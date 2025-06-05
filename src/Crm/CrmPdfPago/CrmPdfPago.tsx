@@ -156,11 +156,9 @@ export default function CrmPdfPago() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium text-gray-700">
-              FACTURA #{factura.id}
-            </p>
+            <p className="text-xs font-medium text-gray-700">#{factura.id}</p>
             <p className="text-xs text-gray-600">
-              {formatDate(factura.creadoEn)}
+              Factura generada el {formatDate(factura.creadoEn)}
             </p>
           </div>
         </div>
@@ -223,7 +221,9 @@ export default function CrmPdfPago() {
                   <th className="py-1.5 px-3 border-b text-left">No.</th>
                   <th className="py-1.5 px-3 border-b text-left">Método</th>
                   <th className="py-1.5 px-3 border-b text-left">Monto</th>
-                  <th className="py-1.5 px-3 border-b text-left">Fecha</th>
+                  <th className="py-1.5 px-3 border-b text-left">
+                    Fecha pagada
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -358,7 +358,7 @@ export default function CrmPdfPago() {
             <span className="font-medium">{factura.empresa.telefono}</span>.
           </p>
           <p className="mt-2 text-[10px]">
-            Generado el{" "}
+            Registro generado el{" "}
             {new Date().toLocaleDateString("es-GT", {
               year: "numeric",
               month: "long",

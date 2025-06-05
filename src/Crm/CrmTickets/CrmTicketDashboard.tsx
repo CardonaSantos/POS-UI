@@ -109,17 +109,10 @@ export default function TicketDashboard() {
       toast.error("Error al conseguir tickets");
     }
   };
-  console.log("tickets", tickets);
-  console.log(
-    "las fechas seleccionadas son: ",
-    dateRange.startDate,
-    dateRange.endDate
-  );
 
   useEffect(() => {
     getTickets();
   }, []);
-  console.log("El estado seleccionado es: ", selectedStatus);
 
   interface Etiqueta {
     id: number;

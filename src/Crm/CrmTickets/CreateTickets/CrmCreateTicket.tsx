@@ -1,7 +1,5 @@
 "use client";
-
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import {
   Ticket,
@@ -14,6 +12,7 @@ import {
   // Search,
   Clock,
   Flag,
+  Loader,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,11 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-// import { cn } from "@/lib/utils";
 import SelectComponent, { MultiValue } from "react-select";
 import axios from "axios";
 import { toast } from "sonner";
@@ -58,21 +54,20 @@ interface Cliente {
   nombre: string;
 }
 
-interface Empresa {
-  id: number;
-  nombre: string;
-}
-
 interface Usuario {
   id: number;
   nombre: string;
 }
 
-// interface Etiqueta {
-//   id: number;
-//   nombre: string;
-//   color: string;
-// }
+interface OptionSelectedReactComponent {
+  value: string;
+  label: string;
+}
+
+interface Etiqueta {
+  id: number;
+  nombre: string;
+}
 
 function CrmCreateTicket({
   openCreatT,
@@ -81,6 +76,7 @@ function CrmCreateTicket({
 }: CreateTicketProps) {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
   interface FormData {
@@ -117,12 +113,6 @@ function CrmCreateTicket({
     { id: 5, nombre: "Roberto Gómez" },
   ]);
 
-  const [empresas, setEmpresas] = useState<Empresa[]>([
-    { id: 1, nombre: "Empresa A" },
-    { id: 2, nombre: "Empresa B" },
-    { id: 3, nombre: "Empresa C" },
-  ]);
-
   const [tecnicos, setTecnicos] = useState<Usuario[]>([
     { id: 1, nombre: "Técnico 1" },
     { id: 2, nombre: "Técnico 2" },
@@ -144,9 +134,6 @@ function CrmCreateTicket({
       toast.info("No se pudieron conseguir los clientes");
     }
   };
-
-  console.log("El form data es: ", formData);
-
   const getTecs = async () => {
     try {
       const response = await axios.get(
@@ -181,8 +168,6 @@ function CrmCreateTicket({
     getEtiquetas();
   }, []);
 
-  console.log(empresas, setEmpresas, setClientes, setTecnicos, setEtiquetas);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -193,10 +178,9 @@ function CrmCreateTicket({
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  console.log("El form data es: ", formData);
 
   const handleSubmit = async () => {
-    console.log("Datos del ticket:", formData);
+    setIsSubmitting(true);
 
     try {
       const response = await axios.post(
@@ -210,21 +194,13 @@ function CrmCreateTicket({
     } catch (error) {
       console.log(error);
       toast.info("Error al crear ticket");
+    } finally {
+      setIsSubmitting(false);
     }
 
     getTickets();
     setOpenCreateT(false);
   };
-
-  interface OptionSelectedReactComponent {
-    value: string;
-    label: string;
-  }
-
-  interface Etiqueta {
-    id: number;
-    nombre: string;
-  }
 
   const handleChangeCustomerSelect = (
     selectedOption: OptionSelectedReactComponent | null
@@ -520,11 +496,23 @@ function CrmCreateTicket({
               onClick={handleSubmit}
               className="flex-1 sm:flex-initial"
               disabled={
-                !formData.clienteId || !formData.empresaId || !formData.titulo
+                isSubmitting ||
+                !formData.clienteId ||
+                !formData.empresaId ||
+                !formData.titulo
               }
             >
-              <Save className="mr-2 h-4 w-4" />
-              Crear Ticket
+              {isSubmitting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Crear Ticket
+                </>
+              )}
             </Button>
           </div>
         </DialogFooter>

@@ -171,6 +171,7 @@ function CrmProfileConfig() {
                   Rol de Usuario
                 </label>
                 <Select
+                  disabled={true}
                   value={rol}
                   onValueChange={(value) => setRol(value as RolUsuario)}
                 >
@@ -214,7 +215,7 @@ function CrmProfileConfig() {
                     {activo ? "Usuario activo" : "Usuario inactivo"}
                   </p>
                 </div>
-                <Switch checked={activo} onCheckedChange={setActivo} />
+                <Switch disabled checked={activo} onCheckedChange={setActivo} />
               </div>
             </div>
           </CardContent>

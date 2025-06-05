@@ -116,12 +116,38 @@ function DialogEdit({
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Seleccionar rol" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={RolUsuario.TECNICO}>Técnico</SelectItem>
-                <SelectItem value={RolUsuario.OFICINA}>Oficina</SelectItem>
-                <SelectItem value={RolUsuario.ADMIN}>Administrador</SelectItem>
+              <SelectContent className="cursor-pointer">
+                <SelectItem
+                  className="cursor-pointer"
+                  value={RolUsuario.TECNICO}
+                >
+                  Técnico
+                </SelectItem>
+                <SelectItem
+                  className="cursor-pointer"
+                  value={RolUsuario.OFICINA}
+                >
+                  Oficina
+                </SelectItem>
+                <SelectItem
+                  className="cursor-pointer"
+                  value={RolUsuario.COBRADOR}
+                >
+                  Cobrador
+                </SelectItem>
 
-                <SelectItem value={RolUsuario.COBRADOR}>Cobrador</SelectItem>
+                <SelectItem
+                  className="text-white font-semibold bg-violet-500 cursor-pointer"
+                  value={RolUsuario.ADMIN}
+                >
+                  Administrador
+                </SelectItem>
+                <SelectItem
+                  className="text-white font-semibold bg-rose-500 cursor-pointer"
+                  value={RolUsuario.SUPER_ADMIN}
+                >
+                  SUPER ADMIN
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

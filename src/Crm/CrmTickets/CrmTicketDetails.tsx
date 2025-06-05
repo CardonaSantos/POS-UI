@@ -115,15 +115,10 @@ export default function TicketDetail({
     usuarioId: userId,
   });
   const [openCloseTicket, setOpenCloseTicket] = useState(false);
-
-  console.log("El form para el seguimiento es: ", formDataComent);
-
   const [ticketDeleteId, setTicketDeleteId] = useState<number | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
-  console.log("el id del ticket seleccionado es: ", ticketDeleteId);
 
   const submitNewComentaryFollowUp = async (e: React.FormEvent) => {
-    console.log("EJECUTANDO FUNCION");
     e.preventDefault();
     try {
       if (!formDataComent.descripcion) {

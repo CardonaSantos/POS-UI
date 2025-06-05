@@ -1,6 +1,5 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
-//================================================================>
 import { useState, useEffect } from "react";
 import { X, Bell, User, LogOut, AtSign } from "lucide-react";
 import {
@@ -14,7 +13,6 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { ModeToggle } from "../mode-toggle";
 import nv2 from "@/assets/LOGOPNG.png";
 import nv3 from "@/assets/LogoCrmPng.png";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +35,6 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { UserCrmToken } from "@/Crm/CrmAuth/UserCRMToken";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.locale("es");
@@ -68,27 +65,51 @@ interface Notificacion {
   fechaCreacion: string;
 }
 
+const mockupNotificaciones_crm: Notificacion[] = [
+  {
+    id: 1,
+    mensaje: "Nuevo cliente registrado: Juan Pérez.",
+    remitenteId: 101,
+    tipoNotificacion: TipoNotificacion.OTRO,
+    referenciaId: 5001,
+    fechaCreacion: "2025-06-05T10:15:00Z",
+  },
+  {
+    id: 2,
+    mensaje: "Recordatorio: Reunión con María Gómez a las 14:00.",
+    remitenteId: 102,
+    tipoNotificacion: TipoNotificacion.SOLICITUD_PRECIO,
+    referenciaId: null,
+    fechaCreacion: "2025-06-05T11:00:00Z",
+  },
+  {
+    id: 3,
+    mensaje: "Pago recibido de Luis Rodríguez por Q1,200.",
+    remitenteId: 103,
+    tipoNotificacion: TipoNotificacion.VENCIMIENTO,
+    referenciaId: 7002,
+    fechaCreacion: "2025-06-05T09:45:00Z",
+  },
+];
+
 export default function Layout2({ children }: LayoutProps) {
   const setUserNombre = useStore((state) => state.setUserNombre);
   const setUserCorreo = useStore((state) => state.setUserCorreo);
   const setUserId = useStore((state) => state.setUserId);
-
   //PARA EL SISTEMA POS
   const setActivo = useStore((state) => state.setActivo);
   const setRol = useStore((state) => state.setRol);
   const setSucursalId = useStore((state) => state.setSucursalId);
   const sucursalId = useStore((state) => state.sucursalId);
   const socket = useSocket();
-  const userID = useStore((state) => state.userId);
+  const userID = useStore((state) => state.userId) ?? 0;
   //PARA EL SISTEMA CRM
-
   const setNombreCrm = useStoreCrm((state) => state.setNombre);
   const setCorreoCrm = useStoreCrm((state) => state.setCorreo);
   const setActivoCrm = useStoreCrm((state) => state.setActivo);
   const setRolCrm = useStoreCrm((state) => state.setRol);
   const setUserIdCrm = useStoreCrm((state) => state.setUserIdCrm);
   const setEmpresaIdCrm = useStoreCrm((state) => state.setEmpresaId);
-
   //POS
   const nombrePos = useStore((state) => state.userNombre);
   const correoPos = useStore((state) => state.userCorreo);
@@ -96,8 +117,17 @@ export default function Layout2({ children }: LayoutProps) {
   //CRM
   const nombreCrm = useStoreCrm((state) => state.nombre);
   const correoCrm = useStoreCrm((state) => state.correo);
-  const rol = useStoreCrm((state) => state.rol);
-  console.log("El rol de mi usuario actual es: ", rol);
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+  const [notificacionesCRM, setNotificacionesCRM] = useState<Notificacion[]>(
+    mockupNotificaciones_crm
+  );
+
+  const isCrmLocation = useLocation().pathname.startsWith("/crm");
+  const nombreUsuario = isCrmLocation ? nombreCrm : nombrePos;
+  const correoUsuario = isCrmLocation ? correoCrm : correoPos;
+  const [sucursalInfo, setSucursalInfo] = useState<Sucursal>();
+
+  console.log("Las notificaciones son: ", notificaciones);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("authTokenPos");
@@ -106,7 +136,6 @@ export default function Layout2({ children }: LayoutProps) {
     if (storedToken) {
       try {
         const decodedToken = jwtDecode<UserToken>(storedToken);
-        // setTokenUser(decodedToken);
         setUserNombre(decodedToken.nombre);
         setUserCorreo(decodedToken.correo);
         setActivo(decodedToken.activo);
@@ -120,7 +149,6 @@ export default function Layout2({ children }: LayoutProps) {
     if (storedTokenCRM) {
       try {
         const decodedTokenCrm = jwtDecode<UserCrmToken>(storedTokenCRM);
-
         setNombreCrm(decodedTokenCrm.nombre);
         setActivoCrm(decodedTokenCrm.activo);
         setCorreoCrm(decodedTokenCrm.correo);
@@ -133,12 +161,6 @@ export default function Layout2({ children }: LayoutProps) {
     }
   }, []);
 
-  const isCrmLocation = useLocation().pathname.startsWith("/crm");
-  // Determinar qué datos usar según la URL
-  const nombreUsuario = isCrmLocation ? nombreCrm : nombrePos;
-  const correoUsuario = isCrmLocation ? correoCrm : correoPos;
-  // const avatarUsuario = isCrmLocation ? avatarCrm : avatarPos;
-
   function handleDeletToken() {
     if (isCrmLocation) {
       localStorage.removeItem("tokenAuthCRM");
@@ -149,7 +171,6 @@ export default function Layout2({ children }: LayoutProps) {
     }
     window.location.reload();
   }
-  const [sucursalInfo, setSucursalInfo] = useState<Sucursal>();
 
   useEffect(() => {
     const getInfoSucursal = async () => {
@@ -165,41 +186,43 @@ export default function Layout2({ children }: LayoutProps) {
       }
     };
 
-    // Solo hace la petición si sucursalId es válido
     if (sucursalId) {
       getInfoSucursal();
     }
-  }, [sucursalId]); // Ahora depende de sucursalId
-
-  console.log("La info de la sucursal actual es: ", sucursalInfo);
-
-  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+  }, [sucursalId]);
 
   const getNotificaciones = async () => {
+    if (!userID) return;
     try {
-      if (isCrmLocation) {
-        const response = await axios.get(
-          `${API_URL}/notification/get-my-notifications/${userID}`
-        );
-        if (response.status === 200) {
-          setNotificaciones(response.data);
-        }
-      }
-    } catch (error) {
-      console.log(error);
+      const response = await axios.get<Notificacion[]>(
+        `${API_URL}/notification/get-my-notifications/${userID}`
+      );
+      console.log("La data es: ", response);
+
+      setNotificaciones(response.data);
+    } catch (err) {
+      console.error("Error loading notificaciones:", err);
       toast.error("Error al conseguir notificaciones");
     }
   };
 
-  useEffect(() => {
-    if (isCrmLocation) {
-      console.log("Conseguir notificaciones del CRM");
-    } else {
-      if (userID) {
-        getNotificaciones();
-      }
+  const getNotificaciones_crm = async () => {
+    try {
+      setNotificacionesCRM(mockupNotificaciones_crm);
+    } catch (error) {
+      console.log(error);
     }
-  }, [userID]);
+  };
+
+  // POS
+  useEffect(() => {
+    if (!isCrmLocation && userID) getNotificaciones();
+  }, [isCrmLocation, userID]);
+
+  // CRM
+  useEffect(() => {
+    if (isCrmLocation) getNotificaciones_crm();
+  }, [isCrmLocation]);
 
   const deleteNoti = async (id: number) => {
     try {
@@ -208,7 +231,7 @@ export default function Layout2({ children }: LayoutProps) {
       );
       if (response.status === 200) {
         toast.success("Notificación eliminada");
-        getNotificaciones(); // Actualiza las notificaciones después de eliminar
+        getNotificaciones();
       }
     } catch (error) {
       console.log(error);
@@ -216,19 +239,14 @@ export default function Layout2({ children }: LayoutProps) {
     }
   };
 
-  // Escuchar el evento de nueva notificación entrante
   useEffect(() => {
     if (socket) {
-      console.log("Escuchando evento para notificaciones");
-
       socket.on("recibirNotificacion", (nuevaNotificacion: Notificacion) => {
         setNotificaciones((prevNotificaciones) => [
           nuevaNotificacion,
           ...prevNotificaciones,
         ]);
       });
-
-      // Limpieza del evento al desmontar el componente o desconectarse el socket
       return () => {
         socket.off("recibirNotificacion");
       };
@@ -237,24 +255,23 @@ export default function Layout2({ children }: LayoutProps) {
 
   const classesCrmLogo = "h-14 w-14 md:h-16 md:w-16";
   const classesNova = "h-16 w-16 md:h-10 md:w-16";
+  let currentNot: Notificacion[] = isCrmLocation
+    ? notificacionesCRM
+    : notificaciones;
 
   return (
     <div className="flex min-h-screen">
       <SidebarProvider>
         <AppSidebar />
-
-        {/* Contenedor principal para el toolbar y el contenido */}
         <div className="flex flex-col w-full">
-          {/* Toolbar */}
           <div className="sticky top-0 z-10 h-16 w-full bg-background border-b border-border shadow-sm flex items-center justify-between">
             <div className="mx-auto flex h-16 max-w-7xl w-full items-center px-4 sm:px-6 lg:px-8 justify-between">
-              {/* Sección izquierda: Logo y nombre de la sucursal */}
               <div className="flex items-center space-x-2">
                 <Link to={isCrmLocation ? "/crm" : "/"}>
                   <img
                     className={`${
                       isCrmLocation ? classesCrmLogo : classesNova
-                    }`} // Mobile: 12x12, Medium+: 16x28
+                    }`}
                     src={isCrmLocation ? nv3 : nv2}
                     alt="Logo"
                   />
@@ -265,17 +282,15 @@ export default function Layout2({ children }: LayoutProps) {
                   </p>
                 </Link>
               </div>
-              {/* vitaFertil-universal-forma:pachon, normal */}
-              {/* Sección derecha: Toggle de modo, notificaciones y menú de usuario */}
               <div className="flex items-center space-x-2">
                 <div className="">
-                  <Link to={"/crm"}>
+                  <Link to={`${isCrmLocation ? "/dashboard" : "/crm"}`}>
                     <Button
                       className="underline font-semibold dark:text-white "
                       size={"icon"}
                       variant={"link"}
                     >
-                      CRM
+                      {`${isCrmLocation ? "POS" : "CRM"}`}
                     </Button>
                   </Link>
                 </div>
@@ -289,9 +304,13 @@ export default function Layout2({ children }: LayoutProps) {
                       <Button variant="outline" size="icon" className="mr-4">
                         <Bell className="h-6 w-6" />
                       </Button>
-                      {notificaciones.length > 0 && (
-                        <span className="absolute top-0 right-0 inline-flex items-center justify-center w-6 h-6 text-xs font-bold leading-none text-primary-foreground bg-rose-500 rounded-full">
-                          {notificaciones.length}
+                      {currentNot.length > 0 && (
+                        <span
+                          className={`absolute top-0 right-0 inline-flex items-center justify-center w-6 h-6 text-xs font-bold leading-none text-primary-foreground ${
+                            isCrmLocation ? "bg-purple-500" : "bg-rose-500 "
+                          } rounded-full`}
+                        >
+                          {currentNot.length}
                         </span>
                       )}
                     </div>
@@ -304,8 +323,8 @@ export default function Layout2({ children }: LayoutProps) {
                       </DialogTitle>
                     </DialogHeader>
                     <div className="py-4 overflow-y-auto max-h-96">
-                      {notificaciones && notificaciones.length > 0 ? (
-                        notificaciones.map((not) => (
+                      {currentNot && currentNot.length > 0 ? (
+                        currentNot.map((not) => (
                           <Card className="m-2 p-4 shadow-md" key={not.id}>
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
@@ -340,7 +359,7 @@ export default function Layout2({ children }: LayoutProps) {
                                 variant={"destructive"}
                                 title="Eliminar Notificación"
                                 className="rounded-full p-2 ml-2 flex-shrink-0"
-                                onClick={() => deleteNoti(not.id)} // Pasa el id directamente
+                                onClick={() => deleteNoti(not.id)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -392,13 +411,11 @@ export default function Layout2({ children }: LayoutProps) {
             </div>
           </div>
 
-          {/* Contenido principal */}
           <main className="flex-1 overflow-y-auto p-1 lg:p-8">
             <SidebarTrigger />
             {children || <Outlet />}
           </main>
 
-          {/* Footer */}
           <footer className="bg-background py-4 text-center text-sm text-muted-foreground border-t border-border">
             <p>&copy; 2024 Novas Sistemas. Todos los derechos reservados</p>
           </footer>
