@@ -1,5 +1,5 @@
 "use client";
-
+import { useDebounce } from "use-debounce";
 import { useEffect, useMemo, useState } from "react";
 import {
   ColumnDef,
@@ -29,7 +29,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { CreditCard, File, FileCheck } from "lucide-react";
+import { CreditCard, File, FileCheck, Loader2 } from "lucide-react";
 import { FacturacionZona } from "../CrmFacturacion/FacturacionZonaTypes";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
@@ -108,47 +108,64 @@ interface Municipios {
   nombre: string;
 }
 
+interface Sector {
+  id: number;
+  nombre: string;
+  clientesCount: number;
+}
+
+interface OptionSelected {
+  value: string; // Cambiar 'number' a 'string'
+  label: string;
+}
+
+const opcionesEstadoFactura = [
+  "TODOS",
+  "PENDIENTE",
+  "PAGADA",
+  "VENCIDA",
+  "ANULADA",
+  "PARCIAL",
+];
+
+// Tipos para las fechas
+type DateRange = {
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+};
+
 export default function BilingTable() {
+  const [totalCount, setTotalCount] = useState(0);
+
   const [filter, setFilter] = useState("");
   const [facturas, setFactuas] = useState<Factura[]>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 }); // 🔥 FIX: Agregamos pageIndex
-
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [departamentos, setDepartamentos] = useState<Departamentos[]>([]);
   const [municipios, setMunicipios] = useState<Municipios[]>([]);
-
   const [depaSelected, setDepaSelected] = useState<string | null>("8");
   const [muniSelected, setMuniSelected] = useState<string | null>(null);
-
   const [sectores, setSectores] = useState<Sector[]>([]);
   const [sectorSelected, setSectorSelected] = useState<string | null>(null);
-
-  interface Sector {
-    id: number;
-    nombre: string;
-    clientesCount: number;
-  }
-
-  const handleSelectSector = (selectedOption: OptionSelected | null) => {
-    setSectorSelected(selectedOption ? selectedOption.value : null);
-  };
-
-  console.log("el departamento selecionado es: ", depaSelected);
-  console.log("el muniSelected selecionado es: ", muniSelected);
-  console.log("las facturas son : ", facturas);
-
   const [facutracionData, setFacturacionData] = useState<FacturacionData>({
     cobrados: null,
     facturados: null,
     porCobrar: null,
   });
-
   const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
     []
   );
-
   const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
     string | null
   >(null);
+
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: undefined,
+    endDate: undefined,
+  });
+
+  const handleSelectSector = (selectedOption: OptionSelected | null) => {
+    setSectorSelected(selectedOption ? selectedOption.value : null);
+  };
 
   const optionsZonasFacturacion: OptionSelected[] = zonasFacturacion
     .sort((a, b) => {
@@ -167,16 +184,45 @@ export default function BilingTable() {
     setZonasFacturacionSelected(selectedOption ? selectedOption.value : null);
   };
 
-  console.log("Las facturas son: ", facturas);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
 
   const getFacturas = async () => {
+    setIsSearching(true);
+    const objetoAEnviar = {
+      params: {
+        page: pagination.pageIndex + 1, // API expects 1-based index
+        limite: pagination.pageSize,
+        paramSearch: filter,
+        //otros selects
+        zonasFacturacionSelected: zonasFacturacionSelected,
+        muniSelected: muniSelected,
+        depaSelected: depaSelected,
+        sectorSelected: sectorSelected,
+      },
+    };
+
+    console.log("El objeto a enviar: ", objetoAEnviar);
+
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/facturacion/facturacion-to-table`
+        `${VITE_CRM_API_URL}/facturacion/facturacion-to-table`,
+        {
+          params: {
+            page: pagination.pageIndex + 1, // API expects 1-based index
+            limite: pagination.pageSize,
+            paramSearch: filter,
+            //otros selects
+            zonasFacturacionSelected: zonasFacturacionSelected,
+            muniSelected: muniSelected,
+            depaSelected: depaSelected,
+            sectorSelected: sectorSelected,
+          },
+        }
       );
 
       if (response.status === 200) {
         setFactuas(response.data.facturasMapeadas);
+        setTotalCount(response.data.totalCount);
         setFacturacionData({
           cobrados: response.data.cobrados,
           facturados: response.data.facturados,
@@ -186,6 +232,8 @@ export default function BilingTable() {
     } catch (error) {
       console.log(error);
       toast.error("Error al conseguir facturación");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -255,11 +303,6 @@ export default function BilingTable() {
     setMuniSelected(selectedOption ? selectedOption.value : null);
   };
 
-  interface OptionSelected {
-    value: string; // Cambiar 'number' a 'string'
-    label: string;
-  }
-
   // Cambiar 'optionsDepartamentos' para mapear los departamentos a 'string' para 'value'
   const optionsDepartamentos: OptionSelected[] = departamentos.map((depa) => ({
     value: depa.id.toString(), // Asegúrate de convertir el 'id' a 'string'
@@ -277,7 +320,7 @@ export default function BilingTable() {
   }));
 
   useEffect(() => {
-    getFacturas();
+    // getFacturas();
     getFacturacionZona();
     // getMunicipios();
     getDepartamentos();
@@ -294,57 +337,14 @@ export default function BilingTable() {
     }
   }, [depaSelected]);
 
-  const opcionesEstadoFactura = [
-    "TODOS",
-    "PENDIENTE",
-    "PAGADA",
-    "VENCIDA",
-    "ANULADA",
-    "PARCIAL",
-  ];
-
-  // Tipos para las fechas
-  type DateRange = {
-    startDate: Date | undefined;
-    endDate: Date | undefined;
-  };
-
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: undefined,
-    endDate: undefined,
-  });
-
   const [estadoFactura, setEstadoFactura] = useState<string>("");
   const handleSelectEstadoFactura = (estado: EstadoFactura) => {
     setEstadoFactura(estado);
   };
-  console.log("El estado de la factura es: ", estadoFactura);
 
   const filteredFacturas = useMemo(() => {
     return facturas.filter((factura) => {
       // Filtros existentes
-      const matchesZona = zonasFacturacionSelected
-        ? factura?.facturacionZonaId === Number(zonasFacturacionSelected)
-        : true;
-
-      const matchesMunicipio = muniSelected
-        ? factura?.clienteObj.municipio === Number(muniSelected)
-        : true;
-
-      const matchesDepartamento = depaSelected
-        ? factura?.clienteObj.departamento === Number(depaSelected)
-        : true;
-
-      const matchesEstado =
-        estadoFactura === "TODOS" || estadoFactura === ""
-          ? true
-          : factura?.estado === estadoFactura;
-
-      const matchesSector = sectorSelected
-        ? factura.clienteObj.sectorId === Number(sectorSelected)
-        : true;
-
-      // filtro de fechas
       const matchesDate = () => {
         if (!dateRange.startDate && !dateRange.endDate) return true;
 
@@ -363,14 +363,7 @@ export default function BilingTable() {
         return ticketDate >= start && ticketDate <= end;
       };
 
-      return (
-        matchesZona &&
-        matchesEstado &&
-        matchesDepartamento &&
-        matchesMunicipio &&
-        matchesSector &&
-        matchesDate()
-      );
+      return matchesDate();
     });
   }, [
     facturas,
@@ -383,6 +376,8 @@ export default function BilingTable() {
   ]); // Añadir dateRange como dependencia
   // **Configuración de la tabla**
   const table = useReactTable({
+    manualPagination: true,
+    pageCount: Math.ceil(totalCount / pagination.pageSize),
     data: filteredFacturas,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -423,14 +418,50 @@ export default function BilingTable() {
     },
   });
 
-  const cobrados = facturas.filter((fac) => {
-    return !["PENDIENTE", "PARCIAL", "VENCIDA", "ANULADA"].includes(fac.estado);
-  });
+  const [debouncedQuery] = useDebounce(filter, 1000);
 
-  const facturados = facturas.filter((fac) => fac.estado !== "PAGADA");
-  console.log("Los facturados sin aun pagar son: ", facturados);
+  useEffect(() => {
+    getFacturas();
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    debouncedQuery,
+    zonasFacturacionSelected,
+    depaSelected,
+    muniSelected,
+    sectorSelected,
+  ]);
 
-  console.log("Los facturados son: ", cobrados);
+  if (isSearching) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm z-50">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <div className="relative">
+            <Loader2 className="h-12 w-12 animate-spin text-gray-600 dark:text-gray-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              Buscando...
+            </h2>
+            <div className="flex justify-center space-x-1">
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              ></span>
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              ></span>
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              ></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card className="max-w-full shadow-lg border border-gray-300 text-xs">

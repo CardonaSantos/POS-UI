@@ -1,3 +1,4 @@
+import { useDebounce } from "use-debounce";
 import { useEffect, useMemo, useState } from "react";
 import {
   ColumnDef,
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { Edit } from "lucide-react";
+import { Edit, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ClienteDto } from "./CustomerTable";
 import axios from "axios";
@@ -109,6 +110,11 @@ const estadosConDescripcion = [
 ];
 
 export default function ClientesTable() {
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+
+  //PAGINACION
+  const [totalCount, setTotalCount] = useState(0);
+
   const [filter, setFilter] = useState("");
   const filtered2 = useDeferredValue(filter);
 
@@ -280,20 +286,37 @@ export default function ClientesTable() {
 
   const getClientes = async () => {
     try {
+      setIsSearching(true);
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/customer-to-table`
+        `${VITE_CRM_API_URL}/internet-customer/customer-to-table`,
+        {
+          params: {
+            page: pagination.pageIndex + 1, // API expects 1-based index
+            limite: pagination.pageSize,
+            paramSearch: filter,
+            //otros filtros
+            zonasFacturacionSelected: zonasFacturacionSelected,
+            muniSelected: muniSelected,
+            depaSelected: depaSelected,
+            sectorSelected: sectorSelected,
+          },
+        }
       );
       if (response.status === 200) {
-        setClientes(response.data);
+        setClientes(response.data.data);
+        setTotalCount(response.data.totalCount);
+        // Reset pagination when new data is fetched
       }
     } catch (error) {
       console.log(error);
       toast.error("Error al conseguir datos de clientes");
+    } finally {
+      setIsSearching(false);
     }
   };
 
   useEffect(() => {
-    getClientes();
+    // getClientes();
     getFacturacionZona();
   }, []);
 
@@ -309,9 +332,6 @@ export default function ClientesTable() {
       setSorting([{ id: columnId, desc: direction === "desc" }]);
     }
   };
-  console.log("Cliente son: ", clientes);
-  console.log("El depa seleccionado es: ", depaSelected);
-  console.log("El muniSelected seleccionado es: ", muniSelected);
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
@@ -319,33 +339,11 @@ export default function ClientesTable() {
 
   const filteredClientesZona = useMemo(() => {
     return clientes.filter((cliente) => {
-      const matchesMunicipio = muniSelected
-        ? cliente.municipioId === Number(muniSelected)
-        : true;
-
-      const matchesDepartamento = depaSelected
-        ? cliente.departamentoId === Number(depaSelected)
-        : true;
-
-      const matchesPorZonas = zonasFacturacionSelected
-        ? cliente.facturacionZonaId === Number(zonasFacturacionSelected)
-        : true;
-
-      const matchesPorSector = sectorSelected
-        ? cliente?.sectorId === Number(sectorSelected)
-        : true;
-
       const matchesPorEstado = estadoSelected
         ? cliente?.estado === estadoSelected
         : true;
 
-      return (
-        matchesMunicipio &&
-        matchesDepartamento &&
-        matchesPorZonas &&
-        matchesPorEstado &&
-        matchesPorSector
-      );
+      return matchesPorEstado;
     });
   }, [
     clientes,
@@ -358,6 +356,9 @@ export default function ClientesTable() {
 
   // **Configuración de la tabla**
   const table = useReactTable({
+    pageCount: Math.ceil(totalCount / pagination.pageSize),
+    manualPagination: true, // Habilitar paginación manual
+    //paginacion
     data: filteredClientesZona, // Cambiar a filteredClientesZona
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -389,6 +390,52 @@ export default function ClientesTable() {
       );
     },
   });
+
+  const [debouncedQuery] = useDebounce(filter, 1000);
+
+  useEffect(() => {
+    getClientes();
+    // Actualizar la tabla cuando cambie la página o el tamaño de página
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    zonasFacturacionSelected,
+    muniSelected,
+    depaSelected,
+    sectorSelected,
+    debouncedQuery,
+  ]);
+
+  if (isSearching) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm z-50">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <div className="relative">
+            <Loader2 className="h-12 w-12 animate-spin text-gray-600 dark:text-gray-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              Buscando...
+            </h2>
+            <div className="flex justify-center space-x-1">
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              ></span>
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              ></span>
+              <span
+                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              ></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card className="max-w-full shadow-lg">
