@@ -418,7 +418,7 @@ export default function BilingTable() {
     },
   });
 
-  const [debouncedQuery] = useDebounce(filter, 1000);
+  const [debouncedQuery] = useDebounce(filter, 500);
 
   useEffect(() => {
     getFacturas();

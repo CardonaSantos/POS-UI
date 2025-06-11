@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { Edit, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Edit, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ClienteDto } from "./CustomerTable";
 import axios from "axios";
@@ -33,7 +33,8 @@ import { FacturacionZona } from "../CrmFacturacion/FacturacionZonaTypes";
 
 import { useDeferredValue } from "react";
 import { Label } from "@/components/ui/label";
-
+import { useRef } from "react";
+import { useWindowScrollPosition } from "../Utils/useWindow";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -110,6 +111,10 @@ const estadosConDescripcion = [
 ];
 
 export default function ClientesTable() {
+  //referencias
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
   //PAGINACION
@@ -147,6 +152,21 @@ export default function ClientesTable() {
     value: muni.id.toString(),
     label: muni.nombre,
   }));
+
+  const atBottom = useWindowScrollPosition();
+
+  const handleToggle = () => {
+    if (atBottom) {
+      // Volver arriba
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Ir hasta el final de la página
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const getDepartamentos = async () => {
     try {
@@ -320,6 +340,12 @@ export default function ClientesTable() {
     getFacturacionZona();
   }, []);
 
+  useEffect(() => {
+    if (!isSearching) {
+      inputRef.current?.focus();
+    }
+  }, [isSearching]);
+
   // Handle sort selection change from react-select
   const handleSortChange = (option: OptionSelect | null) => {
     if (!option) {
@@ -391,7 +417,7 @@ export default function ClientesTable() {
     },
   });
 
-  const [debouncedQuery] = useDebounce(filter, 1000);
+  const [debouncedQuery] = useDebounce(filter, 500);
 
   useEffect(() => {
     getClientes();
@@ -438,280 +464,310 @@ export default function ClientesTable() {
   }
 
   return (
-    <Card className="max-w-full shadow-lg">
-      <CardContent>
-        <div className="flex justify-between items-center mb-4"></div>
-        {/* **Campo de Búsqueda** */}
-        <Input
-          style={{ boxShadow: "none" }}
-          type="text"
-          placeholder="Buscar por Nombre, Teléfono, Dirección, DPI o IP..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          // className="mb-3 border-2
-          className="mb-3 text-xs px-2 py-1 border-2"
-        />
+    <div className="relative overflow-x-auto rounded-md border …">
+      <Card className="max-w-full shadow-lg">
+        <CardContent>
+          <div className="flex justify-between items-center mb-4"></div>
+          {/* **Campo de Búsqueda** */}
+          <Input
+            style={{ boxShadow: "none" }}
+            type="text"
+            placeholder="Buscar por Nombre, Teléfono, Dirección, DPI o IP..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            // className="mb-3 border-2
+            className="mb-3 text-xs px-2 py-1 border-2"
+            ref={inputRef}
+          />
 
-        {/* **Controles: Selector de Orden y Cantidad de Filas** */}
-        <div className="mb-4">
-          {/* **Controles de filtrado y ordenamiento** */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {/* Departamento */}
-            <div className="space-y-1">
-              <Label htmlFor="departamentoId-all">Departamento</Label>
-              <ReactSelectComponent
-                placeholder="Seleccione un departamento"
-                isClearable
-                options={optionsDepartamentos}
-                value={
-                  depaSelected
-                    ? {
-                        value: depaSelected,
-                        label:
-                          departamentos.find(
-                            (depa) => depa.id.toString() === depaSelected
-                          )?.nombre || "",
-                      }
-                    : null
-                }
-                onChange={handleSelectDepartamento}
-                className="text-xs text-black"
-              />
-            </div>
+          {/* **Controles: Selector de Orden y Cantidad de Filas** */}
+          <div className="mb-4">
+            {/* **Controles de filtrado y ordenamiento** */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              {/* Departamento */}
+              <div className="space-y-1">
+                <Label htmlFor="departamentoId-all">Departamento</Label>
+                <ReactSelectComponent
+                  placeholder="Seleccione un departamento"
+                  isClearable
+                  options={optionsDepartamentos}
+                  value={
+                    depaSelected
+                      ? {
+                          value: depaSelected,
+                          label:
+                            departamentos.find(
+                              (depa) => depa.id.toString() === depaSelected
+                            )?.nombre || "",
+                        }
+                      : null
+                  }
+                  onChange={handleSelectDepartamento}
+                  className="text-xs text-black"
+                />
+              </div>
 
-            {/* Municipio */}
-            <div className="space-y-1">
-              <Label htmlFor="municipioId-all">Municipio</Label>
-              <ReactSelectComponent
-                placeholder="Seleccione un municipio"
-                isClearable
-                options={optionsMunis}
-                onChange={handleSelectMunicipio}
-                value={
-                  muniSelected
-                    ? {
-                        value: muniSelected,
-                        label:
-                          municipios.find(
-                            (muni) => muni.id.toString() == muniSelected
-                          )?.nombre || "",
-                      }
-                    : null
-                }
-                className="text-xs text-black"
-              />
-            </div>
+              {/* Municipio */}
+              <div className="space-y-1">
+                <Label htmlFor="municipioId-all">Municipio</Label>
+                <ReactSelectComponent
+                  placeholder="Seleccione un municipio"
+                  isClearable
+                  options={optionsMunis}
+                  onChange={handleSelectMunicipio}
+                  value={
+                    muniSelected
+                      ? {
+                          value: muniSelected,
+                          label:
+                            municipios.find(
+                              (muni) => muni.id.toString() == muniSelected
+                            )?.nombre || "",
+                        }
+                      : null
+                  }
+                  className="text-xs text-black"
+                />
+              </div>
 
-            {/* Sector */}
-            <div className="space-y-1">
-              <Label htmlFor="municipioId-all">Sector</Label>
-              <ReactSelectComponent
-                placeholder="Seleccione un sector"
-                isClearable
-                options={optionsSectores}
-                onChange={handleSelectSector}
-                value={
-                  sectorSelected
-                    ? {
-                        value: sectorSelected,
-                        label:
-                          sectores.find(
-                            (muni) => muni.id.toString() == sectorSelected
-                          )?.nombre || "",
-                      }
-                    : null
-                }
-                className="text-xs text-black"
-              />
-            </div>
+              {/* Sector */}
+              <div className="space-y-1">
+                <Label htmlFor="municipioId-all">Sector</Label>
+                <ReactSelectComponent
+                  placeholder="Seleccione un sector"
+                  isClearable
+                  options={optionsSectores}
+                  onChange={handleSelectSector}
+                  value={
+                    sectorSelected
+                      ? {
+                          value: sectorSelected,
+                          label:
+                            sectores.find(
+                              (muni) => muni.id.toString() == sectorSelected
+                            )?.nombre || "",
+                        }
+                      : null
+                  }
+                  className="text-xs text-black"
+                />
+              </div>
 
-            {/* ESTADO CLIENTE */}
-            <div className="space-y-1">
-              <Label htmlFor="municipioId-all">Estado</Label>
-              <ReactSelectComponent
-                placeholder="Seleccione un estado"
-                options={estadosConDescripcion}
-                onChange={handleSelectEstado}
-                value={
-                  estadosConDescripcion.find(
-                    (opt) => opt.value === estadoSelected
-                  ) || null
-                }
-                isClearable
-                className="text-xs text-black"
-              />
-            </div>
+              {/* ESTADO CLIENTE */}
+              <div className="space-y-1">
+                <Label htmlFor="municipioId-all">Estado</Label>
+                <ReactSelectComponent
+                  placeholder="Seleccione un estado"
+                  options={estadosConDescripcion}
+                  onChange={handleSelectEstado}
+                  value={
+                    estadosConDescripcion.find(
+                      (opt) => opt.value === estadoSelected
+                    ) || null
+                  }
+                  isClearable
+                  className="text-xs text-black"
+                />
+              </div>
 
-            {/* Zona de Facturación */}
-            <div className="space-y-1">
-              <Label>Zona de Facturación</Label>
-              <ReactSelectComponent
-                isClearable
-                placeholder="Ordenar por facturación zona"
-                className="text-xs text-black"
-                options={optionsZonasFacturacion}
-                onChange={handleSelectZonaFacturacion}
-                value={
-                  zonasFacturacionSelected
-                    ? {
-                        value: zonasFacturacionSelected,
-                        label:
-                          zonasFacturacion.find(
-                            (s) => s.id.toString() === zonasFacturacionSelected
-                          )?.nombre || "",
-                      }
-                    : null
-                }
-              />
-            </div>
+              {/* Zona de Facturación */}
+              <div className="space-y-1">
+                <Label>Zona de Facturación</Label>
+                <ReactSelectComponent
+                  isClearable
+                  placeholder="Ordenar por facturación zona"
+                  className="text-xs text-black"
+                  options={optionsZonasFacturacion}
+                  onChange={handleSelectZonaFacturacion}
+                  value={
+                    zonasFacturacionSelected
+                      ? {
+                          value: zonasFacturacionSelected,
+                          label:
+                            zonasFacturacion.find(
+                              (s) =>
+                                s.id.toString() === zonasFacturacionSelected
+                            )?.nombre || "",
+                        }
+                      : null
+                  }
+                />
+              </div>
 
-            {/* Ordenamiento */}
-            <div className="space-y-1">
-              <Label>Ordenar por</Label>
-              <ReactSelectComponent
-                className="text-xs text-black"
-                options={sortOptions}
-                isClearable={true}
-                onChange={handleSortChange}
-                placeholder="Ordenar por..."
-              />
-            </div>
+              {/* Ordenamiento */}
+              <div className="space-y-1">
+                <Label>Ordenar por</Label>
+                <ReactSelectComponent
+                  className="text-xs text-black"
+                  options={sortOptions}
+                  isClearable={true}
+                  onChange={handleSortChange}
+                  placeholder="Ordenar por..."
+                />
+              </div>
 
-            {/* Items por página */}
-            <div className="space-y-1">
-              <Label>Items por página</Label>
-              <Select
-                onValueChange={(value) =>
-                  setPagination({ ...pagination, pageSize: Number(value) })
-                }
-                defaultValue={String(pagination.pageSize)}
+              {/* Items por página */}
+              <div className="space-y-1">
+                <Label>Items por página</Label>
+                <Select
+                  onValueChange={(value) =>
+                    setPagination({ ...pagination, pageSize: Number(value) })
+                  }
+                  defaultValue={String(pagination.pageSize)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Items por página" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <button
+                onClick={handleToggle}
+                className="
+          fixed          
+          bottom-6 right-6
+          h-10 w-10
+          flex items-center justify-center
+          bg-rose-500 hover:bg-rose-600
+          text-white
+          rounded-full
+          shadow-lg
+          transition-colors
+          z-50
+        "
+                aria-label={atBottom ? "Ir al tope" : "Ir al final"}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Items por página" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+                {atBottom ? (
+                  <ChevronUp></ChevronUp>
+                ) : (
+                  <span>
+                    <ChevronDown></ChevronDown>
+                  </span>
+                )}
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* **Tabla** */}
-        <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
-          <table className="w-full border-collapse text-xs">
-            <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  ID
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Nombre Completo
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Teléfono
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  IP
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Servicios
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Zona de Facturación
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {table.getRowModel().rows.map((row) => (
-                <motion.tr
-                  key={row.id}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 120,
-                    damping: 22,
-                  }}
-                  className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
-                >
-                  <td className="px-3 py-2 text-center font-medium">
-                    {row.original.id}
-                  </td>
-                  <Link
-                    to={`/crm/cliente/${row.original.id}`}
-                    className="contents"
+          {/* **Tabla** */}
+          <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
+            <table className="w-full border-collapse text-xs">
+              <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    ID
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    Nombre Completo
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    Teléfono
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    IP
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    Servicios
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    Zona de Facturación
+                  </th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                {table.getRowModel().rows.map((row) => (
+                  <motion.tr
+                    key={row.id}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 120,
+                      damping: 22,
+                    }}
+                    className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
                   >
-                    <td className="px-3 py-2 truncate max-w-[120px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
-                      {`${row.original.nombreCompleto}`.trim()}
+                    <td className="px-3 py-2 text-center font-medium">
+                      {row.original.id}
                     </td>
-                  </Link>
-                  <td className="px-3 py-2 truncate max-w-[90px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.telefono}
-                  </td>
-                  <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.direccionIp}
-                  </td>
-                  <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.servicios
-                      .map((s) => s.nombreServicio)
-                      .join(", ")}
-                  </td>
-                  <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.facturacionZona}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-center">
-                      <Link to={`/crm/cliente-edicion/${row.original.id}`}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800/30 dark:text-gray-300"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <Link
+                      to={`/crm/cliente/${row.original.id}`}
+                      className="contents"
+                    >
+                      <td className="px-3 py-2 truncate max-w-[120px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
+                        {`${row.original.nombreCompleto}`.trim()}
+                      </td>
+                    </Link>
+                    <td className="px-3 py-2 truncate max-w-[90px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                      {row.original.telefono}
+                    </td>
+                    <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                      {row.original.direccionIp}
+                    </td>
+                    <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                      {row.original.servicios
+                        .map((s) => s.nombreServicio)
+                        .join(", ")}
+                    </td>
+                    <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                      {row.original.facturacionZona}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-center">
+                        <Link to={`/crm/cliente-edicion/${row.original.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800/30 dark:text-gray-300"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        {/* **Controles de Paginación** */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs dark:border-gray-800 dark:bg-transparent dark:text-gray-300 mt-0 rounded-b-md">
-          <Button
-            variant="outline"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
-          >
-            Anterior
-          </Button>
+          {/* **Controles de Paginación** */}
+          <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs dark:border-gray-800 dark:bg-transparent dark:text-gray-300 mt-0 rounded-b-md">
+            <Button
+              variant="outline"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+            >
+              Anterior
+            </Button>
 
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Página{" "}
-            <span className="font-medium">{pagination.pageIndex + 1}</span> de{" "}
-            <span className="font-medium">{table.getPageCount()}</span>
-          </span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Página{" "}
+              <span className="font-medium">{pagination.pageIndex + 1}</span> de{" "}
+              <span className="font-medium">{table.getPageCount()}</span>
+            </span>
 
-          <Button
-            variant="outline"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
-          >
-            Siguiente
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <Button
+              variant="outline"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+            >
+              Siguiente
+            </Button>
+          </div>
+        </CardContent>
+        <div ref={bottomRef} className=""></div>
+      </Card>
+    </div>
   );
 }
