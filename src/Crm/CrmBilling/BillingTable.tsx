@@ -1,6 +1,6 @@
 "use client";
 import { useDebounce } from "use-debounce";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -29,12 +29,21 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { CreditCard, File, FileCheck, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  File,
+  FileCheck,
+} from "lucide-react";
 import { FacturacionZona } from "../CrmFacturacion/FacturacionZonaTypes";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
+import { useWindowScrollPosition } from "../Utils/useWindow";
+import { TableSkeleton } from "./SkeletonTable";
+import { stateInvoice } from "./Utils/Utils";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -135,8 +144,10 @@ type DateRange = {
 };
 
 export default function BilingTable() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [filter, setFilter] = useState("");
   const [facturas, setFactuas] = useState<Factura[]>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -163,6 +174,27 @@ export default function BilingTable() {
     endDate: undefined,
   });
 
+  const atBottom = useWindowScrollPosition();
+
+  const handleToggle = () => {
+    if (atBottom) {
+      // Volver arriba
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Ir hasta el final de la página
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!isSearching) {
+      inputRef.current?.focus();
+    }
+  }, [isSearching]);
+
   const handleSelectSector = (selectedOption: OptionSelected | null) => {
     setSectorSelected(selectedOption ? selectedOption.value : null);
   };
@@ -184,24 +216,8 @@ export default function BilingTable() {
     setZonasFacturacionSelected(selectedOption ? selectedOption.value : null);
   };
 
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-
   const getFacturas = async () => {
     setIsSearching(true);
-    const objetoAEnviar = {
-      params: {
-        page: pagination.pageIndex + 1, // API expects 1-based index
-        limite: pagination.pageSize,
-        paramSearch: filter,
-        //otros selects
-        zonasFacturacionSelected: zonasFacturacionSelected,
-        muniSelected: muniSelected,
-        depaSelected: depaSelected,
-        sectorSelected: sectorSelected,
-      },
-    };
-
-    console.log("El objeto a enviar: ", objetoAEnviar);
 
     try {
       const response = await axios.get(
@@ -216,6 +232,7 @@ export default function BilingTable() {
             muniSelected: muniSelected,
             depaSelected: depaSelected,
             sectorSelected: sectorSelected,
+            estado: estadoFactura,
           },
         }
       );
@@ -430,357 +447,380 @@ export default function BilingTable() {
     depaSelected,
     muniSelected,
     sectorSelected,
+    estadoFactura,
   ]);
 
-  if (isSearching) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm z-50">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="relative">
-            <Loader2 className="h-12 w-12 animate-spin text-gray-600 dark:text-gray-400" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Buscando...
-            </h2>
-            <div className="flex justify-center space-x-1">
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></span>
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              ></span>
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              ></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Card className="max-w-full shadow-lg border border-gray-300 text-xs">
-      <CardContent>
-        <div className="flex justify-between items-center mb-4"></div>
-        {/* **Campo de Búsqueda** */}
-        <Input
-          style={{ boxShadow: "none" }}
-          type="text"
-          placeholder="Buscar por nombre, telefono o ip"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="mb-3 text-xs px-2 py-1 border-2"
-        />
+    <div className="relative overflow-x-auto rounded-md border">
+      <Card className="max-w-full shadow-lg border border-gray-300 text-xs">
+        <CardContent>
+          <div className="flex justify-between items-center mb-4"></div>
+          {/* **Campo de Búsqueda** */}
+          <Input
+            ref={inputRef}
+            style={{ boxShadow: "none" }}
+            type="text"
+            placeholder="Buscar por nombre, telefono o ip"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="mb-3 text-xs px-2 py-1 border-2"
+          />
 
-        {/* **Selector de Cantidad de Filas** */}
-        <div>
-          {/* **Filtros de Facturación** */}
-          <div className="space-y-4 mb-4">
-            {/* Resumen de facturación */}
-            <div className="flex flex-wrap items-center gap-4 p-2 bg-muted/20 rounded-lg">
-              <div className="flex items-center">
-                <File className="h-5 w-5 mr-2 dark:text-white" />
-                <span className="text-sm font-semibold">
-                  Facturados: {facutracionData.facturados}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <CreditCard className="h-5 w-5 mr-2 dark:text-white" />
-                <span className="text-sm font-semibold">
-                  Cobrados: {facutracionData.cobrados}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <FileCheck className="h-5 w-5 mr-2 dark:text-white" />
-                <span className="text-sm font-semibold">
-                  Por Cobrar: {facutracionData.porCobrar}
-                </span>
-              </div>
-            </div>
-
-            {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {/* Rango de fechas */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium">
-                  Rango de fechas pago
-                </label>
-                <div className="flex gap-2">
-                  <DatePicker
-                    locale={es}
-                    selected={dateRange.startDate || null}
-                    onChange={(date: Date | null) =>
-                      setDateRange((prev) => ({
-                        ...prev,
-                        startDate: date || undefined,
-                      }))
-                    }
-                    selectsStart
-                    startDate={dateRange.startDate}
-                    endDate={dateRange.endDate}
-                    placeholderText="Fecha inicial"
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    dateFormat="dd/MM/yyyy"
-                    isClearable
-                  />
-
-                  <DatePicker
-                    selected={dateRange.endDate || null}
-                    onChange={(date: Date | null) =>
-                      setDateRange((prev) => ({
-                        ...prev,
-                        endDate: date || undefined,
-                      }))
-                    }
-                    selectsEnd
-                    startDate={dateRange.startDate}
-                    endDate={dateRange.endDate}
-                    minDate={dateRange.startDate}
-                    placeholderText="Fecha final"
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    dateFormat="dd/MM/yyyy"
-                    isClearable
-                  />
+          {/* **Selector de Cantidad de Filas** */}
+          <div>
+            {/* **Filtros de Facturación** */}
+            <div className="space-y-4 mb-4">
+              {/* Resumen de facturación */}
+              <div className="flex flex-wrap items-center gap-4 p-2 bg-muted/20 rounded-lg">
+                <div className="flex items-center">
+                  <File className="h-5 w-5 mr-2 dark:text-white" />
+                  <span className="text-sm font-semibold">
+                    Facturados: {facutracionData.facturados}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <CreditCard className="h-5 w-5 mr-2 dark:text-white" />
+                  <span className="text-sm font-semibold">
+                    Cobrados: {facutracionData.cobrados}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <FileCheck className="h-5 w-5 mr-2 dark:text-white" />
+                  <span className="text-sm font-semibold">
+                    Por Cobrar: {facutracionData.porCobrar}
+                  </span>
                 </div>
               </div>
 
-              {/* Departamento */}
-              <div className="space-y-1">
-                <Label htmlFor="departamentoId-all">Departamento</Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un departamento"
-                  isClearable
-                  options={optionsDepartamentos}
-                  value={
-                    depaSelected
-                      ? {
-                          value: depaSelected,
-                          label:
-                            departamentos.find(
-                              (depa) => depa.id.toString() === depaSelected
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  onChange={handleSelectDepartamento}
-                  className="text-xs text-black"
-                />
-              </div>
+              {/* Filtros */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {/* Rango de fechas */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">
+                    Rango de fechas pago
+                  </label>
+                  <div className="flex gap-2">
+                    <DatePicker
+                      locale={es}
+                      selected={dateRange.startDate || null}
+                      onChange={(date: Date | null) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          startDate: date || undefined,
+                        }))
+                      }
+                      selectsStart
+                      startDate={dateRange.startDate}
+                      endDate={dateRange.endDate}
+                      placeholderText="Fecha inicial"
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      dateFormat="dd/MM/yyyy"
+                      isClearable
+                    />
 
-              {/* Municipio */}
-              <div className="space-y-1">
-                <Label htmlFor="municipioId-all">Municipio</Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un municipio"
-                  isClearable
-                  options={optionsMunis}
-                  onChange={handleSelectMunicipio}
-                  value={
-                    muniSelected
-                      ? {
-                          value: muniSelected,
-                          label:
-                            municipios.find(
-                              (muni) => muni.id.toString() == muniSelected
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  className="text-xs text-black"
-                />
-              </div>
+                    <DatePicker
+                      selected={dateRange.endDate || null}
+                      onChange={(date: Date | null) =>
+                        setDateRange((prev) => ({
+                          ...prev,
+                          endDate: date || undefined,
+                        }))
+                      }
+                      selectsEnd
+                      startDate={dateRange.startDate}
+                      endDate={dateRange.endDate}
+                      minDate={dateRange.startDate}
+                      placeholderText="Fecha final"
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      dateFormat="dd/MM/yyyy"
+                      isClearable
+                    />
+                  </div>
+                </div>
 
-              {/* Sector */}
-              <div className="space-y-1">
-                <Label htmlFor="sectorid-all">Sector</Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un sector"
-                  isClearable
-                  options={optionsSectores}
-                  onChange={handleSelectSector}
-                  value={
-                    sectorSelected
-                      ? {
-                          value: sectorSelected,
-                          label:
-                            sectores.find(
-                              (muni) => muni.id.toString() == sectorSelected
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  className="text-xs text-black"
-                />
-              </div>
+                {/* Departamento */}
+                <div className="space-y-1">
+                  <Label htmlFor="departamentoId-all">Departamento</Label>
+                  <ReactSelectComponent
+                    placeholder="Seleccione un departamento"
+                    isClearable
+                    options={optionsDepartamentos}
+                    value={
+                      depaSelected
+                        ? {
+                            value: depaSelected,
+                            label:
+                              departamentos.find(
+                                (depa) => depa.id.toString() === depaSelected
+                              )?.nombre || "",
+                          }
+                        : null
+                    }
+                    onChange={handleSelectDepartamento}
+                    className="text-xs text-black"
+                  />
+                </div>
 
-              {/* Zona de Facturación */}
-              <div className="space-y-1">
-                <Label>Zona de Facturación</Label>
-                <ReactSelectComponent
-                  isClearable
-                  placeholder="Ordenar por facturación zona"
-                  className="text-xs text-black"
-                  options={optionsZonasFacturacion}
-                  onChange={handleSelectZonaFacturacion}
-                  value={
-                    zonasFacturacionSelected
-                      ? {
-                          value: zonasFacturacionSelected,
-                          label:
-                            zonasFacturacion.find(
-                              (s) =>
-                                s.id.toString() === zonasFacturacionSelected
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                />
-              </div>
+                {/* Municipio */}
+                <div className="space-y-1">
+                  <Label htmlFor="municipioId-all">Municipio</Label>
+                  <ReactSelectComponent
+                    placeholder="Seleccione un municipio"
+                    isClearable
+                    options={optionsMunis}
+                    onChange={handleSelectMunicipio}
+                    value={
+                      muniSelected
+                        ? {
+                            value: muniSelected,
+                            label:
+                              municipios.find(
+                                (muni) => muni.id.toString() == muniSelected
+                              )?.nombre || "",
+                          }
+                        : null
+                    }
+                    className="text-xs text-black"
+                  />
+                </div>
 
-              {/* Estado Factura */}
-              <div className="space-y-1">
-                <Label>Estado Factura</Label>
-                <Select onValueChange={handleSelectEstadoFactura}>
-                  <SelectTrigger className="text-xs">
-                    <SelectValue placeholder="Estado Factura" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {opcionesEstadoFactura.map((state) => (
-                      <SelectGroup key={state}>
-                        <SelectItem value={state}>{state}</SelectItem>
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* Sector */}
+                <div className="space-y-1">
+                  <Label htmlFor="sectorid-all">Sector</Label>
+                  <ReactSelectComponent
+                    placeholder="Seleccione un sector"
+                    isClearable
+                    options={optionsSectores}
+                    onChange={handleSelectSector}
+                    value={
+                      sectorSelected
+                        ? {
+                            value: sectorSelected,
+                            label:
+                              sectores.find(
+                                (muni) => muni.id.toString() == sectorSelected
+                              )?.nombre || "",
+                          }
+                        : null
+                    }
+                    className="text-xs text-black"
+                  />
+                </div>
 
-              {/* Items por página */}
-              <div className="space-y-1">
-                <Label>Items por página</Label>
-                <Select
-                  onValueChange={(value) =>
-                    setPagination({ ...pagination, pageSize: Number(value) })
-                  }
-                  defaultValue={String(pagination.pageSize)}
+                {/* Zona de Facturación */}
+                <div className="space-y-1">
+                  <Label>Zona de Facturación</Label>
+                  <ReactSelectComponent
+                    isClearable
+                    placeholder="Ordenar por facturación zona"
+                    className="text-xs text-black"
+                    options={optionsZonasFacturacion}
+                    onChange={handleSelectZonaFacturacion}
+                    value={
+                      zonasFacturacionSelected
+                        ? {
+                            value: zonasFacturacionSelected,
+                            label:
+                              zonasFacturacion.find(
+                                (s) =>
+                                  s.id.toString() === zonasFacturacionSelected
+                              )?.nombre || "",
+                          }
+                        : null
+                    }
+                  />
+                </div>
+
+                {/* Estado Factura */}
+                <div className="space-y-1">
+                  <Label>Estado Factura</Label>
+                  <Select onValueChange={handleSelectEstadoFactura}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Estado Factura" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {opcionesEstadoFactura.map((state) => (
+                        <SelectGroup key={state}>
+                          <SelectItem value={state}>{state}</SelectItem>
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Items por página */}
+                <div className="space-y-1">
+                  <Label>Items por página</Label>
+                  <Select
+                    onValueChange={(value) =>
+                      setPagination({ ...pagination, pageSize: Number(value) })
+                    }
+                    defaultValue={String(pagination.pageSize)}
+                  >
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Items por página" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <button
+                  onClick={handleToggle}
+                  className="fixed bottom-6 right-6 h-10 w-10 flex items-center justify-center bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-lg transition-colors z-50"
+                  aria-label={atBottom ? "Ir al tope" : "Ir al final"}
                 >
-                  <SelectTrigger className="text-xs">
-                    <SelectValue placeholder="Items por página" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
+                  {atBottom ? (
+                    <ChevronUp></ChevronUp>
+                  ) : (
+                    <span>
+                      <ChevronDown></ChevronDown>
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* **Tabla** */}
-        <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
-          <table className="w-full border-collapse text-xs">
-            <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300"
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    </th>
+          {/* **Tabla** */}
+          <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
+            {isSearching ? (
+              <TableSkeleton />
+            ) : (
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300"
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </th>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {table.getRowModel().rows.map((row) => (
-                <motion.tr
-                  key={row.id}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  transition={{ type: "spring", stiffness: 120, damping: 22 }}
-                  className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
-                >
-                  <td className="px-3 py-2 text-center font-medium">
-                    {row.original.id}
-                  </td>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {table.getRowModel().rows.map((row) => {
+                    const StatusCell = ({
+                      estado,
+                    }: {
+                      estado: EstadoFactura | null;
+                    }) => {
+                      if (!estado) {
+                        return (
+                          <span className="text-gray-500 dark:text-gray-400 text-xs">
+                            Sin cobrar
+                          </span>
+                        );
+                      }
 
-                  <Link
-                    to={`/crm/cliente/${row.original.clienteId}`}
-                    className="contents"
-                  >
-                    <td className="px-3 py-2 truncate max-w-[100px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
-                      {row.original.cliente}
-                    </td>
-                  </Link>
+                      const statusStyle = stateInvoice(estado);
 
-                  <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.cantidad}
-                  </td>
+                      return (
+                        <span className={statusStyle.className}>{estado}</span>
+                      );
+                    };
 
-                  <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {formatearFecha(row.original.fechaCreado)}
-                  </td>
+                    return (
+                      <motion.tr
+                        key={row.id}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 120,
+                          damping: 22,
+                        }}
+                        className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
+                      >
+                        <td className="px-3 py-2 text-center font-medium">
+                          {row.original.id}
+                        </td>
 
-                  <Link to={`/crm/facturacion/pago-factura/${row.original.id}`}>
-                    <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
-                      {formatearFecha(row.original.fechaPago)}
-                    </td>
-                  </Link>
+                        <Link
+                          to={`/crm/cliente/${row.original.clienteId}`}
+                          className="contents"
+                        >
+                          <td className="px-3 py-2 truncate max-w-[100px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
+                            {row.original.cliente}
+                          </td>
+                        </Link>
 
-                  <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.telefono
-                      ? row.original.telefono
-                      : "Sin telefono"}
-                  </td>
+                        <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                          {row.original.cantidad}
+                        </td>
 
-                  <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {row.original.por ? row.original.estado : "Sin cobrar"}
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                          {formatearFecha(row.original.fechaCreado)}
+                        </td>
 
-        {/* **Controles de Paginación** */}
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs dark:border-gray-800 dark:bg-transparent dark:text-gray-300 mt-0 rounded-b-md">
-          <Button
-            variant="outline"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
-          >
-            Anterior
-          </Button>
+                        <Link
+                          to={`/crm/facturacion/pago-factura/${row.original.id}`}
+                        >
+                          <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
+                            {formatearFecha(row.original.fechaPago)}
+                          </td>
+                        </Link>
 
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Página{" "}
-            <span className="font-medium">{pagination.pageIndex + 1}</span> de{" "}
-            <span className="font-medium">{table.getPageCount()}</span>
-          </span>
+                        <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                          {row.original.telefono
+                            ? row.original.telefono
+                            : "Sin telefono"}
+                        </td>
 
-          <Button
-            variant="outline"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
-          >
-            Siguiente
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <StatusCell
+                            estado={
+                              row.original.por ? row.original.estado : null
+                            }
+                          />
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* **Controles de Paginación** */}
+          <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs dark:border-gray-800 dark:bg-transparent dark:text-gray-300 mt-0 rounded-b-md">
+            <Button
+              variant="outline"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+            >
+              Anterior
+            </Button>
+
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Página{" "}
+              <span className="font-medium">{pagination.pageIndex + 1}</span> de{" "}
+              <span className="font-medium">{table.getPageCount()}</span>
+            </span>
+
+            <Button
+              variant="outline"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+            >
+              Siguiente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

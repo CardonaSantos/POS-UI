@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, Edit, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { ClienteDto } from "./CustomerTable";
 import axios from "axios";
@@ -35,6 +35,7 @@ import { useDeferredValue } from "react";
 import { Label } from "@/components/ui/label";
 import { useRef } from "react";
 import { useWindowScrollPosition } from "../Utils/useWindow";
+import { ClientTableSkeleton } from "./SkeletonTable";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -98,6 +99,12 @@ interface OptionSelected {
   label: string;
 }
 
+interface Sector {
+  id: number;
+  nombre: string;
+  clientesCount: number;
+}
+
 // O si quieres mantener los textos descriptivos pero de forma más limpia:
 const estadosConDescripcion = [
   { value: "ACTIVO", label: "ACTIVO " },
@@ -113,8 +120,6 @@ const estadosConDescripcion = [
 export default function ClientesTable() {
   //referencias
   const inputRef = useRef<HTMLInputElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
   //PAGINACION
@@ -132,6 +137,18 @@ export default function ClientesTable() {
 
   const [depaSelected, setDepaSelected] = useState<string | null>("8");
   const [muniSelected, setMuniSelected] = useState<string | null>(null);
+
+  const [sectores, setSectores] = useState<Sector[]>([]);
+  const [sectorSelected, setSectorSelected] = useState<string | null>(null);
+  const [estadoSelected, setEstadoSelected] = useState<string | null>(null);
+
+  const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
+    []
+  );
+
+  const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
+    string | null
+  >(null);
 
   const handleSelectDepartamento = (selectedOption: OptionSelected | null) => {
     setDepaSelected(selectedOption ? selectedOption.value : null);
@@ -195,19 +212,10 @@ export default function ClientesTable() {
       console.log(error);
     }
   };
-  const [sectores, setSectores] = useState<Sector[]>([]);
-  const [sectorSelected, setSectorSelected] = useState<string | null>(null);
-  const [estadoSelected, setEstadoSelected] = useState<string | null>(null);
 
   const handleSelectEstado = (selectedOption: OptionSelected | null) => {
     setEstadoSelected(selectedOption ? selectedOption.value : null);
   };
-
-  interface Sector {
-    id: number;
-    nombre: string;
-    clientesCount: number;
-  }
 
   const getSectores = async () => {
     try {
@@ -238,14 +246,6 @@ export default function ClientesTable() {
       setMuniSelected(null);
     }
   }, [depaSelected]);
-
-  const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
-    []
-  );
-
-  const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
-    string | null
-  >(null);
 
   const getFacturacionZona = async () => {
     try {
@@ -418,7 +418,6 @@ export default function ClientesTable() {
   });
 
   const [debouncedQuery] = useDebounce(filter, 500);
-
   useEffect(() => {
     getClientes();
     // Actualizar la tabla cuando cambie la página o el tamaño de página
@@ -431,37 +430,6 @@ export default function ClientesTable() {
     sectorSelected,
     debouncedQuery,
   ]);
-
-  if (isSearching) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm z-50">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="relative">
-            <Loader2 className="h-12 w-12 animate-spin text-gray-600 dark:text-gray-400" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
-              Buscando...
-            </h2>
-            <div className="flex justify-center space-x-1">
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></span>
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              ></span>
-              <span
-                className="h-2 w-2 rounded-full bg-gray-600 dark:bg-gray-400 animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              ></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative overflow-x-auto rounded-md border …">
@@ -629,18 +597,7 @@ export default function ClientesTable() {
 
               <button
                 onClick={handleToggle}
-                className="
-          fixed          
-          bottom-6 right-6
-          h-10 w-10
-          flex items-center justify-center
-          bg-rose-500 hover:bg-rose-600
-          text-white
-          rounded-full
-          shadow-lg
-          transition-colors
-          z-50
-        "
+                className="fixed bottom-6 right-6 h-10 w-10 flex items-center justify-center bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-lg transition-colors z-50"
                 aria-label={atBottom ? "Ir al tope" : "Ir al final"}
               >
                 {atBottom ? (
@@ -656,87 +613,91 @@ export default function ClientesTable() {
 
           {/* **Tabla** */}
           <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    ID
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    Nombre Completo
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    Teléfono
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    IP
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    Servicios
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    Zona de Facturación
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {table.getRowModel().rows.map((row) => (
-                  <motion.tr
-                    key={row.id}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 120,
-                      damping: 22,
-                    }}
-                    className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
-                  >
-                    <td className="px-3 py-2 text-center font-medium">
-                      {row.original.id}
-                    </td>
-                    <Link
-                      to={`/crm/cliente/${row.original.id}`}
-                      className="contents"
+            {isSearching ? (
+              <ClientTableSkeleton />
+            ) : (
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      ID
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      Nombre Completo
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      Teléfono
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      IP
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      Servicios
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      Zona de Facturación
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {table.getRowModel().rows.map((row) => (
+                    <motion.tr
+                      key={row.id}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 120,
+                        damping: 22,
+                      }}
+                      className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
                     >
-                      <td className="px-3 py-2 truncate max-w-[120px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
-                        {`${row.original.nombreCompleto}`.trim()}
+                      <td className="px-3 py-2 text-center font-medium">
+                        {row.original.id}
                       </td>
-                    </Link>
-                    <td className="px-3 py-2 truncate max-w-[90px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {row.original.telefono}
-                    </td>
-                    <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {row.original.direccionIp}
-                    </td>
-                    <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {row.original.servicios
-                        .map((s) => s.nombreServicio)
-                        .join(", ")}
-                    </td>
-                    <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {row.original.facturacionZona}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex justify-center">
-                        <Link to={`/crm/cliente-edicion/${row.original.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800/30 dark:text-gray-300"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
+                      <Link
+                        to={`/crm/cliente/${row.original.id}`}
+                        className="contents"
+                      >
+                        <td className="px-3 py-2 truncate max-w-[120px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">
+                          {`${row.original.nombreCompleto}`.trim()}
+                        </td>
+                      </Link>
+                      <td className="px-3 py-2 truncate max-w-[90px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        {row.original.telefono}
+                      </td>
+                      <td className="px-3 py-2 truncate max-w-[150px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        {row.original.direccionIp}
+                      </td>
+                      <td className="px-3 py-2 truncate max-w-[120px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        {row.original.servicios
+                          .map((s) => s.nombreServicio)
+                          .join(", ")}
+                      </td>
+                      <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        {row.original.facturacionZona}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex justify-center">
+                          <Link to={`/crm/cliente-edicion/${row.original.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800/30 dark:text-gray-300"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* **Controles de Paginación** */}
@@ -766,7 +727,6 @@ export default function ClientesTable() {
             </Button>
           </div>
         </CardContent>
-        <div ref={bottomRef} className=""></div>
       </Card>
     </div>
   );
