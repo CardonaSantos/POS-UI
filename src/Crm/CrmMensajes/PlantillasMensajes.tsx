@@ -1,25 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   MessageSquare,
-  Plus,
   Search,
-  FileText,
-  Pencil,
-  Trash2,
-  AlertCircle,
-  MoreHorizontal,
-  CheckCircle2,
-  XCircle,
+  ChevronUp,
+  ChevronDown,
+  Send,
+  Check,
+  X,
+  Clock,
+  RefreshCw,
+  Eye,
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  Download,
+  Copy,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -28,25 +27,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -54,595 +42,719 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import type { PlantillaMensaje, TipoPlantilla } from "./types";
-import { toast } from "sonner";
-import axios from "axios";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { getMediaMessage, getMessagingTwilioHistory } from "./API/api";
+import { MediaAttachment, TwilioMessage } from "./Utils/utilsMensajeria";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { formateDateWithMinutes } from "../Utils/FormateDate";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
-// Mapeo de tipos de plantilla a etiquetas más amigables
-const tipoPlantillaLabels: Record<TipoPlantilla, string> = {
-  GENERACION_FACTURA: "Generación de Factura",
-  RECORDATORIO_1: "Primer Recordatorio",
-  RECORDATORIO_2: "Segundo Recordatorio",
-  AVISO_PAGO: "Aviso de Pago",
-  SUSPENSION: "Suspensión de Servicio",
-  CORTE: "Corte de Servicio",
-};
-
 export default function PlantillasMensajesView() {
-  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
-  const [plantillas, setPlantillas] = useState<PlantillaMensaje[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedPlantilla, setSelectedPlantilla] =
-    useState<PlantillaMensaje | null>(null);
-  const [formData, setFormData] = useState({
-    nombre: "",
-    tipo: "" as TipoPlantilla | "",
-    body: "",
-  });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    loadPlantillas();
-  }, []);
-
-  const loadPlantillas = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/mensaje/get-mensajes-plantillas`
-      );
-      if (response.status === 200) {
-        setPlantillas(response.data);
-      }
-    } catch (error) {
-      toast("No se pudieron cargar las plantillas. Intente nuevamente.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filteredPlantillas = plantillas.filter(
-    (plantilla) =>
-      plantilla.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tipoPlantillaLabels[plantilla.tipo]
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      plantilla.body.toLowerCase().includes(searchQuery.toLowerCase())
+  const [mediaData, setMediaData] = useState<MediaAttachment[]>([]);
+  const [messages, setMessages] = useState<TwilioMessage[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [messagesPerPage, setMessagesPerPage] = useState(10);
+  const [selectedMessage, setSelectedMessage] = useState<TwilioMessage | null>(
+    null
   );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] =
+    useState<keyof TwilioMessage>("dateCreated");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const resetForm = () => {
-    setFormData({
-      nombre: "",
-      tipo: "",
-      body: "",
-    });
-    setFormErrors({});
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  console.log("Los token de nex es: ", nextPageToken);
+  const pageTokens = useRef<(string | undefined)[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  // Función que pide una página cualquiera
+  const fetchPage = async (pageNum: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // 1) El token para esta página es el que guardamos en la posición anterior:
+      const token = pageTokens.current[pageNum - 1];
+
+      // 2) Llamamos al API pasando limit + token
+      const { messages, nextPageToken } = await getMessagingTwilioHistory(
+        messagesPerPage,
+        token
+      );
+
+      // 3) Guardamos:
+      setMessages(messages);
+      setCurrentPage(pageNum);
+      setNextPageToken(nextPageToken);
+      // 4) Guardamos el token que sirva para pedir la SIGUIENTE página
+      pageTokens.current[pageNum] = nextPageToken ?? undefined;
+    } catch (e) {
+      setError("Error cargando mensajes");
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleOpenCreateDialog = () => {
-    resetForm();
-    setIsCreateDialogOpen(true);
+  // Al montar, inicializamos y pedimos la página 1
+  useEffect(() => {
+    pageTokens.current = [undefined]; // pageTokens[0] = undefined => página 1
+    fetchPage(1);
+  }, [messagesPerPage]);
+
+  // Botones
+  const goNext = () => {
+    // Si hay token guardado para la siguiente página
+    if (pageTokens.current[currentPage]) {
+      fetchPage(currentPage + 1);
+    }
   };
-
-  const handleOpenEditDialog = (plantilla: PlantillaMensaje) => {
-    setSelectedPlantilla(plantilla);
-    setFormData({
-      nombre: plantilla.nombre,
-      tipo: plantilla.tipo,
-      body: plantilla.body,
-    });
-    setFormErrors({});
-    setIsEditDialogOpen(true);
+  const goPrev = () => {
+    // Sólo si no estamos ya en la página 1
+    if (currentPage > 1) {
+      fetchPage(currentPage - 1);
+    }
   };
-
-  const handleOpenDeleteDialog = (plantilla: PlantillaMensaje) => {
-    setSelectedPlantilla(plantilla);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleFormChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    if (formErrors[field]) {
-      setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
+  const getMetaData = async (SID: string) => {
+    getMediaMessage(SID)
+      .then((data) => setMediaData(data))
+      .catch((error) => {
+        console.log("Error al conseguir media data: ", error);
+      })
+      .finally(() => {
+        console.log("Final de funcion");
       });
+  };
+
+  // Filtrar mensajes según el término de búsqueda
+  const filteredMessages = messages.filter((message) => {
+    const searchableFields = [
+      message.body,
+      message.from,
+      message.to,
+      message.status,
+      message.sid,
+    ];
+    return searchableFields.some(
+      (field) => field && field.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  // Ordenar mensajes
+  const sortedMessages = [...filteredMessages].sort((a, b) => {
+    if (
+      a[sortField] != null &&
+      b[sortField] != null &&
+      a[sortField] < b[sortField]
+    )
+      return sortDirection === "asc" ? -1 : 1;
+    if (
+      a[sortField] != null &&
+      b[sortField] != null &&
+      a[sortField] > b[sortField]
+    )
+      return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const displayedMessages = sortedMessages; // <- Mensajes actuales de la API
+
+  // Manejar ordenamiento
+  const handleSort = (field: keyof TwilioMessage) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
     }
   };
 
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.nombre.trim()) {
-      errors.nombre = "El nombre es obligatorio";
-    }
-
-    if (!formData.tipo) {
-      errors.tipo = "El tipo de plantilla es obligatorio";
-    }
-
-    if (!formData.body.trim()) {
-      errors.body = "El contenido del mensaje es obligatorio";
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+  // Renderizar icono de dirección de ordenamiento
+  const renderSortIcon = (field: keyof TwilioMessage) => {
+    if (sortField !== field) return null;
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-4 w-4 inline ml-1" />
+    ) : (
+      <ChevronDown className="h-4 w-4 inline ml-1" />
+    );
   };
 
-  const handleCreatePlantilla = async () => {
-    if (!validateForm()) return;
+  // Formatear fecha
+  const formatDate = (dateString: string) => {
+    return formateDateWithMinutes(dateString);
+  };
 
-    setIsLoading(true);
-    try {
-      const newPlantilla = {
-        nombre: formData.nombre.trim(),
-        tipo: formData.tipo as TipoPlantilla,
-        body: formData.body.trim(),
-        empresaId: empresaId, // Valor fijo para el ejemplo
-      };
-
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/mensaje`,
-        newPlantilla
-      );
-
-      if (response.status === 201) {
-        toast.success("Plantilla creada exitosamente");
-        loadPlantillas();
-        setIsCreateDialogOpen(false);
-        resetForm();
-      }
-    } catch (error) {
-      toast("No se pudo crear la plantilla. Intente nuevamente.");
-    } finally {
-      setIsLoading(false);
+  // Obtener icono según el estado del mensaje
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "sent":
+        return <Send className="h-4 w-4 text-blue-500" />;
+      case "delivered":
+        return <Check className="h-4 w-4 text-green-500" />;
+      case "read":
+        return <Check className="h-4 w-4 text-green-600" />;
+      case "undelivered":
+        return <X className="h-4 w-4 text-red-500" />;
+      case "failed":
+        return <X className="h-4 w-4 text-red-600" />;
+      case "received":
+        return <MessageSquare className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const handleUpdatePlantilla = async () => {
-    if (!validateForm() || !selectedPlantilla) return;
-
-    setIsLoading(true);
-    try {
-      const data = {
-        nombre: formData.nombre.trim(),
-        tipo: formData.tipo as TipoPlantilla,
-        body: formData.body.trim(),
-      };
-
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/mensaje/${selectedPlantilla.id}`,
-        data
-      );
-
-      if (response.status === 200) {
-        toast.success("Plantilla actualizada exitosamente");
-        setIsLoading(false);
-        loadPlantillas();
-        setIsEditDialogOpen(false);
-        resetForm();
-      }
-    } catch (error) {
-      toast("No se pudo actualizar la plantilla. Intente nuevamente.");
-    } finally {
-      setIsLoading(false);
+  // Obtener color de badge según el estado del mensaje
+  const getStatusBadgeVariant = (
+    status: string
+  ): "default" | "outline" | "secondary" | "destructive" => {
+    switch (status) {
+      case "sent":
+        return "default";
+      case "delivered":
+      case "read":
+        return "secondary";
+      case "undelivered":
+      case "failed":
+        return "destructive";
+      case "received":
+        return "outline";
+      default:
+        return "outline";
     }
   };
 
-  const handleDeletePlantilla = async () => {
-    if (!selectedPlantilla) return;
+  // Formatear número de teléfono
+  const formatPhoneNumber = (phoneNumber: string) => {
+    // Eliminar el prefijo "whatsapp:" si existe
+    return phoneNumber.replace("whatsapp:", "");
+  };
 
-    setIsLoading(true);
-    try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/mensaje/${selectedPlantilla.id}`
-      );
-
-      if (response.status === 200) {
-        toast.success("Plantilla eliminada exitosamente");
-        loadPlantillas();
-        setIsLoading(false);
-        setIsDeleteDialogOpen(false);
-        resetForm();
-      }
-    } catch (error) {
-      toast("No se pudo eliminar la plantilla. Intente nuevamente.");
-    } finally {
-      setIsLoading(false);
-    }
+  // Truncar texto largo
+  const truncateText = (text: string, maxLength = 50) => {
+    if (!text) return "";
+    return text.length > maxLength
+      ? `${text.substring(0, maxLength)}...`
+      : text;
   };
 
   return (
-    <>
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl">Plantillas de Mensajes</CardTitle>
-              <CardDescription>
-                Gestione las plantillas para comunicaciones automáticas con
-                clientes
-              </CardDescription>
-            </div>
-            <Button onClick={handleOpenCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Plantilla
+    <div className="container">
+      <div className="space-y-4">
+        {/* Barra de herramientas */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Buscar mensajes..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar mensajes"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Select
+              value={messagesPerPage.toString()}
+              onValueChange={(value) => {
+                setMessagesPerPage(Number(value));
+              }}
+            >
+              <SelectTrigger
+                className="w-[120px]"
+                aria-label="Mensajes por página"
+              >
+                <SelectValue placeholder="10 por página" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 por página</SelectItem>
+                <SelectItem value="10">10 por página</SelectItem>
+                <SelectItem value="20">20 por página</SelectItem>
+                <SelectItem value="50">50 por página</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                fetchPage(messagesPerPage);
+              }}
+              aria-label="Actualizar"
+            >
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-              <div className="relative w-full sm:w-96">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar plantillas..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+        </div>
 
-            <div className="border rounded-lg overflow-hidden">
+        {/* Tabla de mensajes */}
+        {isLoading ? (
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+            {error}
+          </div>
+        ) : (
+          <div className="border rounded-md overflow-hidden">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[250px]">Nombre</TableHead>
-                    <TableHead className="w-[180px]">Tipo</TableHead>
-                    <TableHead>Contenido</TableHead>
-                    <TableHead className="w-[100px] text-right">
-                      Acciones
+                    <TableHead
+                      className="w-[50px] text-center"
+                      aria-label="Estado del mensaje"
+                    >
+                      Estado
                     </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => handleSort("direction")}
+                    >
+                      Dirección {renderSortIcon("direction")}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => handleSort("body")}
+                    >
+                      Mensaje {renderSortIcon("body")}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => handleSort("from")}
+                    >
+                      De {renderSortIcon("from")}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => handleSort("to")}
+                    >
+                      Para {renderSortIcon("to")}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => handleSort("dateCreated")}
+                    >
+                      Fecha {renderSortIcon("dateCreated")}
+                    </TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPlantillas.map((plantilla) => (
-                    <TableRow key={plantilla.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          {plantilla.nombre}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {tipoPlantillaLabels[plantilla.tipo]}
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-md truncate text-sm text-muted-foreground">
-                          {plantilla.body}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Abrir menú</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEditDialog(plantilla)}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleOpenDeleteDialog(plantilla)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  {displayedMessages.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        No se encontraron mensajes
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    displayedMessages.map((message) => (
+                      <TableRow key={message.sid}>
+                        <TableCell className="text-center">
+                          <div
+                            className="flex justify-center"
+                            title={message.status}
+                            aria-label={`Estado: ${message.status}`}
+                          >
+                            {getStatusIcon(message.status)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              message.direction === "inbound"
+                                ? "outline"
+                                : "default"
+                            }
+                          >
+                            {message.direction === "inbound"
+                              ? "Entrante"
+                              : "Saliente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {message.body
+                            ? truncateText(message.body)
+                            : "Mensaje no disponible"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatPhoneNumber(message.from)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatPhoneNumber(message.to)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {formatDate(message.dateCreated)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedMessage(message)}
+                            aria-label="Ver detalles"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Detalles
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {/* Diálogo de Creación */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center text-xl">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Nueva Plantilla de Mensaje
-            </DialogTitle>
-            <DialogDescription>
-              Cree una nueva plantilla para comunicaciones automáticas con
-              clientes.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="nombre" className="flex items-center">
-                Nombre <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Input
-                id="nombre"
-                placeholder="Ej: Recordatorio de pago mensual"
-                value={formData.nombre}
-                onChange={(e) => handleFormChange("nombre", e.target.value)}
-                className={formErrors.nombre ? "border-destructive" : ""}
-              />
-              {formErrors.nombre && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.nombre}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipo" className="flex items-center">
-                Tipo de Plantilla{" "}
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Select
-                value={formData.tipo}
-                onValueChange={(value) => handleFormChange("tipo", value)}
+        {/* Paginación */}
+        {!isLoading && !error && sortedMessages.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
+            {/* <div className="text-sm text-muted-foreground">
+              Mostrando {indexOfFirstMessage + 1} a{" "}
+              {Math.min(indexOfLastMessage, sortedMessages.length)} de{" "}
+              {sortedMessages.length} mensajes
+            </div> */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goPrev()}
+                aria-label="Página anterior"
               >
-                <SelectTrigger
-                  id="tipo"
-                  className={formErrors.tipo ? "border-destructive" : ""}
-                >
-                  <SelectValue placeholder="Seleccionar tipo de plantilla" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(tipoPlantillaLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formErrors.tipo && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.tipo}
-                </p>
-              )}
-            </div>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="body" className="flex items-center">
-                Contenido del Mensaje{" "}
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Textarea
-                id="body"
-                placeholder="Escriba el contenido del mensaje..."
-                value={formData.body}
-                onChange={(e) => handleFormChange("body", e.target.value)}
-                className={`min-h-[150px] ${
-                  formErrors.body ? "border-destructive" : ""
-                }`}
-              />
-              {formErrors.body ? (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.body}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Al crear su mensaje, puede utilizar variables como:{" "}
-                  {"[nombre_cliente]"}, {"[fecha_pago]"}, {"[monto_pago]"},{" "}
-                  {"[nombre_servicio]"}, {"[detalle_factura]"} y{" "}
-                  {"[empresa_nombre]"} para personalizar y optimizar el
-                  contenido del texto.
-                </p>
-              )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goNext()}
+                aria-label="Página siguiente"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
+        )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleCreatePlantilla} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Crear Plantilla
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Modal de detalles */}
+        <Dialog
+          open={!!selectedMessage}
+          onOpenChange={(open) => {
+            if (!open) setSelectedMessage(null);
+          }}
+        >
+          <DialogContent className="max-w-4xl overflow-y-auto max-h-[44rem]">
+            <DialogHeader>
+              <DialogTitle>Detalles del mensaje</DialogTitle>
+              <DialogDescription>ID: {selectedMessage?.sid}</DialogDescription>
+            </DialogHeader>
 
-      {/* Diálogo de Edición */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader className="text-center items-center">
-            <DialogTitle className="flex items-center text-xl text-center">
-              <Pencil className="h-5 w-5 mr-2" />
-              Editar Plantilla de Mensaje
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Modifique los detalles de la plantilla de mensaje.
-            </DialogDescription>
-          </DialogHeader>
+            {selectedMessage && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Información básica
+                    </h3>
+                    <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+                      <div className="font-medium">Estado:</div>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(selectedMessage.status)}
+                        <Badge
+                          variant={getStatusBadgeVariant(
+                            selectedMessage.status
+                          )}
+                        >
+                          {selectedMessage.status}
+                        </Badge>
+                        {selectedMessage.errorCode && (
+                          <span className="text-red-500">
+                            Error: {selectedMessage.errorCode}
+                          </span>
+                        )}
+                      </div>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-nombre" className="flex items-center">
-                Nombre <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Input
-                id="edit-nombre"
-                placeholder="Ej: Recordatorio de pago mensual"
-                value={formData.nombre}
-                onChange={(e) => handleFormChange("nombre", e.target.value)}
-                className={formErrors.nombre ? "border-destructive" : ""}
-              />
-              {formErrors.nombre && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.nombre}
-                </p>
-              )}
-            </div>
+                      <div className="font-medium">Dirección:</div>
+                      <div>
+                        <Badge
+                          variant={
+                            selectedMessage.direction === "inbound"
+                              ? "outline"
+                              : "default"
+                          }
+                        >
+                          {selectedMessage.direction === "inbound"
+                            ? "Entrante"
+                            : "Saliente"}
+                        </Badge>
+                      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-tipo" className="flex items-center">
-                Tipo de Plantilla{" "}
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Select
-                value={formData.tipo}
-                onValueChange={(value) => handleFormChange("tipo", value)}
-              >
-                <SelectTrigger
-                  id="edit-tipo"
-                  className={formErrors.tipo ? "border-destructive" : ""}
-                >
-                  <SelectValue placeholder="Seleccionar tipo de plantilla" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(tipoPlantillaLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formErrors.tipo && (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.tipo}
-                </p>
-              )}
-            </div>
+                      <div className="font-medium">De:</div>
+                      <div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-auto p-2 justify-start font-normal text-left"
+                            >
+                              <span className="text-blue-600 hover:text-blue-800">
+                                {formatPhoneNumber(selectedMessage.from)}
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-56">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-body" className="flex items-center">
-                Contenido del Mensaje{" "}
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Textarea
-                id="edit-body"
-                placeholder="Escriba el contenido del mensaje..."
-                value={formData.body}
-                onChange={(e) => handleFormChange("body", e.target.value)}
-                className={`min-h-[150px] ${
-                  formErrors.body ? "border-destructive" : ""
-                }`}
-              />
-              {formErrors.body ? (
-                <p className="text-sm text-destructive flex items-center">
-                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                  {formErrors.body}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Al crear su mensaje, puede utilizar variables como:
-                  [nombre_cliente], [fecha_pago], [monto_pago],
-                  [nombre_servicio], [detalle_factura] y [empresa_nombre] para
-                  personalizar y optimizar el contenido del texto.
-                </p>
-              )}
-            </div>
-          </div>
+                            {/* Abrir chat en WhatsApp */}
+                            <DropdownMenuItem asChild>
+                              <a
+                                href={`https://wa.me/${formatPhoneNumber(
+                                  selectedMessage.from
+                                ).replace(/\D/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                              >
+                                <Phone className="h-4 w-4 text-green-600" />
+                                Abrir chat en WhatsApp
+                              </a>
+                            </DropdownMenuItem>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdatePlantilla} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  Actualizando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Guardar Cambios
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                            {/* Copiar número */}
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                navigator.clipboard.writeText(
+                                  formatPhoneNumber(
+                                    selectedMessage.from
+                                  ).replace(/\D/g, "")
+                                )
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              <Copy className="h-4 w-4" />
+                              Copiar número
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
 
-      {/* Diálogo de Confirmación de Eliminación */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <div className="flex items-center text-xl">
-              <Trash2 className="h-5 w-5 mr-2 text-destructive" />
-              <span>Eliminar Plantilla</span>
-            </div>
-          </DialogHeader>
-          <p className="mt-2">
-            ¿Está seguro de que desea eliminar esta plantilla? Esta acción no se
-            puede deshacer.
-          </p>
-          {selectedPlantilla && (
-            <div className="py-4">
-              <div className="p-3 border rounded-md bg-muted/20">
-                <p className="font-medium">{selectedPlantilla.nombre}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Tipo: {tipoPlantillaLabels[selectedPlantilla.tipo]}
-                </p>
+                      <div className="font-medium">Para:</div>
+                      <div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-auto p-2 justify-start font-normal text-left"
+                            >
+                              <span className="text-blue-600 hover:text-blue-800">
+                                {formatPhoneNumber(selectedMessage.to)}
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-56">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+
+                            {/* Abrir chat en WhatsApp */}
+                            <DropdownMenuItem asChild>
+                              <a
+                                href={`https://wa.me/${formatPhoneNumber(
+                                  selectedMessage.to
+                                ).replace(/\D/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                              >
+                                <Phone className="h-4 w-4 text-green-600" />
+                                Abrir chat en WhatsApp
+                              </a>
+                            </DropdownMenuItem>
+
+                            {/* Copiar número */}
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                navigator.clipboard.writeText(
+                                  formatPhoneNumber(selectedMessage.to).replace(
+                                    /\D/g,
+                                    ""
+                                  )
+                                )
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              <Copy className="h-4 w-4" />
+                              Copiar número
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="font-medium">Creado:</div>
+                      <div>{formatDate(selectedMessage.dateCreated)}</div>
+
+                      <div className="font-medium">Enviado:</div>
+                      <div>
+                        {selectedMessage.dateSent
+                          ? formatDate(selectedMessage.dateSent)
+                          : "N/A"}
+                      </div>
+
+                      <div className="font-medium">Actualizado:</div>
+                      <div>{formatDate(selectedMessage.dateUpdated)}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Información adicional
+                    </h3>
+                    <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+                      <div className="font-medium">SID:</div>
+                      <div className="truncate">{selectedMessage.sid}</div>
+
+                      <div className="font-medium">Account SID:</div>
+                      <div className="truncate">
+                        {selectedMessage.accountSid}
+                      </div>
+
+                      <div className="font-medium">Segmentos:</div>
+                      <div>{selectedMessage.numSegments}</div>
+
+                      <div className="font-medium">Media:</div>
+                      <div>
+                        {Number.parseInt(selectedMessage.numMedia) > 0 ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1.5"
+                            onClick={() => {
+                              getMetaData(selectedMessage.sid);
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Solicitar recursos</span>
+                            <Badge
+                              variant="secondary"
+                              className="ml-1 h-5 px-1.5"
+                            >
+                              {selectedMessage.numMedia}
+                            </Badge>
+                          </Button>
+                        ) : (
+                          "0"
+                        )}
+                      </div>
+
+                      {mediaData.length > 0 ? (
+                        mediaData.map((m) => {
+                          const { contentType, sid, url } = m;
+                          const proxyUrl = `${VITE_CRM_API_URL}/twilio-api/messages/${selectedMessage.sid}/media/${sid}`;
+                          console.log("La proxy url es: ", proxyUrl);
+
+                          if (contentType.startsWith("image")) {
+                            return <img src={proxyUrl} alt="" />;
+                          }
+
+                          if (contentType.startsWith("/video")) {
+                            return (
+                              <video
+                                key={sid}
+                                controls
+                                style={{ maxWidth: 300 }}
+                              >
+                                <source src={url} type={contentType} />
+                                Tu navegador no soporta reproducir este video.
+                              </video>
+                            );
+                          }
+
+                          if (contentType.startsWith("audio/")) {
+                            return <audio key={sid} controls src={url} />;
+                          }
+
+                          if (contentType === "application/pdf") {
+                            return (
+                              <a
+                                key={sid}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Ver PDF
+                              </a>
+                            );
+                          }
+                        })
+                      ) : (
+                        <p>Nada</p>
+                      )}
+
+                      <div className="font-medium">Precio:</div>
+                      <div>
+                        {selectedMessage.price
+                          ? `${selectedMessage.price} ${selectedMessage.priceUnit}`
+                          : "N/A"}
+                      </div>
+
+                      <div className="font-medium">API Version:</div>
+                      <div>{selectedMessage.apiVersion}</div>
+
+                      <div className="font-medium">URI:</div>
+                      <div className="truncate">
+                        <a
+                          href={`https://api.twilio.com${selectedMessage.uri}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center"
+                        >
+                          {truncateText(selectedMessage.uri, 30)}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    Contenido del mensaje
+                  </h3>
+                  <div className="p-4 bg-muted rounded-md whitespace-pre-wrap text-sm">
+                    {selectedMessage.body || "(Sin contenido)"}
+                  </div>
+                </div>
+
+                {selectedMessage.errorMessage && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-red-500">
+                      Mensaje de error
+                    </h3>
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                      {selectedMessage.errorMessage}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button disabled={isLoading}>Cancelar</Button>
-            <Button
-              onClick={handleDeletePlantilla}
-              disabled={isLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                  <span>Eliminando...</span>
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <XCircle className="h-4 w-4 mr-2" />
-                  <span>Eliminar</span>
-                </div>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
   );
 }
