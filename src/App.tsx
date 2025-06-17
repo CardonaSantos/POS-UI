@@ -680,7 +680,7 @@ function App() {
             />
 
             <Route
-              path="/editar"
+              path="/crm/editar"
               element={
                 <ProtectRouteCrmUser>
                   <FacturaEdit />
@@ -734,7 +734,7 @@ function App() {
             />
 
             <Route
-              path="/boleta-ticket-soporte/:ticketId"
+              path="/crm-boleta-ticket-soporte/:ticketId"
               element={
                 <ProtectRouteCrmUser>
                   <BoletaTicket />
@@ -743,11 +743,11 @@ function App() {
             />
 
             <Route
-              path="/contrato-plantilla"
+              path="/crm-contrato-plantilla"
               element={
-                <ProtectRouteCrmUser>
-                  <PlantillaContratoManage />
-                </ProtectRouteCrmUser>
+                // <ProtectRouteCrmUser>
+                <PlantillaContratoManage />
+                // </ProtectRouteCrmUser>
               }
             />
 

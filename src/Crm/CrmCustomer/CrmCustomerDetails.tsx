@@ -116,16 +116,49 @@ interface PlantillasInterface {
   creadoEn: string;
   actualizadoEn: string;
 }
+interface FacturaToDeleter {
+  id: number;
+  estado: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+}
+
+interface Contrato {
+  clienteId: number;
+  fechaInstalacionProgramada: string;
+  costoInstalacion: number;
+  fechaPago: string;
+  observaciones: string;
+  ssid: string;
+  wifiPassword: string;
+}
 
 export default function CustomerDetails() {
   const [searchParams] = useSearchParams();
+  const { id } = useParams();
+
   // read the “tab” param, fall back to “general” if missing
   const defaultTab = searchParams.get("tab") || "general";
   // Estado para controlar la pestaña activa
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [plantillas, setPlantillas] = useState<PlantillasInterface[]>([]);
-
-  const { id } = useParams();
+  const [openGenerarFactura, setOpenGenerarFactura] = useState(false);
+  const [openGenerateFacturas, setOpenGenerateFacturas] = useState(false);
+  const [openDeleteFactura, setOpenDeleteFactura] = useState(false);
+  const [facturaAction, setFacturaAction] = useState<FacturaToDeleter | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [openCreateContrato, setOpenCreateContrato] = useState(false);
+  const [dataContrato, setDataContrato] = useState<Contrato>({
+    clienteId: id ? Number(id) : 0,
+    fechaInstalacionProgramada: "",
+    costoInstalacion: 0,
+    fechaPago: "",
+    observaciones: "",
+    ssid: "",
+    wifiPassword: "",
+  });
   const [cliente, setCliente] = useState<ClienteDetailsDto>({
     id: 0,
     sector: {
@@ -177,9 +210,6 @@ export default function CustomerDetails() {
     clienteServicio: [],
     contratoServicioInternet: null,
   });
-
-  // AJUSTAR EL SERVICIO DE GENERAR UNA FACTURA, QUE LA FECHA DE VENCIMIENTO, COINCIDA CON EL MES ASIGNADO, Y CREAREMOS OTROS
-
   const getClienteDetails = async () => {
     try {
       const response = await axios.get(
@@ -215,7 +245,6 @@ export default function CustomerDetails() {
     getPlantillas();
   }, []);
 
-  // Función para abrir Google Maps con la ubicación
   const abrirGoogleMaps = () => {
     if (cliente.ubicacion) {
       window.open(
@@ -225,7 +254,6 @@ export default function CustomerDetails() {
     }
   };
 
-  // Función para iniciar ruta en Google Maps
   const iniciarRuta = () => {
     if (cliente.ubicacion) {
       window.open(
@@ -299,45 +327,6 @@ export default function CustomerDetails() {
     }
   };
 
-  console.log("El cliente es: ", cliente);
-  const [openGenerarFactura, setOpenGenerarFactura] = useState(false);
-
-  const [openGenerateFacturas, setOpenGenerateFacturas] = useState(false);
-  //
-  interface FacturaToDeleter {
-    id: number;
-    estado: string;
-    fechaEmision: string;
-    fechaVencimiento: string;
-  }
-  const [openDeleteFactura, setOpenDeleteFactura] = useState(false);
-  const [facturaAction, setFacturaAction] = useState<FacturaToDeleter | null>(
-    null
-  );
-
-  interface Contrato {
-    clienteId: number;
-    fechaInstalacionProgramada: string;
-    costoInstalacion: number;
-    fechaPago: string;
-    observaciones: string;
-    ssid: string;
-    wifiPassword: string;
-  }
-
-  const [openCreateContrato, setOpenCreateContrato] = useState(false);
-  const [dataContrato, setDataContrato] = useState<Contrato>({
-    clienteId: id ? Number(id) : 0,
-    fechaInstalacionProgramada: "",
-    costoInstalacion: 0,
-    fechaPago: "",
-    observaciones: "",
-    ssid: "",
-    wifiPassword: "",
-  });
-
-  console.log("el objeto dataContrato es: ", dataContrato);
-
   const handleInputChangeContrato = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -392,8 +381,6 @@ export default function CustomerDetails() {
       toast.error("Ocurrió un error al intentar eliminar la factura");
     }
   };
-  console.log("La factura a eliminar es: ", facturaAction);
-  const [isLoading, setIsLoading] = useState(false);
   const handleCreateContrato = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -1157,9 +1144,7 @@ export default function CustomerDetails() {
           </TabsContent>
         </Tabs>
       </motion.div>
-
       {/* DIALOG PARA GENERAR UNA FACTURA-PASADA-FUTURA */}
-
       <FacturaGenerateDialog
         openGenerarFactura={openGenerarFactura}
         setOpenGenerarFactura={setOpenGenerarFactura}

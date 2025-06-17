@@ -65,6 +65,7 @@ import {
   FilePenLine,
   Trash2,
   Globe,
+  Bot,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
@@ -85,6 +86,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile";
+import { formateDateWithMinutes } from "@/Crm/Utils/FormateDate";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 // Enums
 enum EstadoFacturaInternet {
@@ -162,11 +165,21 @@ interface PagoFacturaInternet {
   metodoPago: MetodoPagoFacturaInternet;
   fechaPago: string;
   cobradorId: number;
-  cobrador: string;
+  cobrador: Cobrador;
   creadoEn: string;
 }
+
+interface Cobrador {
+  id: number;
+  nombre: string;
+  rol: RolUsuario;
+}
+
+interface Creador extends Cobrador {}
+
 interface FacturaInternet {
   id: number;
+  creador: Creador;
   fechaPagoEsperada: string | null;
   fechaPagada: string | null;
   montoPago: number | null;
@@ -210,7 +223,6 @@ interface Servicios {
 
 const CrmPaymentFactura: React.FC = () => {
   // Estados
-
   const navigate = useNavigate();
   const { facturaId } = useParams();
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
@@ -221,12 +233,9 @@ const CrmPaymentFactura: React.FC = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [factudaIdDelete, setFacturaIdDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [facturasPendientes, setFacturasPendientes] = useState<
     FacturaInternet[]
   >([]);
-  console.log(setFacturasPendientes);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
 
@@ -274,8 +283,6 @@ const CrmPaymentFactura: React.FC = () => {
     }
   }, []);
 
-  // Cargar datos de la factura
-  // Initial load
   useEffect(() => {
     if (!facturaId) {
       setError("ID de factura inválido");
@@ -285,7 +292,6 @@ const CrmPaymentFactura: React.FC = () => {
     fetchFactura(Number(facturaId));
   }, [facturaId, fetchFactura]);
 
-  // When factura changes, init form and load services
   useEffect(() => {
     if (!factura) return;
 
@@ -510,6 +516,37 @@ const CrmPaymentFactura: React.FC = () => {
     }
   };
 
+  const totalPagado =
+    factura?.pagos.reduce(
+      (sum: number, pago: any) => sum + pago.montoPagado,
+      0
+    ) || 0;
+  // function getMetodoPagoIcon(metodo: string) {
+  //   switch (metodo.toLowerCase()) {
+  //     case 'efectivo':
+  //       return <Banknote className="h-4 w-4 text-green-600" />;
+  //     case 'tarjeta':
+  //       return <CreditCard className="h-4 w-4 text-blue-600" />;
+  //     case 'transferencia':
+  //       return <Smartphone className="h-4 w-4 text-purple-600" />;
+  //     default:
+  //       return <DollarSign className="h-4 w-4 text-gray-600" />;
+  //   }
+  // }
+
+  function getMetodoPagoBadgeColor(metodo: string) {
+    switch (metodo.toLowerCase()) {
+      case "efectivo":
+        return "bg-green-100 text-green-800 hover:bg-green-200";
+      case "tarjeta":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "transferencia":
+        return "bg-purple-100 text-purple-800 hover:bg-purple-200";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+    }
+  }
+
   return (
     <div className="container mx-auto py-6 space-y-6 print:py-0">
       {/* Botón de volver y título */}
@@ -688,6 +725,30 @@ const CrmPaymentFactura: React.FC = () => {
                       }`}
                     >
                       {formatMoney(factura.saldoPendiente)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Generado por
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {factura?.creador ? (
+                      <User className="h-4 w-4 text-primary dark:text-white" />
+                    ) : (
+                      <Bot className="h-4 w-4 text-primary dark:text-white" />
+                    )}
+                    <span
+                      className={`font-medium text-lg ${
+                        factura.saldoPendiente
+                          ? "text-destructive"
+                          : "text-gray-600 dark:text-white"
+                      }`}
+                    >
+                      {factura?.creador?.nombre
+                        ? factura?.creador?.nombre
+                        : "Sistema Auto"}
                     </span>
                   </div>
                 </div>
@@ -1085,101 +1146,134 @@ const CrmPaymentFactura: React.FC = () => {
 
       {/* Diálogo de historial de pagos */}
       <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              Historial de Pagos - Factura #{factura?.id}
-            </DialogTitle>
-            <DialogDescription>
-              Registro de todos los pagos realizados para esta factura
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {factura?.pagos.length === 0 ? (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>Sin pagos</AlertTitle>
-                <AlertDescription>
-                  No hay pagos registrados para esta factura.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="rounded-md border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="text-left p-2 text-sm font-medium">
-                          Fecha
-                        </th>
-                        <th className="text-left p-2 text-sm font-medium">
-                          Monto
-                        </th>
-                        <th className="text-left p-2 text-sm font-medium">
-                          Método
-                        </th>
-                        <th className="text-left p-2 text-sm font-medium">
-                          Cobrador
-                        </th>
+        {factura && (
+          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <History className="h-5 w-5 text-blue-600" />
+                </div>
+                Historial de Pagos
+              </DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogDescription className="text-base">
+                  Factura #{factura?.id} • {factura?.pagos.length || 0} pago
+                  {factura?.pagos.length !== 1 ? "s" : ""} registrado
+                  {factura?.pagos.length !== 1 ? "s" : ""}
+                </DialogDescription>
+                <Badge variant="secondary" className="text-sm font-semibold">
+                  Total: {formatMoney(totalPagado)}
+                </Badge>
+              </div>
+            </DialogHeader>
 
-                        <th className="text-left p-2 text-sm font-medium">
-                          Acción
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {factura?.pagos.map((pago, index) => (
-                        <tr
-                          key={pago.id}
-                          className={
-                            index % 2 === 0 ? "bg-background" : "bg-muted/50"
-                          }
-                        >
-                          <td className="p-2 text-sm">
-                            {new Date(pago.fechaPago).toLocaleDateString(
-                              "es-GT",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </td>
-                          <td className="p-2 text-sm font-medium">
-                            {formatMoney(pago.montoPagado)}
-                          </td>
-                          <td className="p-2 text-sm">
-                            <div className="flex items-center">
-                              {getMetodoPagoIcon(pago.metodoPago)}
-                              {pago.metodoPago}
+            <Separator />
+
+            <div className="flex-1 overflow-y-auto py-4">
+              {factura?.pagos.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="p-3 bg-gray-100 rounded-full mb-4">
+                      <FileText className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Sin pagos registrados
+                    </h3>
+                    <p className="text-gray-500 max-w-sm">
+                      No hay pagos registrados para esta factura. Los pagos
+                      aparecerán aquí una vez que se procesen.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {factura?.pagos.map((pago: any) => (
+                    <Card
+                      key={pago.id}
+                      className="hover:shadow-md transition-shadow duration-200"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <div className="p-2 bg-gray-100 dark:bg-zinc-900 rounded-lg">
+                                {getMetodoPagoIcon(pago.metodoPago)}
+                              </div>
                             </div>
-                          </td>
-                          <td className="p-2 text-sm">{pago.cobrador || ""}</td>
 
-                          <td className="p-2 text-sm">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-500">
+                                  {formatMoney(pago.montoPagado)}
+                                </h4>
+                                <Badge
+                                  variant="secondary"
+                                  className={getMetodoPagoBadgeColor(
+                                    pago.metodoPago
+                                  )}
+                                >
+                                  {pago.metodoPago}
+                                </Badge>
+                              </div>
+
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formateDateWithMinutes(pago.fechaPago)}
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  {pago.cobrador.nombre || "Sin registrar"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex-shrink-0">
                             <Link
                               to={`/crm/factura-pago/pago-servicio-pdf/${facturaId}`}
                             >
-                              <Button size={"icon"} variant={"outline"}>
-                                <Printer />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="hover:bg-gray-50"
+                              >
+                                <Printer className="h-4 w-4 mr-2" />
+                                Imprimir
                               </Button>
                             </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
+              )}
+            </div>
+
+            <Separator />
+
+            <div className="flex justify-between items-center pt-4">
+              <div className="text-sm text-gray-500">
+                {factura?.pagos.length > 0 && (
+                  <>
+                    Último pago:{" "}
+                    {formateDateWithMinutes(
+                      factura.pagos[factura.pagos.length - 1]?.fechaPago
+                    )}
+                  </>
+                )}
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShowHistorial(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
+              <Button
+                onClick={() => setShowHistorial(false)}
+                className="min-w-[100px]"
+              >
+                Cerrar
+              </Button>
+            </div>
+          </DialogContent>
+        )}
       </Dialog>
 
       <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>

@@ -98,7 +98,7 @@ export const routesCrm_SuperAdmin = [
   {
     icon: FileText,
     label: "Plantillas contratos",
-    href: "/contrato-plantilla",
+    href: "/crm-contrato-plantilla",
   },
 
   {
@@ -191,7 +191,7 @@ export const routesCrm_Admin = [
   {
     icon: FileText,
     label: "Plantillas contratos",
-    href: "/contrato-plantilla",
+    href: "/crm-contrato-plantilla",
   },
 
   {
@@ -276,7 +276,7 @@ export const routesCrm_Oficina = [
   {
     icon: FileText,
     label: "Plantillas contratos",
-    href: "/contrato-plantilla",
+    href: "/crm-contrato-plantilla",
   },
 
   {

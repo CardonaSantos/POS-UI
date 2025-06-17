@@ -1,5 +1,4 @@
 import { Navigate } from "react-router-dom";
-
 import gif from "@/assets/loading.gif";
 import { useAuthStoreCRM } from "./AuthStateCRM";
 
@@ -23,7 +22,7 @@ export function ProtectRouteCrmUser({ children }: ProtectedRouteProps) {
     return <Navigate to="/crm/login" />;
   }
 
-  if (!["ADMIN", "TECNICO"].includes(userRol)) {
+  if (!["ADMIN", "TECNICO", "SUPER_ADMIN"].includes(userRol)) {
     return <Navigate to="/crm" />;
   }
 

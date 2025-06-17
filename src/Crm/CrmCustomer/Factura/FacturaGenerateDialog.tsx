@@ -10,15 +10,17 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { CalendarIcon, FileText, X } from "lucide-react";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
 interface DataGenerateFactura {
   mes: number | null;
   anio: number | null;
   clienteId: number | null;
+  creadorId: number | null;
 }
 
 interface DialogProps {
@@ -35,17 +37,18 @@ function FacturaGenerateDialog({
   clienteId,
   getClienteDetails,
 }: DialogProps) {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+  const [isSubmiting, setIsSubmitting] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
-
   const [dataGenerarFactura, setDataGenerarFactura] =
     useState<DataGenerateFactura>({
       anio: null,
       clienteId: clienteId,
       mes: null,
+      creadorId: userId,
     });
 
-  console.log("El objeto es: ", dataGenerarFactura);
-  console.log("El clienteId es: ", clienteId);
+  console.log("", dataGenerarFactura);
 
   const handleDateChange = (date: Date | null) => {
     setFechaSeleccionada(date); // Actualizamos el estado correctamente cuando se limpia el campo
@@ -58,7 +61,6 @@ function FacturaGenerateDialog({
         mes: mes,
       }));
     } else {
-      // Si se limpia la fecha, actualizamos mes y año a null
       setDataGenerarFactura((previaData) => ({
         ...previaData,
         anio: null,
@@ -67,48 +69,58 @@ function FacturaGenerateDialog({
     }
   };
 
-  const [isSubmiting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async () => {
-    if (!clienteId || clienteId === 0) {
+    if (!clienteId) {
       toast.error("No se ha proporcionado un cliente válido.");
       return;
     }
 
     if (!fechaSeleccionada) return;
 
-    const mes = fechaSeleccionada.getMonth() + 1; // getMonth() devuelve 0 para enero, por eso sumamos 1
+    const mes = fechaSeleccionada.getMonth() + 1;
     const anio = fechaSeleccionada.getFullYear();
 
-    const data = {
-      clienteId: clienteId,
-      mes: mes,
-      anio: anio,
+    const payload = {
+      clienteId,
+      mes,
+      anio,
+      creadorId: userId ?? null,
     };
 
     try {
       setIsSubmitting(true);
-      const response = await axios.post(
+
+      const { status } = await axios.post(
         `${VITE_CRM_API_URL}/facturacion/generate-factura-internet`,
-        data
+        payload
       );
 
-      if (response.status === 200 || response.status === 201) {
-        toast.success("Factura Generada");
+      if (status === 200 || status === 201) {
+        toast.success("Factura generada");
         setOpenGenerarFactura(false);
         setFechaSeleccionada(null);
-        setIsSubmitting(false);
         await getClienteDetails();
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("Error al generar factura");
+    } catch (err) {
       setIsSubmitting(false);
+
+      /* ⬇︎  Detectar duplicado (HTTP 409) */
+      if (axios.isAxiosError(err)) {
+        const axErr = err as AxiosError<any>;
+
+        if (axErr.response?.status === 409) {
+          const mensaje = axErr.response.data?.message ?? "Factura duplicada";
+
+          toast.warning(mensaje);
+          return; // ya manejado
+        }
+      }
+
+      // Cualquier otro error
+      toast.error("Error al generar factura");
+      console.error(err);
     }
   };
-
-  console.log("La fecha seleccionada: ", fechaSeleccionada);
-  console.log("el objeto es: ", dataGenerarFactura);
 
   return (
     <Dialog open={openGenerarFactura} onOpenChange={setOpenGenerarFactura}>

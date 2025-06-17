@@ -110,11 +110,27 @@ export interface FacturaInternet {
   pagada: boolean;
   estado: string;
   pagos: Pagos[];
+  creador: CreadorFactura;
+}
+
+interface CreadorFactura {
+  id: number;
+  nombre: string;
+  rol: UsersRol;
+}
+
+enum UsersRol {
+  TECNICO = "TECNICO",
+  OFICINA = "OFICINA",
+  ADMIN = "ADMIN",
+  SUPER_ADMIN = "SUPER_ADMIN",
+  COBRADOR = "COBRADOR",
 }
 
 interface Cobrador {
   id: number;
   nombreCobrador: string;
+  rol: UsersRol;
 }
 
 interface Pagos {

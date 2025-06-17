@@ -10,9 +10,10 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { CalendarIcon, FileText, X } from "lucide-react";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
 interface DataGenerateFactura {
@@ -35,8 +36,11 @@ function GenerateFacturas({
   clienteId,
   getClienteDetails,
 }: DialogProps) {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [isSubmiting, setIsSubmitting] = useState(false);
 
   const [dataGenerarFactura, setDataGenerarFactura] =
     useState<DataGenerateFactura>({
@@ -67,8 +71,6 @@ function GenerateFacturas({
     }
   };
 
-  const [isSubmiting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async () => {
     if (!clienteId || clienteId === 0) {
       toast.error("No se ha proporcionado un cliente válido.");
@@ -85,29 +87,37 @@ function GenerateFacturas({
       mesInicio: dataGenerarFactura.mesInicio,
       mesFin: dataGenerarFactura.mesFin,
       anio: dataGenerarFactura.anio,
+      creadorId: userId,
     };
-
-    console.log("La data generada es: ", data);
 
     try {
       setIsSubmitting(true);
-      const response = await axios.post(
+
+      await axios.post(
         `${VITE_CRM_API_URL}/facturacion/generate-factura-internet-multiple`,
         data
       );
 
-      if (response.status === 200 || response.status === 201) {
-        toast.success("Facturas Generadas");
-        setOpenGenerateFacturas(false);
-        setFechaInicio(null);
-        setFechaFin(null);
-        setIsSubmitting(false);
-        await getClienteDetails();
+      toast.success("Facturas generadas");
+      setOpenGenerateFacturas(false);
+      setFechaInicio(null);
+      setFechaFin(null);
+      await getClienteDetails();
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const axErr = err as AxiosError<any>;
+
+        if (axErr.response?.status === 409) {
+          const mensaje = axErr.response.data?.message ?? "Factura duplicada";
+          toast.warning(mensaje);
+          return; // isSubmitting se apagará en finally
+        }
       }
-    } catch (error) {
-      console.log(error);
+
       toast.error("Error al generar facturas");
-      setIsSubmitting(false);
+      console.error(err);
+    } finally {
+      setIsSubmitting(false); // ✔️ siempre se ejecuta
     }
   };
 

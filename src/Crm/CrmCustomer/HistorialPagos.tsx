@@ -13,10 +13,14 @@ import {
   EllipsisVertical,
   FilePenLine,
   Trash2,
+  User,
 } from "lucide-react";
 import type { FacturaInternet } from "./CustomerDetails"; // Asumiendo que tienes tus interfaces en este archivo
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +28,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 
 interface FacturaToDeleter {
   id: number;
@@ -65,12 +67,20 @@ export function HistorialPagos({
   setFacturaAction,
   setOpenDeleteFactura,
 }: HistorialPagosProps) {
-  // Preparar los datos para la tabla
+  console.log("Las transacciones, pagos de facturas, son: ", facturas);
+
   const transacciones = facturas.map((factura) => {
-    // Factura principal
     const facturaRow = {
       fecha: factura.fechaEmision,
-      canal: "SISTEMA AUTO",
+      canal: {
+        creador: factura?.creador?.nombre
+          ? factura?.creador?.nombre
+          : "SISTEMA AUTO",
+        cobrador:
+          factura.pagos.length > 0
+            ? factura.pagos.map((c) => c?.cobrador?.nombreCobrador).join(", ")
+            : "Sin registrar",
+      },
       tipoPago: factura?.pagos[0]?.metodoPago ?? "N/A",
       referencia: factura.id.toString(),
       detalle: `FACTURA ${new Date(factura.fechaVencimiento)
@@ -91,7 +101,6 @@ export function HistorialPagos({
       fechaVencimiento: factura.fechaVencimiento,
       pagos: factura.pagos, // Mantén los pagos asociados a la factura
     };
-
     return facturaRow;
   });
 
@@ -99,7 +108,6 @@ export function HistorialPagos({
     (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
   );
 
-  // Calcular saldos acumulados
   let saldoAcumulado = 0;
   transacciones.forEach((t) => {
     saldoAcumulado = saldoAcumulado + t.cobro - t.pago;
@@ -125,7 +133,7 @@ export function HistorialPagos({
                   Fecha
                 </TableHead>
                 <TableHead className="font-medium w-[80px] text-[11px]">
-                  Canal
+                  Canales
                 </TableHead>
                 <TableHead className="font-medium w-[70px] text-[11px]">
                   Estado
@@ -164,7 +172,51 @@ export function HistorialPagos({
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-[11px]">
                     <div className="flex items-center gap-1">
-                      <span className="truncate">{t.canal}</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <span className="truncate hover:cursor-pointer hover:text-primary transition-colors text-[11px] underline decoration-dotted underline-offset-2">
+                            {t.canal.creador}
+                          </span>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-64 p-3" align="start">
+                          <div className="space-y-3">
+                            {/* Creador */}
+                            <div className="flex items-start gap-2">
+                              <User className="h-3.5 w-3.5 mt-0.5 text-muted-foreground" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                                  Creado por
+                                </p>
+                                <p className="text-[11px] font-normal text-foreground truncate">
+                                  {t.canal.creador}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Separador sutil */}
+                            <div className="border-t border-border/50"></div>
+
+                            {/* Cobrador */}
+                            <div className="flex items-start gap-2">
+                              <CreditCard className="h-3.5 w-3.5 mt-0.5 text-muted-foreground" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                                  Cobrado por
+                                </p>
+                                <p className="text-[11px] font-normal text-foreground">
+                                  {t.canal.cobrador === "Sin registrar" ? (
+                                    <span className="text-muted-foreground italic">
+                                      Sin registrar
+                                    </span>
+                                  ) : (
+                                    t.canal.cobrador
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-[11px]">
@@ -250,7 +302,7 @@ export function HistorialPagos({
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link
-                            to={`/editar?factura=${t.id}`}
+                            to={`/crm/editar?factura=${t.id}`}
                             className="flex items-center text-green-600 dark:text-green-400 focus:text-green-700 dark:focus:text-green-300"
                           >
                             <FilePenLine className="h-3.5 w-3.5 mr-2" />
