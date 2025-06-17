@@ -1224,7 +1224,7 @@ const CrmPaymentFactura: React.FC = () => {
 
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  {pago.cobrador.nombre || "Sin registrar"}
+                                  {pago?.cobrador?.nombre || "No registrado"}
                                 </div>
                               </div>
                             </div>
