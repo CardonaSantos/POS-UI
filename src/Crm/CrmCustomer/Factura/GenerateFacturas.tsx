@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { CalendarIcon, FileText, X } from "lucide-react";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+console.log("Otro ajuste: ");
 
 interface DataGenerateFactura {
   mesInicio: number | null;
