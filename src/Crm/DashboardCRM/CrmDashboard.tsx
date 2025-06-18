@@ -137,7 +137,10 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <motion.div {...LightCardMotion}>
+    <motion.div
+      {...LightCardMotion}
+      transition={{ type: "spring", stiffness: 100, damping: 10 }}
+    >
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
