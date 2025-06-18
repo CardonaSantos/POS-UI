@@ -104,7 +104,6 @@ function FacturaGenerateDialog({
     } catch (err) {
       setIsSubmitting(false);
 
-      /* ⬇︎  Detectar duplicado (HTTP 409) */
       if (axios.isAxiosError(err)) {
         const axErr = err as AxiosError<any>;
 
@@ -112,13 +111,13 @@ function FacturaGenerateDialog({
           const mensaje = axErr.response.data?.message ?? "Factura duplicada";
 
           toast.warning(mensaje);
-          return; // ya manejado
+          return;
         }
       }
-
-      // Cualquier otro error
       toast.error("Error al generar factura");
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -91,6 +91,7 @@ import { RutasCobroEdit } from "./Crm/CrmRutas/RutasCobroEdit";
 import FacturaEdit from "./Crm/CrmFacturacion/FacturaEdicion/FacturaEdit";
 import CrmProfileConfig from "./Crm/CrmProfile/CrmProfileConfig";
 import CrmUsers from "./Crm/CrmProfile/CrmUsers";
+import MetasTecnicosPage from "./Crm/CrmTicketsMeta/MetasTecnicosPage";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -783,6 +784,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <CrmUsers />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/metas-soporte"
+              element={
+                <ProtectRouteCrmUser>
+                  <MetasTecnicosPage />
                 </ProtectRouteCrmUser>
               }
             />

@@ -17,6 +17,7 @@ import {
   MessagesSquare,
   User,
   LucideIcon,
+  Target,
 } from "lucide-react";
 
 export interface Route {
@@ -25,7 +26,6 @@ export interface Route {
   href?: string;
   submenu?: Route[];
 }
-
 export const routesCrm_SuperAdmin = [
   { icon: Home, label: "Inicio", href: "/crm" },
 
@@ -53,6 +53,8 @@ export const routesCrm_SuperAdmin = [
     label: "Soporte",
     submenu: [
       { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
+      { icon: Target, label: "Metas de Soporte", href: "/crm/metas-soporte" },
+
       {
         icon: Tags,
         label: "Categorías de Soporte",
@@ -146,6 +148,8 @@ export const routesCrm_Admin = [
     label: "Soporte",
     submenu: [
       { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
+      { icon: Target, label: "Metas de Soporte", href: "/crm/metas-soporte" },
+
       {
         icon: Tags,
         label: "Categorías de Soporte",
@@ -237,6 +241,8 @@ export const routesCrm_Oficina = [
     label: "Soporte",
     submenu: [
       { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
+      { icon: Target, label: "Metas de Soporte", href: "/crm/metas-soporte" },
+
       {
         icon: Tags,
         label: "Categorías de Soporte",
