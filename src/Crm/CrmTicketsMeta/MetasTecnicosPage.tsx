@@ -6,7 +6,7 @@ import {
   Target,
   TrendingUp,
   Clock,
-  EllipsisIcon,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -327,6 +327,15 @@ export default function MetasTecnicosPage() {
     }
   };
 
+  // Variables calculadas antes del return
+  const totalMetas = metas.length;
+  const metasActivas = metas.filter((m) => m.estado === "ABIERTO").length;
+  const ticketsResueltos = metas.reduce(
+    (acc, meta) => acc + meta.ticketsResueltos,
+    0
+  );
+  const metaTotal = metas.reduce((acc, meta) => acc + meta.metaTickets, 0);
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <Tabs defaultValue="ticketsMeta">
@@ -344,7 +353,7 @@ export default function MetasTecnicosPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
             <div>
-              <h1 className="text-2xl font-bold">Metas de Soportes</h1>
+              <h2 className="text-xl font-bold">Metas de Soportes</h2>
             </div>
             <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
@@ -353,54 +362,67 @@ export default function MetasTecnicosPage() {
           </div>
 
           {/* Estadísticas generales */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Metas
-                </CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metas.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Metas Activas
-                </CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {metas.filter((m) => m.estado === "ABIERTO").length}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Total Metas
+                    </p>
+                    <div className="text-2xl font-bold">{totalMetas}</div>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-transparent p-2 rounded-lg">
+                    <Target className="h-4 w-4 text-blue-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Tickets Resueltos
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {metas.reduce((acc, meta) => acc + meta.ticketsResueltos, 0)}
+
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Metas Activas
+                    </p>
+                    <div className="text-2xl font-bold">{metasActivas}</div>
+                  </div>
+                  <div className="bg-green-50 dark:bg-transparent p-2 rounded-lg">
+                    <Clock className="h-4 w-4 text-green-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Meta Total
-                </CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {metas.reduce((acc, meta) => acc + meta.metaTickets, 0)}
+
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Tickets Resueltos
+                    </p>
+                    <div className="text-2xl font-bold">{ticketsResueltos}</div>
+                  </div>
+                  <div className="bg-orange-50 dark:bg-transparent  p-2 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Meta Total
+                    </p>
+                    <div className="text-2xl font-bold">{metaTotal}</div>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-transparent p-2 rounded-lg">
+                    <Target className="h-4 w-4 text-purple-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -408,49 +430,70 @@ export default function MetasTecnicosPage() {
 
           {/* Tabla de metas */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-0">
               <CardTitle>
-                <h3 className="text-">Metas Activas</h3>
+                <h2 className="text-lg text-center">Metas Activas</h2>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Técnico</TableHead>
-                      <TableHead>Período</TableHead>
-                      <TableHead className="text-right">Objetivo</TableHead>
-                      <TableHead className="text-right">Resueltos</TableHead>
-                      <TableHead className="text-right">% Cumplido</TableHead>
-                      <TableHead className="text-right">Faltantes</TableHead>
-                      <TableHead className="text-right">Promedio/Día</TableHead>
-                      <TableHead className="text-right">Proyección</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                    <TableRow className="border-b">
+                      <TableHead className="h-10 px-3 text-xs font-medium">
+                        Técnico
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium">
+                        Período
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        Objetivo
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        Resueltos
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        % Cumplido
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        Faltantes
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        Promedio/Día
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right">
+                        Proyección
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium">
+                        Estado
+                      </TableHead>
+                      <TableHead className="h-10 px-2 text-xs font-medium text-right w-16">
+                        Acciones
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
                       Array.from({ length: 3 }).map((_, i) => (
-                        <TableRow key={i}>
+                        <TableRow key={i} className="h-12">
                           {Array.from({ length: 10 }).map((_, j) => (
-                            <TableCell key={j}>
-                              <Skeleton className="h-4 w-full" />
+                            <TableCell key={j} className="px-3 py-2">
+                              <Skeleton className="h-3 w-full" />
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : metas.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8">
-                          <div className="flex flex-col items-center gap-2">
+                        <TableCell colSpan={10} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-3">
                             <Target className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground text-sm">
                               No hay metas registradas
                             </p>
                             <Button
                               variant="outline"
+                              size="sm"
                               onClick={openCreateDialog}
                             >
                               Crear primera meta
@@ -486,37 +529,46 @@ export default function MetasTecnicosPage() {
                         );
 
                         return (
-                          <TableRow key={meta.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">
+                          <TableRow
+                            key={meta.id}
+                            className="h-14 hover:bg-muted/50"
+                          >
+                            <TableCell className="px-3 py-2">
+                              <div className="space-y-0.5">
+                                <div className="font-medium text-sm leading-tight">
                                   {meta.tecnico.nombre}
                                 </div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-xs text-muted-foreground leading-tight">
                                   {meta.titulo}
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <div>{formateDate(meta.fechaInicio)}</div>
-                                <div className="text-muted-foreground">
+                            <TableCell className="px-2 py-2">
+                              <div className="text-xs space-y-0.5">
+                                <div className="leading-tight">
+                                  {formateDate(meta.fechaInicio)}
+                                </div>
+                                <div className="text-muted-foreground leading-tight">
                                   {formateDate(meta.fechaFin)}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-muted-foreground leading-tight">
                                   {diasTranscurridos}/{diasTotales} días
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {meta.metaTickets}
+                            <TableCell className="px-2 py-2 text-right">
+                              <span className="font-medium text-sm">
+                                {meta.metaTickets}
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              {meta.ticketsResueltos}
+                            <TableCell className="px-2 py-2 text-right">
+                              <span className="text-sm">
+                                {meta.ticketsResueltos}
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div
-                                className={`font-medium ${
+                            <TableCell className="px-2 py-2 text-right">
+                              <span
+                                className={`font-medium text-sm ${
                                   porcentajeCumplido >= 100
                                     ? "text-green-600"
                                     : porcentajeCumplido >= 75
@@ -525,69 +577,71 @@ export default function MetasTecnicosPage() {
                                 }`}
                               >
                                 {porcentajeCumplido}%
-                              </div>
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              {ticketsFaltantes}
+                            <TableCell className="px-2 py-2 text-right">
+                              <span className="text-sm">
+                                {ticketsFaltantes}
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              {promedioDiario}
+                            <TableCell className="px-2 py-2 text-right">
+                              <span className="text-sm">{promedioDiario}</span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div
-                                className={`font-medium ${
+                            <TableCell className="px-2 py-2 text-right">
+                              <span
+                                className={`font-medium text-sm ${
                                   proyeccion >= meta.metaTickets
                                     ? "text-green-600"
                                     : "text-red-600"
                                 }`}
                               >
                                 {proyeccion}
-                              </div>
+                              </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-2 py-2">
                               <Badge
                                 variant={getEstadoBadgeVariant(meta.estado)}
+                                className="text-xs px-2 py-0.5"
                               >
                                 {meta.estado}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="px-2 py-2 text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button size={"sm"} variant="outline">
-                                    <EllipsisIcon />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 hover:bg-muted"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Abrir menú</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
-                                  className="w-56"
-                                  align="start"
+                                  className="w-40"
+                                  align="end"
+                                  sideOffset={4}
                                 >
-                                  <DropdownMenuLabel>
+                                  <DropdownMenuLabel className="text-xs font-medium">
                                     Acciones
                                   </DropdownMenuLabel>
                                   <DropdownMenuGroup>
-                                    <DropdownMenuItem>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => openEditDialog(meta)}
-                                        disabled={operationLoading}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
+                                    <DropdownMenuItem
+                                      className="text-xs cursor-pointer"
+                                      onClick={() => openEditDialog(meta)}
+                                      disabled={operationLoading}
+                                    >
+                                      <Edit className="h-3.5 w-3.5 mr-2" />
+                                      Editar
                                     </DropdownMenuItem>
-
-                                    <DropdownMenuItem>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          openDeleteDialog(meta.id)
-                                        }
-                                        disabled={operationLoading}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
+                                    <DropdownMenuItem
+                                      className="text-xs cursor-pointer text-red-600 focus:text-red-600"
+                                      onClick={() => openDeleteDialog(meta.id)}
+                                      disabled={operationLoading}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                      Eliminar
                                     </DropdownMenuItem>
                                   </DropdownMenuGroup>
                                 </DropdownMenuContent>

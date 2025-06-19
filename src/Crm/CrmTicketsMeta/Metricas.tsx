@@ -1,14 +1,10 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, BarChart3, TrendingUp, Target } from "lucide-react";
+import { RefreshCw, BarChart3, TrendingUp, Target, Clock } from "lucide-react";
 import { toast } from "sonner";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -17,52 +13,51 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import axios from "axios";
-
-interface Metrics {
-  tecnicoId: number;
-  nombre: string;
-  correo: string;
-  totalTickets: number;
-  ticketsResueltos: number;
-  ticketsPendientes: number;
-  tasaResolucion: number; // %
-  tiempoPromedioHrs: number; // horas
-  ticketsPorDia: number;
-  proyeccion: number;
-  diasTranscurridos: number;
-  totalDias: number;
-}
-
-interface MetricChartsProps {
-  loading?: boolean;
-}
-
+import {
+  MetricChartsProps,
+  Metrics,
+  TicketMoment,
+  TicketsActuales,
+} from "./types";
+import TicketsEnProcesoCard from "./TicketsEnProcesoTable";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+export type TicketResueltoDiaPivot = {
+  dia: number;
+} & Record<string, number>; // nombreTécnico -> cantidad
 
 export default function MetricCharts({
   loading: externalLoading = false,
 }: MetricChartsProps) {
   const [data, setData] = useState<Metrics[]>([]);
+  const [dataScale, setDataScale] = useState<TicketResueltoDiaPivot[]>([]);
+  const [dataTicketsActuales, setDataTicketsActuales] =
+    useState<TicketsActuales | null>(null);
+  const [dataTicketsEnProceso, setDataTicketsEnProceso] = useState<
+    TicketMoment[]
+  >([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const isLoading = loading || externalLoading;
+  console.log("La data recibiendo ", data);
+  console.log("La data del scale es: ", dataScale);
+  console.log("data dataTicketsEnProceso en proceso: ", dataTicketsEnProceso);
 
   // Fetch data from API
   const fetchMetrics = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get<Metrics[]>(
+      const response = await axios.get(
         `${VITE_CRM_API_URL}/metas-tickets/tickets-for-metricas`
       );
-      setData(response.data);
-      toast.success("Métricas actualizadas correctamente");
+
+      setData(response.data.data);
+      setDataScale(response.data.dataScale);
+      setDataTicketsEnProceso(response.data.ticketsEnProceso);
+      setDataTicketsActuales(response.data.ticketsActuales);
     } catch (err) {
       const errorMessage = "Error al cargar las métricas";
       setError(errorMessage);
@@ -76,47 +71,6 @@ export default function MetricCharts({
   useEffect(() => {
     fetchMetrics();
   }, []);
-
-  // Prepare data for BarChart (Resueltos vs Pendientes)
-  const barChartData = data.map((metric) => ({
-    nombre: metric.nombre,
-    resueltos: metric.ticketsResueltos,
-    pendientes: metric.ticketsPendientes,
-    total: metric.totalTickets,
-  }));
-
-  // Prepare data for LineChart (Proyección diaria)
-  const generateProjectionData = () => {
-    if (data.length === 0) return [];
-
-    const maxDias = Math.max(...data.map((m) => m.totalDias));
-    const projectionData = [];
-
-    for (let dia = 1; dia <= maxDias; dia++) {
-      const dayData: any = { dia };
-
-      data.forEach((metric) => {
-        const ticketsProyectados = Math.min(
-          Math.round(metric.ticketsPorDia * dia),
-          metric.proyeccion
-        );
-        dayData[metric.nombre] = ticketsProyectados;
-      });
-
-      projectionData.push(dayData);
-    }
-
-    return projectionData;
-  };
-
-  const lineChartData = generateProjectionData();
-
-  // Prepare data for RadialBarChart (Tasa de resolución)
-  const radialChartData = data.map((metric, index) => ({
-    nombre: metric.nombre,
-    tasaResolucion: metric.tasaResolucion,
-    fill: `hsl(${(index * 137.5) % 360}, 70%, 50%)`, // Generate different colors
-  }));
 
   // Colors for charts
   const COLORS = [
@@ -135,12 +89,14 @@ export default function MetricCharts({
     </div>
   );
 
+  console.log("Los tickets actuales son: ", dataTicketsActuales);
+
   return (
     <div className="space-y-6">
       {/* Header with refresh button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Métricas de Rendimiento</h2>
+          <h2 className="text-xl font-bold">Métricas de Rendimiento</h2>
           <p className="text-muted-foreground">
             Análisis visual del desempeño de los técnicos
           </p>
@@ -173,106 +129,99 @@ export default function MetricCharts({
       )}
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* BarChart - Tickets Resueltos vs Pendientes */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Tickets Resueltos vs Pendientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <ChartSkeleton />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={barChartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="nombre"
-                    tick={{ fontSize: 12 }}
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      value,
-                      name === "resueltos" ? "Resueltos" : "Pendientes",
-                    ]}
-                    labelFormatter={(label) => `Técnico: ${label}`}
-                  />
-                  <Legend />
-                  <Bar dataKey="resueltos" fill="#22c55e" name="Resueltos" />
-                  <Bar dataKey="pendientes" fill="#ef4444" name="Pendientes" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+      <div className=" gap-4">
+        {dataTicketsActuales && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Tickets disponibles
+                    </p>
+                    <div className="text-2xl font-bold">
+                      {dataTicketsActuales.tickets}
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-transparent p-2 rounded-lg">
+                    <Target className="h-4 w-4 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* RadialBarChart - Tasa de Resolución */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Tasa de Resolución
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <ChartSkeleton />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={radialChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="tasaResolucion"
-                  >
-                    {radialChartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index} + ${entry.nombre}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [`${value}%`, "Tasa de Resolución"]}
-                    labelFormatter={(label) => `${label}`}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Asignados
+                    </p>
+                    <div className="text-2xl font-bold">
+                      {dataTicketsActuales.ticketsAsignados}
+                    </div>
+                  </div>
+                  <div className="bg-green-50 dark:bg-transparent p-2 rounded-lg">
+                    <Clock className="h-4 w-4 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      En proceso
+                    </p>
+                    <div className="text-2xl font-bold">
+                      {dataTicketsActuales.ticketsEnProceso}
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 dark:bg-transparent  p-2 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Resueltos
+                    </p>
+                    <div className="text-2xl font-bold">
+                      {dataTicketsActuales.ticketsResueltos}
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-transparent p-2 rounded-lg">
+                    <Target className="h-4 w-4 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* LineChart - Proyección de Tickets */}
         <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Proyección de Tickets Resueltos por Día
+              <h2 className="text-lg">Tickets Resueltos por Día</h2>
             </CardTitle>
           </CardHeader>
+
           <CardContent>
             {isLoading ? (
               <ChartSkeleton />
             ) : (
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart
-                  data={lineChartData}
+                  data={dataScale} /* ← nuevo estado */
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -293,14 +242,18 @@ export default function MetricCharts({
                   />
                   <Tooltip
                     labelFormatter={(label) => `Día ${label}`}
-                    formatter={(value, name) => [value, `${name} (proyectado)`]}
+                    formatter={(value, name) => [value, `${name} (resueltos)`]}
                   />
                   <Legend />
+
+                  {/* Dibuja una línea por técnico en el mismo orden de 'data' */}
                   {data.map((metric, index) => (
                     <Line
                       key={metric.tecnicoId}
                       type="monotone"
-                      dataKey={metric.nombre}
+                      dataKey={
+                        metric.nombre
+                      } /* ← clave dinámica en dataScale */
                       stroke={COLORS[index % COLORS.length]}
                       strokeWidth={2}
                       dot={{ r: 4 }}
@@ -312,65 +265,6 @@ export default function MetricCharts({
             )}
           </CardContent>
         </Card>
-
-        {/* Summary Cards */}
-        {!isLoading && data.length > 0 && (
-          <>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Técnicos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{data.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Técnicos activos
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Tickets Totales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {data.reduce((acc, metric) => acc + metric.totalTickets, 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {data.reduce(
-                    (acc, metric) => acc + metric.ticketsResueltos,
-                    0
-                  )}{" "}
-                  resueltos
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Promedio Resolución
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.round(
-                    data.reduce(
-                      (acc, metric) => acc + metric.tasaResolucion,
-                      0
-                    ) / data.length
-                  )}
-                  %
-                </div>
-                <p className="text-xs text-muted-foreground">Tasa promedio</p>
-              </CardContent>
-            </Card>
-          </>
-        )}
       </div>
 
       {/* Empty state */}
@@ -392,6 +286,8 @@ export default function MetricCharts({
           </CardContent>
         </Card>
       )}
+
+      <TicketsEnProcesoCard data={dataTicketsEnProceso} />
     </div>
   );
 }

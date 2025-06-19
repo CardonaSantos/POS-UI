@@ -54,3 +54,74 @@ export interface OptionSelected {
   value: string;
   label: string;
 }
+
+//Para metricas
+export interface Metrics {
+  tecnicoId: number;
+  nombre: string;
+  correo: string;
+  totalTickets: number;
+  ticketsResueltos: number;
+  ticketsPendientes: number;
+  tasaResolucion: number; // %
+  tiempoPromedioHrs: number; // horas
+  ticketsPorDia: number;
+  proyeccion: number;
+  diasTranscurridos: number;
+  totalDias: number;
+}
+
+export interface MetricChartsProps {
+  loading?: boolean;
+}
+export interface TicketResueltoDiaRaw {
+  dia: number; // 1-31
+  tecnicoId: number;
+  tecnicoNombre: string; // ej. "Santos Miguel"
+  resueltos: number; // tickets resueltos ese día
+}
+//otras metricas del día
+export interface Tecnico {
+  id: number;
+  nombre: string;
+}
+
+export enum PrioridadTicketSoporte {
+  BAJA = "BAJA",
+  MEDIA = "MEDIA",
+  ALTA = "ALTA",
+  URGENTE = "URGENTE",
+}
+
+export enum EstadoTicket {
+  NUEVO = "NUEVO",
+  ABIERTA = "ABIERTA",
+  EN_PROCESO = "EN_PROCESO",
+  PENDIENTE = "PENDIENTE",
+  PENDIENTE_CLIENTE = "PENDIENTE_CLIENTE",
+  PENDIENTE_TECNICO = "PENDIENTE_TECNICO",
+  RESUELTA = "RESUELTA",
+  CANCELADA = "",
+  ARCHIVADA = "ARCHIVADA",
+  CERRADO = "CERRADO",
+}
+
+export interface TicketMoment {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  estado: EstadoTicket;
+  prioridad: PrioridadTicketSoporte;
+  tecnico: Tecnico;
+}
+
+export interface TicketsEnProceso {
+  ticket: TicketMoment[];
+}
+
+export interface TicketsActuales {
+  tickets: number;
+  ticketsResueltos: number;
+  ticketsEnProceso: number;
+  ticketsAsignados: number;
+}
