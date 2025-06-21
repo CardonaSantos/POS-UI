@@ -90,6 +90,9 @@ export default function MetricCharts({
   );
 
   console.log("Los tickets actuales son: ", dataTicketsActuales);
+  const techNames = dataScale.length
+    ? Object.keys(dataScale[0]).filter((k) => k !== "dia")
+    : [];
 
   return (
     <div className="space-y-6">
@@ -247,14 +250,12 @@ export default function MetricCharts({
                   <Legend />
 
                   {/* Dibuja una línea por técnico en el mismo orden de 'data' */}
-                  {data.map((metric, index) => (
+                  {techNames.map((name, idx) => (
                     <Line
-                      key={metric.tecnicoId}
+                      key={name}
                       type="monotone"
-                      dataKey={
-                        metric.nombre
-                      } /* ← clave dinámica en dataScale */
-                      stroke={COLORS[index % COLORS.length]}
+                      dataKey={name}
+                      stroke={COLORS[idx % COLORS.length]}
                       strokeWidth={2}
                       dot={{ r: 4 }}
                       activeDot={{ r: 6 }}
