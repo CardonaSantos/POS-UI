@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/select";
 import SelectComponent, { MultiValue, SingleValue } from "react-select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RolUsuario } from "../CrmProfile/interfacesProfile";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 dayjs.extend(localizedFormat);
@@ -251,6 +252,22 @@ export default function TicketDetail({
     }
   };
 
+  type Option = { value: string; label: string };
+  // Actualiza el técnico asignado a partir de la opción seleccionada
+  const handleChangeCompanions = (selectedOptions: MultiValue<Option>) => {
+    setTicketToEdit((prev) => ({
+      ...prev,
+      // Si no hay selección, ponemos un arreglo vacío
+      companios: selectedOptions
+        ? selectedOptions.map((opt) => ({
+            id: Number(opt.value),
+            name: opt.label,
+            rol: "TECNICO" as RolUsuario,
+          }))
+        : [],
+    }));
+  };
+
   const handleSubmitTicketEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -316,6 +333,12 @@ export default function TicketDetail({
   const handleClose = () => {
     setSelectedTicketId(null);
   };
+
+  // fuera del render, o memoizado
+  const companionOptions = ticketToEdit?.companios?.map((c) => ({
+    value: c.id.toString(), // o simplemente c.id, si tu optionsTecs usan numbers
+    label: c.name,
+  }));
 
   return (
     <div className="flex flex-col h-full p-2 rounded-sm">
@@ -454,212 +477,285 @@ export default function TicketDetail({
 
       {/* DIALOG PARA LA EDICION DEL TICKET Y CIERRE POSTERIOR */}
       <Dialog open={openUpdateTicket} onOpenChange={setOpenUpdateTicket}>
-        <DialogContent className="sm:max-w-[500px] md:max-w-[600px] p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[900px] lg:max-w-[1000px] p-0 overflow-hidden max-h-[90vh]">
           <form onSubmit={handleSubmitTicketEdit} className="space-y-0">
-            <DialogHeader className="px-6 pt-6 pb-2 bg-muted/30">
-              <DialogTitle className="text-xl font-semibold">
+            <DialogHeader className="px-6 pt-6 pb-4 bg-muted/30 border-b">
+              <DialogTitle className="text-xl font-semibold text-center">
                 Editar Ticket
               </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Modifica los campos del ticket según sea necesario.
-              </DialogDescription>
             </DialogHeader>
 
-            <div className="px-6 py-4 max-h-[70vh] overflow-y-auto space-y-5">
-              {/* Título */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="title"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
-                    <span className="text-primary text-xs font-bold">T</span>
-                  </span>
-                  Título
-                </Label>
-                <Input
-                  name="title"
-                  id="title"
-                  value={ticketToEdit.title}
-                  onChange={handleChangePropsTicket}
-                  className="w-full"
-                  placeholder="Título del ticket"
-                />
-              </div>
+            <div className="px-6 py-6 max-h-[calc(90vh-140px)] overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* COLUMNA IZQUIERDA - Información Básica */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                      Información Básica
+                    </h3>
 
-              {/* Descripción */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="description"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
-                    <span className="text-primary text-xs font-bold">D</span>
-                  </span>
-                  Descripción
-                </Label>
-                <Textarea
-                  name="description"
-                  id="description"
-                  value={ticketToEdit.description}
-                  onChange={handleChangePropsTicket}
-                  className="w-full min-h-[100px] resize-y"
-                  placeholder="Descripción detallada del problema"
-                />
-              </div>
+                    {/* Título */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="title"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
+                          <span className="text-primary text-xs font-bold">
+                            T
+                          </span>
+                        </span>
+                        Título
+                      </Label>
+                      <Input
+                        name="title"
+                        id="title"
+                        value={ticketToEdit.title}
+                        onChange={handleChangePropsTicket}
+                        className="w-full"
+                        placeholder="Título del ticket"
+                      />
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Prioridad */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="priority"
-                    className="flex items-center gap-2 text-sm font-medium"
-                  >
-                    <Flag className="h-4 w-4 text-red-500" />
-                    Prioridad
-                  </Label>
-                  <Select
-                    value={ticketToEdit.priority}
-                    onValueChange={(value) =>
-                      handleSelectChange("priority", value)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar prioridad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BAJA" className="flex items-center">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-gray-500"></span>
-                          <span>Baja</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="MEDIA">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                          <span>Media</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="ALTA">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
-                          <span>Alta</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="URGENTE">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                          <span>Urgente</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {/* Descripción */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="description"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
+                          <span className="text-primary text-xs font-bold">
+                            D
+                          </span>
+                        </span>
+                        Descripción
+                      </Label>
+                      <Textarea
+                        name="description"
+                        id="description"
+                        value={ticketToEdit.description}
+                        onChange={handleChangePropsTicket}
+                        className="w-full min-h-[120px] resize-y"
+                        placeholder="Descripción detallada del problema"
+                      />
+                    </div>
+
+                    {/* Prioridad y Estado */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Prioridad */}
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="priority"
+                          className="flex items-center gap-2 text-sm font-medium"
+                        >
+                          <Flag className="h-4 w-4 text-red-500" />
+                          Prioridad
+                        </Label>
+                        <Select
+                          value={ticketToEdit.priority}
+                          onValueChange={(value) =>
+                            handleSelectChange("priority", value)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccionar prioridad" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[60]">
+                            <SelectItem
+                              value="BAJA"
+                              className="flex items-center"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-gray-500"></span>
+                                <span>Baja</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="MEDIA">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                                <span>Media</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="ALTA">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                <span>Alta</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="URGENTE">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                                <span>Urgente</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Estado */}
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="status"
+                          className="flex items-center gap-2 text-sm font-medium"
+                        >
+                          <Clock className="h-4 w-4 text-blue-500" />
+                          Estado
+                        </Label>
+                        <Select
+                          value={ticketToEdit.status}
+                          onValueChange={(value) =>
+                            handleSelectChange("status", value)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[60]">
+                            <SelectItem value="NUEVO">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                                <span>Nuevo</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="ABIERTA">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                <span>Abierta</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="EN_PROCESO">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                                <span>En Proceso</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="PENDIENTE">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-gray-500"></span>
+                                <span>Pendiente</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="PENDIENTE_CLIENTE">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-pink-500"></span>
+                                <span>Pendiente Cliente</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="PENDIENTE_TECNICO">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-teal-500"></span>
+                                <span>Pendiente Técnico</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Etiquetas */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-sm font-medium">
+                        <Tag className="h-4 w-4 text-purple-500" />
+                        Etiquetas
+                      </Label>
+                      <div className="relative" style={{ zIndex: 50 }}>
+                        <SelectComponent
+                          placeholder="Seleccione etiquetas (opcional)"
+                          options={optionsLabels}
+                          isMulti
+                          value={ticketToEdit.tags}
+                          onChange={handleChangeLabels}
+                          menuPlacement="auto"
+                          className="text-black text-[12px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Estado */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="status"
-                    className="flex items-center gap-2 text-sm font-medium"
-                  >
-                    <Clock className="h-4 w-4 text-blue-500" />
-                    Estado
-                  </Label>
-                  <Select
-                    value={ticketToEdit.status}
-                    onValueChange={(value) =>
-                      handleSelectChange("status", value)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NUEVO">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                          <span>Nuevo</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="ABIERTA">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
-                          <span>Abierta</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="EN_PROCESO">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                          <span>En Proceso</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="PENDIENTE">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-gray-500"></span>
-                          <span>Pendiente</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="PENDIENTE_CLIENTE">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-pink-500"></span>
-                          <span>Pendiente Cliente</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="PENDIENTE_TECNICO">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-teal-500"></span>
-                          <span>Pendiente Técnico</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                {/* COLUMNA DERECHA - Asignaciones */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                      Asignaciones
+                    </h3>
 
-              {/* Etiquetas */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-sm font-medium">
-                  <Tag className="h-4 w-4 text-purple-500" />
-                  Etiquetas
-                </Label>
-                <div className="relative z-30">
-                  <SelectComponent
-                    placeholder="Seleccione etiquetas (opcional)"
-                    options={optionsLabels}
-                    isMulti
-                    value={ticketToEdit.tags}
-                    onChange={handleChangeLabels}
-                    menuPlacement="top"
-                    className=" text-black text-[12px]"
-                  />
-                </div>
-              </div>
+                    {/* Técnico Asignado */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="assignee"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <UserIcon className="h-4 w-4 text-teal-500" />
+                        Técnico Asignado
+                      </Label>
+                      <div className="relative" style={{ zIndex: 40 }}>
+                        <SelectComponent
+                          placeholder="Seleccione un técnico"
+                          isClearable
+                          options={optionsTecs.filter(
+                            (option) =>
+                              !ticketToEdit.companios
+                                .map((tecnico) => tecnico.id)
+                                .includes(parseInt(option.value))
+                          )}
+                          value={
+                            ticketToEdit.assignee
+                              ? optionsTecs.find(
+                                  (tec) =>
+                                    tec.value ===
+                                    ticketToEdit.assignee.id.toString()
+                                )
+                              : null
+                          }
+                          onChange={handleChangeTecSelect}
+                          className="text-black text-[13px]"
+                          menuPlacement="auto"
+                        />
+                      </div>
+                    </div>
 
-              {/* Técnico Asignado */}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="assignee"
-                  className="flex items-center gap-2 text-sm font-medium"
-                >
-                  <UserIcon className="h-4 w-4 text-teal-500" />
-                  Técnico Asignado
-                </Label>
-                <SelectComponent
-                  placeholder="Seleccione un técnico"
-                  isClearable
-                  options={optionsTecs}
-                  value={
-                    ticketToEdit.assignee
-                      ? optionsTecs.find(
-                          (tec) =>
-                            tec.value === ticketToEdit.assignee.id.toString()
-                        )
-                      : null
-                  }
-                  onChange={handleChangeTecSelect}
-                  className="text-black text-[13px]"
-                  menuPlacement="top"
-                />
+                    {/* Acompañantes */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="companions"
+                        className="flex items-center gap-2 text-sm font-medium "
+                      >
+                        <UserIcon className="h-4 w-4 text-teal-500" />
+                        Acompañantes
+                      </Label>
+                      <div className="relative" style={{ zIndex: 30 }}>
+                        <SelectComponent
+                          placeholder="Seleccione acompañantes"
+                          isClearable
+                          options={optionsTecs.filter(
+                            (t) =>
+                              t.value !== ticketToEdit.assignee.id.toString()
+                          )}
+                          isMulti
+                          value={companionOptions}
+                          onChange={handleChangeCompanions}
+                          className="text-black text-[13px]"
+                          menuPlacement="auto"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Información adicional o campos extra */}
+                    {/* <div className="space-y-4 pt-4">
+                      <h4 className="text-md font-medium text-muted-foreground">
+                        Información Adicional
+                      </h4>
+                      <div className="p-4 bg-muted/20 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          Aquí puedes agregar campos adicionales como fechas,
+                          categorías, o cualquier otra información relevante
+                          para el ticket.
+                        </p>
+                      </div>
+                    </div> */}
+                  </div>
+                </div>
               </div>
             </div>
 

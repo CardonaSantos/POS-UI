@@ -113,6 +113,11 @@ export interface TicketMoment {
   estado: EstadoTicket;
   prioridad: PrioridadTicketSoporte;
   tecnico: Tecnico;
+  cliente: {
+    id: number;
+    nombre: string;
+    apellidos: string;
+  };
 }
 
 export interface TicketsEnProceso {

@@ -51,7 +51,9 @@ export default function CrmDashboard() {
       if (response.status === 200) {
         setTickets(response.data);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log("Error al conseguir mis tickets", error);
+    }
   };
 
   const getEnProceso = async () => {
@@ -136,16 +138,8 @@ export default function CrmDashboard() {
         </div>
       )}
 
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          <MyTickets getEnProceso={getEnProceso} tickets={tickets} />
-          <TicketsEnProcesoCard data={dataTicketsEnProceso} />
-        </div>
-      </div>
-
-      <div className="container mx-auto space-y-4">
-        {/* <MorososInvoices /> */}
-      </div>
+      <MyTickets getEnProceso={getEnProceso} tickets={tickets} />
+      <TicketsEnProcesoCard data={dataTicketsEnProceso} />
     </motion.div>
   );
 }

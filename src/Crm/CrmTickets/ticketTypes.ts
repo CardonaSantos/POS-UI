@@ -1,8 +1,16 @@
+import { RolUsuario } from "../CrmProfile/interfacesProfile";
+
 export interface User {
   id: number;
   name: string;
   initials: string;
   avatar?: string;
+}
+
+export interface Companion {
+  id: number;
+  name: string;
+  rol: RolUsuario;
 }
 
 export interface Comment {
@@ -48,6 +56,7 @@ export interface Ticket {
   status: EstadoTicketSoporte;
   priority: PrioridadTicketSoporte;
   assignee: User;
+  companios: Companion[];
   creator: User;
   date: string;
   unread?: boolean;

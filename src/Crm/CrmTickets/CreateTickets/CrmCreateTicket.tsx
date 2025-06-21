@@ -13,6 +13,7 @@ import {
   Clock,
   Flag,
   Loader,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,10 +36,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import SelectComponent, { MultiValue } from "react-select";
+import SelectComponent from "react-select";
 import axios from "axios";
 import { toast } from "sonner";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+import { MultiSelect } from "./MultiSelect";
+import { TechSelect } from "./TechSelect";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 // Tipos
 interface CreateTicketProps {
@@ -68,6 +69,19 @@ interface Etiqueta {
   id: number;
   nombre: string;
 }
+interface FormData {
+  clienteId: number | null;
+  tecnicoId: number | null;
+  tecnicosAdicionales: number[];
+
+  titulo: "";
+  descripcion: "";
+  estado: "NUEVO";
+  prioridad: "MEDIA";
+  etiquetas: number[];
+  userId: number;
+  empresaId: number;
+}
 
 function CrmCreateTicket({
   openCreatT,
@@ -77,19 +91,7 @@ function CrmCreateTicket({
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
-  interface FormData {
-    clienteId: number | null;
-    tecnicoId: number | null;
-    titulo: "";
-    descripcion: "";
-    estado: "NUEVO";
-    prioridad: "MEDIA";
-    etiquetas: number[];
-    userId: number;
-    empresaId: number;
-  }
 
   // Estados para los campos del formulario
   const [formData, setFormData] = useState<FormData>({
@@ -102,7 +104,24 @@ function CrmCreateTicket({
     etiquetas: [] as number[],
     userId: userId,
     empresaId: empresaId,
+    tecnicosAdicionales: [],
   });
+
+  const clearFormData = () => {
+    setFormData({
+      clienteId: 0,
+      tecnicoId: 0,
+      titulo: "",
+      descripcion: "",
+      estado: "NUEVO",
+      prioridad: "MEDIA",
+      etiquetas: [],
+      userId: userId,
+      empresaId: empresaId,
+      tecnicosAdicionales: [],
+    });
+    setLabelsSelecteds([]);
+  };
 
   // Datos simulados
   const [clientes, setClientes] = useState<Cliente[]>([
@@ -175,7 +194,7 @@ function CrmCreateTicket({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleSelectChange = (name: string, value: string | null) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -183,13 +202,18 @@ function CrmCreateTicket({
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/tickets-soporte`,
-        formData
-      );
+      const response = await axios.post(`${VITE_CRM_API_URL}/tickets-soporte`, {
+        ...formData,
+        etiquetas: labelsSelecteds,
+        tecnicoId:
+          formData.tecnicoId !== null && formData.tecnicoId !== undefined
+            ? Number(formData.tecnicoId)
+            : null,
+      });
 
       if (response.status === 201) {
         toast.success("Ticket Creado");
+        clearFormData();
       }
     } catch (error) {
       console.log(error);
@@ -211,26 +235,38 @@ function CrmCreateTicket({
     setFormData((prev) => ({ ...prev, clienteId: newCustomerId }));
   };
 
-  const handleChangeTecSelect = (
-    optionSelected: OptionSelectedReactComponent | null
-  ) => {
-    const newTecId = optionSelected ? parseInt(optionSelected.value, 10) : null;
-    setFormData((prevData) => ({
-      ...prevData,
-      tecnicoId: newTecId,
-    }));
-  };
+  // const handleChangeTecSelect = (
+  //   optionSelected: OptionSelectedReactComponent | null
+  // ) => {
+  //   const newTecId = optionSelected ? parseInt(optionSelected.value, 10) : null;
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     tecnicoId: newTecId,
+  //   }));
+  // };
 
-  const handleChangeLabels = (
-    selectedOptions: MultiValue<{ value: string; label: string }>
-  ) => {
-    const selectedIds = selectedOptions.map((option) => parseInt(option.value));
-    setLabelsSelecteds(selectedIds);
-    setFormData((prev) => ({
-      ...prev,
-      etiquetas: selectedIds,
-    }));
-  };
+  // const handleChangeTecSelectMulti = (
+  //   selectedOptions: MultiValue<{ value: string; label: string }>
+  // ) => {
+  //   const selectedIds = selectedOptions.map((option) =>
+  //     parseInt(option.value, 10)
+  //   );
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     tecnicosAdicionales: selectedIds,
+  //   }));
+  // };
+
+  // const handleChangeLabels = (
+  //   selectedOptions: MultiValue<{ value: string; label: string }>
+  // ) => {
+  //   const selectedIds = selectedOptions.map((option) => parseInt(option.value));
+  //   setLabelsSelecteds(selectedIds);
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     etiquetas: selectedIds,
+  //   }));
+  // };
 
   const optionsCustomers = clientes.map((cliente) => ({
     value: cliente.id.toString(),
@@ -247,18 +283,18 @@ function CrmCreateTicket({
     label: label.nombre,
   }));
 
+  const tecnicoSelected = formData.tecnicoId ? false : true;
+
+  console.log("El form data es: ", formData);
+
   return (
     <Dialog open={openCreatT} onOpenChange={setOpenCreateT}>
-      <DialogContent className="sm:max-w-[700px] max-h-[100vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[900px] lg:max-w-[1000px] max-h-[98vh]  flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Ticket className="h-5 w-5 text-primary" />
             Crear Nuevo Ticket de Soporte
           </DialogTitle>
-          <DialogDescription>
-            Complete la información para crear un nuevo ticket de soporte
-            técnico.
-          </DialogDescription>
         </DialogHeader>
 
         <Tabs
@@ -276,201 +312,283 @@ function CrmCreateTicket({
             </TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 ">
-            <TabsContent value="info" className="mt-0 space-y-10">
-              {/* Cliente */}
-              <div className="space-y-2">
-                <Label htmlFor="cliente" className="flex items-center gap-1">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  Cliente <span className="text-destructive">*</span>
-                </Label>
-                <SelectComponent
-                  placeholder="Seleccione un cliente"
-                  isClearable
-                  className="text-black text-sm"
-                  options={optionsCustomers}
-                  value={
-                    optionsCustomers.find(
-                      (option) =>
-                        option.value === formData.clienteId?.toString()
-                    ) || null
-                  }
-                  onChange={handleChangeCustomerSelect}
-                />
-              </div>
+          <ScrollArea className="flex-1">
+            <TabsContent value="info" className="mt-0 space-y-0">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-1">
+                {/* COLUMNA IZQUIERDA - Cliente y Asignaciones */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground border-b pb-2">
+                      Cliente y Asignaciones
+                    </h3>
 
-              {/* Técnico */}
-              <div className="space-y-2">
-                <Label htmlFor="tecnicoId" className="flex items-center gap-1">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  Técnico Asignado
-                </Label>
-                <SelectComponent
-                  placeholder="Seleccione un técnico"
-                  isClearable
-                  className="text-black text-sm"
-                  options={optionsTecs}
-                  value={optionsTecs.find(
-                    (tec) =>
-                      tec.value === formData.tecnicoId?.toString() || null
-                  )}
-                  onChange={handleChangeTecSelect}
-                />
-              </div>
+                    {/* Cliente */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="cliente"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        Cliente <span className="text-destructive">*</span>
+                      </Label>
+                      <div className="relative" style={{ zIndex: 50 }}>
+                        <SelectComponent
+                          placeholder="Seleccione un cliente"
+                          isClearable
+                          className="text-black text-sm"
+                          options={optionsCustomers}
+                          value={
+                            optionsCustomers.find(
+                              (option) =>
+                                option.value === formData.clienteId?.toString()
+                            ) || null
+                          }
+                          onChange={handleChangeCustomerSelect}
+                        />
+                      </div>
+                    </div>
 
-              {/* Estado */}
-              <div className="space-y-2">
-                <Label htmlFor="estado" className="flex items-center gap-1">
-                  <Clock className="h-4 w-4  text-blue-500" />
-                  Estado
-                </Label>
-                <Select
-                  value={formData.estado}
-                  onValueChange={(value) => handleSelectChange("estado", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NUEVO">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                        <span>Nuevo</span>
+                    {/* Técnico Asignado */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="tecnicoId"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        Técnico Asignado
+                      </Label>
+                      <div className="relative" style={{ zIndex: 40 }}>
+                        <TechSelect
+                          options={optionsTecs.filter(
+                            (o) =>
+                              !formData.tecnicosAdicionales.includes(
+                                Number(o.value)
+                              )
+                          )}
+                          value={
+                            optionsTecs.find(
+                              (tec) =>
+                                tec.value === formData.tecnicoId?.toString()
+                            ) || null
+                          }
+                          onChange={(opt) => {
+                            handleSelectChange("tecnicoId", opt?.value ?? null);
+                          }}
+                          placeholder="Seleccione un técnico"
+                        />
                       </div>
-                    </SelectItem>
-                    <SelectItem value="ABIERTA">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-yellow-600"></span>
-                        <span>Abierta</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="EN_PROCESO">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-green-600"></span>
-                        <span>En Proceso</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="PENDIENTE">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-gray-600"></span>
-                        <span>Pendiente</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="PENDIENTE_CLIENTE">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-pink-600"></span>
-                        <span>Pendiente Cliente</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="PENDIENTE_TECNICO">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-teal-600"></span>
-                        <span>Pendiente Técnico</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                    </div>
 
-              {/* Prioridad */}
-              <div className="space-y-2">
-                <Label htmlFor="prioridad" className="flex items-center gap-1">
-                  <Flag className="h-4 w-4 text-red-500" />
-                  Prioridad
-                </Label>
-                <Select
-                  value={formData.prioridad}
-                  onValueChange={(value) =>
-                    handleSelectChange("prioridad", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar prioridad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BAJA" className="flex items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-gray-500"></span>
-                        <span>Baja</span>
+                    {/* Acompañantes */}
+                    <div className="space-y-2 pb-10">
+                      <Label
+                        htmlFor="acompanantes"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        Acompañantes
+                      </Label>
+                      <div className="relative">
+                        <MultiSelect
+                          disabled={tecnicoSelected}
+                          options={optionsTecs.filter(
+                            (t) => t.value !== formData.tecnicoId?.toString()
+                          )}
+                          value={optionsTecs.filter((t) =>
+                            formData.tecnicosAdicionales.includes(+t.value)
+                          )}
+                          onChange={(opts) =>
+                            setFormData({
+                              ...formData,
+                              tecnicosAdicionales: opts.map((o) => +o.value),
+                            })
+                          }
+                        />
                       </div>
-                    </SelectItem>
-                    <SelectItem value="MEDIA">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                        <span>Media</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ALTA">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
-                        <span>Alta</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="URGENTE">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                        <span>Urgente</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* COLUMNA DERECHA - Estado y Prioridad */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground border-b pb-2">
+                      Estado y Configuración
+                    </h3>
+
+                    {/* Estado */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="estado"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        Estado
+                      </Label>
+                      <Select
+                        value={formData.estado}
+                        onValueChange={(value) =>
+                          handleSelectChange("estado", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar estado" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[60]">
+                          <SelectItem value="NUEVO">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                              <span>Nuevo</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="ABIERTA">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-yellow-600"></span>
+                              <span>Abierta</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="EN_PROCESO">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-green-600"></span>
+                              <span>En Proceso</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="PENDIENTE">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-gray-600"></span>
+                              <span>Pendiente</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="PENDIENTE_CLIENTE">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-pink-600"></span>
+                              <span>Pendiente Cliente</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="PENDIENTE_TECNICO">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-teal-600"></span>
+                              <span>Pendiente Técnico</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Prioridad */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="prioridad"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <Flag className="h-4 w-4 text-red-500" />
+                        Prioridad
+                      </Label>
+                      <Select
+                        value={formData.prioridad}
+                        onValueChange={(value) =>
+                          handleSelectChange("prioridad", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar prioridad" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[60]">
+                          <SelectItem
+                            value="BAJA"
+                            className="flex items-center"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-gray-500"></span>
+                              <span>Baja</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="MEDIA">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                              <span>Media</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="ALTA">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                              <span>Alta</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="URGENTE">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                              <span>Urgente</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="details" className="mt-0 space-y-10">
-              {/* Título */}
-              <div className="space-y-2 px-4">
-                <Label htmlFor="titulo" className="flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  Título <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="titulo"
-                  name="titulo"
-                  value={formData.titulo}
-                  onChange={handleChange}
-                  placeholder="Título descriptivo del problema"
-                  required
-                />
-              </div>
-
-              {/* Descripción */}
-              <div className="space-y-1 px-4">
-                <Label
-                  htmlFor="descripcion"
-                  className="flex items-center gap-1"
-                >
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  Descripción
-                </Label>
-                <Textarea
-                  id="descripcion"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  placeholder="Describa detalladamente el problema o solicitud"
-                  className="min-h-[90px]"
-                />
-              </div>
-
-              {/* Etiquetas */}
-              <div className="space-y-1">
-                <Label className="flex items-center gap-1">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  Etiquetas
-                </Label>
-                <div className="relative z-30">
-                  <SelectComponent
-                    placeholder="Seleccione etiquetas (opcional)"
-                    options={optionsLabels}
-                    isMulti
-                    className="text-black text-sm"
-                    onChange={handleChangeLabels}
-                    value={optionsLabels.filter((option) =>
-                      labelsSelecteds.includes(Number.parseInt(option.value))
-                    )}
-                    menuPlacement="top" // Esta propiedad hace que las opciones se desplieguen hacia arriba
+            <TabsContent value="details" className="mt-0 space-y-6 p-1">
+              <div className="max-w-2xl mx-auto space-y-6">
+                {/* Título */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="titulo"
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                    Título <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="titulo"
+                    name="titulo"
+                    value={formData.titulo}
+                    onChange={handleChange}
+                    placeholder="Título descriptivo del problema"
+                    required
+                    className="text-sm"
                   />
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="descripcion"
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    Descripción
+                  </Label>
+                  <Textarea
+                    id="descripcion"
+                    name="descripcion"
+                    value={formData.descripcion}
+                    onChange={handleChange}
+                    placeholder="Describa detalladamente el problema o solicitud"
+                    className="min-h-[90px] text-sm"
+                  />
+                </div>
+
+                {/* Etiquetas */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    Etiquetas
+                  </Label>
+                  <div className="relative" style={{ zIndex: 30 }}>
+                    <MultiSelect
+                      options={optionsLabels}
+                      value={optionsLabels.filter((o) =>
+                        labelsSelecteds.includes(Number(o.value))
+                      )}
+                      onChange={(opts) =>
+                        setLabelsSelecteds(opts.map((o) => Number(o.value)))
+                      }
+                      placeholder="Seleccione etiquetas (opcional)"
+                      // disabled={true} // cámbialo a true si quieres bloquearlo
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -479,7 +597,8 @@ function CrmCreateTicket({
 
         <Separator className="my-4" />
 
-        <DialogFooter className="flex sm:justify-between gap-2">
+        {/* FOOTER CORREGIDO */}
+        <div className="flex sm:justify-between gap-2 pt-2 pb-4">
           <div className="hidden sm:flex items-center text-sm text-muted-foreground">
             <Calendar className="mr-2 h-4 w-4" />
             Fecha de creación: {new Date().toLocaleDateString()}
@@ -515,7 +634,7 @@ function CrmCreateTicket({
               )}
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
