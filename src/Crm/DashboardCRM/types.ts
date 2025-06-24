@@ -11,6 +11,7 @@ export interface FormattedTicket {
   clientName: string;
   clientPhone: string | null;
   referenceContact: string | null;
+  clientId: number;
 
   location: {
     lat: number;

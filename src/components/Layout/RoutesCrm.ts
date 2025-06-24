@@ -307,11 +307,6 @@ export const routesCrm_Tecnico = [
     label: "Soporte",
     submenu: [
       { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
-      {
-        icon: Tags,
-        label: "Categorías de Soporte",
-        href: "/crm/tags",
-      },
     ],
   },
   { icon: User, label: "Perfil", href: "/crm/perfil" },

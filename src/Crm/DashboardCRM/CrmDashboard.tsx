@@ -46,7 +46,7 @@ export default function CrmDashboard() {
   const getTickets = async () => {
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/dashboard/get-dashboard-info/${userId}`
+        `${VITE_CRM_API_URL}/dashboard/get-tickets-asignados/${userId}`
       );
       if (response.status === 200) {
         setTickets(response.data);
@@ -73,6 +73,8 @@ export default function CrmDashboard() {
     getEnProceso();
   }, []);
 
+  console.log("Los tickets asignados son: ", tickets);
+
   // Función para obtener los datos del dashboard desde el backend
   const fetchDashboardData = async () => {
     try {
@@ -94,51 +96,53 @@ export default function CrmDashboard() {
   return (
     <motion.div
       {...DesvanecerHaciaArriba}
-      className="container mx-auto p-4 space-y-4"
+      className="container p-4 mx-auto space-y-4"
     >
-      <h2 className="text-xl font-bold  text-center underline">
-        Dashboard CRM
-      </h2>
+      <h2 className="text-xl font-bold text-center underline">Dashboard CRM</h2>
 
       {rol == "TECNICO" ? null : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <StatCard
             title="Clientes Activos"
             value={dashboardData?.activeClients.toString() ?? ""}
-            icon={<Users className="h-4 w-4 text-muted-foreground" />}
+            icon={<Users className="w-4 h-4 text-muted-foreground" />}
           />
           <StatCard
             title="Clientes Morosos"
             value={dashboardData?.delinquentClients.toString() ?? ""}
-            icon={<UserMinus className="h-4 w-4 text-muted-foreground" />}
+            icon={<UserMinus className="w-4 h-4 text-muted-foreground" />}
           />
 
           <StatCard
             title="Clientes Suspendidos"
             value={dashboardData?.suspendedClients.toString() ?? ""}
-            icon={<WifiOff className="h-4 w-4 text-muted-foreground" />}
+            icon={<WifiOff className="w-4 h-4 text-muted-foreground" />}
           />
 
           <StatCard
             title="Clientes Desconectados"
             value={dashboardData?.suspendedClients.toString() ?? ""}
-            icon={<UserX className="h-4 w-4 text-muted-foreground" />}
+            icon={<UserX className="w-4 h-4 text-muted-foreground" />}
           />
 
           <StatCard
             title="Servicios Activos"
             value={dashboardData?.activeServices.toString() ?? ""}
-            icon={<Zap className="h-4 w-4 text-muted-foreground" />}
+            icon={<Zap className="w-4 h-4 text-muted-foreground" />}
           />
           <StatCard
             title="Servicios Suspendidos"
             value={dashboardData?.suspendedServices.toString() ?? ""}
-            icon={<ZapOff className="h-4 w-4 text-muted-foreground" />}
+            icon={<ZapOff className="w-4 h-4 text-muted-foreground" />}
           />
         </div>
       )}
 
-      <MyTickets getEnProceso={getEnProceso} tickets={tickets} />
+      <MyTickets
+        getEnProcesoStatus={getEnProceso}
+        getEnProceso={getTickets}
+        tickets={tickets}
+      />
       <TicketsEnProcesoCard data={dataTicketsEnProceso} />
     </motion.div>
   );
@@ -162,7 +166,7 @@ function StatCard({
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
                 {title}
               </p>
               <p className="text-xl font-bold">{value}</p>

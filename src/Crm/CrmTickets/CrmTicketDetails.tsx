@@ -152,6 +152,7 @@ export default function TicketDetail({
       }
     } catch (error) {
       toast.info("Error al añadir seguimiento");
+      return error;
     }
   };
 
@@ -273,7 +274,10 @@ export default function TicketDetail({
     try {
       const response = await axios.patch(
         `${VITE_CRM_API_URL}/tickets-soporte/update-ticket-soporte/${ticketToEdit.id}`,
-        ticketToEdit
+        {
+          ...ticketToEdit,
+          companios: ticketToEdit.companios.map((tec) => tec.id),
+        }
       );
       if (response.status === 200 || response.status === 201) {
         toast.success("Ticket actualizado correctamente");
@@ -342,11 +346,11 @@ export default function TicketDetail({
 
   return (
     <div className="flex flex-col h-full p-2 rounded-sm">
-      <div className="border-b px-0">
-        <div className="flex items-center justify-between bg-muted sm:bg-transparent rounded-sm p-2">
+      <div className="px-0 border-b">
+        <div className="flex items-center justify-between p-2 rounded-sm bg-muted sm:bg-transparent">
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-green-400 text-gray-800 font-semibold">
+            <Avatar className="w-8 h-8">
+              <AvatarFallback className="font-semibold text-gray-800 bg-green-400">
                 {ticket.customer
                   ? ticket.customer.name.slice(0, 2).toUpperCase()
                   : "NA"}{" "}
@@ -355,7 +359,7 @@ export default function TicketDetail({
             <div>
               <div className="text-[12px] text-blue-600 font-semibold">
                 <Link to={`/crm/cliente/${ticket.customer.id}`}>
-                  {ticket.assignee ? ticket.customer.name : "No asignado"} ·{" "}
+                  {ticket?.assignee ? ticket?.customer?.name : "No asignado"} ·{" "}
                   {formatearFecha(new Date(ticket.date).toISOString())}
                 </Link>
               </div>
@@ -372,7 +376,7 @@ export default function TicketDetail({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="w-8 h-8">
                   <Ellipsis />
                 </Button>
               </DropdownMenuTrigger>
@@ -384,7 +388,7 @@ export default function TicketDetail({
                     setOpenDelete(true);
                   }}
                 >
-                  Eliminar Ticket <TicketSlash className="h-5 w-5 mx-2" />
+                  Eliminar Ticket <TicketSlash className="w-5 h-5 mx-2" />
                 </DropdownMenuCheckboxItem>
 
                 <DropdownMenuSeparator />
@@ -396,11 +400,11 @@ export default function TicketDetail({
                     setTicketToEdit(ticket);
                   }}
                 >
-                  Actualizar Ticket <RotateCcw className="h-5 w-5 mx-2" />
+                  Actualizar Ticket <RotateCcw className="w-5 h-5 mx-2" />
                 </DropdownMenuCheckboxItem>
                 <Link to={`/crm-boleta-ticket-soporte/${ticket.id}`}>
                   <DropdownMenuCheckboxItem>
-                    Imprimir Boleta Ticket <FileText className="h-5 w-5 mx-2" />
+                    Imprimir Boleta Ticket <FileText className="w-5 h-5 mx-2" />
                   </DropdownMenuCheckboxItem>
                 </Link>
 
@@ -410,26 +414,26 @@ export default function TicketDetail({
                     setTicketToEdit(ticket);
                   }}
                 >
-                  Cerrar Ticket <Sticker className="h-5 w-5 mx-2" />
+                  Cerrar Ticket <Sticker className="w-5 h-5 mx-2" />
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              className="p-2 rounded-full hover:bg-gray-100"
               aria-label="Close details"
             >
-              <X className="h-4 w-4  text-red-500 font-bold" />
+              <X className="w-4 h-4 font-bold text-red-500" />
             </button>
           </div>
         </div>
 
-        <h2 className="text-base font-semibold mt-2">{ticket.title}</h2>
-        <p className="text-sm font-thin mb-1">{ticket.description}</p>
+        <h2 className="mt-2 text-base font-semibold">{ticket.title}</h2>
+        <p className="mb-1 text-sm font-thin">{ticket.description}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 p-4 overflow-y-auto">
         {ticket.comments &&
           ticket.comments.map((comment, index) => (
             <motion.div
@@ -437,10 +441,10 @@ export default function TicketDetail({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gray-100 dark:bg-slate-900 rounded-lg py-2 px-3 mb-2"
+              className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="font-medium text-sm">{comment.user.name}</span>
+                <span className="text-sm font-medium">{comment.user.name}</span>
                 <span className="text-[11px] text-muted-foreground">
                   {formatearFecha(new Date(comment.date).toISOString())}
                 </span>
@@ -450,7 +454,7 @@ export default function TicketDetail({
           ))}
       </div>
 
-      <div className="border-t p-4">
+      <div className="p-4 border-t">
         <form onSubmit={submitNewComentaryFollowUp}>
           <div className="relative flex items-center gap-3">
             <Textarea
@@ -468,7 +472,7 @@ export default function TicketDetail({
               type="submit"
               className="bg-[#27bd65] hover:bg-[#3cc575] text-white flex items-center justify-center p-2 rounded-lg transition-colors duration-300"
             >
-              <Send className="h-4 w-4 mr-2" />
+              <Send className="w-4 h-4 mr-2" />
               ENVIAR
             </button>
           </div>
@@ -479,18 +483,18 @@ export default function TicketDetail({
       <Dialog open={openUpdateTicket} onOpenChange={setOpenUpdateTicket}>
         <DialogContent className="sm:max-w-[900px] lg:max-w-[1000px] p-0 overflow-hidden max-h-[90vh]">
           <form onSubmit={handleSubmitTicketEdit} className="space-y-0">
-            <DialogHeader className="px-6 pt-6 pb-4 bg-muted/30 border-b">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
               <DialogTitle className="text-xl font-semibold text-center">
                 Editar Ticket
               </DialogTitle>
             </DialogHeader>
 
             <div className="px-6 py-6 max-h-[calc(90vh-140px)] overflow-y-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 {/* COLUMNA IZQUIERDA - Información Básica */}
                 <div className="space-y-6">
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                    <h3 className="pb-2 text-lg font-medium border-b text-muted-foreground">
                       Información Básica
                     </h3>
 
@@ -501,7 +505,7 @@ export default function TicketDetail({
                         className="flex items-center gap-2 text-sm font-medium"
                       >
                         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
-                          <span className="text-primary text-xs font-bold">
+                          <span className="text-xs font-bold text-primary">
                             T
                           </span>
                         </span>
@@ -524,7 +528,7 @@ export default function TicketDetail({
                         className="flex items-center gap-2 text-sm font-medium"
                       >
                         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
-                          <span className="text-primary text-xs font-bold">
+                          <span className="text-xs font-bold text-primary">
                             D
                           </span>
                         </span>
@@ -548,7 +552,7 @@ export default function TicketDetail({
                           htmlFor="priority"
                           className="flex items-center gap-2 text-sm font-medium"
                         >
-                          <Flag className="h-4 w-4 text-red-500" />
+                          <Flag className="w-4 h-4 text-red-500" />
                           Prioridad
                         </Label>
                         <Select
@@ -566,25 +570,25 @@ export default function TicketDetail({
                               className="flex items-center"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-gray-500"></span>
+                                <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
                                 <span>Baja</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="MEDIA">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                 <span>Media</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="ALTA">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
                                 <span>Alta</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="URGENTE">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                                <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                                 <span>Urgente</span>
                               </div>
                             </SelectItem>
@@ -598,7 +602,7 @@ export default function TicketDetail({
                           htmlFor="status"
                           className="flex items-center gap-2 text-sm font-medium"
                         >
-                          <Clock className="h-4 w-4 text-blue-500" />
+                          <Clock className="w-4 h-4 text-blue-500" />
                           Estado
                         </Label>
                         <Select
@@ -613,37 +617,37 @@ export default function TicketDetail({
                           <SelectContent className="z-[60]">
                             <SelectItem value="NUEVO">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                                 <span>Nuevo</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="ABIERTA">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
                                 <span>Abierta</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="EN_PROCESO">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                 <span>En Proceso</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="PENDIENTE">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-gray-500"></span>
+                                <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
                                 <span>Pendiente</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="PENDIENTE_CLIENTE">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-pink-500"></span>
+                                <span className="w-2 h-2 bg-pink-500 rounded-full"></span>
                                 <span>Pendiente Cliente</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="PENDIENTE_TECNICO">
                               <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-teal-500"></span>
+                                <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
                                 <span>Pendiente Técnico</span>
                               </div>
                             </SelectItem>
@@ -655,7 +659,7 @@ export default function TicketDetail({
                     {/* Etiquetas */}
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2 text-sm font-medium">
-                        <Tag className="h-4 w-4 text-purple-500" />
+                        <Tag className="w-4 h-4 text-purple-500" />
                         Etiquetas
                       </Label>
                       <div className="relative" style={{ zIndex: 50 }}>
@@ -676,7 +680,7 @@ export default function TicketDetail({
                 {/* COLUMNA DERECHA - Asignaciones */}
                 <div className="space-y-6">
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-muted-foreground border-b pb-2">
+                    <h3 className="pb-2 text-lg font-medium border-b text-muted-foreground">
                       Asignaciones
                     </h3>
 
@@ -686,7 +690,7 @@ export default function TicketDetail({
                         htmlFor="assignee"
                         className="flex items-center gap-2 text-sm font-medium"
                       >
-                        <UserIcon className="h-4 w-4 text-teal-500" />
+                        <UserIcon className="w-4 h-4 text-teal-500" />
                         Técnico Asignado
                       </Label>
                       <div className="relative" style={{ zIndex: 40 }}>
@@ -721,7 +725,7 @@ export default function TicketDetail({
                         htmlFor="companions"
                         className="flex items-center gap-2 text-sm font-medium "
                       >
-                        <UserIcon className="h-4 w-4 text-teal-500" />
+                        <UserIcon className="w-4 h-4 text-teal-500" />
                         Acompañantes
                       </Label>
                       <div className="relative" style={{ zIndex: 30 }}>
@@ -730,7 +734,7 @@ export default function TicketDetail({
                           isClearable
                           options={optionsTecs.filter(
                             (t) =>
-                              t.value !== ticketToEdit.assignee.id.toString()
+                              t.value !== ticketToEdit?.assignee?.id.toString()
                           )}
                           isMulti
                           value={companionOptions}
@@ -740,38 +744,24 @@ export default function TicketDetail({
                         />
                       </div>
                     </div>
-
-                    {/* Información adicional o campos extra */}
-                    {/* <div className="space-y-4 pt-4">
-                      <h4 className="text-md font-medium text-muted-foreground">
-                        Información Adicional
-                      </h4>
-                      <div className="p-4 bg-muted/20 rounded-lg">
-                        <p className="text-sm text-muted-foreground">
-                          Aquí puedes agregar campos adicionales como fechas,
-                          categorías, o cualquier otra información relevante
-                          para el ticket.
-                        </p>
-                      </div>
-                    </div> */}
                   </div>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="px-6 py-4 bg-muted/30 border-t flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <DialogFooter className="flex flex-col gap-2 px-6 py-4 border-t bg-muted/30 sm:flex-row sm:gap-0">
               <Button
                 variant="outline"
                 onClick={() => setOpenUpdateTicket(false)}
                 type="button"
-                className="w-full sm:w-auto order-2 sm:order-1"
+                className="order-2 w-full sm:w-auto sm:order-1"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSubmitTicketEdit}
                 type="submit"
-                className="w-full sm:w-auto order-1 sm:order-2"
+                className="order-1 w-full sm:w-auto sm:order-2"
               >
                 Guardar Cambios
               </Button>
@@ -792,10 +782,10 @@ export default function TicketDetail({
               puede deshacer.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 flex justify-center items-center">
+          <div className="flex items-center justify-center py-4">
             <Alert className="" variant="destructive">
-              <div className="flex justify-center items-center">
-                <AlertCircle className="h-4 w-4" />
+              <div className="flex items-center justify-center">
+                <AlertCircle className="w-4 h-4" />
               </div>
 
               <AlertTitle className="text-center">Advertencia</AlertTitle>
