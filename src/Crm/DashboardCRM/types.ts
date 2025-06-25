@@ -1,4 +1,5 @@
 // src/interfaces/ticket.ts
+import currency from "currency.js";
 
 export interface FormattedTicket {
   id: number;
@@ -29,3 +30,12 @@ export enum EstadoTicketSoporte {
   CANCELADA = "CANCELADA",
   ARCHIVADA = "ARCHIVADA",
 }
+
+export const formatearMoneda = (monto: number) => {
+  return currency(monto, {
+    symbol: "Q",
+    separator: ",",
+    decimal: ".",
+    precision: 2,
+  }).format();
+};

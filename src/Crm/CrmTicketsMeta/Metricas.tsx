@@ -38,6 +38,8 @@ export default function MetricCharts({
     TicketMoment[]
   >([]);
 
+  const [resueltosMes, setResueltosMes] = useState<number | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isLoading = loading || externalLoading;
@@ -58,6 +60,7 @@ export default function MetricCharts({
       setDataScale(response.data.dataScale);
       setDataTicketsEnProceso(response.data.ticketsEnProceso);
       setDataTicketsActuales(response.data.ticketsActuales);
+      setResueltosMes(response.data.resueltosDelMes);
     } catch (err) {
       const errorMessage = "Error al cargar las métricas";
       setError(errorMessage);
@@ -84,8 +87,8 @@ export default function MetricCharts({
 
   const ChartSkeleton = () => (
     <div className="space-y-3">
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-64 w-full" />
+      <Skeleton className="w-3/4 h-4" />
+      <Skeleton className="w-full h-64" />
     </div>
   );
 
@@ -97,7 +100,7 @@ export default function MetricCharts({
   return (
     <div className="space-y-6">
       {/* Header with refresh button */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Métricas de Rendimiento</h2>
           <p className="text-muted-foreground">
@@ -132,76 +135,92 @@ export default function MetricCharts({
       )}
 
       {/* Charts Grid */}
-      <div className=" gap-4">
+      <div className="gap-4 ">
         {dataTicketsActuales && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <Card className="hover:shadow-md transition-shadow duration-200">
+          <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-4">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Tickets disponibles
                     </p>
                     <div className="text-2xl font-bold">
                       {dataTicketsActuales.tickets}
                     </div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-transparent p-2 rounded-lg">
-                    <Target className="h-4 w-4 text-blue-600" />
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-transparent">
+                    <Target className="w-4 h-4 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Asignados
                     </p>
                     <div className="text-2xl font-bold">
                       {dataTicketsActuales.ticketsAsignados}
                     </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-transparent p-2 rounded-lg">
-                    <Clock className="h-4 w-4 text-green-600" />
+                  <div className="p-2 rounded-lg bg-green-50 dark:bg-transparent">
+                    <Clock className="w-4 h-4 text-green-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       En proceso
                     </p>
                     <div className="text-2xl font-bold">
                       {dataTicketsActuales.ticketsEnProceso}
                     </div>
                   </div>
-                  <div className="bg-orange-50 dark:bg-transparent  p-2 rounded-lg">
-                    <TrendingUp className="h-4 w-4 text-orange-600" />
+                  <div className="p-2 rounded-lg bg-orange-50 dark:bg-transparent">
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
-                      Resueltos
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      Resueltos del día
                     </p>
                     <div className="text-2xl font-bold">
                       {dataTicketsActuales.ticketsResueltos}
                     </div>
                   </div>
-                  <div className="bg-purple-50 dark:bg-transparent p-2 rounded-lg">
-                    <Target className="h-4 w-4 text-purple-600" />
+                  <div className="p-2 rounded-lg bg-purple-50 dark:bg-transparent">
+                    <Target className="w-4 h-4 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-shadow duration-200 hover:shadow-md">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      Resueltos del mes
+                    </p>
+                    <div className="text-2xl font-bold">{resueltosMes}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-purple-50 dark:bg-transparent">
+                    <Target className="w-4 h-4 text-purple-600" />
                   </div>
                 </div>
               </CardContent>
@@ -213,7 +232,7 @@ export default function MetricCharts({
         <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+              <TrendingUp className="w-5 h-5" />
               <h2 className="text-lg">Tickets Resueltos por Día</h2>
             </CardTitle>
           </CardHeader>
@@ -272,12 +291,12 @@ export default function MetricCharts({
       {!isLoading && data.length === 0 && !error && (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="py-8 text-center">
+              <BarChart3 className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">
                 No hay datos disponibles
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="mb-4 text-muted-foreground">
                 No se encontraron métricas para mostrar en los gráficos.
               </p>
               <Button onClick={fetchMetrics} variant="outline">

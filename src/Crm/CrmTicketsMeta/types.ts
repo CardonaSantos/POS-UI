@@ -129,4 +129,5 @@ export interface TicketsActuales {
   ticketsResueltos: number;
   ticketsEnProceso: number;
   ticketsAsignados: number;
+  resueltosDelMes: number;
 }
