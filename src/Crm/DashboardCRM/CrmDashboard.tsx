@@ -2,9 +2,7 @@ import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
-  UserMinus,
   Zap,
-  ZapOff,
   WifiOff,
   DollarSign,
   FileText,
@@ -14,6 +12,10 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
+  CreditCard,
+  Hourglass,
+  Kanban,
+  UserX,
 } from "lucide-react";
 import DesvanecerHaciaArriba from "../Motion/DashboardAnimations";
 import { motion } from "framer-motion";
@@ -25,6 +27,7 @@ import { getTicketEnProceso } from "../CrmTicketsMeta/api";
 import TicketsEnProcesoCard from "../CrmTicketsMeta/TicketsEnProcesoTable";
 import { TicketMoment } from "../CrmTicketsMeta/types";
 import { FormattedTicket, formatearMoneda } from "./types";
+import { Link } from "react-router-dom";
 const tokencrm = localStorage.getItem("authTokenCRM");
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -49,6 +52,9 @@ export interface DashboardData {
   totalCobradoDelMes: number;
   moraDeMorosos: number;
   facturasSinPagarMonto: number;
+  //
+  pendientesPago: number;
+  atrasados: number;
 }
 // src/interfaces/ticket.ts
 
@@ -138,6 +144,10 @@ export default function CrmDashboard() {
     totalCobradoDelMes: number;
     moraDeMorosos: number;
     facturasSinPagarMonto: number;
+    //nuevos
+    pendientesPago: number;
+    atrasados: number;
+    desinstalados: number;
   }
 
   // Componente de tarjeta compacta
@@ -205,7 +215,7 @@ export default function CrmDashboard() {
           <CardContent className="flex flex-col justify-between h-full p-3">
             <div className="flex items-start justify-between min-h-0">
               <div className="flex flex-col justify-between flex-1 h-full min-w-0">
-                <p className="text-xs font-medium leading-tight tracking-wide uppercase truncate text-muted-foreground">
+                <p className="text-xs font-semibold leading-tight tracking-wide uppercase truncate text-muted-foreground">
                   {title}
                 </p>
                 <div className="flex items-center justify-between mt-1">
@@ -234,7 +244,7 @@ export default function CrmDashboard() {
                   </div>
                 </div>
                 {subtitle && (
-                  <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                  <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5 font-semibold">
                     {subtitle}
                   </p>
                 )}
@@ -277,25 +287,33 @@ export default function CrmDashboard() {
               <p className="text-2xl font-bold text-foreground">
                 {totalClients}
               </p>
-              <p className="text-xs text-muted-foreground">Total Clientes</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                Total Clientes
+              </p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-500">
                 {healthScore}%
               </p>
-              <p className="text-xs text-muted-foreground">Salud del Sistema</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                Salud del Sistema
+              </p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">
                 {formatearMoneda(dashboardData.totalCobradoDelMes)}
               </p>
-              <p className="text-xs text-muted-foreground">Cobrado Este Mes</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                Cobrado Este Mes
+              </p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-red-500">
                 {formatearMoneda(dashboardData.facturasSinPagarMonto)}
               </p>
-              <p className="text-xs text-muted-foreground">Por Cobrar</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                Por Cobrar
+              </p>
             </div>
           </div>
         </CardContent>
@@ -324,19 +342,55 @@ export default function CrmDashboard() {
               icon={<Users className="w-4 h-4" />}
               variant="success"
             />
-            <CompactStatCard
-              title="Clientes Morosos"
-              value={dashboardData.delinquentClients}
-              icon={<UserMinus className="w-4 h-4" />}
-              variant="warning"
-              subtitle={formatearMoneda(dashboardData.moraDeMorosos)}
-            />
-            <CompactStatCard
-              title="Suspendidos"
-              value={dashboardData.suspendedClients}
-              icon={<WifiOff className="w-4 h-4" />}
-              variant="danger"
-            />
+
+            <Link to={"/crm-clientes?estado=ACTIVO"}>
+              <CompactStatCard
+                title="Clientes al día"
+                value={dashboardData.activeServices}
+                icon={<Zap className="w-4 h-4" />}
+                variant="success"
+              />
+            </Link>
+
+            <Link to={"/crm-clientes?estado=PENDIENTE_ACTIVO"}>
+              <CompactStatCard
+                title="Pendientes Pago"
+                value={dashboardData.pendientesPago}
+                icon={<CreditCard className="w-4 h-4" />}
+                variant="warning"
+                // subtitle={formatearMoneda(dashboardData.moraDeMorosos)}
+              />
+            </Link>
+
+            <Link to={"/crm-clientes?estado=ATRASADO"}>
+              <CompactStatCard
+                title="Atrasados"
+                value={dashboardData.atrasados}
+                icon={<Hourglass className="w-4 h-4" />}
+                variant="warning"
+                // subtitle={formatearMoneda(dashboardData.moraDeMorosos)}
+              />
+            </Link>
+
+            <Link to={"/crm-clientes?estado=MOROSO"}>
+              <CompactStatCard
+                title="Clientes Morosos"
+                value={dashboardData.delinquentClients}
+                icon={<AlertTriangle className="w-4 h-4" />}
+                variant="danger"
+                subtitle={formatearMoneda(dashboardData.moraDeMorosos)}
+              />
+            </Link>
+
+            <Link to={"/crm-clientes?estado=SUSPENDIDO"}>
+              <CompactStatCard
+                title="Suspendidos"
+                value={dashboardData.suspendedClients}
+                icon={<WifiOff className="w-4 h-4" />}
+                variant="danger"
+              />
+            </Link>
+
             <CompactStatCard
               title="Nuevos/Mes"
               value={dashboardData.clientesNuevosDelMes}
@@ -345,40 +399,33 @@ export default function CrmDashboard() {
               trend={{ value: 12, isPositive: true }}
             />
 
-            {/* Servicios */}
-            <CompactStatCard
-              title="Servicios Activos"
-              value={dashboardData.activeServices}
-              icon={<Zap className="w-4 h-4" />}
-              variant="success"
-            />
-            <CompactStatCard
-              title="Serv. Suspendidos"
-              value={dashboardData.suspendedServices}
-              icon={<ZapOff className="w-4 h-4" />}
-              variant="warning"
-            />
-
             {/* Facturación */}
-            <CompactStatCard
-              title="Facturas Emitidas"
-              value={dashboardData.facturasEmitidas}
-              icon={<FileText className="w-4 h-4" />}
-              variant="info"
-              subtitle={`${dashboardData.facturasEmitidasDelMes} este mes`}
-            />
-            <CompactStatCard
-              title="Facturas Cobradas"
-              value={dashboardData.facturasCobradas}
-              icon={<CheckCircle className="w-4 h-4" />}
-              variant="success"
-              subtitle={`${dashboardData.facturasCobradasDelMes} este mes`}
-            />
+            <Link to={"/crm/facturacion"}>
+              <CompactStatCard
+                title="Facturas Emitidas"
+                value={dashboardData.facturasEmitidas}
+                icon={<FileText className="w-4 h-4" />}
+                variant="info"
+                subtitle={`${dashboardData.facturasEmitidasDelMes} este mes`}
+              />
+            </Link>
+
+            <Link to={"/crm/facturacion?estadoFactura=PAGADA"}>
+              <CompactStatCard
+                title="Facturas Cobradas"
+                value={dashboardData.facturasCobradas}
+                icon={<CheckCircle className="w-4 h-4" />}
+                variant="success"
+                subtitle={`${dashboardData.facturasCobradasDelMes} este mes`}
+              />
+            </Link>
+
             <CompactStatCard
               title="Total Cobrado"
               value={formatearMoneda(dashboardData.totalCobradoDelMes)}
               icon={<DollarSign className="w-4 h-4" />}
               variant="success"
+              subtitle="este mes"
             />
             <CompactStatCard
               title="Sin Pagar"
@@ -387,6 +434,18 @@ export default function CrmDashboard() {
               variant="danger"
             />
 
+            <Link to={"/crm/facturacion?estadoFactura=PENDIENTE"}>
+              <CompactStatCard
+                title="Por cobrar"
+                value={formatearMoneda(
+                  dashboardData.facturasSinPagarMonto -
+                    dashboardData.totalCobradoDelMes
+                )}
+                icon={<Kanban className="w-4 h-4" />}
+                variant="info"
+              />
+            </Link>
+
             {/* Soporte */}
             <CompactStatCard
               title="Tickets Resueltos"
@@ -394,6 +453,7 @@ export default function CrmDashboard() {
               icon={<CheckCircle className="w-4 h-4" />}
               variant="success"
               trend={{ value: 8, isPositive: true }}
+              subtitle="este mes"
             />
             <CompactStatCard
               title="Total Registrados"
@@ -401,6 +461,15 @@ export default function CrmDashboard() {
               icon={<Users className="w-4 h-4" />}
               variant="info"
             />
+
+            <Link to={"/crm-clientes?estado=DESINSTALADO"}>
+              <CompactStatCard
+                title="Desinstalados"
+                value={dashboardData.desinstalados}
+                icon={<UserX className="w-4 h-4" />}
+                variant="danger"
+              />
+            </Link>
           </div>
         </>
       )}

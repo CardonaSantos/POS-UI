@@ -77,12 +77,12 @@ export default function MetricCharts({
 
   // Colors for charts
   const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#8884D8",
-    "#82CA9D",
+    "#E53935", // Rojo vivo
+    "#1E88E5", // Azul intenso
+    "#43A047", // Verde brillante
+    "#FDD835", // Amarillo fuerte
+    "#FB8C00", // Naranja cálido
+    "#8E24AA", // Morado destacado
   ];
 
   const ChartSkeleton = () => (

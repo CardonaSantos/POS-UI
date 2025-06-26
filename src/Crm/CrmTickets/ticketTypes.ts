@@ -59,6 +59,7 @@ export interface Ticket {
   companios: Companion[];
   creator: User;
   date: string;
+  closedAt: string;
   unread?: boolean;
   tags?: Tags[];
   comments?: Comment[];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,9 @@ export default function TicketDetail({
   //setticket
   setSelectedTicketId,
 }: TicketDetailProps) {
+  // Ahora current será HTMLInputElement | null
+  const comentaryRef = useRef<HTMLTextAreaElement>(null);
+
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [openUpdateTicket, setOpenUpdateTicket] = useState(false);
   const [ticketToEdit, setTicketToEdit] = useState<Ticket>(ticket);
@@ -452,6 +455,14 @@ export default function TicketDetail({
               <p className="text-[12px]">{comment.text}</p>
             </motion.div>
           ))}
+
+        {ticket.closedAt ? (
+          <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900">
+            <p className="text-xs font-semibold text-gray-500 dark:text-white">
+              Cerrado el {formatearFecha(ticket.closedAt)}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="p-4 border-t">
@@ -816,7 +827,13 @@ export default function TicketDetail({
 
       {/* DIALOG DE ABRIR CERRAR */}
       <Dialog open={openCloseTicket} onOpenChange={setOpenCloseTicket}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            comentaryRef.current?.focus();
+          }}
+          className="sm:max-w-[500px]"
+        >
           <DialogHeader>
             <DialogTitle className="text-center">Cerrar Ticket</DialogTitle>
             <DialogDescription className="text-center">
@@ -850,6 +867,7 @@ export default function TicketDetail({
             />
 
             <Textarea
+              ref={comentaryRef}
               placeholder="Escriba un comentario"
               className="min-h-[50px] resize-none pr-12 flex-1"
               value={formDataComent.descripcion}

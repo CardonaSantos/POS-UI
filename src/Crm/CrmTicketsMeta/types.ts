@@ -42,6 +42,7 @@ export interface CreateMetaTecnicoTicketPayload {
   fechaFin: string; // ISO Date string, ej. "2025-07-31T23:59:59.999Z"
   metaTickets: number;
   titulo?: string; // Opcional: nombre descriptivo de la meta
+  estado?: string;
 }
 
 export interface Tecnicos {
@@ -130,4 +131,11 @@ export interface TicketsActuales {
   ticketsEnProceso: number;
   ticketsAsignados: number;
   resueltosDelMes: number;
+}
+
+export enum EstadoMetaTicketEnum {
+  CANCELADO = "CANCELADO",
+  ABIERTO = "ABIERTO",
+  FINALIZADO = "FINALIZADO",
+  CERRADO = "CERRADO",
 }

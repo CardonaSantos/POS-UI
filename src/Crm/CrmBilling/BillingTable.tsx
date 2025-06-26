@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 // import { Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -144,8 +144,12 @@ type DateRange = {
 };
 
 export default function BilingTable() {
+  const [searchParams] = useSearchParams();
+  const estadoQuery = searchParams.get("estadoFactura") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
   const [totalCount, setTotalCount] = useState(0);
+
+  const [estadoFactura, setEstadoFactura] = useState<string>(estadoQuery);
 
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [filter, setFilter] = useState("");
@@ -175,6 +179,9 @@ export default function BilingTable() {
   });
 
   const atBottom = useWindowScrollPosition();
+  const handleSelectEstadoFactura = (estado: EstadoFactura) => {
+    setEstadoFactura(estado);
+  };
 
   const handleToggle = () => {
     if (atBottom) {
@@ -354,11 +361,6 @@ export default function BilingTable() {
     }
   }, [depaSelected]);
 
-  const [estadoFactura, setEstadoFactura] = useState<string>("");
-  const handleSelectEstadoFactura = (estado: EstadoFactura) => {
-    setEstadoFactura(estado);
-  };
-
   const filteredFacturas = useMemo(() => {
     return facturas.filter((factura) => {
       // Filtros existentes
@@ -451,10 +453,10 @@ export default function BilingTable() {
   ]);
 
   return (
-    <div className="relative overflow-x-auto rounded-md border">
-      <Card className="max-w-full shadow-lg border border-gray-300 text-xs">
+    <div className="relative overflow-x-auto border rounded-md">
+      <Card className="max-w-full text-xs border border-gray-300 shadow-lg">
         <CardContent>
-          <div className="flex justify-between items-center mb-4"></div>
+          <div className="flex items-center justify-between mb-4"></div>
           {/* **Campo de Búsqueda** */}
           <Input
             ref={inputRef}
@@ -463,29 +465,29 @@ export default function BilingTable() {
             placeholder="Buscar por nombre, telefono o ip"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="mb-3 text-xs px-2 py-1 border-2"
+            className="px-2 py-1 mb-3 text-xs border-2"
           />
 
           {/* **Selector de Cantidad de Filas** */}
           <div>
             {/* **Filtros de Facturación** */}
-            <div className="space-y-4 mb-4">
+            <div className="mb-4 space-y-4">
               {/* Resumen de facturación */}
-              <div className="flex flex-wrap items-center gap-4 p-2 bg-muted/20 rounded-lg">
+              <div className="flex flex-wrap items-center gap-4 p-2 rounded-lg bg-muted/20">
                 <div className="flex items-center">
-                  <File className="h-5 w-5 mr-2 dark:text-white" />
+                  <File className="w-5 h-5 mr-2 dark:text-white" />
                   <span className="text-sm font-semibold">
                     Facturados: {facutracionData.facturados}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <CreditCard className="h-5 w-5 mr-2 dark:text-white" />
+                  <CreditCard className="w-5 h-5 mr-2 dark:text-white" />
                   <span className="text-sm font-semibold">
                     Cobrados: {facutracionData.cobrados}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <FileCheck className="h-5 w-5 mr-2 dark:text-white" />
+                  <FileCheck className="w-5 h-5 mr-2 dark:text-white" />
                   <span className="text-sm font-semibold">
                     Por Cobrar: {facutracionData.porCobrar}
                   </span>
@@ -493,7 +495,7 @@ export default function BilingTable() {
               </div>
 
               {/* Filtros */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {/* Rango de fechas */}
                 <div className="space-y-1">
                   <label className="text-xs font-medium">
@@ -513,7 +515,7 @@ export default function BilingTable() {
                       startDate={dateRange.startDate}
                       endDate={dateRange.endDate}
                       placeholderText="Fecha inicial"
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="w-full px-3 py-1 text-sm transition-colors border rounded-md shadow-sm h-9 border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       dateFormat="dd/MM/yyyy"
                       isClearable
                     />
@@ -531,7 +533,7 @@ export default function BilingTable() {
                       endDate={dateRange.endDate}
                       minDate={dateRange.startDate}
                       placeholderText="Fecha final"
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="w-full px-3 py-1 text-sm transition-colors border rounded-md shadow-sm h-9 border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       dateFormat="dd/MM/yyyy"
                       isClearable
                     />
@@ -671,7 +673,7 @@ export default function BilingTable() {
 
                 <button
                   onClick={handleToggle}
-                  className="fixed bottom-6 right-6 h-10 w-10 flex items-center justify-center bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-lg transition-colors z-50"
+                  className="fixed z-50 flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full shadow-lg bottom-6 right-6 bg-rose-500 hover:bg-rose-600"
                   aria-label={atBottom ? "Ir al tope" : "Ir al final"}
                 >
                   {atBottom ? (
@@ -687,18 +689,18 @@ export default function BilingTable() {
           </div>
 
           {/* **Tabla** */}
-          <div className="overflow-x-auto rounded-md border border-gray-200 shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
+          <div className="overflow-x-auto border border-gray-200 rounded-md shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
             {isSearching ? (
               <TableSkeleton />
             ) : (
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full text-xs border-collapse">
                 <thead className="bg-gray-50 dark:bg-transparent dark:border-b dark:border-gray-800">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
                         <th
                           key={header.id}
-                          className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300"
+                          className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300"
                         >
                           {flexRender(
                             header.column.columnDef.header,
@@ -718,7 +720,7 @@ export default function BilingTable() {
                     }) => {
                       if (!estado) {
                         return (
-                          <span className="text-gray-500 dark:text-gray-400 text-xs">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             Sin cobrar
                           </span>
                         );
@@ -743,7 +745,7 @@ export default function BilingTable() {
                         }}
                         className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
                       >
-                        <td className="px-3 py-2 text-center font-medium">
+                        <td className="px-3 py-2 font-medium text-center">
                           {row.original.id}
                         </td>
 
@@ -794,12 +796,12 @@ export default function BilingTable() {
           </div>
 
           {/* **Controles de Paginación** */}
-          <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 text-xs dark:border-gray-800 dark:bg-transparent dark:text-gray-300 mt-0 rounded-b-md">
+          <div className="flex items-center justify-between px-4 py-3 mt-0 text-xs border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-transparent dark:text-gray-300 rounded-b-md">
             <Button
               variant="outline"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+              className="h-8 px-3 py-1 text-xs font-medium transition-colors border-gray-300 rounded-md disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
             >
               Anterior
             </Button>
@@ -814,7 +816,7 @@ export default function BilingTable() {
               variant="outline"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="h-8 rounded-md border-gray-300 px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
+              className="h-8 px-3 py-1 text-xs font-medium transition-colors border-gray-300 rounded-md disabled:opacity-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/30"
             >
               Siguiente
             </Button>

@@ -9,6 +9,14 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -36,12 +44,13 @@ import ReactSelectcomponent from "react-select";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import type {
-  MetaTecnicoTicket,
-  CreateMetaTecnicoTicketPayload,
-  EstadoMetaTicket,
-  Tecnicos,
-  OptionSelected,
+import {
+  type MetaTecnicoTicket,
+  type CreateMetaTecnicoTicketPayload,
+  type EstadoMetaTicket,
+  type Tecnicos,
+  type OptionSelected,
+  EstadoMetaTicketEnum,
 } from "./types";
 import {
   getMetasTickets,
@@ -61,19 +70,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Metricas from "./Metricas";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 // Mock data para técnicos (en un caso real vendría de otra API)
-
 interface MetaFormData {
   tecnicoId: string;
   fechaInicio: string;
   fechaFin: string;
   metaTickets: string;
   titulo: string;
+  estado: string;
 }
 
 export default function MetasTecnicosPage() {
+  const userRol = useStoreCrm((state) => state.rol) ?? "";
   const [metas, setMetas] = useState<MetaTecnicoTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [operationLoading, setOperationLoading] = useState(false);
@@ -93,6 +104,7 @@ export default function MetasTecnicosPage() {
     fechaFin: "",
     metaTickets: "",
     titulo: "",
+    estado: "",
   });
   const [editingMeta, setEditingMeta] = useState<MetaTecnicoTicket | null>(
     null
@@ -231,6 +243,7 @@ export default function MetasTecnicosPage() {
         fechaFin: new Date(formData.fechaFin).toISOString(),
         metaTickets: Number.parseInt(formData.metaTickets),
         titulo: formData.titulo || undefined,
+        estado: formData.estado || "ABIERTO",
       };
 
       await updateMetaTickets(editingMeta.id, payload);
@@ -273,6 +286,7 @@ export default function MetasTecnicosPage() {
       fechaFin: "",
       metaTickets: "",
       titulo: "",
+      estado: "ABIERTA",
     });
   };
 
@@ -289,6 +303,7 @@ export default function MetasTecnicosPage() {
       fechaFin: new Date(meta.fechaFin).toISOString().split("T")[0],
       metaTickets: meta.metaTickets.toString(),
       titulo: meta.titulo || "",
+      estado: meta.estado,
     });
     setEditDialogOpen(true);
   };
@@ -336,8 +351,12 @@ export default function MetasTecnicosPage() {
   );
   const metaTotal = metas.reduce((acc, meta) => acc + meta.metaTickets, 0);
 
+  const rolesPermitidos = ["ADMIN", "SUPER_ADMIN", "OFICINA"];
+
+  const isAllowed = !rolesPermitidos.includes(userRol);
+
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container p-4 mx-auto space-y-6">
       <Tabs defaultValue="ticketsMeta">
         <div>
           <TabsList className="w-full">
@@ -351,77 +370,77 @@ export default function MetasTecnicosPage() {
         </div>
         <TabsContent value="ticketsMeta">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+          <div className="flex flex-col items-start justify-between gap-4 mb-2 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-xl font-bold">Metas de Soportes</h2>
             </div>
             <Button onClick={openCreateDialog} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="w-4 h-4 mr-2" />
               Nueva Meta
             </Button>
           </div>
 
           {/* Estadísticas generales */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <Card className="hover:shadow-md transition-shadow duration-200">
+          <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-4">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Total Metas
                     </p>
                     <div className="text-2xl font-bold">{totalMetas}</div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-transparent p-2 rounded-lg">
-                    <Target className="h-4 w-4 text-blue-600" />
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-transparent">
+                    <Target className="w-4 h-4 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Metas Activas
                     </p>
                     <div className="text-2xl font-bold">{metasActivas}</div>
                   </div>
-                  <div className="bg-green-50 dark:bg-transparent p-2 rounded-lg">
-                    <Clock className="h-4 w-4 text-green-600" />
+                  <div className="p-2 rounded-lg bg-green-50 dark:bg-transparent">
+                    <Clock className="w-4 h-4 text-green-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Tickets Resueltos
                     </p>
                     <div className="text-2xl font-bold">{ticketsResueltos}</div>
                   </div>
-                  <div className="bg-orange-50 dark:bg-transparent  p-2 rounded-lg">
-                    <TrendingUp className="h-4 w-4 text-orange-600" />
+                  <div className="p-2 rounded-lg bg-orange-50 dark:bg-transparent">
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow duration-200">
+            <Card className="transition-shadow duration-200 hover:shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
                       Meta Total
                     </p>
                     <div className="text-2xl font-bold">{metaTotal}</div>
                   </div>
-                  <div className="bg-purple-50 dark:bg-transparent p-2 rounded-lg">
-                    <Target className="h-4 w-4 text-purple-600" />
+                  <div className="p-2 rounded-lg bg-purple-50 dark:bg-transparent">
+                    <Target className="w-4 h-4 text-purple-600" />
                   </div>
                 </div>
               </CardContent>
@@ -467,7 +486,7 @@ export default function MetasTecnicosPage() {
                       <TableHead className="h-10 px-2 text-xs font-medium">
                         Estado
                       </TableHead>
-                      <TableHead className="h-10 px-2 text-xs font-medium text-right w-16">
+                      <TableHead className="w-16 h-10 px-2 text-xs font-medium text-right">
                         Acciones
                       </TableHead>
                     </TableRow>
@@ -478,17 +497,17 @@ export default function MetasTecnicosPage() {
                         <TableRow key={i} className="h-12">
                           {Array.from({ length: 10 }).map((_, j) => (
                             <TableCell key={j} className="px-3 py-2">
-                              <Skeleton className="h-3 w-full" />
+                              <Skeleton className="w-full h-3" />
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : metas.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-12">
+                        <TableCell colSpan={10} className="py-12 text-center">
                           <div className="flex flex-col items-center gap-3">
-                            <Target className="h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground text-sm">
+                            <Target className="w-8 h-8 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">
                               No hay metas registradas
                             </p>
                             <Button
@@ -535,10 +554,10 @@ export default function MetasTecnicosPage() {
                           >
                             <TableCell className="px-3 py-2">
                               <div className="space-y-0.5">
-                                <div className="font-medium text-sm leading-tight">
+                                <div className="text-sm font-medium leading-tight">
                                   {meta.tecnico.nombre}
                                 </div>
-                                <div className="text-xs text-muted-foreground leading-tight">
+                                <div className="text-xs leading-tight text-muted-foreground">
                                   {meta.titulo}
                                 </div>
                               </div>
@@ -548,16 +567,16 @@ export default function MetasTecnicosPage() {
                                 <div className="leading-tight">
                                   {formateDate(meta.fechaInicio)}
                                 </div>
-                                <div className="text-muted-foreground leading-tight">
+                                <div className="leading-tight text-muted-foreground">
                                   {formateDate(meta.fechaFin)}
                                 </div>
-                                <div className="text-muted-foreground leading-tight">
+                                <div className="leading-tight text-muted-foreground">
                                   {diasTranscurridos}/{diasTotales} días
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell className="px-2 py-2 text-right">
-                              <span className="font-medium text-sm">
+                              <span className="text-sm font-medium">
                                 {meta.metaTickets}
                               </span>
                             </TableCell>
@@ -608,13 +627,16 @@ export default function MetasTecnicosPage() {
                             </TableCell>
                             <TableCell className="px-2 py-2 text-right">
                               <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger
+                                  disabled={isAllowed}
+                                  asChild
+                                >
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 hover:bg-muted"
+                                    className="w-8 h-8 p-0 hover:bg-muted"
                                   >
-                                    <MoreHorizontal className="h-4 w-4" />
+                                    <MoreHorizontal className="w-4 h-4" />
                                     <span className="sr-only">Abrir menú</span>
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -636,7 +658,7 @@ export default function MetasTecnicosPage() {
                                       Editar
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      className="text-xs cursor-pointer text-red-600 focus:text-red-600"
+                                      className="text-xs text-red-600 cursor-pointer focus:text-red-600"
                                       onClick={() => openDeleteDialog(meta.id)}
                                       disabled={operationLoading}
                                     >
@@ -782,6 +804,7 @@ export default function MetasTecnicosPage() {
             <div className="grid gap-2">
               <Label htmlFor="tecnico-edit">Técnico</Label>
               <ReactSelectcomponent
+                isDisabled
                 className="text-sm text-black"
                 placeholder="Selecciona un usuario"
                 onChange={handleSelectTec}
@@ -820,7 +843,9 @@ export default function MetasTecnicosPage() {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      fechaInicio: e.target.value,
+                      fechaInicio: dayjs(e.target.value)
+                        .tz("America/Guatemala")
+                        .format("YYYY-MM-DD"),
                     }))
                   }
                 />
@@ -834,7 +859,9 @@ export default function MetasTecnicosPage() {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      fechaFin: e.target.value,
+                      fechaFin: dayjs(e.target.value)
+                        .tz("America/Guatemala")
+                        .format("YYYY-MM-DD"),
                     }))
                   }
                 />
@@ -855,6 +882,37 @@ export default function MetasTecnicosPage() {
                 }
                 placeholder="Número de tickets objetivo"
               />
+            </div>
+            <div className="grid gap-2">
+              <Select
+                onValueChange={(value) => {
+                  setFormData((previaData) => ({
+                    ...previaData,
+                    estado: value,
+                  }));
+                }}
+                value={formData.estado}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Estado de meta" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value={EstadoMetaTicketEnum.ABIERTO}>
+                      Abierto
+                    </SelectItem>
+                    <SelectItem value={EstadoMetaTicketEnum.CANCELADO}>
+                      Cancelado
+                    </SelectItem>
+                    <SelectItem value={EstadoMetaTicketEnum.CERRADO}>
+                      Cerrado
+                    </SelectItem>
+                    <SelectItem value={EstadoMetaTicketEnum.FINALIZADO}>
+                      Finalizado
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
