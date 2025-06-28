@@ -1,8 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, BarChart3, TrendingUp, Target, Clock } from "lucide-react";
+import {
+  RefreshCw,
+  BarChart3,
+  TrendingUp,
+  Target,
+  Clock,
+  Calendar,
+  Ticket,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   XAxis,
@@ -22,10 +30,19 @@ import {
   TicketsActuales,
 } from "./types";
 import TicketsEnProcesoCard from "./TicketsEnProcesoTable";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 export type TicketResueltoDiaPivot = {
   dia: number;
 } & Record<string, number>; // nombreTécnico -> cantidad
+
+interface TicketResueltoDiaSelected {
+  dia: number;
+  [nombreTecnico: string]: number;
+}
 
 export default function MetricCharts({
   loading: externalLoading = false,
@@ -37,8 +54,11 @@ export default function MetricCharts({
   const [dataTicketsEnProceso, setDataTicketsEnProceso] = useState<
     TicketMoment[]
   >([]);
-
+  const [selectedData, setSelectedData] =
+    useState<TicketResueltoDiaPivot | null>(null);
   const [resueltosMes, setResueltosMes] = useState<number | null>(null);
+  // al principio de tu componente
+  const [showModal, setShowModal] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,9 +113,31 @@ export default function MetricCharts({
   );
 
   console.log("Los tickets actuales son: ", dataTicketsActuales);
-  const techNames = dataScale.length
-    ? Object.keys(dataScale[0]).filter((k) => k !== "dia")
-    : [];
+
+  const techNames = useMemo(
+    () =>
+      dataScale.length
+        ? Object.keys(dataScale[0]).filter((k) => k !== "dia")
+        : [],
+    [dataScale] // ← solo cambia cuando llegan datos nuevos
+  );
+  // todos visibles por defecto
+  const [visibleTechs, setVisibleTechs] = useState<string[]>(techNames);
+
+  // cuando cambie la lista de técnicos (p. ej. al primer fetch) los sincronizamos
+  useEffect(() => {
+    setVisibleTechs(techNames); // ahora sí, solo cuando hay técnicos nuevos
+  }, [techNames]);
+
+  const handleDotClick = (dia: number) => {
+    const found = dataScale.find((o) => o.dia === dia);
+    if (!found) return;
+
+    const total = techNames.reduce((sum, tech) => sum + (found[tech] ?? 0), 0);
+
+    setSelectedData({ ...found, total }); // ← ahora sí cumple la interfaz
+    setShowModal(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -250,12 +292,16 @@ export default function MetricCharts({
                   <XAxis
                     dataKey="dia"
                     label={{
-                      value: "Días",
+                      // value: "Días",
                       position: "insideBottom",
                       offset: -10,
                     }}
+                    onClick={() => setShowModal(true)}
+                    style={{ cursor: "pointer" }}
                   />
+
                   <YAxis
+                    onClick={() => setShowModal(true)}
                     label={{
                       value: "Tickets",
                       angle: -90,
@@ -269,23 +315,101 @@ export default function MetricCharts({
                   <Legend />
 
                   {/* Dibuja una línea por técnico en el mismo orden de 'data' */}
-                  {techNames.map((name, idx) => (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={COLORS[idx % COLORS.length]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  ))}
+                  {visibleTechs.map((name) => {
+                    // mantenemos el índice original para que cada técnico conserve su color
+                    const idx = techNames.indexOf(name);
+                    const color = COLORS[idx % COLORS.length];
+
+                    // puntos clicables
+                    const CustomDot = (props: any) => {
+                      const { cx, cy, payload } = props;
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={4}
+                          fill={color}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleDotClick(payload.dia)}
+                        />
+                      );
+                    };
+
+                    const CustomActiveDot = (props: any) => {
+                      const { cx, cy, payload } = props;
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={6}
+                          fill={color}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleDotClick(payload.dia)}
+                        />
+                      );
+                    };
+
+                    return (
+                      <Line
+                        key={name}
+                        type="monotone"
+                        dataKey={name}
+                        stroke={color}
+                        strokeWidth={2}
+                        dot={<CustomDot />}
+                        activeDot={<CustomActiveDot />}
+                        className="hover:cursor-pointer"
+                      />
+                    );
+                  })}
                 </LineChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
+        <div className="flex flex-wrap gap-3 mb-4">
+          {techNames.map((name) => (
+            <label
+              key={name}
+              className="flex items-center gap-2 text-sm capitalize"
+            >
+              <Checkbox
+                checked={visibleTechs.includes(name)}
+                onCheckedChange={() =>
+                  setVisibleTechs((prev) =>
+                    prev.includes(name)
+                      ? prev.filter((t) => t !== name)
+                      : [...prev, name]
+                  )
+                }
+              />
+              {name}
+            </label>
+          ))}
+        </div>
       </div>
+
+      {showModal && selectedData && (
+        <Dialog open onOpenChange={(open) => setShowModal(open)}>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="text-center">
+              <h2 className="font-semibold">Detalles del día</h2>
+            </div>
+            <div className="py-2">
+              <ShowDaySelected day={selectedData} />
+            </div>
+
+            <DialogFooter>
+              <Button
+                onClick={() => setShowModal(false)}
+                className="min-w-[100px]"
+              >
+                Cerrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Empty state */}
       {!isLoading && data.length === 0 && !error && (
@@ -311,3 +435,75 @@ export default function MetricCharts({
     </div>
   );
 }
+type ShowDaySelectedProps = {
+  day: TicketResueltoDiaSelected;
+};
+const ShowDaySelected = ({ day }: ShowDaySelectedProps) => {
+  const tecnicos = Object.entries(day)
+    .filter(([key]) => key !== "dia" && key !== "total")
+    .map(([tecnico, count]) => ({ name: tecnico, resolved: count as number }));
+
+  return (
+    <div className="w-full space-y-4">
+      <Card className="border-l-4 border-l-blue-500 bg-gradient-to-r ">
+        <CardHeader className="py-3 pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4 text-blue-600" />
+            Día {day.dia}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+
+      {/* Técnicos */}
+      {tecnicos.length > 0 && (
+        <div className="space-y-3">
+          <div className="grid gap-2">
+            {tecnicos.map(({ name, resolved }) => (
+              <Card
+                key={name}
+                className="transition-colors bg-muted/30 hover:bg-muted/50"
+              >
+                <CardContent className="py-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-semibold capitalize">
+                        {name}
+                      </span>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="font-semibold dark:text-fuchsia-500 dark:bg-slate-900 text-rose-500"
+                    >
+                      <Ticket className="w-3 h-3 mr-1" />
+                      {resolved}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Total */}
+      <Card className="">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-semibold text-green-800">
+                Total Resueltos
+              </span>
+            </div>
+            <Badge className="px-2 py-0 text-lg text-white bg-green-600 hover:bg-green-700">
+              {day.total}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
