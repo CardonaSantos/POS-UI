@@ -37,10 +37,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 export type TicketResueltoDiaPivot = {
   dia: number;
+  total: number;
 } & Record<string, number>; // nombreTécnico -> cantidad
 
 interface TicketResueltoDiaSelected {
   dia: number;
+  total: number;
   [nombreTecnico: string]: number;
 }
 
@@ -64,7 +66,7 @@ export default function MetricCharts({
   const [error, setError] = useState<string | null>(null);
   const isLoading = loading || externalLoading;
   console.log("La data recibiendo ", data);
-  console.log("La data del scale es: ", dataScale);
+  console.log("LA DATA SCALES ES: ", dataScale);
   console.log("data dataTicketsEnProceso en proceso: ", dataTicketsEnProceso);
 
   // Fetch data from API
@@ -133,9 +135,8 @@ export default function MetricCharts({
     const found = dataScale.find((o) => o.dia === dia);
     if (!found) return;
 
-    const total = techNames.reduce((sum, tech) => sum + (found[tech] ?? 0), 0);
-
-    setSelectedData({ ...found, total }); // ← ahora sí cumple la interfaz
+    // en lugar de recalcular, usa el valor que te mandó el backend:
+    setSelectedData(found);
     setShowModal(true);
   };
 
@@ -367,13 +368,18 @@ export default function MetricCharts({
             )}
           </CardContent>
         </Card>
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4 mt-4 justify-center items-center">
           {techNames.map((name) => (
             <label
               key={name}
               className="flex items-center gap-2 text-sm capitalize"
             >
               <Checkbox
+                className="
+              data-[state=checked]:bg-green-500 
+              data-[state=checked]:border-green-500 
+              focus:ring-green-500
+              data-[state=unchecked]:border-slate-300"
                 checked={visibleTechs.includes(name)}
                 onCheckedChange={() =>
                   setVisibleTechs((prev) =>
@@ -383,6 +389,7 @@ export default function MetricCharts({
                   )
                 }
               />
+
               {name}
             </label>
           ))}
@@ -443,6 +450,8 @@ const ShowDaySelected = ({ day }: ShowDaySelectedProps) => {
     .filter(([key]) => key !== "dia" && key !== "total")
     .map(([tecnico, count]) => ({ name: tecnico, resolved: count as number }));
 
+  const { total } = day;
+
   return (
     <div className="w-full space-y-4">
       <Card className="border-l-4 border-l-blue-500 bg-gradient-to-r ">
@@ -499,7 +508,7 @@ const ShowDaySelected = ({ day }: ShowDaySelectedProps) => {
               </span>
             </div>
             <Badge className="px-2 py-0 text-lg text-white bg-green-600 hover:bg-green-700">
-              {day.total}
+              {total}
             </Badge>
           </div>
         </CardContent>
