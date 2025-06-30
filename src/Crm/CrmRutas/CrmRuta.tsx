@@ -30,9 +30,6 @@ export default function RutasCobroPage() {
             <Route className="h-6 w-6 text-primary" />
             Rutas de Cobro
           </h1>
-          <p className="text-muted-foreground">
-            Gestione las rutas de cobro para sus clientes
-          </p>
         </div>
       </div>
 

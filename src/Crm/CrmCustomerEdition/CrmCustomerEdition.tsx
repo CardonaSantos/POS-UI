@@ -152,6 +152,7 @@ interface CustomerData {
   contrasenaWifi: string;
   ssidRouter: string;
   fechaInstalacion: string;
+  estado: EstadoCliente;
   departamento: Departamentos;
   municipio: Municipios;
   sector: Sector;
@@ -286,7 +287,7 @@ function EditCustomers() {
           municipioId: customerData.municipio?.id?.toString() || "",
           departamentoId: customerData.departamento?.id?.toString() || "",
           empresaId: "1",
-          estado: EstadoCliente.ACTIVO,
+          estado: customerData?.estado,
         });
 
         // Set contract data if exists

@@ -32,6 +32,7 @@ import {
   BadgeCheck,
   Download,
   Printer,
+  Map,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -406,6 +407,31 @@ function RutaCobro() {
                                 {formatearMoneda(cliente.saldo.saldoPendiente)}
                               </span>
                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {cliente.ubicacion?.latitud &&
+                            cliente.ubicacion?.longitud ? (
+                              <div className="flex items-center">
+                                <Map className="h-4 w-4 mr-2 text-blue-500" />
+                                <span>
+                                  <a
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline font-semibold text-blue-500"
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`}
+                                  >
+                                    Ubicación en Maps
+                                  </a>
+                                </span>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="font-semibold">
+                                  Ubicación No Disponible
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           <Separator />

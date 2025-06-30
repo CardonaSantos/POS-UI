@@ -699,6 +699,24 @@ function App() {
             />
 
             <Route
+              path="/crm/rutas-cobro/edit/:id"
+              element={
+                <ProtectRouteCrmUser>
+                  <RutasCobroEdit />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            {/* <Route
+              path="/crm/rutas-cobro/imprimi"
+              element={
+                <ProtectRouteCrmUser>
+                  <RutasCobroEdit />
+                </ProtectRouteCrmUser>
+              }
+            /> */}
+
+            <Route
               path="/crm/factura-pago/pago-servicio-pdf/:factudaId"
               element={
                 <ProtectRouteCrmUser>
@@ -757,15 +775,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <ContratoServicioPDF />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/rutas-cobro/edit/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <RutasCobroEdit />
                 </ProtectRouteCrmUser>
               }
             />

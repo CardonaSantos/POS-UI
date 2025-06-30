@@ -54,11 +54,16 @@ import {
   AlertCircle,
   Loader2,
   BookmarkX,
+  Printer,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { RutasSkeleton } from "./RutasSkeleton";
 import { EstadoRuta, EstadoCliente, type Ruta } from "./rutas-types";
+import { formatearMoneda } from "../Utils/FormateDate";
+import { getEstadoColorBadge, returnStatusClient } from "../Utils/Utils2";
+import { cn } from "@/lib/utils";
+import { downloadExcelRutaCobro } from "./api";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -190,22 +195,6 @@ export function RutasCobroList() {
     }
   };
 
-  // Obtener el color del badge según el estado del cliente
-  const getClienteEstadoBadgeColor = (estado: EstadoCliente) => {
-    switch (estado) {
-      case EstadoCliente.ACTIVO:
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case EstadoCliente.MOROSO:
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-      case EstadoCliente.SUSPENDIDO:
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case EstadoCliente.ATRASADO:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-      default:
-        return "";
-    }
-  };
-
   // Obtener el icono según el estado
   const getEstadoIcon = (estado: EstadoRuta) => {
     switch (estado) {
@@ -232,6 +221,26 @@ export function RutasCobroList() {
       (ruta.observaciones &&
         ruta.observaciones.toLowerCase().includes(searchRuta.toLowerCase()))
   );
+
+  console.log("Las rutas son: ", rutas);
+  const handleDownloadExcelRutaCobro = async (rutaId: number) => {
+    try {
+      const response = await downloadExcelRutaCobro(rutaId);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `ruta_${rutaId}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      toast.success("¡Descarga exitosa!");
+    } catch (error) {
+      toast.error("Hubo un error al descargar el Excel");
+      console.error(error);
+    }
+  };
 
   return (
     <Card>
@@ -365,6 +374,16 @@ export function RutasCobroList() {
                                 >
                                   <Eye className="h-4 w-4" />
                                   <span>Ver detalles</span>
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleDownloadExcelRutaCobro(ruta.id)
+                                  }
+                                  className="flex items-center gap-2"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                  <span>Imprimir ruta</span>
                                 </DropdownMenuItem>
 
                                 {/* Opciones visibles solo si la ruta no está cerrada */}
@@ -525,17 +544,17 @@ export function RutasCobroList() {
                     <div className="mt-2">
                       <div className="text-sm font-medium flex justify-between mb-2">
                         <span>
-                          Total a cobrar: Q
-                          {selectedRuta.clientes
-                            .reduce(
+                          Total a cobrar:{" "}
+                          {formatearMoneda(
+                            selectedRuta.clientes.reduce(
                               (sum, cliente) =>
                                 sum + (cliente.saldoPendiente || 0),
                               0
                             )
-                            .toFixed(2)}
+                          )}
                         </span>
                         <span>
-                          Cobrado: Q{selectedRuta.montoCobrado.toFixed(2)}
+                          Cobrado: {formatearMoneda(selectedRuta.montoCobrado)}
                         </span>
                       </div>
                     </div>
@@ -558,11 +577,16 @@ export function RutasCobroList() {
                                 {cliente.nombre} {cliente.apellidos || ""}
                               </div>
                               <Badge
-                                className={getClienteEstadoBadgeColor(
-                                  cliente.estadoCliente
+                                className={cn(
+                                  "text-[9px]",
+                                  getEstadoColorBadge(
+                                    returnStatusClient(
+                                      cliente.estadoCliente as EstadoCliente
+                                    )
+                                  )
                                 )}
                               >
-                                {cliente.estadoCliente}
+                                {returnStatusClient(cliente.estadoCliente)}
                               </Badge>
                             </div>
 
@@ -583,8 +607,8 @@ export function RutasCobroList() {
                             <div className="flex items-center justify-between mt-2">
                               <div className="text-sm">
                                 <span className="font-medium">
-                                  Saldo: Q
-                                  {cliente.saldoPendiente?.toFixed(2) || "0.00"}
+                                  Saldo:{" "}
+                                  {formatearMoneda(cliente.saldoPendiente ?? 0)}
                                 </span>
                                 {cliente.facturasPendientes &&
                                   cliente.facturasPendientes > 0 && (

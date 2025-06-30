@@ -157,9 +157,6 @@ export default function CrmPdfPago() {
           </div>
           <div className="text-right">
             <p className="text-xs font-medium text-gray-700">#{factura.id}</p>
-            <p className="text-xs text-gray-600">
-              Factura generada el {formatDate(factura.creadoEn)}
-            </p>
           </div>
         </div>
 

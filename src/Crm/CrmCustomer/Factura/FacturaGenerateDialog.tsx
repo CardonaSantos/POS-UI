@@ -89,7 +89,6 @@ function FacturaGenerateDialog({
 
     try {
       setIsSubmitting(true);
-
       const { status } = await axios.post(
         `${VITE_CRM_API_URL}/facturacion/generate-factura-internet`,
         payload

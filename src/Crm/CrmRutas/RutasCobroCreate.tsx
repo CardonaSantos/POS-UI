@@ -59,11 +59,8 @@ import {
   Phone,
   DollarSign,
 } from "lucide-react";
-
-// Custom Components
 import { SelectCobradores } from "./SelectCobradores";
 import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
-
 // Types
 import {
   type ClienteInternet,
@@ -498,7 +495,8 @@ export function RutasCobroCreate({ onRouteCreated }: RutasCobroCreateProps) {
 
           <Button
             type="submit"
-            className="w-full"
+            variant={"outline"}
+            className="max-w-lg"
             disabled={
               isSubmitting ||
               !nuevaRuta.nombreRuta ||
@@ -772,6 +770,7 @@ export function RutasCobroCreate({ onRouteCreated }: RutasCobroCreateProps) {
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <FileText className="h-3 w-3" />
                             {cliente.facturasPendientes || 0} facturas
+                            pendientes
                           </div>
                         </TableCell>
                       </TableRow>
@@ -850,25 +849,6 @@ export function RutasCobroCreate({ onRouteCreated }: RutasCobroCreateProps) {
             </>
           )}
         </CardContent>
-
-        {/* Mensaje de validación */}
-        {(selectedClientes.length === 0 || !nuevaRuta.nombreRuta) && (
-          <CardFooter>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900/30 text-sm w-full">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  {!nuevaRuta.nombreRuta && (
-                    <p>Debe ingresar un nombre para la ruta.</p>
-                  )}
-                  {selectedClientes.length === 0 && (
-                    <p>Debe seleccionar al menos un cliente.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardFooter>
-        )}
       </Card>
     </form>
   );

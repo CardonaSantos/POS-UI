@@ -69,44 +69,48 @@ export function HistorialPagos({
 }: HistorialPagosProps) {
   console.log("Las transacciones, pagos de facturas, son: ", facturas);
 
-  const transacciones = facturas.map((factura) => {
-    const facturaRow = {
-      fecha: factura.fechaEmision,
-      canal: {
-        creador: factura?.creador?.nombre
-          ? factura?.creador?.nombre
-          : "SISTEMA AUTO",
-        cobrador:
-          factura.pagos.length > 0
-            ? factura.pagos.map((c) => c?.cobrador?.nombreCobrador).join(", ")
-            : "Sin registrar",
-      },
-      tipoPago: factura?.pagos[0]?.metodoPago ?? "N/A",
-      referencia: factura.id.toString(),
-      detalle: `FACTURA ${new Date(factura.fechaVencimiento)
-        .toLocaleString("default", { month: "long" })
-        .toUpperCase()} ${new Date(factura.fechaVencimiento).getFullYear()}`,
-      cobro: factura.monto,
-      pago:
-        factura.pagos?.reduce((total, pago) => total + pago.montoPagado, 0) ||
-        0,
-      saldo:
-        factura.monto -
-        (factura.pagos?.reduce((total, pago) => total + pago.montoPagado, 0) ||
-          0),
-      esPago: false, // Solo es pago cuando no es una factura original
-      id: factura.id,
-      estado: factura.estado,
-      fechaEmision: factura.fechaEmision,
-      fechaVencimiento: factura.fechaVencimiento,
-      pagos: factura.pagos, // Mantén los pagos asociados a la factura
-    };
-    return facturaRow;
-  });
-
-  transacciones.sort(
-    (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-  );
+  const transacciones = [...facturas]
+    .sort(
+      (a, b) =>
+        new Date(a.fechaVencimiento).getTime() -
+        new Date(b.fechaVencimiento).getTime()
+    )
+    .map((factura) => {
+      const facturaRow = {
+        fecha: factura.fechaEmision,
+        canal: {
+          creador: factura?.creador?.nombre
+            ? factura?.creador?.nombre
+            : "SISTEMA AUTO",
+          cobrador:
+            factura.pagos.length > 0
+              ? factura.pagos.map((c) => c?.cobrador?.nombreCobrador).join(", ")
+              : "Sin registrar",
+        },
+        tipoPago: factura?.pagos[0]?.metodoPago ?? "N/A",
+        referencia: factura.id.toString(),
+        detalle: `FACTURA ${new Date(factura.fechaVencimiento)
+          .toLocaleString("default", { month: "long" })
+          .toUpperCase()} ${new Date(factura.fechaVencimiento).getFullYear()}`,
+        cobro: factura.monto,
+        pago:
+          factura.pagos?.reduce((total, pago) => total + pago.montoPagado, 0) ||
+          0,
+        saldo:
+          factura.monto -
+          (factura.pagos?.reduce(
+            (total, pago) => total + pago.montoPagado,
+            0
+          ) || 0),
+        esPago: false, // Solo es pago cuando no es una factura original
+        id: factura.id,
+        estado: factura.estado,
+        fechaEmision: factura.fechaEmision,
+        fechaVencimiento: factura.fechaVencimiento,
+        pagos: factura.pagos, // Mantén los pagos asociados a la factura
+      };
+      return facturaRow;
+    });
 
   let saldoAcumulado = 0;
   transacciones.forEach((t) => {

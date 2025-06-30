@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { useRef } from "react";
 import { useWindowScrollPosition } from "../Utils/useWindow";
 import { ClientTableSkeleton } from "./SkeletonTable";
+import { getEstadoColorText, returnStatusClient } from "../Utils/Utils2";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -78,6 +79,7 @@ const columns: ColumnDef<ClienteDto>[] = [
 
   { accessorKey: "creadoEn", header: "Plan Internet" },
   { accessorKey: "facturacionZona", header: "Zona Facturación" },
+  { accessorKey: "estadoCliente", header: "Estado cliente" },
 ];
 
 interface OptionSelect {
@@ -120,18 +122,14 @@ const estadosConDescripcion = [
 export default function ClientesTable() {
   //referencias
   const [searchParam] = useSearchParams();
-
   const estadoQuery = searchParam.get("estado") ?? "";
-
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
   //PAGINACION
   const [totalCount, setTotalCount] = useState(0);
-
   const [filter, setFilter] = useState("");
   const filtered2 = useDeferredValue(filter);
-
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<any>([]);
   const [clientes, setClientes] = useState<ClienteDto[]>([]);
@@ -370,23 +368,6 @@ export default function ClientesTable() {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [zonasFacturacionSelected]); // Resetear a página 1 cuando el filtro cambie
 
-  // const filteredClientesZona = useMemo(() => {
-  //   return clientes.filter((cliente) => {
-  //     const matchesPorEstado = estadoSelected
-  //       ? cliente?.estado === estadoSelected
-  //       : true;
-
-  //     return matchesPorEstado;
-  //   });
-  // }, [
-  //   clientes,
-  //   zonasFacturacionSelected,
-  //   muniSelected,
-  //   depaSelected,
-  //   sectorSelected,
-  //   estadoSelected,
-  // ]);
-
   // **Configuración de la tabla**
   const table = useReactTable({
     pageCount: Math.ceil(totalCount / pagination.pageSize),
@@ -439,8 +420,10 @@ export default function ClientesTable() {
     estadoSelected,
   ]);
 
+  console.log("Clientes son: ", clientes);
+
   return (
-    <div className="relative overflow-x-auto rounded-md border …">
+    <div className="relative overflow-x-auto rounded-md border">
       <Card className="max-w-full shadow-lg">
         <CardContent>
           <div className="flex items-center justify-between mb-4"></div>
@@ -645,6 +628,11 @@ export default function ClientesTable() {
                     <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
                       Zona de Facturación
                     </th>
+
+                    <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
+                      Estado cliente
+                    </th>
+
                     <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
                       Acciones
                     </th>
@@ -687,6 +675,14 @@ export default function ClientesTable() {
                       </td>
                       <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
                         {row.original.facturacionZona}
+                      </td>
+
+                      <td
+                        className={`px-3 py-2 truncate max-w-[100px] whitespace-nowrap ${getEstadoColorText(
+                          returnStatusClient(row.original.estado)
+                        )}`}
+                      >
+                        {returnStatusClient(row.original.estado)}
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex justify-center">

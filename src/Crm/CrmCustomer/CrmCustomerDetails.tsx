@@ -72,7 +72,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  // DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -92,6 +91,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import timezone from "dayjs/plugin/timezone";
 import { HistorialPagos } from "./HistorialPagos";
+import { getEstadoColorBadge, returnStatusClient } from "../Utils/Utils2";
+import { EstadoCliente } from "../CrmCustomers/CustomerTable";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -263,22 +264,6 @@ export default function CustomerDetails() {
     }
   };
 
-  // Función para obtener el color de la insignia según el estado
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case "ACTIVO":
-        return "bg-green-100 text-green-800";
-      case "INACTIVO":
-        return "bg-gray-100 text-gray-800";
-      case "SUSPENDIDO":
-        return "bg-yellow-100 text-yellow-800";
-      case "MOROSO":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   // Función para obtener el color de la insignia según el estado del ticket
   const getTicketEstadoColor = (estado: string) => {
     switch (estado) {
@@ -431,9 +416,14 @@ export default function CustomerDetails() {
               <span>•</span>
               <Badge
                 variant="outline"
-                className={cn("text-xs", getEstadoColor(cliente.estadoCliente))}
+                className={cn(
+                  "text-xs",
+                  getEstadoColorBadge(
+                    returnStatusClient(cliente.estadoCliente as EstadoCliente)
+                  )
+                )}
               >
-                {cliente.estadoCliente}
+                {returnStatusClient(cliente.estadoCliente as EstadoCliente)}
               </Badge>
             </div>
           </div>
