@@ -92,6 +92,7 @@ import FacturaEdit from "./Crm/CrmFacturacion/FacturaEdicion/FacturaEdit";
 import CrmProfileConfig from "./Crm/CrmProfile/CrmProfileConfig";
 import CrmUsers from "./Crm/CrmProfile/CrmUsers";
 import MetasTecnicosPage from "./Crm/CrmTicketsMeta/MetasTecnicosPage";
+import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -707,15 +708,6 @@ function App() {
               }
             />
 
-            {/* <Route
-              path="/crm/rutas-cobro/imprimi"
-              element={
-                <ProtectRouteCrmUser>
-                  <RutasCobroEdit />
-                </ProtectRouteCrmUser>
-              }
-            /> */}
-
             <Route
               path="/crm/factura-pago/pago-servicio-pdf/:factudaId"
               element={
@@ -802,6 +794,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <MetasTecnicosPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/facturas-eliminadas"
+              element={
+                <ProtectRouteCrmUser>
+                  <DeletedInvoicesView />
                 </ProtectRouteCrmUser>
               }
             />

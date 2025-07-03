@@ -61,6 +61,7 @@ export interface FacturaInternet {
   creadoEn: string;
   fechaPagoEsperada: string;
   saldoPendiente: number;
+  periodo: string;
   cliente: Cliente;
   empresa: Empresa;
   pagos: Pago[];

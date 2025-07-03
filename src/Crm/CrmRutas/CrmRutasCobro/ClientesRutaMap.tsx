@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 // import {
 //   Carousel,
 //   CarouselContent,
@@ -191,6 +192,20 @@ const Maps = ({ clientes }: PropsClientes) => {
           >
             Cerrar
           </button>
+        </div>
+
+        <div className="flex justify-between items-center px-2 py-1 bg-gray-50 text-gray-500 text-xs">
+          <Button variant="link" asChild>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${cliente.location.lat},${cliente.location.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-blue-500 underline text-sm hover:text-blue-600">
+                Iniciar ruta en Maps
+              </span>
+            </a>
+          </Button>
         </div>
       </div>
     );

@@ -93,6 +93,7 @@ import timezone from "dayjs/plugin/timezone";
 import { HistorialPagos } from "./HistorialPagos";
 import { getEstadoColorBadge, returnStatusClient } from "../Utils/Utils2";
 import { EstadoCliente } from "../CrmCustomers/CustomerTable";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -135,9 +136,11 @@ interface Contrato {
 }
 
 export default function CustomerDetails() {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [searchParams] = useSearchParams();
   const { id } = useParams();
 
+  const [motivo, setMotivo] = useState<string>("");
   // read the “tab” param, fall back to “general” if missing
   const defaultTab = searchParams.get("tab") || "general";
   // Estado para controlar la pestaña activa
@@ -347,8 +350,10 @@ export default function CustomerDetails() {
           data: {
             facturaId: id,
             estadoFactura: estado,
+            userId: userId,
             fechaEmision,
             fechaVencimiento,
+            motivo: motivo,
           },
         }
       );
@@ -358,6 +363,7 @@ export default function CustomerDetails() {
         getClienteDetails();
         setFacturaAction(null);
         setOpenDeleteFactura(false);
+        setMotivo("");
       } else {
         toast.error("No se pudo eliminar la factura");
       }
@@ -495,7 +501,7 @@ export default function CustomerDetails() {
           onValueChange={setActiveTab}
           className="lg:space-y-4"
         >
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-7 ">
+          <TabsList className="w-full flex flex-wrap gap-1 overflow-x-auto sm:grid sm:grid-cols-3 md:grid-cols-5  sm:h-auto">
             <TabsTrigger
               value="general"
               className="text-xs md:text-sm flex items-center justify-center"
@@ -1020,102 +1026,131 @@ export default function CustomerDetails() {
 
           {/* Pestaña de Facturación */}
           <TabsContent value="facturacion" className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-1">
+            <div className="flex flex-col lg:flex-row gap-4">
               {/* Tarjeta de Saldo del Cliente */}
-              <Card className="h-fit max-w-[320px] w-full shadow-sm">
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm flex items-center">
-                    <Wallet className="h-4 w-4 mr-2 dark:text-white" />
-                    <p className="text-sm font-normal">Saldo del Cliente</p>
-                  </CardTitle>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Abrir menú</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          onClick={() => setOpenGenerarFactura(true)}
-                        >
-                          Generar factura individual
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
+              <Card className="w-full  lg:max-w-sm flex-shrink-0 border-0 shadow-sm bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-medium flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                      <div className="p-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-700/60">
+                        <Wallet className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                      </div>
+                      Saldo del Cliente
+                    </CardTitle>
 
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          onClick={() => setOpenGenerateFacturas(true)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
                         >
-                          Generar múltiples facturas
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Abrir menú</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() => setOpenGenerarFactura(true)}
+                          >
+                            Generar factura individual
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() => setOpenGenerateFacturas(true)}
+                          >
+                            Generar múltiples facturas
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </CardHeader>
 
-                <CardContent className="text-sm">
+                <CardContent className="space-y-4">
                   {cliente.saldoCliente ? (
-                    <dl className="grid grid-cols-1 gap-4">
-                      {/* Actual */}
-                      <div className="grid grid-cols-3 items-start">
-                        <dt className="font-medium text-muted-foreground flex items-center">
-                          <CreditCard className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                          Actual:
-                        </dt>
-                        <dd className="col-span-2">
-                          <span className={"text-green-600 font-semibold"}>
+                    <div className="space-y-4">
+                      {/* Balance Items */}
+                      <div className="space-y-3">
+                        {/* Actual */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded bg-emerald-100 dark:bg-emerald-900/30">
+                              <CreditCard className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              Actual
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                             {formatearMoneda(cliente.saldoCliente.saldo)}
                           </span>
-                        </dd>
-                      </div>
+                        </div>
 
-                      {/* Pendiente */}
-                      <div className="grid grid-cols-3 items-start">
-                        <dt className="font-medium text-muted-foreground flex items-center">
-                          <CreditCard className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                          Pendiente:
-                        </dt>
-                        <dd className="col-span-2">
-                          <span className={"text-red-600 font-semibold"}>
+                        {/* Pendiente */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded bg-red-100 dark:bg-red-900/30">
+                              <CreditCard className="h-3 w-3 text-red-600 dark:text-red-400" />
+                            </div>
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              Pendiente
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-red-600 dark:text-red-400">
                             {formatearMoneda(
                               cliente.saldoCliente.saldoPendiente
                             )}
                           </span>
-                        </dd>
-                      </div>
+                        </div>
 
-                      {/* Total */}
-                      <div className="grid grid-cols-3 items-start">
-                        <dt className="font-medium text-muted-foreground flex items-center">
-                          <CreditCard className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                          Total:
-                        </dt>
-                        <dd className="col-span-2">
-                          <span className="text-green-600 font-semibold">
+                        {/* Total */}
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded bg-blue-100 dark:bg-blue-900/30">
+                              <CreditCard className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              Total
+                            </span>
+                          </div>
+                          <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                             {formatearMoneda(cliente.saldoCliente.totalPagos)}
                           </span>
-                        </dd>
+                        </div>
                       </div>
 
-                      {/* Último pago */}
-                      <div className="grid grid-cols-3 items-start">
-                        <dt className="font-medium text-muted-foreground flex items-center">
-                          <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                          Último pago:
-                        </dt>
-                        <dd className="col-span-2">
-                          {cliente.saldoCliente.ultimoPago
-                            ? formatearFecha(cliente.saldoCliente.ultimoPago)
-                            : "No hay pagos registrados"}
-                        </dd>
+                      {/* Last Payment */}
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1 rounded bg-slate-100 dark:bg-slate-700/60">
+                              <Calendar className="h-3 w-3 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                              Último pago
+                            </span>
+                          </div>
+                          <span className="text-xs text-slate-600 dark:text-slate-300">
+                            {cliente.saldoCliente.ultimoPago
+                              ? formatearFecha(cliente.saldoCliente.ultimoPago)
+                              : "No hay pagos registrados"}
+                          </span>
+                        </div>
                       </div>
-                    </dl>
+                    </div>
                   ) : (
-                    <p>No hay información de saldo disponible.</p>
+                    <div className="text-center py-6">
+                      <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 w-fit mx-auto mb-3">
+                        <Wallet className="h-6 w-6 text-slate-400" />
+                      </div>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        No hay información de saldo disponible
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -1172,6 +1207,17 @@ export default function CustomerDetails() {
                 su saldo actual y su relacion con sus facturas.
               </AlertDescription>
             </Alert>
+
+            <div className="pt-2">
+              <Textarea
+                className=""
+                onChange={(e) => {
+                  setMotivo(e.target.value);
+                }}
+                placeholder="Describa el motivo por el cual se procede a eliminar (OPCIONAL)"
+                value={motivo}
+              ></Textarea>
+            </div>
           </div>
           <DialogFooter>
             <Button

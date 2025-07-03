@@ -210,6 +210,18 @@ export const routesCrm_Admin = [
     ],
   },
 
+  {
+    icon: MapIcon,
+    label: "Registros eliminados",
+    submenu: [
+      {
+        icon: MapPin,
+        label: "Facturas eliminadas (demo)",
+        href: "/crm/facturas-eliminadas",
+      },
+    ],
+  },
+
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },
 ];

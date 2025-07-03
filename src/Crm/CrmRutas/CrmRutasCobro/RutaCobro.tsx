@@ -535,18 +535,6 @@ function RutaCobro() {
                               </div>
                             )}
                           </div>
-
-                          <div className="pt-1">
-                            {/* <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => handleClientSelect(cliente.id)}
-                            >
-                              <MapPin className="h-4 w-4 mr-2" />
-                              Ver en mapa
-                            </Button> */}
-                          </div>
                         </div>
                       </AccordionContent>
                     </AccordionItem>

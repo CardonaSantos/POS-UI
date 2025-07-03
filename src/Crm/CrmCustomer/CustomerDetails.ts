@@ -109,6 +109,7 @@ export interface FacturaInternet {
   fechaVencimiento: string; // ISO string
   pagada: boolean;
   estado: string;
+  periodo: string;
   pagos: Pagos[];
   creador: CreadorFactura;
 }

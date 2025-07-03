@@ -1,4 +1,3 @@
-"use client";
 import {
   Table,
   TableBody,
@@ -88,6 +87,7 @@ export function HistorialPagos({
               : "Sin registrar",
         },
         tipoPago: factura?.pagos[0]?.metodoPago ?? "N/A",
+        periodo: factura.periodo,
         referencia: factura.id.toString(),
         detalle: `FACTURA ${new Date(factura.fechaVencimiento)
           .toLocaleString("default", { month: "long" })
@@ -136,6 +136,9 @@ export function HistorialPagos({
                 <TableHead className="font-medium w-[60px] text-[11px]">
                   Fecha
                 </TableHead>
+                <TableHead className="font-medium w-[60px] text-[11px]">
+                  Periodo
+                </TableHead>
                 <TableHead className="font-medium w-[80px] text-[11px]">
                   Canales
                 </TableHead>
@@ -146,7 +149,7 @@ export function HistorialPagos({
                   Tipo Pago
                 </TableHead>
                 <TableHead className="font-medium w-[60px] text-[11px]">
-                  Ref.
+                  ID
                 </TableHead>
                 <TableHead className="font-medium w-[100px] text-[11px]">
                   Detalle
@@ -174,6 +177,11 @@ export function HistorialPagos({
                   <TableCell className="whitespace-nowrap font-medium text-[11px]">
                     {formatearFecha(t.fecha)}
                   </TableCell>
+
+                  <TableCell className="whitespace-nowrap font-medium text-[11px]">
+                    {t?.periodo ?? "N/A"}
+                  </TableCell>
+
                   <TableCell className="whitespace-nowrap text-[11px]">
                     <div className="flex items-center gap-1">
                       <DropdownMenu>
