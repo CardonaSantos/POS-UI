@@ -5,6 +5,7 @@ export interface User {
   name: string;
   initials: string;
   avatar?: string;
+  rol: string;
 }
 
 export interface Companion {

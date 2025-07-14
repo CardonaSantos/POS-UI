@@ -106,7 +106,10 @@ export enum EstadoTicket {
   ARCHIVADA = "ARCHIVADA",
   CERRADO = "CERRADO",
 }
-
+interface Acompañantes {
+  id: number;
+  nombre: string;
+}
 export interface TicketMoment {
   id: number;
   titulo: string;
@@ -114,6 +117,7 @@ export interface TicketMoment {
   estado: EstadoTicket;
   prioridad: PrioridadTicketSoporte;
   tecnico: Tecnico;
+  acompanantes: Acompañantes[];
   cliente: {
     id: number;
     nombre: string;

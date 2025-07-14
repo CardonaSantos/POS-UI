@@ -20,6 +20,15 @@ type DateRange = {
   startDate: Date | undefined;
   endDate: Date | undefined;
 };
+interface Etiqueta {
+  id: number;
+  nombre: string;
+}
+
+interface Usuario {
+  id: number;
+  nombre: string;
+}
 
 export default function TicketDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -34,6 +43,10 @@ export default function TicketDashboard() {
 
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedCreator, setSelectedCreator] = useState<string | null>(null);
+  const [openCreateTicket, setOpenCreateTicket] = useState(false);
+
+  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
+  const [tecnicos, setTecnicos] = useState<Usuario[]>([]);
 
   const filterTickets = (tickets: Ticket[]) => {
     return tickets.filter((ticket) => {
@@ -96,8 +109,6 @@ export default function TicketDashboard() {
     });
   };
 
-  //ESTADOS PARA CREAR TICKET Y LLAMADA A FUNCION GET
-  const [openCreateTicket, setOpenCreateTicket] = useState(false);
   const getTickets = async () => {
     try {
       const response = await axios.get(`${VITE_CRM_API_URL}/tickets-soporte`);
@@ -114,18 +125,6 @@ export default function TicketDashboard() {
     getTickets();
   }, []);
 
-  interface Etiqueta {
-    id: number;
-    nombre: string;
-  }
-
-  interface Usuario {
-    id: number;
-    nombre: string;
-  }
-
-  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
-  const [tecnicos, setTecnicos] = useState<Usuario[]>([]);
   const optionsLabels = etiquetas.map((label) => ({
     value: label.id.toString(),
     label: label.nombre,

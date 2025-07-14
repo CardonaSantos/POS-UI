@@ -458,6 +458,10 @@ function DialogDetails({
                   <SelectItem value="NUEVO">Nuevo</SelectItem>
                   <SelectItem value="ABIERTA">Abierta</SelectItem>
                   <SelectItem value="EN_PROCESO">En Proceso</SelectItem>
+                  <SelectItem value="PENDIENTE_REVISION">
+                    Pendiente Revisión
+                  </SelectItem>
+
                   <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                   <SelectItem value="PENDIENTE_CLIENTE">
                     Pendiente Cliente

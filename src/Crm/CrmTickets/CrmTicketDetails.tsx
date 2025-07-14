@@ -245,13 +245,14 @@ export default function TicketDetail({
             .map((word) => word[0])
             .join(""),
           avatar: prev.assignee?.avatar || "",
+          rol: prev.creator.rol,
         },
       }));
     } else {
       // Si se deselecciona el técnico, se limpia el valor
       setTicketToEdit((prev) => ({
         ...prev,
-        assignee: { id: 0, name: "", initials: "" },
+        assignee: { id: 0, name: "", initials: "", rol: "" },
       }));
     }
   };
@@ -341,9 +342,8 @@ export default function TicketDetail({
     setSelectedTicketId(null);
   };
 
-  // fuera del render, o memoizado
   const companionOptions = ticketToEdit?.companios?.map((c) => ({
-    value: c.id.toString(), // o simplemente c.id, si tu optionsTecs usan numbers
+    value: c.id.toString(),
     label: c.name,
   }));
 
@@ -460,6 +460,14 @@ export default function TicketDetail({
           <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900">
             <p className="text-xs font-semibold text-gray-500 dark:text-white">
               Cerrado el {formatearFecha(ticket.closedAt)}
+            </p>
+          </div>
+        ) : null}
+
+        {ticket.creator ? (
+          <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900">
+            <p className="text-xs font-semibold text-gray-500 dark:text-white">
+              Creado por: {ticket.creator.name} | {ticket.creator.rol}
             </p>
           </div>
         ) : null}
