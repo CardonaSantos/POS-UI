@@ -67,7 +67,6 @@ import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
 import CreateCustomers from "./Crm/CrmCreateCustomers/CreateCustomers";
 import EmpresaForm from "./Crm/CrmEmpresa/EmpresaForm";
-import CustomerDetails from "./Crm/CrmCustomer/CrmCustomerDetails";
 import { ProtectRouteCrmUser } from "./Crm/CrmAuthRoutes/ProtectRouteCrmUser";
 import { useAuthStoreCRM } from "./Crm/CrmAuthRoutes/AuthStateCRM";
 import CrmRegist from "./Crm/CrmAuth/CrmRegist";
@@ -93,6 +92,7 @@ import CrmProfileConfig from "./Crm/CrmProfile/CrmProfileConfig";
 import CrmUsers from "./Crm/CrmProfile/CrmUsers";
 import MetasTecnicosPage from "./Crm/CrmTicketsMeta/MetasTecnicosPage";
 import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
+import CustomerProfile from "./Crm/CrmCustomer/newCustomerPage/customer-profile";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -544,7 +544,6 @@ function App() {
             />
 
             {/* RUTAS PARA EL CRM */}
-
             <Route
               path="/crm"
               element={
@@ -576,7 +575,7 @@ function App() {
               path="/crm/cliente/:id"
               element={
                 <ProtectRouteCrmUser>
-                  <CustomerDetails />
+                  <CustomerProfile />
                 </ProtectRouteCrmUser>
               }
             />

@@ -141,9 +141,7 @@ export default function CustomerDetails() {
   const { id } = useParams();
 
   const [motivo, setMotivo] = useState<string>("");
-  // read the “tab” param, fall back to “general” if missing
   const defaultTab = searchParams.get("tab") || "general";
-  // Estado para controlar la pestaña activa
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [plantillas, setPlantillas] = useState<PlantillasInterface[]>([]);
   const [openGenerarFactura, setOpenGenerarFactura] = useState(false);
@@ -413,10 +411,6 @@ export default function CustomerDetails() {
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <User className="h-5 w-5 dark:text-white" />
-              {cliente.nombre} {cliente.apellidos}
-            </h1>
             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
               <span>Cliente #{cliente.id}</span>
               <span>•</span>
