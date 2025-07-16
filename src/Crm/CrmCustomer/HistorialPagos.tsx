@@ -15,7 +15,7 @@ import {
   User,
 } from "lucide-react";
 import type { FacturaInternet } from "./CustomerDetails"; // Asumiendo que tienes tus interfaces en este archivo
-import { ScrollArea } from "@/components/ui/scroll-area";
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 
 import { Link } from "react-router-dom";
@@ -129,7 +129,8 @@ export function HistorialPagos({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="max-h-60 overflow-y-auto">
+        {/* <ScrollArea className="max-h-60 overflow-y-auto"> */}
+        <div className="max-h-60 overflow-auto">
           <Table className="w-full text-[11px] [&_th]:py-1.5 [&_td]:py-1 [&_th]:text-[11px] [&_td]:text-[11px] [&_th]:px-2 [&_td]:px-2">
             <TableHeader className="sticky top-0 bg-muted/80 dark:bg-gray-900/80 backdrop-blur-sm z-10">
               <TableRow className="border-b dark:border-gray-800">
@@ -346,7 +347,9 @@ export function HistorialPagos({
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
+        </div>
+
+        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );

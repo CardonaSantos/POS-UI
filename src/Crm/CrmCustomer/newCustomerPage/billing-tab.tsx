@@ -133,7 +133,7 @@ export function BillingTab({
       </Card>
 
       {/* Historial de Pagos */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <HistorialPagos
           facturas={cliente.facturaInternet}
           nombreCliente={`${cliente.nombre} ${cliente.apellidos}`}
