@@ -125,6 +125,7 @@ const ServicioTable: React.FC<ServicioTableProps> = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
+                          disabled
                           variant="ghost"
                           size="icon"
                           onClick={() => onDeleteClick(servicio.id)}

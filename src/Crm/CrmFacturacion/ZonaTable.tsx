@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import type { FacturacionZona } from "./FacturacionZonaTypes";
+// import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 
 interface ZonaTableProps {
   zonas: FacturacionZona[];
@@ -42,6 +43,10 @@ const ZonaTable: React.FC<ZonaTableProps> = ({
   onEditClick,
   onDeleteClick,
 }) => {
+  // const rol = useStoreCrm((state) => state.rol) ?? "";
+
+  // const isSuperAdmin: boolean = rol === "SUPER_ADMIN" ? false : true;
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -219,6 +224,7 @@ const ZonaTable: React.FC<ZonaTableProps> = ({
                     <span className="sr-only">Editar</span>
                   </Button>
                   <Button
+                    disabled
                     variant="ghost"
                     size="icon"
                     onClick={() => onDeleteClick(zona.id)}

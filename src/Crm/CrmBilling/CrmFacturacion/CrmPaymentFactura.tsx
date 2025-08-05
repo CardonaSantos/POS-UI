@@ -621,7 +621,7 @@ const CrmPaymentFactura: React.FC = () => {
                     </DropdownMenuLabel>
                     <DropdownMenuItem asChild>
                       <Link
-                        to={`/editar?factura=${factura.id}`}
+                        to={`/crm/editar?factura=${factura.id}`}
                         className="flex items-center text-green-600 dark:text-green-400 focus:text-green-700 dark:focus:text-green-300"
                       >
                         <FilePenLine className="h-3.5 w-3.5 mr-2" />
