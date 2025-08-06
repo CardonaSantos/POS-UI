@@ -36,7 +36,7 @@ interface FacturaToDeleter {
 }
 
 // Función para formatear fechas
-const formatearFecha = (fechaISO: string) => {
+const formatearFecha = (fechaISO: string | Date) => {
   const fecha = new Date(fechaISO);
   return `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()}`;
 };
@@ -77,6 +77,7 @@ export function HistorialPagos({
     .map((factura) => {
       const facturaRow = {
         fecha: factura.fechaEmision,
+        fechaPagada: factura.fechaPagada,
         canal: {
           creador: factura?.creador?.nombre
             ? factura?.creador?.nombre
@@ -146,6 +147,11 @@ export function HistorialPagos({
                 <TableHead className="font-medium w-[70px] text-[11px]">
                   Estado
                 </TableHead>
+
+                <TableHead className="font-medium w-[70px] text-[11px]">
+                  F. Pagada
+                </TableHead>
+
                 <TableHead className="font-medium w-[70px] text-[11px]">
                   Tipo Pago
                 </TableHead>
@@ -244,6 +250,17 @@ export function HistorialPagos({
                       {t.estado}
                     </Badge>
                   </TableCell>
+
+                  <TableCell className="whitespace-nowrap text-[11px]">
+                    {t.fechaPagada && (
+                      <div className="flex items-center gap-1">
+                        <span className="truncate">
+                          {formatearFecha(t.fechaPagada)}
+                        </span>
+                      </div>
+                    )}
+                  </TableCell>
+
                   <TableCell className="whitespace-nowrap text-[11px]">
                     {t.tipoPago && (
                       <div className="flex items-center gap-1">
@@ -348,8 +365,6 @@ export function HistorialPagos({
             </TableBody>
           </Table>
         </div>
-
-        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );

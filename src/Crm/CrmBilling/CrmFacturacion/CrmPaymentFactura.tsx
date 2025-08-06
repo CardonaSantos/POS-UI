@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect, useCallback } from "react";
-// import { useRouter, useSearchParams } from "next/navigation"
 import {
   Card,
   CardContent,
@@ -88,6 +87,18 @@ import {
 } from "@/components/ui/tooltip";
 import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile";
 import { formateDateWithMinutes } from "@/Crm/Utils/FormateDate";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.locale("es");
+
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 // Enums
 enum EstadoFacturaInternet {
@@ -131,12 +142,6 @@ interface ServicioInternet {
   velocidad?: string;
   precio: number;
 }
-
-// interface Usuario {
-//   id: number;
-//   nombre: string;
-//   apellidos?: string;
-// }
 
 interface ClienteInternet {
   id: number;
@@ -208,6 +213,7 @@ interface NuevoPago {
   metodoPago: MetodoPagoFacturaInternet;
   cobradorId: number;
   numeroBoleta: string;
+  fechaPago: string | Date | null;
 }
 
 interface Servicios {
@@ -246,6 +252,7 @@ const CrmPaymentFactura: React.FC = () => {
     metodoPago: MetodoPagoFacturaInternet.EFECTIVO,
     cobradorId: userId,
     numeroBoleta: "",
+    fechaPago: dayjs().tz("America/Guatemala").toDate(),
   });
   const [serviciosSeleccionados, setServiciosSeleccionados] =
     useState<number[]>();
@@ -348,6 +355,7 @@ const CrmPaymentFactura: React.FC = () => {
         cobradorId: Number(userId),
         numeroBoleta: nuevoPago.numeroBoleta,
         serviciosAdicionales: serviciosSeleccionados?.map((s) => s),
+        fechaPago: nuevoPago.fechaPago,
       };
 
       const response = await axios.post(
@@ -373,6 +381,7 @@ const CrmPaymentFactura: React.FC = () => {
           metodoPago: MetodoPagoFacturaInternet.EFECTIVO,
           cobradorId: userId,
           numeroBoleta: "",
+          fechaPago: dayjs().tz("America/Guatemala").toDate(),
         });
       }
     } catch (err: any) {
@@ -521,18 +530,6 @@ const CrmPaymentFactura: React.FC = () => {
       (sum: number, pago: any) => sum + pago.montoPagado,
       0
     ) || 0;
-  // function getMetodoPagoIcon(metodo: string) {
-  //   switch (metodo.toLowerCase()) {
-  //     case 'efectivo':
-  //       return <Banknote className="h-4 w-4 text-green-600" />;
-  //     case 'tarjeta':
-  //       return <CreditCard className="h-4 w-4 text-blue-600" />;
-  //     case 'transferencia':
-  //       return <Smartphone className="h-4 w-4 text-purple-600" />;
-  //     default:
-  //       return <DollarSign className="h-4 w-4 text-gray-600" />;
-  //   }
-  // }
 
   function getMetodoPagoBadgeColor(metodo: string) {
     switch (metodo.toLowerCase()) {
@@ -546,6 +543,9 @@ const CrmPaymentFactura: React.FC = () => {
         return "bg-gray-100 text-gray-800 hover:bg-gray-200";
     }
   }
+
+  console.log("data form pago: ", nuevoPago);
+  console.log("La factura a pagar es: ", factura);
 
   return (
     <div className="container mx-auto py-6 space-y-6 print:py-0">
@@ -1100,6 +1100,25 @@ const CrmPaymentFactura: React.FC = () => {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fechaPago">Método de Pago</Label>
+                    <Input
+                      id="fechaPago"
+                      type="date"
+                      value={dayjs(nuevoPago.fechaPago).format("YYYY-MM-DD")}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const dateStr = e.target.value;
+                        const fechaGt = dayjs
+                          .tz(dateStr, "America/Guatemala")
+                          .toDate();
+                        setNuevoPago((prev) => ({
+                          ...prev,
+                          fechaPago: fechaGt,
+                        }));
+                      }}
+                    />
                   </div>
 
                   {/* Conditional field for receipt number when payment method is DEPOSITO */}

@@ -128,6 +128,7 @@ export interface FacturaInternet {
   periodo: string;
   pagos: Pagos[];
   creador: CreadorFactura;
+  fechaPagada: string | Date;
 }
 
 export interface CreadorFactura {
