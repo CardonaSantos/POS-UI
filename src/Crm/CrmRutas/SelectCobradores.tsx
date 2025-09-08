@@ -46,7 +46,7 @@ export function SelectCobradores({ value, onChange }: SelectCobradoresProps) {
 
   return (
     <ReactSelectComponent
-      className="text-sm text-black"
+      className="text-xs text-black"
       options={optionsCobradores}
       onChange={handleSelectCobrador}
       isClearable

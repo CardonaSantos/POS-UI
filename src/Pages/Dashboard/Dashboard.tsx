@@ -85,8 +85,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Reparacion } from "../Reparaciones/RepairRegisType";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import currency from "currency.js";
-import DesvanecerHaciaArriba from "@/Crm/Motion/DashboardAnimations";
 import SkeletonCard from "./Skeleton/SkeletonCardCredit";
+import DesvanecerHaciaArriba from "@/Crm/Motion/DashboardAnimations";
 
 const formatearMoneda = (monto: number) => {
   return currency(monto, {

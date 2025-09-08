@@ -3,10 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Phone, FileText } from "lucide-react";
-import type { ClienteInternet, EstadoCliente } from "./rutas-types";
+import type {
+  ClienteInternetFromCreateRuta,
+  EstadoCliente,
+} from "./rutas-types";
 
 interface ClienteCardProps {
-  cliente: ClienteInternet;
+  cliente: ClienteInternetFromCreateRuta;
   isSelected: boolean;
   onSelect: (checked: boolean) => void;
   getBadgeColor: (estado: EstadoCliente) => string;

@@ -42,7 +42,7 @@ export function AppSidebar() {
   }, [isCrmLocation, rolUserCRM, rolUserPOS]);
 
   return (
-    <Sidebar variant="floating" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <div className="overflow-y-auto">
           <SidebarGroup>

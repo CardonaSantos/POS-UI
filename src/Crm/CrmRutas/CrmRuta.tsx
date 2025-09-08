@@ -1,54 +1,39 @@
 "use client";
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Route, MapPin, Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { RutasCobroList } from "./RutasCobroList";
 import { RutasCobroCreate } from "./RutasCobroCreate";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
-
+import { PageHeader } from "../Utils/Components/PageHeader";
+import { motion } from "framer-motion";
+import DesvanecerHaciaArriba from "../Motion/DashboardAnimations";
 export default function RutasCobroPage() {
   const [activeTab, setActiveTab] = useState<string>("rutas");
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const handleRouteCreated = (message: string) => {
-    setSuccess(message);
-    setActiveTab("rutas");
-
-    // Limpiar mensaje después de 3 segundos
-    setTimeout(() => {
-      setSuccess(null);
-    }, 3000);
-  };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Route className="h-6 w-6 text-primary" />
-            Rutas de Cobro
-          </h1>
-        </div>
-      </div>
+    <motion.div className="container mx-auto" {...DesvanecerHaciaArriba}>
+      <PageHeader
+        sticky={false}
+        title="Rutas de Cobro"
+        subtitle="Gestiona tus rutas y asignaciones"
+        fallbackBackTo="/crm" // si no hay history
+      />
 
-      {success && (
-        <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/30">
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Éxito</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto">
-          <TabsTrigger value="rutas" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
+        <TabsList className="grid w-full grid-cols-2 md:w-auto h-8 p-0.5 rounded-lg">
+          <TabsTrigger
+            value="rutas"
+            className="flex items-center gap-1 px-2 py-1 text-xs leading-none data-[state=active]:shadow-none"
+          >
+            <MapPin className="h-3 w-3" />
             <span>Rutas Existentes</span>
           </TabsTrigger>
-          <TabsTrigger value="crear" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+
+          <TabsTrigger
+            value="crear"
+            className="flex items-center gap-1 px-2 py-1 text-xs leading-none data-[state=active]:shadow-none"
+          >
+            <Plus className="h-3 w-3" />
             <span>Crear Ruta</span>
           </TabsTrigger>
         </TabsList>
@@ -58,9 +43,9 @@ export default function RutasCobroPage() {
         </TabsContent>
 
         <TabsContent value="crear">
-          <RutasCobroCreate onRouteCreated={handleRouteCreated} />
+          <RutasCobroCreate />
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }

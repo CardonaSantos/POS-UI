@@ -1,12 +1,15 @@
+// SelectZonaFacturacion.tsx
 "use client";
 
+import * as React from "react";
 import ReactSelectComponent from "react-select";
 import type { OptionSelected, FacturacionZona } from "./rutas-types";
+import { compactSelectStyles } from "@/utils/_components/react_select_component_styles.ts/selectStyles";
 
 interface SelectZonaFacturacionProps {
   zonas: FacturacionZona[];
-  value: string | null;
-  onChange: (option: OptionSelected | null) => void;
+  value: string[];
+  onChange: (options: OptionSelected[]) => void;
 }
 
 export function SelectZonaFacturacion({
@@ -14,27 +17,33 @@ export function SelectZonaFacturacion({
   value,
   onChange,
 }: SelectZonaFacturacionProps) {
-  const optionsZonasFacturacion: OptionSelected[] = zonas.map((c) => ({
-    value: c.id.toString(),
-    label: `${c.nombreRuta} (${c.clientes} clientes)`,
+  const options: OptionSelected[] = zonas.map((z) => ({
+    value: String(z.id),
+    label: `${z.nombreRuta} (${z.clientes} clientes)`,
   }));
+
+  const [portal, setPortal] = React.useState<HTMLElement | null>(null);
+  React.useEffect(() => setPortal(document.body), []);
 
   return (
     <ReactSelectComponent
-      className="text-black text-sm w-full sm:w-[250px]"
-      options={optionsZonasFacturacion}
-      onChange={onChange}
+      className="w-full text-xs text-black dark:text-black"
+      classNamePrefix="rs"
+      styles={compactSelectStyles}
+      options={options}
+      isMulti
       isClearable
+      closeMenuOnSelect={false}
+      // 👇 deja que el menú Oculte lo ya seleccionado (default = true)
+      hideSelectedOptions
       placeholder="Filtrar por zona..."
-      value={
-        value
-          ? {
-              value: value,
-              label:
-                zonas.find((c) => c.id.toString() === value)?.nombreRuta || "",
-            }
-          : null
+      value={options.filter((opt) => value.includes(opt.value))}
+      onChange={(selected) =>
+        onChange(selected ? (selected as OptionSelected[]) : [])
       }
+      components={{ IndicatorSeparator: null }}
+      menuPortalTarget={portal ?? undefined}
+      maxMenuHeight={260}
     />
   );
 }

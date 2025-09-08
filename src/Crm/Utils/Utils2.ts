@@ -42,7 +42,7 @@ export const returnStatusClient = (estado: EstadoCliente) => {
   return estadoDefined;
 };
 
-export const getEstadoColorBadge = (estado: string) => {
+export const getEstadoOperandoClienteColorBadge = (estado: string) => {
   switch (estado) {
     case "ACTIVO":
       return "bg-green-100 text-green-800";

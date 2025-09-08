@@ -1,55 +1,44 @@
+// SelectSectoresMulti.tsx
 "use client";
 
-import ReactSelect, { ActionMeta, SingleValue } from "react-select";
+import * as React from "react";
+import ReactSelectComponent from "react-select";
 import type { OptionSelected, Sector } from "./rutas-types";
+import { compactSelectStyles } from "@/utils/_components/react_select_component_styles.ts/selectStyles";
 
-interface SelectSectoresProps {
+interface Props {
   sectores: Sector[];
-  value: string | null;
-  onChange: (value: string | null) => void; // Mejor: Recibe directamente el valor
-  className?: string;
+  value: string[];
+  onChange: (options: OptionSelected[]) => void;
 }
 
-export function SelectSectores({
-  sectores,
-  value,
-  onChange,
-  className = "",
-}: SelectSectoresProps) {
-  // Memoizar las opciones para mejor rendimiento
-  const options = sectores.map(
-    (sector): OptionSelected => ({
-      value: sector.id.toString(),
-      label: `${sector.nombre} (${sector.clientesCount} clientes)`,
-    })
-  );
+export function SelectSectoresMulti({ sectores, value, onChange }: Props) {
+  const options: OptionSelected[] = sectores.map((s) => ({
+    value: String(s.id),
+    label: `${s.nombre} (${s.clientes ?? s.clientesCount ?? 0})`,
+  }));
 
-  // Encontrar el valor seleccionado
-  const selectedOption = value
-    ? options.find((option) => option.value === value) || null
-    : null;
-
-  // Manejar cambio manteniendo consistencia con react-select
-  const handleChange = (
-    newValue: SingleValue<OptionSelected>,
-    _actionMeta: ActionMeta<OptionSelected>
-  ) => {
-    onChange(newValue?.value ?? null);
-  };
+  const [portal, setPortal] = React.useState<HTMLElement | null>(null);
+  React.useEffect(() => setPortal(document.body), []);
 
   return (
-    <ReactSelect<OptionSelected>
-      className={`text-black text-sm ${className}`}
+    <ReactSelectComponent
+      className="w-full text-xs text-black"
+      classNamePrefix="rs"
+      styles={compactSelectStyles}
       options={options}
-      onChange={handleChange}
-      value={selectedOption}
+      isMulti
       isClearable
+      closeMenuOnSelect={false}
+      hideSelectedOptions // 👈 importante
       placeholder="Filtrar por sector..."
-      noOptionsMessage={() => "No hay sectores disponibles"}
-      classNames={{
-        control: () => "!min-h-9 !border-gray-300",
-        placeholder: () => "!text-gray-400",
-      }}
+      value={options.filter((opt) => value.includes(opt.value))}
+      onChange={(selected) =>
+        onChange(selected ? (selected as OptionSelected[]) : [])
+      }
+      components={{ IndicatorSeparator: null }}
+      menuPortalTarget={portal ?? undefined}
+      maxMenuHeight={260}
     />
   );
 }

@@ -40,11 +40,12 @@ export interface Usuario {
   rol: string;
 }
 
-export interface ClienteInternet {
+export interface ClienteInternetFromCreateRuta {
   id: number;
   nombre: string;
   apellidos?: string;
   telefono?: string;
+  telefonoReferencia?: string;
   direccion?: string;
   dpi?: string;
   estadoCliente: EstadoCliente;
@@ -54,9 +55,15 @@ export interface ClienteInternet {
   saldoPendiente?: number;
   facturasPendientes?: number;
   facturacionZona: number;
+  zonaFacturacion: string;
+
   municipio: Municipio;
   sector: SectorCliente;
+  facturas?: { id: number; montoFactura: number; fechaPagoEsperada: string }[]; // 👈
 }
+
+export interface ClienteInternetFromRuta
+  extends ClienteInternetFromCreateRuta {}
 
 interface Municipio {
   id: number;
@@ -75,22 +82,26 @@ export interface Ruta {
   cobrador?: Usuario;
   empresaId: number;
   empresa: Empresa;
-  clientes: ClienteInternet[];
+  clientes: ClienteInternetFromCreateRuta[];
   cobrados: number;
-  montoCobrado: number;
   estadoRuta: EstadoRuta;
   fechaCreacion: string;
   fechaActualizacion: string;
   observaciones?: string;
   diasCobro?: string[];
+  //
+
+  totalACobrar: number;
+  totalCobrado: number;
 }
 
 export interface CreateRutaDto {
   nombreRuta: string;
   cobradorId?: string | null;
   EmpresaId: number;
-  clientesIds: string[];
+  facturasIds: string[]; // 👈 ahora mandamos facturas, no clientes
   observaciones?: string;
+  clientesIds: [];
 }
 
 export interface OptionSelected {

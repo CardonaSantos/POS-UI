@@ -31,7 +31,10 @@ interface Cliente {
     ultimoPago: string;
   };
   imagenes: string[];
+  totalDebe: number;
 }
+
+export interface ClienteForMiniPerfilCard extends Cliente {}
 
 interface Factura {
   id: number;

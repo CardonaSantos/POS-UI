@@ -85,14 +85,14 @@ import {
 
 // Custom Components
 import { SelectCobradores } from "./SelectCobradores";
-import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
+// import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
 
 // Types
 import {
-  type ClienteInternet,
+  type ClienteInternetFromCreateRuta,
   EstadoCliente,
   type FacturacionZona,
-  type OptionSelected,
+  // type OptionSelected,
   type Ruta,
   EstadoRuta,
 } from "./rutas-types";
@@ -120,11 +120,11 @@ export function RutasCobroEdit() {
   const [estadoRuta, setEstadoRuta] = useState<EstadoRuta>(EstadoRuta.ACTIVO);
 
   // Estados para la gestión de clientes
-  const [clientesActuales, setClientesActuales] = useState<ClienteInternet[]>(
-    []
-  );
+  const [clientesActuales, setClientesActuales] = useState<
+    ClienteInternetFromCreateRuta[]
+  >([]);
   const [clientesDisponibles, setClientesDisponibles] = useState<
-    ClienteInternet[]
+    ClienteInternetFromCreateRuta[]
   >([]);
   const [selectedClientesIds, setSelectedClientesIds] = useState<string[]>([]);
   const [clientesToRemove, setClientesToRemove] = useState<string[]>([]);
@@ -142,6 +142,7 @@ export function RutasCobroEdit() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showFilters, setShowFilters] = useState(false);
   const [isLoadingClientes, setIsLoadingClientes] = useState(false);
+  console.log(facturacionZona);
 
   // Cargar datos de la ruta
   useEffect(() => {
@@ -188,7 +189,9 @@ export function RutasCobroEdit() {
         setEstadoRuta(rutaData.estadoRuta);
         setClientesActuales(rutaData.clientes);
         setSelectedClientesIds(
-          rutaData.clientes.map((c: ClienteInternet) => c.id.toString())
+          rutaData.clientes.map((c: ClienteInternetFromCreateRuta) =>
+            c.id.toString()
+          )
         );
       }
     } catch (err) {
@@ -226,13 +229,14 @@ export function RutasCobroEdit() {
         // Filtrar clientes que ya están en la ruta
         const clientesIds = clientesActuales.map((c) => c.id.toString());
         let availableClientes = response.data.filter(
-          (c: ClienteInternet) => !clientesIds.includes(c.id.toString())
+          (c: ClienteInternetFromCreateRuta) =>
+            !clientesIds.includes(c.id.toString())
         );
 
         // Aplicar filtros adicionales
         availableClientes = availableClientes
           .filter(
-            (cliente: ClienteInternet) =>
+            (cliente: ClienteInternetFromCreateRuta) =>
               cliente.nombre
                 .toLowerCase()
                 .includes(searchCliente.toLowerCase()) ||
@@ -246,28 +250,33 @@ export function RutasCobroEdit() {
                   .includes(searchCliente.toLowerCase()))
           )
           .filter(
-            (cliente: ClienteInternet) =>
+            (cliente: ClienteInternetFromCreateRuta) =>
               clienteFilter === "TODOS" ||
               cliente.estadoCliente === clienteFilter
           )
-          .filter((cliente: ClienteInternet) =>
+          .filter((cliente: ClienteInternetFromCreateRuta) =>
             zonaFacturacionId
               ? cliente.facturacionZona.toString() === zonaFacturacionId
               : true
           )
-          .sort((a: ClienteInternet, b: ClienteInternet) => {
-            if (sortBy === "nombre") {
-              return sortDirection === "asc"
-                ? a.nombre.localeCompare(b.nombre)
-                : b.nombre.localeCompare(a.nombre);
-            } else {
-              const saldoA = a.saldoPendiente || 0;
-              const saldoB = b.saldoPendiente || 0;
-              return sortDirection === "asc"
-                ? saldoA - saldoB
-                : saldoB - saldoA;
+          .sort(
+            (
+              a: ClienteInternetFromCreateRuta,
+              b: ClienteInternetFromCreateRuta
+            ) => {
+              if (sortBy === "nombre") {
+                return sortDirection === "asc"
+                  ? a.nombre.localeCompare(b.nombre)
+                  : b.nombre.localeCompare(a.nombre);
+              } else {
+                const saldoA = a.saldoPendiente || 0;
+                const saldoB = b.saldoPendiente || 0;
+                return sortDirection === "asc"
+                  ? saldoA - saldoB
+                  : saldoB - saldoA;
+              }
             }
-          });
+          );
 
         setTotalClientes(availableClientes.length);
 
@@ -390,12 +399,6 @@ export function RutasCobroEdit() {
       setSortDirection("asc");
     }
     setCurrentPage(1); // Volver a la primera página al cambiar el ordenamiento
-  };
-
-  const handleSelecZona = (option: OptionSelected | null) => {
-    const newValue = option ? option.value : null;
-    setZonaFacturacionId(newValue);
-    setCurrentPage(1); // Volver a la primera página al cambiar el filtro
   };
 
   // Calcular el número total de páginas
@@ -716,11 +719,6 @@ export function RutasCobroEdit() {
                       <FileText className="h-4 w-4 " />
                       <span>Total a cobrar: Q{totalACobrar.toFixed(2)}</span>
                     </div>
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Cobrado: Q{ruta?.montoCobrado ?? 0}</span>
-                    </div>
                   </div>
 
                   {ruta.cobrador && (
@@ -946,11 +944,11 @@ export function RutasCobroEdit() {
 
                       <div className="space-y-2 w-full sm:w-auto sm:flex-1">
                         <Label htmlFor="zona-filter">Zona de facturación</Label>
-                        <SelectZonaFacturacion
+                        {/* <SelectZonaFacturacion
                           zonas={facturacionZona}
                           value={zonaFacturacionId}
                           onChange={handleSelecZona}
-                        />
+                        /> */}
                       </div>
                     </div>
                   </div>

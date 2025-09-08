@@ -1,8 +1,7 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,14 +33,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search,
   MoreVertical,
-  MapPin,
   User,
   Users,
   Calendar,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Check,
   Play,
   Eye,
   Edit,
@@ -49,74 +43,75 @@ import {
   MapPinned,
   UserCheck,
   Phone,
-  Home,
   Info,
   AlertCircle,
   Loader2,
   BookmarkX,
   Printer,
 } from "lucide-react";
-import axios from "axios";
 import { toast } from "sonner";
 import { RutasSkeleton } from "./RutasSkeleton";
-import { EstadoRuta, EstadoCliente, type Ruta } from "./rutas-types";
-import { formatearMoneda } from "../Utils/FormateDate";
-import { getEstadoColorBadge, returnStatusClient } from "../Utils/Utils2";
-import { cn } from "@/lib/utils";
+import { EstadoRuta, type Ruta } from "./rutas-types";
 import { downloadExcelRutaCobro } from "./api";
-
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+import {
+  useApiMutation,
+  useApiQuery,
+} from "@/hooks/genericoCall/genericoCallHook";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { getEstadoBadgeColorRutaList } from "./_Utils/utilsBadge";
+import { getEstadoIconRutaList } from "./_Utils/getEstadoIconRutaList";
+import { AdvancedDialogCRM } from "../_Utils/AdvancedDialogCRM";
+import { formattShortFecha } from "@/utils/formattFechas";
+import MiniPerfilClienteCard from "./_subcomponents/MiniPerfilClienteCard";
 
 export function RutasCobroList() {
-  const [rutas, setRutas] = useState<Ruta[]>([]);
   const [searchRuta, setSearchRuta] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRuta, setSelectedRuta] = useState<Ruta | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [rutaToDelete, setRutaToDelete] = useState<number | null>(null);
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    fetchRutas();
-  }, []);
-
-  // Función para cargar rutas
-  const fetchRutas = async () => {
-    setIsLoading(true);
-    // setError(null);
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/ruta-cobro/get-rutas-cobros`
-      );
-      if (response.status === 200) {
-        setRutas(response.data);
-      }
-    } catch (err) {
-      console.error("Error al cargar rutas:", err);
-      // setError("Error al cargar las rutas de cobro. Intente nuevamente.");
-      toast.error("Error al cargar las rutas de cobro");
-    } finally {
-      setIsLoading(false);
+  const [rutaClose, setRutaClose] = useState<number | null>(null);
+  const [openCloseRuta, setOpenCloseRuta] = useState(false);
+  //API CALLS
+  const {
+    data: rutas = [],
+    isFetching: isLoadingRutas,
+    refetch: fetchRutas,
+    error: rutasError,
+    isError: isErrorRutas,
+  } = useApiQuery<Ruta[]>(
+    ["rutas"],
+    "/ruta-cobro/get-rutas-cobros",
+    undefined,
+    {
+      initialData: [],
+      retry: 1,
+      //sin params
     }
-  };
+  );
 
-  // Función para ver detalles de una ruta
+  const closeRuta = useApiMutation<void, void>(
+    "patch",
+    `/ruta-cobro/close-one-ruta/${rutaClose}`
+  );
+
+  const deleteRuta = useApiMutation<void, void>(
+    "delete",
+    rutaToDelete
+      ? `/ruta-cobro/delete-one-ruta/${rutaToDelete}`
+      : "/ruta-cobro/delete-one-ruta"
+  );
+
   const handleViewRuta = (ruta: Ruta) => {
     setSelectedRuta(ruta);
     setIsViewDialogOpen(true);
   };
 
-  // Función para eliminar una ruta
   const handleDeleteClick = (rutaId: number) => {
     setRutaToDelete(rutaId);
     setIsDeleteDialogOpen(true);
   };
-
-  const [rutaClose, setRutaClose] = useState<number | null>(null);
-  const [openCloseRuta, setOpenCloseRuta] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
   const handleCloseRuta = (rutaId: number) => {
     setRutaClose(rutaId);
@@ -124,92 +119,48 @@ export function RutasCobroList() {
   };
 
   const handleCloseRutaCobro = async () => {
-    if (rutaClose === null) return;
-
-    setIsClosing(true);
+    if (!rutaClose) {
+      toast.info("Seleccione una ruta a cerrar");
+      return;
+    }
     try {
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/ruta-cobro/close-one-ruta/${rutaClose}`
-      );
-
-      if (response.status === 200) {
-        setOpenCloseRuta(false);
-        setRutaClose(null);
-        toast.success("Ruta cerrada correctamente");
-        setIsClosing(false);
-        fetchRutas();
-      }
-    } catch (err) {
-      console.error("Error al eliminar ruta:", err);
-      toast.error("Error al eliminar la ruta");
-      setIsClosing(false);
+      await closeRuta.mutateAsync();
+      toast.success("Ruta de cobro cerrada exitosamente");
+      await fetchRutas();
+      setRutaClose(null);
+      setOpenCloseRuta(false);
+    } catch (error) {
+      console.log("Error generado en close ruta: ", error);
+      toast.error(getApiErrorMessageAxios(error));
+      return;
     }
   };
 
   const handleConfirmDelete = async () => {
-    if (rutaToDelete === null) return;
-
-    setIsSubmitting(true);
-
+    if (!rutaToDelete) {
+      toast.warning("Ruta para eliminar no válida");
+      return;
+    }
     try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/ruta-cobro/delete-one-ruta/${rutaToDelete}`
-      );
-
-      if (response.status === 200) {
-        setIsDeleteDialogOpen(false);
-        setRutaToDelete(null);
-        toast.success("Ruta eliminada correctamente");
-        setIsSubmitting(false);
-        fetchRutas();
-      }
-    } catch (err) {
-      console.error("Error al eliminar ruta:", err);
-      toast.error("Error al eliminar la ruta");
-      setIsSubmitting(false);
+      await deleteRuta.mutateAsync();
+      toast.success("Ruta eliminada correctamente");
+      await fetchRutas?.();
+      setRutaToDelete(null);
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.log("El error generado al eliminar ruta es: ", error);
+      toast.error(getApiErrorMessageAxios(error));
     }
   };
 
-  // Función para formatear fechas
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-GT", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  // Obtener el color del badge según el estado
-  const getEstadoBadgeColor = (estado: EstadoRuta) => {
-    switch (estado) {
-      case EstadoRuta.ACTIVO:
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case EstadoRuta.PENDIENTE:
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case EstadoRuta.COMPLETADO:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-      case EstadoRuta.INACTIVO:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-      default:
-        return "";
-    }
-  };
-
-  // Obtener el icono según el estado
-  const getEstadoIcon = (estado: EstadoRuta) => {
-    switch (estado) {
-      case EstadoRuta.ACTIVO:
-        return <CheckCircle className="h-3.5 w-3.5 mr-1" />;
-      case EstadoRuta.PENDIENTE:
-        return <Clock className="h-3.5 w-3.5 mr-1" />;
-      case EstadoRuta.COMPLETADO:
-        return <Check className="h-3.5 w-3.5 mr-1" />;
-      case EstadoRuta.INACTIVO:
-        return <XCircle className="h-3.5 w-3.5 mr-1" />;
-      default:
-        return null;
-    }
-  };
+  //eliminacion
+  const isDeleting = deleteRuta.isPending;
+  const hasErrorDeleting = deleteRuta.isError;
+  const errorDeleting = deleteRuta.error;
+  //cerrando
+  const isClosing = closeRuta.isPending;
+  const hasErrorClosingRutas = closeRuta.isError;
+  const errorClosingRuta = closeRuta.error;
 
   const filteredRutas = rutas.filter(
     (ruta) =>
@@ -222,7 +173,6 @@ export function RutasCobroList() {
         ruta.observaciones.toLowerCase().includes(searchRuta.toLowerCase()))
   );
 
-  console.log("Las rutas son: ", rutas);
   const handleDownloadExcelRutaCobro = async (rutaId: number) => {
     try {
       const response = await downloadExcelRutaCobro(rutaId);
@@ -237,19 +187,52 @@ export function RutasCobroList() {
 
       toast.success("¡Descarga exitosa!");
     } catch (error) {
-      toast.error("Hubo un error al descargar el Excel");
+      toast.error(getApiErrorMessageAxios(error));
       console.error(error);
     }
   };
+
+  //FALLBACKS ERRORS
+  {
+    isErrorRutas && (
+      <Alert variant="destructive" className="mt-2">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error al cargar rutas</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessageAxios(rutasError)}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  {
+    hasErrorDeleting && (
+      <Alert variant="destructive" className="mt-2">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error al cargar rutas</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessageAxios(errorDeleting)}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  {
+    hasErrorClosingRutas && (
+      <Alert variant="destructive" className="mt-2">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error al cargar rutas</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessageAxios(errorClosingRuta)}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Rutas de Cobro Existentes
-          </CardTitle>
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -262,15 +245,14 @@ export function RutasCobroList() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoadingRutas ? (
           <RutasSkeleton />
         ) : rutas.length === 0 ? (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertTitle>Sin rutas</AlertTitle>
             <AlertDescription>
-              No hay rutas de cobro registradas. Cree una nueva utilizando la
-              pestaña "Crear Ruta".
+              No hay rutas de cobro registradas.
             </AlertDescription>
           </Alert>
         ) : (
@@ -306,17 +288,19 @@ export function RutasCobroList() {
                     filteredRutas.map((ruta) => (
                       <TableRow key={ruta.id} className="group">
                         <TableCell>
-                          <div className="font-medium">{ruta.nombreRuta}</div>
+                          <div className="text-xs font-medium">
+                            {ruta.nombreRuta}
+                          </div>
                           <div className="text-xs text-muted-foreground">
-                            Creada: {formatDate(ruta.fechaCreacion)}
+                            Creada: {formattShortFecha(ruta.fechaCreacion)}
                           </div>
                           <div className="md:hidden mt-1">
                             <Badge
-                              className={`${getEstadoBadgeColor(
+                              className={`${getEstadoBadgeColorRutaList(
                                 ruta.estadoRuta
                               )} flex items-center text-xs`}
                             >
-                              {getEstadoIcon(ruta.estadoRuta)}
+                              {getEstadoIconRutaList(ruta.estadoRuta)}
                               {ruta.estadoRuta}
                             </Badge>
                           </div>
@@ -325,7 +309,7 @@ export function RutasCobroList() {
                           {ruta.cobrador ? (
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4 text-muted-foreground" />
-                              <span>
+                              <span className="text-xs">
                                 {ruta.cobrador.nombre}{" "}
                                 {ruta.cobrador.apellidos || ""}
                               </span>
@@ -344,11 +328,11 @@ export function RutasCobroList() {
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <Badge
-                            className={`${getEstadoBadgeColor(
+                            className={`${getEstadoBadgeColorRutaList(
                               ruta.estadoRuta
                             )} flex items-center`}
                           >
-                            {getEstadoIcon(ruta.estadoRuta)}
+                            {getEstadoIconRutaList(ruta.estadoRuta)}
                             {ruta.estadoRuta}
                           </Badge>
                         </TableCell>
@@ -450,7 +434,7 @@ export function RutasCobroList() {
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <MapPinned className="h-5 w-5 text-primary" />
+              <MapPinned className="h-5 w-5 text-primary dark:text-white" />
               {selectedRuta?.nombreRuta}
             </DialogTitle>
             <DialogDescription>Detalles de la ruta de cobro</DialogDescription>
@@ -463,28 +447,29 @@ export function RutasCobroList() {
                     <h3 className="text-sm font-medium text-muted-foreground">
                       Información General
                     </h3>
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-2 space-y-2 text-xs">
                       <div className="flex items-center gap-2">
                         <Badge
-                          className={`${getEstadoBadgeColor(
+                          className={`${getEstadoBadgeColorRutaList(
                             selectedRuta.estadoRuta
                           )} flex items-center`}
                         >
-                          {getEstadoIcon(selectedRuta.estadoRuta)}
+                          {getEstadoIconRutaList(selectedRuta.estadoRuta)}
                           {selectedRuta.estadoRuta}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
+                        <Calendar className="h-4 w-4 text-primary dark:text-white" />
                         <span>
-                          Creada: {formatDate(selectedRuta.fechaCreacion)}
+                          Creada:{" "}
+                          {formattShortFecha(selectedRuta.fechaCreacion)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
+                        <Calendar className="h-4 w-4 text-primary dark:text-white" />
                         <span>
                           Actualizada:{" "}
-                          {formatDate(selectedRuta.fechaActualizacion)}
+                          {formattShortFecha(selectedRuta.fechaActualizacion)}
                         </span>
                       </div>
                     </div>
@@ -499,20 +484,20 @@ export function RutasCobroList() {
                     {selectedRuta.cobrador ? (
                       <div className="mt-2 p-3 bg-muted rounded-md">
                         <div className="flex items-center gap-2">
-                          <UserCheck className="h-4 w-4 text-primary" />
-                          <span className="font-medium">
+                          <UserCheck className="h-4 w-4 text-primary dark:text-white" />
+                          <span className="text-xs">
                             {selectedRuta.cobrador.nombre}{" "}
                             {selectedRuta.cobrador.apellidos || ""}
                           </span>
                         </div>
                         {selectedRuta.cobrador.telefono && (
                           <div className="flex items-center gap-2 mt-1 text-sm">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Phone className="h-3.5 w-3.5 text-muted-foreground dark:text-white " />
                             <span>{selectedRuta.cobrador.telefono}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2 mt-1 text-sm">
-                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Info className="h-3.5 w-3.5 text-muted-foreground dark:text-white" />
                           <span>{selectedRuta.cobrador.email}</span>
                         </div>
                       </div>
@@ -540,26 +525,6 @@ export function RutasCobroList() {
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <div className="mt-2">
-                      <div className="text-sm font-medium flex justify-between mb-2">
-                        <span>
-                          Total a cobrar:{" "}
-                          {formatearMoneda(
-                            selectedRuta.clientes.reduce(
-                              (sum, cliente) =>
-                                sum + (cliente.saldoPendiente || 0),
-                              0
-                            )
-                          )}
-                        </span>
-                        <span>
-                          Cobrado: {formatearMoneda(selectedRuta.montoCobrado)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
                   <ScrollArea className="h-[300px] rounded-md border">
                     <div className="p-4 space-y-4">
                       {selectedRuta.clientes.length === 0 ? (
@@ -567,58 +532,11 @@ export function RutasCobroList() {
                           No hay clientes en esta ruta
                         </div>
                       ) : (
-                        selectedRuta.clientes.map((cliente) => (
-                          <div
-                            key={cliente.id}
-                            className="p-3 bg-muted rounded-md"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium">
-                                {cliente.nombre} {cliente.apellidos || ""}
-                              </div>
-                              <Badge
-                                className={cn(
-                                  "text-[9px]",
-                                  getEstadoColorBadge(
-                                    returnStatusClient(
-                                      cliente.estadoCliente as EstadoCliente
-                                    )
-                                  )
-                                )}
-                              >
-                                {returnStatusClient(cliente.estadoCliente)}
-                              </Badge>
-                            </div>
-
-                            {cliente.telefono && (
-                              <div className="flex items-center gap-2 mt-1 text-sm">
-                                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span>{cliente.telefono}</span>
-                              </div>
-                            )}
-
-                            {cliente.direccion && (
-                              <div className="flex items-start gap-2 mt-1 text-sm">
-                                <Home className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
-                                <span>{cliente.direccion}</span>
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between mt-2">
-                              <div className="text-sm">
-                                <span className="font-medium">
-                                  Saldo:{" "}
-                                  {formatearMoneda(cliente.saldoPendiente ?? 0)}
-                                </span>
-                                {cliente.facturasPendientes &&
-                                  cliente.facturasPendientes > 0 && (
-                                    <span className="text-xs text-muted-foreground ml-2">
-                                      ({cliente.facturasPendientes} facturas)
-                                    </span>
-                                  )}
-                              </div>
-                            </div>
-                          </div>
+                        selectedRuta.clientes.map((cliente, index) => (
+                          <MiniPerfilClienteCard
+                            cliente={cliente}
+                            key={index}
+                          />
                         ))
                       )}
                     </div>
@@ -633,50 +551,28 @@ export function RutasCobroList() {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmación de eliminación */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
-            <DialogDescription>
-              ¿Está seguro que desea eliminar esta ruta de cobro? Esta acción no
-              se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Advertencia</AlertTitle>
-              <AlertDescription>
-                Al eliminar esta ruta, se perderá toda la información asociada a
-                ella.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Eliminando...
-                </>
-              ) : (
-                "Eliminar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdvancedDialogCRM
+        type="warning"
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Confirmar eliminación de ruta"
+        description="¿Está seguro que desea eliminar esta ruta de cobro? Esta acción no
+              se puede deshacer."
+        confirmButton={{
+          label: "Si, continuar y eliminar ruta",
+          loading: isDeleting,
+          loadingText: "Eliminando...",
+          disabled: isDeleting,
+          onClick: () => handleConfirmDelete(),
+          variant: "destructive",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: isDeleting,
+          loadingText: "Cancelando...",
+          variant: "outline",
+        }}
+      />
 
       {/* DIALOG DE CIERRE DE RUTA */}
       <Dialog open={openCloseRuta} onOpenChange={setOpenCloseRuta}>

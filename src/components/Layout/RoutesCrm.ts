@@ -18,6 +18,7 @@ import {
   User,
   LucideIcon,
   Target,
+  ClipboardCheck,
 } from "lucide-react";
 
 export interface Route {
@@ -109,8 +110,14 @@ export const routesCrm_SuperAdmin = [
     submenu: [
       {
         icon: MapPin,
-        label: "Rutas Manage",
+        label: "Rutas",
         href: "/crm/ruta",
+      },
+
+      {
+        icon: MapPin,
+        label: "Mis rutas",
+        href: "/crm/rutas-asignadas",
       },
     ],
   },
@@ -204,8 +211,14 @@ export const routesCrm_Admin = [
     submenu: [
       {
         icon: MapPin,
-        label: "Rutas Manage",
+        label: "Rutas",
         href: "/crm/ruta",
+      },
+
+      {
+        icon: ClipboardCheck,
+        label: "Mis rutas",
+        href: "/crm/rutas-asignadas",
       },
     ],
   },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -46,7 +46,6 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import currency from "currency.js";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
@@ -67,19 +66,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formattMonedaGT } from "@/utils/formattMonedaGt";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { copyToClipBoard } from "@/utils/clipBoard";
+import { openNumberPhone } from "@/utils/openNumberPhone";
+import { useApiQuery } from "@/hooks/genericoCall/genericoCallHook";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { PageHeader } from "@/Crm/Utils/Components/PageHeader";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
-
-const formatearMoneda = (monto: number) => {
-  return currency(monto, {
-    symbol: "Q",
-    separator: ",",
-    decimal: ".",
-    precision: 2,
-  }).format();
-};
 
 enum MetodoPagoFacturaInternet {
   EFECTIVO = "EFECTIVO",
@@ -113,11 +118,9 @@ function formatDate(date: string) {
 function RutaCobro() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const { rutaId } = useParams<{ rutaId: string }>();
-  const [ruta, setRuta] = useState<RutaCobroInterface>();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [facturaSelected, setFacturaSelected] = useState<number | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -133,6 +136,22 @@ function RutaCobro() {
     numeroBoleta: "",
     rutaId: rutaId,
   });
+
+  const {
+    data: ruta,
+    isFetching: isFetchingRuta,
+    refetch: reFetchRuta,
+    error: rutaError,
+    isError: isRutaError,
+  } = useApiQuery<RutaCobroInterface>(
+    ["ruta-cobro"],
+    `/ruta-cobro/get-one-ruta-cobro/${rutaId}`,
+    undefined,
+    {
+      retry: 1,
+      //sin params
+    }
+  );
 
   const clientesToMap =
     ruta?.clientes?.map((c) => ({
@@ -165,33 +184,11 @@ function RutaCobro() {
             ],
     })) || []; // Aquí se asegura de que siempre sea un arreglo vacío en caso de undefined
 
-  const getRuta = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/ruta-cobro/get-one-ruta-cobro/${rutaId}`
-      );
-
-      if (response.status === 200) {
-        setRuta(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir datos");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getRuta();
-  }, [rutaId]);
-
   const handleClientSelect = (clientId: number) => {
     setSelectedClientId(clientId);
   };
 
-  if (isLoading) {
+  if (isFetchingRuta) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center">
@@ -291,7 +288,7 @@ function RutaCobro() {
         });
         setOpenConfirm(false);
         setSelectedClientId(null);
-        getRuta();
+        reFetchRuta();
         setOpenPdfPago(true);
       }
     } catch (err: any) {
@@ -302,8 +299,27 @@ function RutaCobro() {
     }
   };
 
+  {
+    isRutaError && (
+      <Alert variant="destructive" className="mt-2">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error al cargar rutas</AlertTitle>
+        <AlertDescription>
+          {getApiErrorMessageAxios(rutaError)}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-4 space-y-4">
+    <motion.div className="container mx-auto ">
+      <PageHeader
+        sticky={false}
+        title="Ruta de cobro asignada"
+        subtitle="Gestiona tus rutas y asignaciones"
+        fallbackBackTo="/crm" // si no hay history
+      />
+
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -311,234 +327,296 @@ function RutaCobro() {
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
       >
         <div className="flex flex-col space-y-4 lg:order-1">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-xl">{ruta.nombreRuta}</CardTitle>
-                  <CardDescription>
-                    <div className="flex items-center mt-1">
-                      <User className="h-4 w-4 mr-1" />
-                      <span>Cobrador: {ruta.cobrador.nombre}</span>
-                    </div>
-                  </CardDescription>
+          <Card className="p-3">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-sm font-semibold">
+                  {ruta.nombreRuta}
+                </CardTitle>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span>Cobrador: {ruta.cobrador.nombre}</span>
                 </div>
-                <Badge variant="outline" className="ml-2">
-                  {ruta.clientes.length} clientes
-                </Badge>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>Creado: {formatDate(ruta.creadoEn)}</span>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="pb-2">
-              <div className="text-sm text-muted-foreground flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Creado: {formatDate(ruta.creadoEn)}</span>
-              </div>
-            </CardContent>
+              <Badge variant="outline" className="text-xs">
+                {ruta.clientes.length} clientes
+              </Badge>
+            </div>
           </Card>
 
           <Card className="flex-1">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Clientes en Ruta</CardTitle>
+              <CardTitle className="text-base">Clientes en Ruta</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[calc(100vh-350px)] px-4">
                 <Accordion type="single" collapsible className="w-full">
-                  {ruta.clientes.map((cliente) => (
-                    <AccordionItem
-                      key={cliente.id}
-                      value={`cliente-${cliente.id}`}
-                    >
-                      <AccordionTrigger
-                        className="py-3 px-2 hover:bg-accent rounded-md group"
-                        onClick={() => handleClientSelect(cliente.id)}
+                  {ruta.clientes.map((cliente) => {
+                    return (
+                      <AccordionItem
+                        key={cliente.id}
+                        value={`cliente-${cliente.id}`}
                       >
-                        <div className="flex flex-1 items-center justify-between pr-2">
-                          <div className="flex items-center">
-                            <div
-                              className={cn(
-                                "w-2 h-2 rounded-full mr-3",
-                                cliente.saldo.saldoPendiente > 0
-                                  ? "bg-destructive"
-                                  : "bg-green-500"
-                              )}
-                            ></div>
-                            <span>{cliente.nombreCompleto}</span>
-                          </div>
-                          <Badge
-                            variant={
-                              cliente.saldo.saldoPendiente > 0
-                                ? "destructive"
-                                : "outline"
-                            }
-                            className="ml-2"
-                          >
-                            {formatearMoneda(cliente.saldo.saldoPendiente)}
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-2">
-                        <div className="space-y-3 py-1">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div className="flex items-center text-sm">
-                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>{cliente.telefono}</span>
-                            </div>
-                            <div className="flex items-center text-sm">
-                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>
-                                Último pago:{" "}
-                                {formatDate(cliente.saldo.ultimoPago)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 text-sm">
+                        <AccordionTrigger
+                          className="py-3 px-2 hover:bg-accent rounded-md group"
+                          onClick={() => handleClientSelect(cliente.id)}
+                        >
+                          <div className="flex flex-1 items-center justify-between pr-2">
                             <div className="flex items-center">
-                              <Coins className="h-4 w-4 mr-2 text-green-500" />
-                              <span>
-                                Saldo a favor:{" "}
-                                {formatearMoneda(cliente.saldo.saldoFavor)}
-                              </span>
+                              <div
+                                className={cn(
+                                  "w-2 h-2 rounded-full mr-3",
+                                  cliente.totalDebe > 0
+                                    ? "bg-destructive"
+                                    : "bg-green-500"
+                                )}
+                              ></div>
+                              <span>{cliente.nombreCompleto}</span>
                             </div>
-                            <div className="flex items-center">
-                              <CreditCard className="h-4 w-4 mr-2 text-destructive" />
-                              <span>
-                                Pendiente:{" "}
-                                {formatearMoneda(cliente.saldo.saldoPendiente)}
-                              </span>
-                            </div>
+                            <Badge
+                              variant={
+                                cliente.totalDebe > 0
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                              className="ml-2"
+                            >
+                              {formattMonedaGT(cliente.totalDebe)}
+                            </Badge>
                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-2">
+                          <div className="space-y-3 py-1">
+                            <p className="text-blue-500 font-semibold underline">
+                              <Link to={`/crm/cliente/${cliente.id}`}>
+                                Ver perfil del cliente
+                              </Link>
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div className="flex items-center text-sm">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger className="flex justify-between items-center">
+                                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                                    <span>Télefono: {cliente.telefono}</span>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuLabel>
+                                      Opciones de contacto
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        copyToClipBoard(cliente.telefono)
+                                      }
+                                    >
+                                      Copiar número
+                                    </DropdownMenuItem>
 
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            {cliente.ubicacion?.latitud &&
-                            cliente.ubicacion?.longitud ? (
-                              <div className="flex items-center">
-                                <Map className="h-4 w-4 mr-2 text-blue-500" />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        openNumberPhone(cliente.telefono)
+                                      }
+                                    >
+                                      Llamar al número
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+
+                              <div className="flex items-center text-sm">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger className="flex justify-between items-center">
+                                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                                    <span>
+                                      Télefono Referencia:{" "}
+                                      {cliente.contactoReferencia.telefono}
+                                    </span>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuLabel>
+                                      Opciones de contacto
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        copyToClipBoard(
+                                          cliente.contactoReferencia.telefono
+                                        )
+                                      }
+                                    >
+                                      Copiar número
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        copyToClipBoard(
+                                          cliente.contactoReferencia.telefono
+                                        )
+                                      }
+                                    >
+                                      Llamar al número
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+
+                              <div className="flex items-center text-sm">
+                                <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                                 <span>
-                                  <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="underline font-semibold text-blue-500"
-                                    href={`https://www.google.com/maps/dir/?api=1&destination=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`}
-                                  >
-                                    Ubicación en Maps
-                                  </a>
+                                  Último pago:{" "}
+                                  {formatDate(cliente.saldo.ultimoPago)}
                                 </span>
                               </div>
-                            ) : (
-                              <div>
-                                <span className="font-semibold">
-                                  Ubicación No Disponible
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className="flex items-center">
+                                <CreditCard className="h-4 w-4 mr-2 text-destructive" />
+                                <span>
+                                  Pendiente:{" "}
+                                  {formattMonedaGT(cliente.totalDebe)}
                                 </span>
                               </div>
-                            )}
-                          </div>
+                            </div>
 
-                          <Separator />
-
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-medium flex items-center">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Facturas pendientes
-                            </h4>
-                            {cliente.facturas.length > 0 ? (
-                              <div className="space-y-2">
-                                {cliente.facturas.map((factura) => (
-                                  <div
-                                    key={factura.id}
-                                    className="bg-accent/50 p-2 rounded-md"
-                                  >
-                                    <div className="flex justify-between items-center">
-                                      <div className="flex items-center">
-                                        {factura.estadoFactura ===
-                                        "pendiente" ? (
-                                          <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
-                                        ) : (
-                                          <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                                        )}
-                                        <span className="text-sm font-medium">
-                                          Factura #{factura.id}
-                                        </span>
-                                      </div>
-                                      <Badge
-                                        className={`${
-                                          factura.estadoFactura === "PENDIENTE"
-                                            ? "bg-red-500"
-                                            : factura.estadoFactura ===
-                                              "PARCIAL"
-                                            ? "bg-yellow-500"
-                                            : "bg-green-500"
-                                        }`}
-                                      >
-                                        {factura.estadoFactura}
-                                      </Badge>
-                                    </div>
-                                    <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                                      <div>
-                                        Monto:{" "}
-                                        {formatearMoneda(factura.montoPago)}
-                                      </div>
-                                      <div>
-                                        Pendiente:{" "}
-                                        {formatearMoneda(
-                                          factura.saldoPendiente
-                                        )}
-                                      </div>
-                                      <div>
-                                        Fecha: {formatDate(factura.creadoEn)}
-                                      </div>
-                                    </div>
-                                    <div className="mt-2 mb-6 flex">
-                                      <Link
-                                        to={`/crm/factura-pago/pago-servicio-pdf/${factura.id}`} // Aquí puedes poner la URL para imprimir la factura
-                                        className="text-blue-600 hover:underline text-xs flex items-center gap-2 "
-                                      >
-                                        <Printer className="h-4 w-4" />
-                                        Imprimir factura
-                                      </Link>
-                                    </div>
-                                    <div className="mt-2">
-                                      <Button
-                                        disabled={
-                                          factura.estadoFactura === "PAGADA"
-                                        }
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={() => {
-                                          setOpenPayment(true);
-                                          setSelectedClientId(cliente.id);
-                                          setFacturaSelected(factura.id);
-                                          setNuevoPago((previaData) => ({
-                                            ...previaData,
-                                            montoPagado: factura.saldoPendiente,
-                                          }));
-                                          setNuevoPago((previaData) => ({
-                                            ...previaData,
-                                            montoPagado: factura.saldoPendiente,
-                                          }));
-                                        }}
-                                      >
-                                        Registrar Pago
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-muted-foreground">
-                                No hay facturas pendientes.{" "}
-                                <Link to={`/crm/cliente/${cliente.id}`}>
-                                  <span className="text-blue-500 hover:underline underline">
-                                    Ver Facturación
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              {cliente.ubicacion?.latitud &&
+                              cliente.ubicacion?.longitud ? (
+                                <div className="flex items-center">
+                                  <Map className="h-4 w-4 mr-2 text-blue-500 animate-pulse" />
+                                  <span>
+                                    <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="underline font-semibold text-blue-500 animate-pulse"
+                                      href={`https://www.google.com/maps/dir/?api=1&destination=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`}
+                                    >
+                                      Ubicación en Maps
+                                    </a>
                                   </span>
-                                </Link>
-                              </div>
-                            )}
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="font-semibold">
+                                    Ubicación No Disponible
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-medium flex items-center">
+                                <FileText className="h-4 w-4 mr-2" />
+                                Facturas pendientes
+                              </h4>
+                              {cliente.facturas.length > 0 ? (
+                                <div className="space-y-2">
+                                  {cliente.facturas.map((factura) => (
+                                    <div
+                                      key={factura.id}
+                                      className="bg-accent/50 p-2 rounded-md"
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <div className="flex items-center">
+                                          {factura.estadoFactura ===
+                                          "pendiente" ? (
+                                            <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
+                                          ) : (
+                                            <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                                          )}
+                                          <span className="text-sm font-medium">
+                                            Factura #{factura.id}
+                                          </span>
+                                        </div>
+                                        <Badge
+                                          className={`${
+                                            factura.estadoFactura ===
+                                            "PENDIENTE"
+                                              ? "bg-red-500"
+                                              : factura.estadoFactura ===
+                                                "PARCIAL"
+                                              ? "bg-yellow-500"
+                                              : "bg-green-500"
+                                          }`}
+                                        >
+                                          {factura.estadoFactura}
+                                        </Badge>
+                                      </div>
+                                      <div className="mt-1 grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                                        <div>
+                                          Monto:{" "}
+                                          {formattMonedaGT(factura.montoPago)}
+                                        </div>
+                                        <div>
+                                          Pendiente:{" "}
+                                          {formattMonedaGT(
+                                            factura.saldoPendiente
+                                          )}
+                                        </div>
+                                        <div>
+                                          Fecha: {formatDate(factura.creadoEn)}
+                                        </div>
+                                      </div>
+                                      <div className="mt-2 mb-6 flex">
+                                        <Link
+                                          to={`/crm/factura-pago/pago-servicio-pdf/${factura.id}`} // Aquí puedes poner la URL para imprimir la factura
+                                          className="text-blue-600 hover:underline text-xs flex items-center gap-2 "
+                                        >
+                                          <Printer className="h-4 w-4" />
+                                          Imprimir factura
+                                        </Link>
+                                      </div>
+                                      <div className="mt-2">
+                                        <Button
+                                          disabled={
+                                            factura.estadoFactura === "PAGADA"
+                                          }
+                                          size="sm"
+                                          className="w-full"
+                                          onClick={() => {
+                                            setOpenPayment(true);
+                                            setSelectedClientId(cliente.id);
+                                            setFacturaSelected(factura.id);
+                                            setNuevoPago((previaData) => ({
+                                              ...previaData,
+                                              montoPagado:
+                                                factura.saldoPendiente,
+                                            }));
+                                            setNuevoPago((previaData) => ({
+                                              ...previaData,
+                                              montoPagado:
+                                                factura.saldoPendiente,
+                                            }));
+                                          }}
+                                        >
+                                          Registrar Pago
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground">
+                                  No hay facturas pendientes.{" "}
+                                  <Link to={`/crm/cliente/${cliente.id}`}>
+                                    <span className="text-blue-500 hover:underline underline">
+                                      Ver Facturación
+                                    </span>
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
                 </Accordion>
               </ScrollArea>
             </CardContent>
@@ -807,7 +885,7 @@ function RutaCobro() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
 

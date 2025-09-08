@@ -91,7 +91,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import timezone from "dayjs/plugin/timezone";
 import { HistorialPagos } from "./HistorialPagos";
-import { getEstadoColorBadge, returnStatusClient } from "../Utils/Utils2";
+import {
+  getEstadoOperandoClienteColorBadge,
+  returnStatusClient,
+} from "../Utils/Utils2";
 import { EstadoCliente } from "../CrmCustomers/CustomerTable";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 dayjs.extend(utc);
@@ -418,7 +421,7 @@ export default function CustomerDetails() {
                 variant="outline"
                 className={cn(
                   "text-xs",
-                  getEstadoColorBadge(
+                  getEstadoOperandoClienteColorBadge(
                     returnStatusClient(cliente.estadoCliente as EstadoCliente)
                   )
                 )}

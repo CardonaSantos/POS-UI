@@ -18,7 +18,10 @@ import {
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { ClienteDetailsDto } from "./types";
-import { getEstadoColorBadge, returnStatusClient } from "../../Utils/Utils2";
+import {
+  getEstadoOperandoClienteColorBadge,
+  returnStatusClient,
+} from "../../Utils/Utils2";
 import { EstadoCliente } from "@/Crm/CrmCustomers/CustomerTable";
 
 interface PlantillasInterface {
@@ -58,7 +61,7 @@ export function CustomerHeader({
             variant="outline"
             className={cn(
               "text-[10px] py-0.5 px-1",
-              getEstadoColorBadge(
+              getEstadoOperandoClienteColorBadge(
                 returnStatusClient(cliente.estadoCliente as EstadoCliente)
               )
             )}

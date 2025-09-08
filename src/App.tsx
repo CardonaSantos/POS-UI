@@ -93,6 +93,7 @@ import CrmUsers from "./Crm/CrmProfile/CrmUsers";
 import MetasTecnicosPage from "./Crm/CrmTicketsMeta/MetasTecnicosPage";
 import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
 import CustomerProfile from "./Crm/CrmCustomer/newCustomerPage/customer-profile";
+import RutasAsignadasMain from "./Crm/CrmRutas/_rutas_asignadas/rutas_asignadas_main";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -703,6 +704,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <RutasCobroEdit />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/rutas-asignadas"
+              element={
+                <ProtectRouteCrmUser>
+                  <RutasAsignadasMain />
                 </ProtectRouteCrmUser>
               }
             />
