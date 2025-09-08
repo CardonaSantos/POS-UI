@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { RutasSkeleton } from "./RutasSkeleton";
-import { EstadoRuta, type Ruta } from "./rutas-types";
+import { EstadoRuta, PagedResponse, type Ruta } from "./rutas-types";
 import { downloadExcelRutaCobro } from "./api";
 import {
   useApiMutation,
@@ -75,21 +75,22 @@ export function RutasCobroList() {
   const [openCloseRuta, setOpenCloseRuta] = useState(false);
   //API CALLS
   const {
-    data: rutas = [],
+    data: rutasRes,
     isFetching: isLoadingRutas,
     refetch: fetchRutas,
     error: rutasError,
     isError: isErrorRutas,
-  } = useApiQuery<Ruta[]>(
+  } = useApiQuery<PagedResponse<Ruta>>(
     ["rutas"],
     "/ruta-cobro/get-rutas-cobros",
     undefined,
     {
-      initialData: [],
+      initialData: { items: [], total: 0 }, // ← importante
       retry: 1,
-      //sin params
     }
   );
+
+  const list = rutasRes?.items ?? [];
 
   const closeRuta = useApiMutation<void, void>(
     "patch",
@@ -162,17 +163,6 @@ export function RutasCobroList() {
   const hasErrorClosingRutas = closeRuta.isError;
   const errorClosingRuta = closeRuta.error;
 
-  const filteredRutas = rutas.filter(
-    (ruta) =>
-      ruta.nombreRuta.toLowerCase().includes(searchRuta.toLowerCase()) ||
-      (ruta.cobrador &&
-        `${ruta.cobrador.nombre} ${ruta.cobrador.apellidos || ""}`
-          .toLowerCase()
-          .includes(searchRuta.toLowerCase())) ||
-      (ruta.observaciones &&
-        ruta.observaciones.toLowerCase().includes(searchRuta.toLowerCase()))
-  );
-
   const handleDownloadExcelRutaCobro = async (rutaId: number) => {
     try {
       const response = await downloadExcelRutaCobro(rutaId);
@@ -191,6 +181,16 @@ export function RutasCobroList() {
       console.error(error);
     }
   };
+
+  const filteredRutas = list.filter(
+    (ruta) =>
+      ruta.nombreRuta.toLowerCase().includes(searchRuta.toLowerCase()) ||
+      (ruta.cobrador &&
+        `${ruta.cobrador.nombre} ${ruta.cobrador.apellidos ?? ""}`
+          .toLowerCase()
+          .includes(searchRuta.toLowerCase())) ||
+      ruta.observaciones?.toLowerCase().includes(searchRuta.toLowerCase())
+  );
 
   //FALLBACKS ERRORS
   {
@@ -247,7 +247,7 @@ export function RutasCobroList() {
       <CardContent>
         {isLoadingRutas ? (
           <RutasSkeleton />
-        ) : rutas.length === 0 ? (
+        ) : filteredRutas.length === 0 ? (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertTitle>Sin rutas</AlertTitle>

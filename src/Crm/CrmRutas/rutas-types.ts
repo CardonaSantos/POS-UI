@@ -127,3 +127,4 @@ export interface FacturacionZona {
   facturas: number;
   clientes: number;
 }
+export type PagedResponse<T> = { items: T[]; total: number };
