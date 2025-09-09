@@ -44,17 +44,16 @@ function fullUrl(cfg: AxiosRequestConfig) {
 // 🟦 Request logger
 axiosClient.interceptors.request.use((cfg) => {
   cfg.metadata = { start: performance.now() };
-
-  const method = (cfg.method ?? "get").toLowerCase();
-  // Evitar preflight innecesario:
-  if ((method === "get" || method === "delete") && cfg.headers) {
-    delete (cfg.headers as any)["Content-Type"];
-  }
-  // Agregar Content-Type solo si hay body
-  if (["post", "put", "patch"].includes(method) && cfg.data != null) {
-    (cfg.headers as any)["Content-Type"] ??= "application/json";
-  }
-
+  const url = fullUrl(cfg);
+  console.groupCollapsed(
+    `➡️  ${String(cfg.method).toUpperCase()} ${url}  withCredentials=${
+      cfg.withCredentials
+    }`
+  );
+  console.log("params:", cfg.params);
+  if (cfg.data) console.log("data:", cfg.data);
+  console.log("headers:", cfg.headers);
+  console.groupEnd();
   return cfg;
 });
 
