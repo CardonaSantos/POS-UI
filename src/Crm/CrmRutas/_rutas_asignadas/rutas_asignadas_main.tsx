@@ -3,7 +3,6 @@
 import DesvanecerHaciaArriba from "@/Crm/Motion/DashboardAnimations";
 import { PageHeader } from "@/Crm/Utils/Components/PageHeader";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { useApiQuery } from "@/hooks/genericoCall/genericoCallHook";
 import { motion } from "framer-motion";
 import { FindRutasAsignadasResult } from "./rutas-asignadas.type";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -51,6 +50,7 @@ import { Badge } from "@/components/ui/badge";
 
 import type { Variants, Transition, MotionProps } from "framer-motion";
 import { Link } from "react-router-dom";
+import { CRM } from "@/hooks/indexCalls";
 
 // Define el transition con tipo explícito (evita el "string" ensanchado)
 const SPRING: Transition = {
@@ -215,8 +215,9 @@ function EmptyState({ onRefresh }: { onRefresh: () => void }) {
 
 function RutasTableDesktop({
   rutas,
-  onStart,
-}: {
+}: // onStart,
+
+{
   rutas: FindRutasAsignadasResult["rutas"];
   onStart?: (id: number) => void;
 }) {
@@ -286,13 +287,13 @@ function RutasTableDesktop({
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="flex gap-2"
-                      onClick={() => onStart?.(ruta.id)}
-                    >
-                      <Play className="w-4 h-4" />
-                      Iniciar ruta
+                    <DropdownMenuItem className="flex gap-2" asChild>
+                      <Link to={`/crm/cobros-en-ruta/${ruta.id}`}>
+                        <Play className="w-4 h-4" />
+                        Iniciar ruta
+                      </Link>
                     </DropdownMenuItem>
+
                     <DropdownMenuItem disabled>
                       Registrar turno en ruta (próximamente…)
                     </DropdownMenuItem>
@@ -312,7 +313,7 @@ function RutasTableDesktop({
 
 function RutasAsignadasMain() {
   const userID = useStoreCrm((state) => state.userIdCRM) ?? 0;
-
+  const { useApiQuery: useCrmQuery } = CRM;
   const {
     data: rutas = {
       rutas: [],
@@ -322,7 +323,7 @@ function RutasAsignadasMain() {
     refetch: fetchRutas,
     error: rutasError,
     isError,
-  } = useApiQuery<FindRutasAsignadasResult>(
+  } = useCrmQuery<FindRutasAsignadasResult>(
     ["rutas-asignadas", userID],
     "ruta-cobro/rutas-cobros-asignadas",
     { params: { id: userID } },

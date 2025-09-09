@@ -1,110 +1,121 @@
-// api/axiosClient.ts
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-
-// ⚠️ Asegúrate que esto existe en tu .env y reinicia el dev server
-const API_URL = import.meta.env.VITE_API_URL; // p.ej. http://localhost:3000
-console.log("🔧 axios baseURL:", API_URL);
-
-// Para medir duración por request
+// api/axiosClient.ts (o api/http.ts)
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+// Pon esto una sola vez en tu cliente (arriba del archivo)
 declare module "axios" {
-  // agregamos metadata al config para medir tiempos
-  export interface AxiosRequestConfig {
+  interface AxiosRequestConfig {
+    metadata?: { start: number };
+  }
+  // Axios v1 usa InternalAxiosRequestConfig en .config de AxiosError
+  interface InternalAxiosRequestConfig {
     metadata?: { start: number };
   }
 }
 
-// 🔧 Cliente centralizado
-export const axiosClient = axios.create({
-  baseURL: API_URL,
-  withCredentials: true, // si usas cookies/sesión
-  timeout: 10000,
-  headers: {
-    Accept: "application/json",
-    // "Content-Type": "application/json",
-  },
-});
-
-export class HttpError extends Error {
-  constructor(message: string, public status: number, public body?: unknown) {
-    super(message);
-    this.name = "HttpError";
-  }
-}
-
-// Utilidad para armar URL completa en logs
-function fullUrl(cfg: AxiosRequestConfig) {
+function fullUrlFrom(cfg?: AxiosRequestConfig) {
   try {
-    if (!cfg.baseURL) return cfg.url ?? "(sin url)";
-    return new URL(cfg.url ?? "", cfg.baseURL).toString();
+    return new URL(cfg?.url ?? "", cfg?.baseURL ?? "").toString();
   } catch {
-    return `${cfg.baseURL ?? ""}${cfg.url ?? ""}`;
+    return `${cfg?.baseURL ?? ""}${cfg?.url ?? ""}`;
   }
 }
 
-// 🟦 Request logger
-axiosClient.interceptors.request.use((cfg) => {
-  cfg.metadata = { start: performance.now() };
-  const url = fullUrl(cfg);
-  console.groupCollapsed(
-    `➡️  ${String(cfg.method).toUpperCase()} ${url}  withCredentials=${
-      cfg.withCredentials
-    }`
-  );
-  console.log("params:", cfg.params);
-  if (cfg.data) console.log("data:", cfg.data);
-  console.log("headers:", cfg.headers);
-  console.groupEnd();
-  return cfg;
-});
-
-// 🟩 Response ok logger
-axiosClient.interceptors.response.use(
-  (res: AxiosResponse) => {
-    const ms =
-      res.config?.metadata?.start != null
-        ? Math.round(performance.now() - res.config.metadata.start)
-        : undefined;
-    const url = fullUrl(res.config);
+function attachLogging(client: AxiosInstance, name: string) {
+  client.interceptors.request.use((cfg) => {
+    (cfg as any).metadata = { start: performance.now() };
+    const url = (() => {
+      try {
+        return new URL(cfg.url ?? "", cfg.baseURL ?? "").toString();
+      } catch {
+        return `${cfg.baseURL ?? ""}${cfg.url ?? ""}`;
+      }
+    })();
     console.groupCollapsed(
-      `✅ ${res.status} ${res.statusText} — ${String(
-        res.config.method
-      ).toUpperCase()} ${url}` + (ms != null ? ` (${ms} ms)` : "")
+      `➡️ [${name}] ${String(cfg.method).toUpperCase()} ${url}`
     );
-    console.log("data:", res.data);
-    console.log("headers:", res.headers);
+    console.log("params:", cfg.params);
+    if (cfg.data) console.log("data:", cfg.data);
+    console.log("headers:", cfg.headers);
     console.groupEnd();
-    return res;
-  },
-  (error: unknown) => {
-    // ❌ Error logger (incluye casos CORS/timeout)
-    if (axios.isCancel(error)) {
-      console.warn("⏹️ Request cancelada");
+    return cfg;
+  });
+
+  client.interceptors.response.use(
+    (res: AxiosResponse) => {
+      const ms = Math.round(
+        performance.now() - (res.config as any).metadata?.start!
+      );
+      const url = (() => {
+        try {
+          return new URL(
+            res.config.url ?? "",
+            res.config.baseURL ?? ""
+          ).toString();
+        } catch {
+          return `${res.config.baseURL ?? ""}${res.config.url ?? ""}`;
+        }
+      })();
+      console.groupCollapsed(
+        `✅ [${name}] ${res.status} ${res.statusText} — ${String(
+          res.config.method
+        ).toUpperCase()} ${url} (${ms} ms)`
+      );
+      console.log("data:", res.data);
+      console.log("headers:", res.headers);
+      console.groupEnd();
+      return res;
+    },
+    (error: unknown) => {
+      if (!axios.isAxiosError(error)) {
+        // Error que no viene de Axios
+        console.groupCollapsed(`⛔ [${name}] Error no-Axios`);
+        console.error(error);
+        console.groupEnd();
+        return Promise.reject(error);
+      }
+
+      const ax = error; // AxiosError
+      const cfg = ax.config as AxiosRequestConfig | undefined;
+      const url = fullUrlFrom(cfg);
+      const method = String(cfg?.method ?? "GET").toUpperCase();
+
+      const start = (cfg as any)?.metadata?.start as number | undefined;
+      const ms =
+        typeof start === "number"
+          ? Math.round(performance.now() - start)
+          : undefined;
+
+      console.groupCollapsed(
+        `⛔ [${name}] Axios error — ${method} ${url}` +
+          (ms != null ? ` (${ms} ms)` : "")
+      );
+      console.error("message:", ax.message);
+      console.error("code:", ax.code);
+      console.error("status:", ax.response?.status ?? "(sin status)");
+      console.error("response data:", ax.response?.data);
+      console.groupEnd();
+
       return Promise.reject(error);
     }
+  );
+}
 
-    const ax = error as AxiosError;
-    const url = ax.config ? fullUrl(ax.config) : "(sin url)";
-    const ms =
-      ax.config?.metadata?.start != null
-        ? Math.round(performance.now() - (ax.config.metadata.start as number))
-        : undefined;
+// 🔹 API CRM
+export const crmApi = axios.create({
+  baseURL: import.meta.env.VITE_CRM_API_URL,
+  withCredentials: false, // ← déjalo false si NO usas cookies/sesión
+  timeout: 10000,
+  headers: { Accept: "application/json" },
+});
+attachLogging(crmApi, "CRM");
 
-    console.groupCollapsed(
-      `⛔ Axios error — ${String(ax.config?.method).toUpperCase()} ${url}` +
-        (ms != null ? ` (${ms} ms)` : "")
-    );
-    console.error("message:", ax.message);
-    console.error("code:", ax.code); // p.ej. ERR_NETWORK, ECONNABORTED (timeout)
-    console.error("status:", ax.response?.status ?? "(sin status)");
-    console.error("response headers:", ax.response?.headers);
-    console.error("response data:", ax.response?.data);
-    console.error("request headers:", ax.config?.headers);
-    console.error("withCredentials:", ax.config?.withCredentials);
-    console.groupEnd();
+// 🔹 API POS
+export const posApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: false,
+  timeout: 10000,
+  headers: { Accept: "application/json" },
+});
+attachLogging(posApi, "POS");
 
-    const status = ax.response?.status ?? 0;
-    const body = ax.response?.data;
-    const message = (body as any)?.message || ax.message || "Error de red";
-    return Promise.reject(new HttpError(message, status, body));
-  }
-);
+// (Opcional) compatibilidad hacia atrás: tu código viejo puede seguir importando axiosClient
+export const axiosClient = crmApi;

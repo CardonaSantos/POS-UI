@@ -1,8 +1,3 @@
-// /features/rutas-cobro/api.ts
-import {
-  useApiQuery,
-  useApiMutation,
-} from "@/hooks/genericoCall/genericoCallHook";
 import type {
   ClienteInternetFromCreateRuta,
   EstadoCliente,
@@ -11,6 +6,7 @@ import type {
 } from "../rutas-types";
 import type { SortDir, SortField } from "../types/types";
 import { UseQueryResult } from "@tanstack/react-query";
+import { CRM } from "@/hooks/indexCalls";
 
 // Paginado genérico
 export type Paged<T> = {
@@ -33,6 +29,9 @@ export type ClientesRutaParams = {
   perPage?: number;
   empresaId?: number; // si tu backend lo usa
 };
+
+const { useApiMutation: useCrmMutations } = CRM;
+const { useApiQuery: useCrmQuery } = CRM;
 
 // Limpia undefined/null para no ensuciar la URL
 // api.ts
@@ -66,7 +65,7 @@ export function useClientesRuta(
     perPage: params.perPage ?? 10,
   };
 
-  return useApiQuery<Paged<ClienteInternetFromCreateRuta>>(
+  return useCrmQuery<Paged<ClienteInternetFromCreateRuta>>(
     rutasCobroKeys.clientes(params),
     "/internet-customer/get-customers-ruta",
     { params: clean(params) },
@@ -80,7 +79,7 @@ export function useClientesRuta(
 }
 
 export function useZonasFacturacion() {
-  return useApiQuery<FacturacionZona[]>(
+  return useCrmQuery<FacturacionZona[]>(
     rutasCobroKeys.zonas(),
     "/facturacion-zona/get-zonas-facturacion-to-ruta",
     undefined,
@@ -89,7 +88,7 @@ export function useZonasFacturacion() {
 }
 
 export function useSectoresSelect() {
-  return useApiQuery<Sector[]>(
+  return useCrmQuery<Sector[]>(
     rutasCobroKeys.sectores(),
     "/sector/sectores-to-select",
     undefined,
@@ -107,5 +106,5 @@ export type CrearRutaDTO = {
 };
 
 export function useCrearRutaMutation() {
-  return useApiMutation<void, CrearRutaDTO>("post", "/ruta-cobro");
+  return useCrmMutations<void, CrearRutaDTO>("post", "/ruta-cobro");
 }

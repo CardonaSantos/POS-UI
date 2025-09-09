@@ -53,16 +53,14 @@ import { toast } from "sonner";
 import { RutasSkeleton } from "./RutasSkeleton";
 import { EstadoRuta, PagedResponse, type Ruta } from "./rutas-types";
 import { downloadExcelRutaCobro } from "./api";
-import {
-  useApiMutation,
-  useApiQuery,
-} from "@/hooks/genericoCall/genericoCallHook";
+
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { getEstadoBadgeColorRutaList } from "./_Utils/utilsBadge";
 import { getEstadoIconRutaList } from "./_Utils/getEstadoIconRutaList";
 import { AdvancedDialogCRM } from "../_Utils/AdvancedDialogCRM";
 import { formattShortFecha } from "@/utils/formattFechas";
 import MiniPerfilClienteCard from "./_subcomponents/MiniPerfilClienteCard";
+import { CRM } from "@/hooks/indexCalls";
 
 export function RutasCobroList() {
   const [searchRuta, setSearchRuta] = useState("");
@@ -73,6 +71,10 @@ export function RutasCobroList() {
 
   const [rutaClose, setRutaClose] = useState<number | null>(null);
   const [openCloseRuta, setOpenCloseRuta] = useState(false);
+
+  const { useApiQuery: useCrmQuery } = CRM;
+  const { useApiMutation: useCrmMutations } = CRM;
+
   //API CALLS
   const {
     data: rutasRes,
@@ -80,7 +82,7 @@ export function RutasCobroList() {
     refetch: fetchRutas,
     error: rutasError,
     isError: isErrorRutas,
-  } = useApiQuery<PagedResponse<Ruta>>(
+  } = useCrmQuery<PagedResponse<Ruta>>(
     ["rutas"],
     "/ruta-cobro/get-rutas-cobros",
     undefined,
@@ -92,12 +94,12 @@ export function RutasCobroList() {
 
   const list = rutasRes?.items ?? [];
 
-  const closeRuta = useApiMutation<void, void>(
+  const closeRuta = useCrmMutations<void, void>(
     "patch",
     `/ruta-cobro/close-one-ruta/${rutaClose}`
   );
 
-  const deleteRuta = useApiMutation<void, void>(
+  const deleteRuta = useCrmMutations<void, void>(
     "delete",
     rutaToDelete
       ? `/ruta-cobro/delete-one-ruta/${rutaToDelete}`

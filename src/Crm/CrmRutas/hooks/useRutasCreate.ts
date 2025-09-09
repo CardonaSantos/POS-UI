@@ -75,7 +75,6 @@ export function useRutasCreate(empresaId: number) {
   };
 
   // ---- Derivados ----
-
   const isInitialClientes =
     isLoadingClientes && (clientesData?.items?.length ?? 0) === 0;
 
