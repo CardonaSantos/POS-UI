@@ -160,6 +160,8 @@ export default function CustomerProfile() {
     setFacturaAction,
   };
 
+  console.log("Los datos del cliente son: ", cliente);
+
   return (
     <div className="container mx-auto py-4  sm:py-6">
       <motion.div

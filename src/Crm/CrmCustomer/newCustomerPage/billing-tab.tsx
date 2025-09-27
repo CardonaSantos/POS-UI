@@ -68,7 +68,7 @@ export function BillingTab({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setOpenGenerateFacturas(true)}>
-                  Generar masivo
+                  Generar varios
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -79,19 +79,14 @@ export function BillingTab({
             <>
               {[
                 {
-                  label: "Actual",
+                  label: "Saldo Acumulado",
                   value: cliente.saldoCliente.saldo,
                   color: "emerald",
                 },
                 {
-                  label: "Pendiente",
+                  label: "Saldo Pendiente",
                   value: cliente.saldoCliente.saldoPendiente,
                   color: "red",
-                },
-                {
-                  label: "Total",
-                  value: cliente.saldoCliente.totalPagos,
-                  color: "blue",
                 },
               ].map((item) => (
                 <div

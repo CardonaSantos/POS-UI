@@ -124,7 +124,7 @@ export interface FacturaInternet {
   fechaEmision: string; // ISO string
   fechaVencimiento: string; // ISO string
   pagada: boolean;
-  estado: string;
+  estado: StateFacturaInternet;
   periodo: string;
   pagos: Pagos[];
   creador: CreadorFactura;
@@ -143,6 +143,14 @@ export enum UsersRol {
   ADMIN = "ADMIN",
   SUPER_ADMIN = "SUPER_ADMIN",
   COBRADOR = "COBRADOR",
+}
+
+export enum StateFacturaInternet {
+  PENDIENTE = "PENDIENTE",
+  PAGADA = "PAGADA",
+  VENCIDA = "VENCIDA",
+  ANULADA = "ANULADA",
+  PARCIAL = "PARCIAL",
 }
 
 export interface Cobrador {

@@ -27,6 +27,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.locale("es");
 
 interface FacturaToDeleter {
   id: number;
@@ -90,9 +101,11 @@ export function HistorialPagos({
         tipoPago: factura?.pagos[0]?.metodoPago ?? "N/A",
         periodo: factura.periodo,
         referencia: factura.id.toString(),
-        detalle: `FACTURA ${new Date(factura.fechaVencimiento)
-          .toLocaleString("default", { month: "long" })
-          .toUpperCase()} ${new Date(factura.fechaVencimiento).getFullYear()}`,
+        detalle: `FACTURA ${dayjs
+          .utc(factura.fechaVencimiento)
+          .locale("es")
+          .format("MMMM YYYY")
+          .toUpperCase()}`,
         cobro: factura.monto,
         pago:
           factura.pagos?.reduce((total, pago) => total + pago.montoPagado, 0) ||
