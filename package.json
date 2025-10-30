@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@nivo/bar": "^0.99.0",
+    "@nivo/bullet": "^0.99.0",
     "@nivo/core": "^0.99.0",
+    "@nivo/pie": "^0.99.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.4",

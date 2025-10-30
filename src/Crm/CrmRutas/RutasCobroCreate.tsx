@@ -32,12 +32,10 @@ import {
   AlertCircle,
   DollarSign,
 } from "lucide-react";
-
 // Componentes auxiliares que ya tienes
 import { SelectCobradores } from "./SelectCobradores";
 import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
 import { SelectSectoresMulti } from "./SelectSectores";
-
 // Tipos
 import {
   type OptionSelected,
@@ -45,7 +43,6 @@ import {
   EstadoCliente,
 } from "./rutas-types";
 import { useRutasCreate } from "./hooks/useRutasCreate";
-
 import { TableBaseGeneric } from "../Utils/Components/TableBaseTanstakGeneric";
 import { columnsClientesRutaCreate } from "./_table_clientes_create/columns_create_ruta";
 import { RowSelectionState } from "@tanstack/react-table";

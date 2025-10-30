@@ -71,14 +71,13 @@ import dayOfYear from "dayjs/plugin/dayOfYear";
 import isLeapYear from "dayjs/plugin/isLeapYear"; // ES 2015
 import advancedFormat from "dayjs/plugin/advancedFormat"; // ES 2015
 import currency from "currency.js";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 import { DropdownMenu } from "@radix-ui/react-dropdown-menu";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ProgressBullet } from "@/components/ui/progress";
 
 dayjs.extend(advancedFormat);
 dayjs.extend(dayOfYear);
@@ -237,19 +236,17 @@ interface EditMetaCobro {
 function Metas() {
   const userId = useStore((state) => state.userId) ?? 0;
   const sucursalId = useStore((state) => state.sucursalId) ?? 0;
-  const [metasCobros, setMetasCobros] = useState<MetaCobros[]>([]);
 
+  const [metasCobros, setMetasCobros] = useState<MetaCobros[]>([]);
   const [metasTienda, setMetasTienda] = useState<MetaTienda[]>([]);
   const [usuarios, setUsuarios] = useState<UsuarioSucursal[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  console.log(setSearchTerm);
 
   const [openUpdateMetaTienda, setOpenUpdateMetaTienda] = useState(false);
   const [openUpdateMetaCobro, setOpenUpdateMetaCobro] = useState(false);
 
   const [metaTiendaSelected, setMetaTiendaSelected] =
     useState<MetaTienda | null>(null);
-
   const [metaCobroSelected, setMetaCobroSelected] = useState<MetaCobros | null>(
     null
   );
@@ -257,7 +254,6 @@ function Metas() {
   const [metasCobrosSummary, setMetasCobrosSummary] = useState<MetaCobros[]>(
     []
   );
-
   const [metasTiendaSummary, setMetasTiendaSummary] = useState<MetaTienda[]>(
     []
   );
@@ -270,16 +266,54 @@ function Metas() {
     fechaFin: "",
     sucursalId: sucursalId,
   });
+  console.log("setstate: ", setSearchTerm);
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ──────────────────────────────────────────────────────────────────────────────
+  const clamp = (v: number, min: number, max: number) =>
+    Math.min(Math.max(v, min), max);
+  const safePercent = (num: number, den: number) =>
+    den > 0 ? (num / den) * 100 : 0;
+
+  const formatearMoneda = (monto: number) =>
+    currency(monto, {
+      symbol: "Q",
+      separator: ",",
+      decimal: ".",
+      precision: 2,
+    }).format();
+
+  /** % del mes actual transcurrido (0..100) */
+  const calcularReferenciaMes = () => {
+    const hoy = dayjs();
+    const totalDiasMes = hoy.daysInMonth();
+    const diaActual = hoy.date();
+    return (diaActual / totalDiasMes) * 100;
+  };
+
+  /** % del avance temporal de una meta según su ventana (0..100) */
+  const refPctMeta = (inicioISO: string, finISO: string) => {
+    const start = dayjs(inicioISO);
+    const end = dayjs(finISO);
+    const now = dayjs();
+    if (!start.isValid() || !end.isValid() || end.isBefore(start)) return 0;
+    if (now.isSame(end) || now.isAfter(end)) return 100;
+    if (now.isSame(start) || now.isBefore(start)) return 0;
+    const pct =
+      (now.diff(start, "millisecond") / end.diff(start, "millisecond")) * 100;
+    return clamp(pct, 0, 100);
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // API calls
+  // ──────────────────────────────────────────────────────────────────────────────
   const getMetasCobros = async () => {
     try {
       const response = await axios.get(
         `${API_URL}/metas/get-all-cobros-metas/${sucursalId}`
       );
-
-      if (response.status === 200) {
-        setMetasCobros(response.data);
-      }
+      if (response.status === 200) setMetasCobros(response.data);
     } catch (error) {
       console.log(error);
       toast.error("Error al conseguir los registros de metas de cobros");
@@ -291,9 +325,7 @@ function Metas() {
       const response = await axios.get(
         `${API_URL}/metas/get-all-seller-goals/${sucursalId}`
       );
-      if (response.status === 200) {
-        setMetasTienda(response.data);
-      }
+      if (response.status === 200) setMetasTienda(response.data);
     } catch (error) {
       console.log(error);
       toast.error("Error al conseguir los registros de metas de tiendas");
@@ -318,9 +350,7 @@ function Metas() {
   const getUsuarios = async () => {
     try {
       const response = await axios.get(`${API_URL}/metas/get-all-metas-users`);
-      if (response.status === 200) {
-        setUsuarios(response.data);
-      }
+      if (response.status === 200) setUsuarios(response.data);
     } catch (error) {
       console.log(error);
       toast.error("Error al cargar los usuarios");
@@ -334,8 +364,11 @@ function Metas() {
       getUsuarios();
       getMetasToSummary();
     }
-  }, []);
+  }, [sucursalId]);
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Filtros y selects
+  // ──────────────────────────────────────────────────────────────────────────────
   const filteredMetasTienda = metasTienda.filter(
     (meta) =>
       (meta.tituloMeta ? meta.tituloMeta.toLowerCase() : "").includes(
@@ -362,27 +395,25 @@ function Metas() {
   const [opcionSeleccionada, setOpcionSeleccionada] =
     useState<OptionSelected | null>(null);
 
-  const handleChangeUser = (
-    opcionSeleccionada: SingleValue<OptionSelected>
-  ) => {
-    setOpcionSeleccionada(opcionSeleccionada);
-    setMetaDto((datosPrevios) => ({
-      ...datosPrevios,
-      usuarioId: opcionSeleccionada?.value || null, // Actualizar el usuarioId
+  const handleChangeUser = (op: SingleValue<OptionSelected>) => {
+    setOpcionSeleccionada(op);
+    setMetaDto((prev) => ({
+      ...prev,
+      usuarioId: op?.value ?? null,
     }));
   };
-  console.log("La data a enviar es: ", metaDto);
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Crear meta
+  // ──────────────────────────────────────────────────────────────────────────────
   const handleSubmitGoal = async () => {
     try {
       const { usuarioId, tipoMeta, fechaFin, montoMeta } = metaDto;
-
       if (!usuarioId || !tipoMeta || !fechaFin || !montoMeta) {
         toast.info("Faltan datos para continuar");
         return;
       }
-
-      const user = usuarios.find((user) => user.id === usuarioId);
+      const user = usuarios.find((u) => u.id === usuarioId);
       const endpoint =
         tipoMeta === "Tienda"
           ? `${API_URL}/metas`
@@ -391,7 +422,7 @@ function Metas() {
       const requestBody = {
         usuarioId,
         tipoMeta,
-        tituloMeta: metaDto.tituloMeta || null, // Título puede ser opcional
+        tituloMeta: metaDto.tituloMeta || null,
         montoMeta,
         fechaFin: new Date(fechaFin),
         sucursalId: sucursalId,
@@ -400,7 +431,7 @@ function Metas() {
       const response = await axios.post(endpoint, requestBody);
       if (response.status === 201) {
         toast.success(`Meta registrada para el usuario ${user?.nombre}`);
-        resetForm(); // Restablecer el formulario
+        resetForm();
         getMetasCobros();
         getMetasTienda();
       }
@@ -425,34 +456,24 @@ function Metas() {
     });
     setOpcionSeleccionada(null);
   };
-  console.log("Los usuarios son: ", usuarios);
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Depósitos (Cobros)
+  // ──────────────────────────────────────────────────────────────────────────────
   const [openDepositosDialog, setOpenDepositosDialog] = useState(false);
   const [selectedMeta, setSelectedMeta] = useState<MetaCobros>();
-
   const handleOpenDepositos = (meta: MetaCobros) => {
     setSelectedMeta(meta);
     setOpenDepositosDialog(true);
-  };
-
-  const formatearMoneda = (monto: number) => {
-    return currency(monto, {
-      symbol: "Q",
-      separator: ",",
-      decimal: ".",
-      precision: 2,
-    }).format();
   };
 
   const [openDeletDepo, setOpenDeletDepo] = useState(false);
   const [selectedDepo, setSelectedDepo] = useState<DepositoCobro>();
 
   const onConfirmDelete = async (id: number) => {
-    console.log("EL DEPOSITO ELIMINADO ES: ", id);
-
     try {
       const response = await axios.delete(
-        `${API_URL}/metas/delete-one-payment/${selectedMeta?.id}/${selectedDepo?.id}`
+        `${API_URL}/metas/delete-one-payment/${selectedMeta?.id}/${id}`
       );
       if (response.status === 200 || response.status === 201) {
         toast.success("Depósito eliminado correctamente");
@@ -466,16 +487,9 @@ function Metas() {
     }
   };
 
-  const calcularReferencia = () => {
-    const hoy = dayjs();
-    const totalDiasMes = dayjs().daysInMonth(); // Obtiene el total de días en el mes actual
-    const diaActual = hoy.date(); // Obtiene el día actual del mes (1-31)
-
-    return (diaActual / totalDiasMes) * 100; // Calcula el porcentaje del mes transcurrido
-  };
-
-  console.log("Las metas de tienda son: ", metasTienda);
-
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Eliminación de metas
+  // ──────────────────────────────────────────────────────────────────────────────
   const [openDeleteCobro, setOpenDeleteCobro] = useState(false);
   const [CobroToDelete, setCobroToDelete] = useState(0);
   const [passwordAdminCobro, setPasswordAdminCobro] = useState("");
@@ -490,16 +504,10 @@ function Metas() {
         toast.info("Faltan datos para completar la acción");
         return;
       }
-
       const response = await axios.delete(
         `${API_URL}/metas/delete-one-goal/${goalToDelete}/${userId}`,
-        {
-          data: {
-            passwordAdmin: passwordAdmin,
-          },
-        }
+        { data: { passwordAdmin } }
       );
-
       if (response.status === 200 || response.status === 201) {
         toast.success("Registro de meta eliminado");
         getMetasTienda();
@@ -524,16 +532,10 @@ function Metas() {
         toast.info("Faltan datos para completar la acción");
         return;
       }
-
       const response = await axios.delete(
         `${API_URL}/metas/delete-one-cobro-goal/${CobroToDelete}/${userId}`,
-        {
-          data: {
-            passwordAdmin: passwordAdminCobro,
-          },
-        }
+        { data: { passwordAdmin: passwordAdminCobro } }
       );
-
       if (response.status === 200 || response.status === 201) {
         toast.success("Registro de meta eliminado");
         getMetasCobros();
@@ -547,64 +549,43 @@ function Metas() {
     }
   };
 
-  const getMetasCobroTotal = () => {
-    return metasCobrosSummary.reduce((acc, meta) => acc + meta.montoMeta, 0);
-  };
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Agregaciones y % seguros
+  // ──────────────────────────────────────────────────────────────────────────────
+  // COBROS
+  const getMetasCobroTotal = () =>
+    metasCobrosSummary.reduce((acc, meta) => acc + meta.montoMeta, 0);
 
-  const getMetasCobroAvance = () => {
-    return metasCobrosSummary.reduce((acc, meta) => acc + meta.montoActual, 0);
-  };
+  const getMetasCobroAvance = () =>
+    metasCobrosSummary.reduce((acc, meta) => acc + meta.montoActual, 0);
 
-  const getMetasCobroRestante = () => {
-    return getMetasCobroTotal() - getMetasCobroAvance();
-  };
+  const getMetasCobroRestante = () =>
+    Math.max(0, getMetasCobroTotal() - getMetasCobroAvance());
 
-  const getPercentMetaCobro = () => {
-    let montoMeta = metasCobrosSummary.reduce(
-      (acc, meta) => acc + meta.montoMeta,
-      0
-    );
-    let montoActual = metasCobrosSummary.reduce(
-      (acc, meta) => acc + meta.montoActual,
-      0
-    );
-    const porcentaje = montoActual >= 0 ? (montoActual / montoMeta) * 100 : 0;
-    console.log("El porcentaje de avance es: ", porcentaje.toFixed(1));
+  const getPercentMetaCobro = () =>
+    safePercent(getMetasCobroAvance(), getMetasCobroTotal());
 
-    return porcentaje;
-  };
+  // TIENDAS
+  const getMetasTiendaTotal = () =>
+    metasTiendaSummary.reduce((acc, meta) => acc + meta.montoMeta, 0);
 
-  //METAS DE TIENDAS
-  const getMetasTiendaTotal = () => {
-    return metasTiendaSummary.reduce((acc, meta) => acc + meta.montoMeta, 0);
-  };
+  const getMetasTiendaAvance = () =>
+    metasTiendaSummary.reduce((acc, meta) => acc + meta.montoActual, 0);
 
-  const getMetasTiendaAvance = () => {
-    return metasTiendaSummary.reduce((acc, meta) => acc + meta.montoActual, 0);
-  };
+  const getMetasTiendaRestante = () =>
+    Math.max(0, getMetasTiendaTotal() - getMetasTiendaAvance());
 
-  const getMetasTiendaRestante = () => {
-    return getMetasTiendaTotal() - getMetasTiendaAvance();
-  };
+  const getPercentTiendaCobro = () =>
+    safePercent(getMetasTiendaAvance(), getMetasTiendaTotal());
 
-  const getPercentTiendaCobro = () => {
-    let montoMeta = metasTiendaSummary.reduce(
-      (acc, meta) => acc + meta.montoMeta,
-      0
-    );
-    let montoActual = metasTiendaSummary.reduce(
-      (acc, meta) => acc + meta.montoActual,
-      0
-    );
-    const porcentaje = montoActual >= 0 ? (montoActual / montoMeta) * 100 : 0;
-    console.log(
-      "El porcentaje de avance de metas tienda es: ",
-      porcentaje.toFixed(1)
-    );
+  // COMBINADAS
+  const metaTotal = getMetasCobroTotal() + getMetasTiendaTotal();
+  const avanceTotal = getMetasCobroAvance() + getMetasTiendaAvance();
+  const percentCombinado = safePercent(avanceTotal, metaTotal);
 
-    return porcentaje;
-  };
-
+  // ──────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ──────────────────────────────────────────────────────────────────────────────
   return (
     <div className="container mx-auto p-4">
       <Tabs defaultValue="asignar" className="w-full">
@@ -621,12 +602,13 @@ function Metas() {
             <CreditCard className="w-4 h-4 mr-2" />
             Metas de Cobros
           </TabsTrigger>
-
           <TabsTrigger value="totales">
             <CreditCard className="w-4 h-4 mr-2" />
             Totales
           </TabsTrigger>
         </TabsList>
+
+        {/* ─────────────── Asignar ─────────────── */}
         <TabsContent value="asignar">
           <Card>
             <CardHeader>
@@ -645,21 +627,18 @@ function Metas() {
                       className="text-black"
                       placeholder="Seleccione un usuario"
                       id="usuario"
-                      value={opcionSeleccionada} // Vinculo esto para que pueda limpiar el input cuando sea success
+                      value={opcionSeleccionada}
                       options={optionsUsuarios}
                       onChange={handleChangeUser}
-                    ></SelectComponent>
+                    />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="tipoMeta">Tipo de Meta</Label>
-                    {/* Recibirá un tipo de dato que solo sea del type definido, lo especifico aqui en el onValueChange */}
                     <Select
                       value={metaDto.tipoMeta}
                       onValueChange={(value: TipoMeta) =>
-                        setMetaDto((datosprevios) => ({
-                          ...datosprevios,
-                          tipoMeta: value,
-                        }))
+                        setMetaDto((prev) => ({ ...prev, tipoMeta: value }))
                       }
                     >
                       <SelectTrigger className="w-full">
@@ -682,8 +661,8 @@ function Metas() {
                     <Input
                       value={metaDto.tituloMeta || ""}
                       onChange={(e) =>
-                        setMetaDto((datosprevios) => ({
-                          ...datosprevios,
+                        setMetaDto((prev) => ({
+                          ...prev,
                           tituloMeta: e.target.value,
                         }))
                       }
@@ -697,8 +676,8 @@ function Metas() {
                     <Input
                       value={metaDto.montoMeta}
                       onChange={(e) =>
-                        setMetaDto((datosprevios) => ({
-                          ...datosprevios,
+                        setMetaDto((prev) => ({
+                          ...prev,
                           montoMeta: Number(e.target.value),
                         }))
                       }
@@ -707,13 +686,14 @@ function Metas() {
                       placeholder="0.00"
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="fechaFin">Fecha Límite</Label>
                     <Input
                       value={metaDto.fechaFin}
                       onChange={(e) =>
-                        setMetaDto((datosprevios) => ({
-                          ...datosprevios,
+                        setMetaDto((prev) => ({
+                          ...prev,
                           fechaFin: e.target.value,
                         }))
                       }
@@ -722,6 +702,7 @@ function Metas() {
                     />
                   </div>
                 </div>
+
                 <Button
                   type="button"
                   className="w-full"
@@ -734,11 +715,10 @@ function Metas() {
           </Card>
         </TabsContent>
 
-        {/* TAB PAR METAS DE TIENDAS */}
+        {/* ─────────────── Tiendas ─────────────── */}
         <TabsContent value="tiendas">
           <Card>
             <div className="flex gap-2 flex-col md:flex-row">
-              {/* RESUMEN DE METAS DE COBROS EN TIENDAS */}
               <Card className="shadow-sm w-full m-2">
                 <CardHeader className="py-1 px-4">
                   <CardTitle className="text-sm">
@@ -789,18 +769,11 @@ function Metas() {
                         {getPercentTiendaCobro().toFixed(2)}%
                       </span>
                     </div>
-                    <Progress
-                      value={getPercentTiendaCobro()}
-                      className={cn(
-                        "w-full h-2",
-                        getPercentTiendaCobro() >= 100
-                          ? "[&>div]:bg-green-500"
-                          : getPercentTiendaCobro() >= 75
-                          ? "[&>div]:bg-blue-500"
-                          : getPercentTiendaCobro() >= 50
-                          ? "[&>div]:bg-yellow-500"
-                          : "[&>div]:bg-red-500"
-                      )}
+                    <ProgressBullet
+                      metaQ={getMetasTiendaTotal()}
+                      actualQ={getMetasTiendaAvance()}
+                      refPct={calcularReferenciaMes()} // 👈 agrega esto
+                      className="h-6"
                     />
                   </div>
                 </CardContent>
@@ -829,10 +802,16 @@ function Metas() {
                   </TableHeader>
                   <TableBody className="text-[0.8rem]">
                     {filteredMetasTienda.map((meta) => {
-                      const porcentaje =
-                        meta.montoMeta > 0
-                          ? (meta.montoActual / meta.montoMeta) * 100
-                          : 0;
+                      const porcentaje = safePercent(
+                        meta.montoActual,
+                        meta.montoMeta
+                      );
+                      const referencia = refPctMeta(
+                        meta.fechaInicio,
+                        meta.fechaFin
+                      );
+                      const diferencia = porcentaje - referencia;
+
                       return (
                         <TableRow key={meta.id} className="h-8">
                           <TableCell className="py-0">
@@ -848,10 +827,11 @@ function Metas() {
                             {formatearMoneda(meta.montoActual)}
                           </TableCell>
                           <TableCell className="py-0">
-                            {formatearMoneda(meta.montoMeta - meta.montoActual)}
+                            {formatearMoneda(
+                              Math.max(0, meta.montoMeta - meta.montoActual)
+                            )}
                           </TableCell>
 
-                          {/* Porcentaje */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
                               <Percent
@@ -867,46 +847,40 @@ function Metas() {
                             </div>
                           </TableCell>
 
-                          {/* Referencia */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
                               <Clock
                                 className={`w-3 h-3 ${
-                                  calcularReferencia() >= 70
+                                  referencia >= 70
                                     ? "text-green-500"
-                                    : calcularReferencia() >= 40
+                                    : referencia >= 40
                                     ? "text-yellow-500"
                                     : "text-red-500"
                                 }`}
                               />
-                              <span>{calcularReferencia().toFixed(0)}%</span>
+                              <span>{referencia.toFixed(0)}%</span>
                             </div>
                           </TableCell>
 
-                          {/* Diferencia */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
-                              {porcentaje - calcularReferencia() >= 0 ? (
+                              {diferencia >= 0 ? (
                                 <TrendingUp className="w-3 h-3 text-green-500" />
                               ) : (
                                 <TrendingDown className="w-3 h-3 text-red-500" />
                               )}
                               <span
                                 className={
-                                  porcentaje - calcularReferencia() >= 0
+                                  diferencia >= 0
                                     ? "text-green-500"
                                     : "text-red-500"
                                 }
                               >
-                                {Math.abs(
-                                  porcentaje - calcularReferencia()
-                                ).toFixed(0)}
-                                %
+                                {Math.abs(diferencia).toFixed(0)}%
                               </span>
                             </div>
                           </TableCell>
 
-                          {/* Estado */}
                           <TableCell className="py-0">
                             {meta.estado === EstadoMetaTienda.FINALIZADO ? (
                               <div className="flex items-center gap-1 text-green-500">
@@ -926,7 +900,6 @@ function Metas() {
                             )}
                           </TableCell>
 
-                          {/* Acciones */}
                           <TableCell className="py-0 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -975,13 +948,11 @@ function Metas() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* TAB PAR METAS DE TIENDAS */}
 
-        {/* TAB PAR METAS DE COBRO */}
+        {/* ─────────────── Cobros ─────────────── */}
         <TabsContent value="cobros">
           <Card>
             <div className="flex gap-2 flex-col md:flex-row">
-              {/* RESUMEN DE METAS DE COBROS*/}
               <Card className="shadow-sm w-full m-2">
                 <CardHeader className="py-1 px-4">
                   <CardTitle className="text-sm">
@@ -1032,18 +1003,11 @@ function Metas() {
                         {getPercentMetaCobro().toFixed(2)}%
                       </span>
                     </div>
-                    <Progress
-                      value={getPercentMetaCobro()}
-                      className={cn(
-                        "w-full h-2",
-                        getPercentMetaCobro() >= 100
-                          ? "[&>div]:bg-green-500"
-                          : getPercentMetaCobro() >= 75
-                          ? "[&>div]:bg-blue-500"
-                          : getPercentMetaCobro() >= 50
-                          ? "[&>div]:bg-yellow-500"
-                          : "[&>div]:bg-red-500"
-                      )}
+                    <ProgressBullet
+                      metaQ={getMetasCobroTotal()}
+                      actualQ={getMetasCobroAvance()}
+                      refPct={calcularReferenciaMes()}
+                      className="h-6"
                     />
                   </div>
                 </CardContent>
@@ -1072,41 +1036,36 @@ function Metas() {
                   </TableHeader>
                   <TableBody className="text-[0.8rem]">
                     {filteredMetasCobros.map((meta) => {
-                      const porcentaje =
-                        meta.montoMeta > 0
-                          ? (meta.montoActual / meta.montoMeta) * 100
-                          : 0;
-                      const referencia = calcularReferencia();
+                      const porcentaje = safePercent(
+                        meta.montoActual,
+                        meta.montoMeta
+                      );
+                      const referencia = refPctMeta(
+                        meta.fechaInicio,
+                        meta.fechaFin
+                      );
                       const diferencia = porcentaje - referencia;
 
                       return (
                         <TableRow key={meta.id} className="h-8">
-                          {/* Título */}
                           <TableCell className="py-0">
                             {meta.tituloMeta || "Sin título"}
                           </TableCell>
-
-                          {/* Usuario */}
                           <TableCell className="py-0">
                             {meta.usuario.nombre}
                           </TableCell>
-
-                          {/* Monto Meta */}
                           <TableCell className="py-0">
                             {formatearMoneda(meta.montoMeta)}
                           </TableCell>
-
-                          {/* Monto Actual */}
                           <TableCell className="py-0">
                             {formatearMoneda(meta.montoActual)}
                           </TableCell>
-
-                          {/* Faltante */}
                           <TableCell className="py-0">
-                            {formatearMoneda(meta.montoMeta - meta.montoActual)}
+                            {formatearMoneda(
+                              Math.max(0, meta.montoMeta - meta.montoActual)
+                            )}
                           </TableCell>
 
-                          {/* Porcentaje de progreso */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
                               <Percent
@@ -1122,7 +1081,6 @@ function Metas() {
                             </div>
                           </TableCell>
 
-                          {/* Referencia */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
                               <Clock
@@ -1138,7 +1096,6 @@ function Metas() {
                             </div>
                           </TableCell>
 
-                          {/* Diferencia */}
                           <TableCell className="py-0">
                             <div className="flex items-center gap-1">
                               {diferencia >= 0 ? (
@@ -1158,7 +1115,6 @@ function Metas() {
                             </div>
                           </TableCell>
 
-                          {/* Estado */}
                           <TableCell className="py-0">
                             {meta.estado === EstadoMetaCobro.FINALIZADO ? (
                               <div className="flex items-center gap-1 text-green-500">
@@ -1178,7 +1134,6 @@ function Metas() {
                             )}
                           </TableCell>
 
-                          {/* Acciones */}
                           <TableCell className="py-0 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -1195,7 +1150,6 @@ function Metas() {
                                 align="end"
                                 className="w-36 shadow-lg rounded-md border border-gray-200"
                               >
-                                {/* Opción para ver depósitos */}
                                 <DropdownMenuItem
                                   onClick={() => handleOpenDepositos(meta)}
                                   className="flex items-center gap-2 hover:bg-gray-100 text-xs py-1"
@@ -1204,10 +1158,8 @@ function Metas() {
                                   <span>Depósitos</span>
                                 </DropdownMenuItem>
 
-                                {/* Separador */}
                                 <div className="h-px bg-gray-200 my-0.5" />
 
-                                {/* Opción para actualizar */}
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setMetaCobroSelected(meta);
@@ -1219,10 +1171,8 @@ function Metas() {
                                   <span>Actualizar</span>
                                 </DropdownMenuItem>
 
-                                {/* Separador */}
                                 <div className="h-px bg-gray-200 my-0.5" />
 
-                                {/* Opción para eliminar */}
                                 <DropdownMenuItem
                                   onClick={() => {
                                     setCobroToDelete(meta.id);
@@ -1243,7 +1193,7 @@ function Metas() {
                 </Table>
               </div>
 
-              {/* Dialog para mostrar depósitos */}
+              {/* Dialog depósitos */}
               <Dialog
                 open={openDepositosDialog}
                 onOpenChange={setOpenDepositosDialog}
@@ -1327,7 +1277,7 @@ function Metas() {
                 )}
               </Dialog>
 
-              {/* DIALOG PARA ELIMINAR UN PAGO */}
+              {/* Eliminar depósito */}
               <Dialog open={openDeletDepo} onOpenChange={setOpenDeletDepo}>
                 {selectedDepo && (
                   <DialogContent className="sm:max-w-[425px]">
@@ -1345,9 +1295,7 @@ function Metas() {
                       <Button
                         className="w-full"
                         variant="destructive"
-                        onClick={() => {
-                          onConfirmDelete(selectedDepo.id);
-                        }}
+                        onClick={() => onConfirmDelete(selectedDepo.id)}
                       >
                         Eliminar
                       </Button>
@@ -1365,9 +1313,8 @@ function Metas() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* TAB PAR METAS DE COBRO */}
 
-        {/* TAB PAR METAS DE COBRO */}
+        {/* ─────────────── Totales ─────────────── */}
         <TabsContent value="totales">
           {/* Resumen de metas de cobros */}
           <Card className="my-1 shadow-md">
@@ -1421,18 +1368,12 @@ function Metas() {
                     {getPercentMetaCobro().toFixed(2)}%
                   </span>
                 </div>
-                <Progress
-                  value={getPercentMetaCobro()}
-                  className={cn(
-                    "w-full h-3",
-                    getPercentMetaCobro() >= 100
-                      ? "[&>div]:bg-green-500"
-                      : getPercentMetaCobro() >= 75
-                      ? "[&>div]:bg-blue-500"
-                      : getPercentMetaCobro() >= 50
-                      ? "[&>div]:bg-yellow-500"
-                      : "[&>div]:bg-red-500"
-                  )}
+                {/* ⚠️ Aquí va SOLO COBROS */}
+                <ProgressBullet
+                  metaQ={getMetasCobroTotal()}
+                  actualQ={getMetasCobroAvance()}
+                  refPct={calcularReferenciaMes()}
+                  className="h-6"
                 />
               </div>
             </CardContent>
@@ -1490,18 +1431,11 @@ function Metas() {
                     {getPercentTiendaCobro().toFixed(2)}%
                   </span>
                 </div>
-                <Progress
-                  value={getPercentTiendaCobro()}
-                  className={cn(
-                    "w-full h-3",
-                    getPercentTiendaCobro() >= 100
-                      ? "[&>div]:bg-green-500"
-                      : getPercentTiendaCobro() >= 75
-                      ? "[&>div]:bg-blue-500"
-                      : getPercentTiendaCobro() >= 50
-                      ? "[&>div]:bg-yellow-500"
-                      : "[&>div]:bg-red-500"
-                  )}
+                <ProgressBullet
+                  metaQ={getMetasTiendaTotal()}
+                  actualQ={getMetasTiendaAvance()}
+                  refPct={calcularReferenciaMes()}
+                  className="h-6"
                 />
               </div>
             </CardContent>
@@ -1526,9 +1460,7 @@ function Metas() {
                   <div className="flex items-center">
                     <TargetIcon className="mr-2 h-3 w-3 text-muted-foreground" />
                     <span className="text-base font-semibold">
-                      {formatearMoneda(
-                        getMetasCobroTotal() + getMetasTiendaTotal()
-                      )}
+                      {formatearMoneda(metaTotal)}
                     </span>
                   </div>
                 </div>
@@ -1537,9 +1469,7 @@ function Metas() {
                   <div className="flex items-center">
                     <ArrowUpIcon className="mr-2 h-3 w-3 text-green-500" />
                     <span className="text-base font-semibold">
-                      {formatearMoneda(
-                        getMetasCobroAvance() + getMetasTiendaAvance()
-                      )}
+                      {formatearMoneda(avanceTotal)}
                     </span>
                   </div>
                 </div>
@@ -1550,9 +1480,7 @@ function Metas() {
                   <div className="flex items-center">
                     <ArrowDownIcon className="mr-2 h-3 w-3 text-red-500" />
                     <span className="text-base font-semibold">
-                      {formatearMoneda(
-                        getMetasCobroRestante() + getMetasTiendaRestante()
-                      )}
+                      {formatearMoneda(Math.max(0, metaTotal - avanceTotal))}
                     </span>
                   </div>
                 </div>
@@ -1562,49 +1490,22 @@ function Metas() {
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-medium">Progreso</span>
                   <span className="text-xs font-medium">
-                    {(
-                      ((getMetasCobroAvance() + getMetasTiendaAvance()) /
-                        (getMetasCobroTotal() + getMetasTiendaTotal())) *
-                      100
-                    ).toFixed(2)}
-                    %
+                    {percentCombinado.toFixed(2)}%
                   </span>
                 </div>
-                <Progress
-                  value={
-                    ((getMetasCobroAvance() + getMetasTiendaAvance()) /
-                      (getMetasCobroTotal() + getMetasTiendaTotal())) *
-                    100
-                  }
-                  className={cn(
-                    "w-full h-3",
-                    ((getMetasCobroAvance() + getMetasTiendaAvance()) /
-                      (getMetasCobroTotal() + getMetasTiendaTotal())) *
-                      100 >=
-                      100
-                      ? "[&>div]:bg-green-500"
-                      : ((getMetasCobroAvance() + getMetasTiendaAvance()) /
-                          (getMetasCobroTotal() + getMetasTiendaTotal())) *
-                          100 >=
-                        75
-                      ? "[&>div]:bg-blue-500"
-                      : ((getMetasCobroAvance() + getMetasTiendaAvance()) /
-                          (getMetasCobroTotal() + getMetasTiendaTotal())) *
-                          100 >=
-                        50
-                      ? "[&>div]:bg-yellow-500"
-                      : "[&>div]:bg-red-500"
-                  )}
+                <ProgressBullet
+                  metaQ={metaTotal}
+                  actualQ={avanceTotal}
+                  refPct={calcularReferenciaMes()}
+                  className="h-6"
                 />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* TAB PAR METAS DE COBRO */}
       </Tabs>
 
-      {/* DIALOG PARA ELIMINACIONES DE METAS EN TIENDAS */}
+      {/* ─────────────── Dialogs eliminación ─────────────── */}
       <Dialog open={openDeleteG} onOpenChange={setOpenDeleteG}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -1653,7 +1554,6 @@ function Metas() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG PARA ELIMINACIONES DE METAS EN COBROS */}
       <Dialog open={openDeleteCobro} onOpenChange={setOpenDeleteCobro}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -1704,14 +1604,13 @@ function Metas() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG PARA ACTUALIZACION DE METAS DE TIENDAS*/}
+      {/* Edits */}
       <EditMetaTiendaDialog
         getMetasTienda={getMetasTienda}
         open={openUpdateMetaTienda}
         onClose={() => setOpenUpdateMetaTienda(false)}
         metaTienda={metaTiendaSelected}
       />
-
       <EditMetaCobroDialog
         getMetasCobros={getMetasCobros}
         open={openUpdateMetaCobro}

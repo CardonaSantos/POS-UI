@@ -165,6 +165,7 @@ export function RutasCobroEdit() {
     zonaFacturacionId,
     sortBy,
     sortDirection,
+    clientesActuales, // 👈 faltaba
   ]);
 
   // Función para cargar datos de la ruta
@@ -220,75 +221,35 @@ export function RutasCobroEdit() {
   const fetchClientesDisponibles = async () => {
     setIsLoadingClientes(true);
     try {
-      // En un entorno real, esta llamada incluiría parámetros de paginación, filtros y ordenamiento
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customers-ruta`
+      const params = {
+        empresaId,
+        search: searchCliente || undefined,
+        estado: clienteFilter === "TODOS" ? undefined : clienteFilter,
+        zonaIds: zonaFacturacionId ? [Number(zonaFacturacionId)] : undefined,
+        sortBy: sortBy, // "nombre" | "saldo"
+        sortDir: sortDirection, // "asc" | "desc"
+        page: currentPage, // 1-based (tu backend lo espera así)
+        perPage: ITEMS_PER_PAGE,
+      };
+
+      const { data } = await axios.get(
+        `${VITE_CRM_API_URL}/internet-customer/get-customers-ruta`,
+        { params }
       );
 
-      if (response.status === 200) {
-        // Filtrar clientes que ya están en la ruta
-        const clientesIds = clientesActuales.map((c) => c.id.toString());
-        let availableClientes = response.data.filter(
-          (c: ClienteInternetFromCreateRuta) =>
-            !clientesIds.includes(c.id.toString())
-        );
+      // data es { items, total, page, perPage }
+      const idsActuales = new Set(clientesActuales.map((c) => c.id.toString()));
 
-        // Aplicar filtros adicionales
-        availableClientes = availableClientes
-          .filter(
-            (cliente: ClienteInternetFromCreateRuta) =>
-              cliente.nombre
-                .toLowerCase()
-                .includes(searchCliente.toLowerCase()) ||
-              (cliente.apellidos &&
-                cliente.apellidos
-                  .toLowerCase()
-                  .includes(searchCliente.toLowerCase())) ||
-              (cliente.direccion &&
-                cliente.direccion
-                  .toLowerCase()
-                  .includes(searchCliente.toLowerCase()))
-          )
-          .filter(
-            (cliente: ClienteInternetFromCreateRuta) =>
-              clienteFilter === "TODOS" ||
-              cliente.estadoCliente === clienteFilter
-          )
-          .filter((cliente: ClienteInternetFromCreateRuta) =>
-            zonaFacturacionId
-              ? cliente.facturacionZona.toString() === zonaFacturacionId
-              : true
-          )
-          .sort(
-            (
-              a: ClienteInternetFromCreateRuta,
-              b: ClienteInternetFromCreateRuta
-            ) => {
-              if (sortBy === "nombre") {
-                return sortDirection === "asc"
-                  ? a.nombre.localeCompare(b.nombre)
-                  : b.nombre.localeCompare(a.nombre);
-              } else {
-                const saldoA = a.saldoPendiente || 0;
-                const saldoB = b.saldoPendiente || 0;
-                return sortDirection === "asc"
-                  ? saldoA - saldoB
-                  : saldoB - saldoA;
-              }
-            }
-          );
+      // Excluye de la página actual los que ya están en la ruta
+      const paginaSinActuales = (
+        data.items as ClienteInternetFromCreateRuta[]
+      ).filter((c) => !idsActuales.has(c.id.toString()));
 
-        setTotalClientes(availableClientes.length);
+      setClientesDisponibles(paginaSinActuales);
 
-        // Paginar los resultados
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const paginatedData = availableClientes.slice(
-          startIndex,
-          startIndex + ITEMS_PER_PAGE
-        );
-
-        setClientesDisponibles(paginatedData);
-      }
+      // ⚠️ El total que muestras es el del server; si excluyes en cliente,
+      // el conteo puede no coincidir perfecto. Déjalo así o ver "opción ideal" abajo.
+      setTotalClientes(data.total);
     } catch (err) {
       console.error("Error al cargar clientes disponibles:", err);
       toast.error("Error al cargar clientes disponibles");
@@ -653,17 +614,18 @@ export function RutasCobroEdit() {
                         <SelectValue placeholder="Seleccionar estado" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={EstadoRuta.ACTIVO}>
-                          Activo
+                        <SelectItem value="TODOS">Todos</SelectItem>
+                        <SelectItem value={EstadoCliente.ACTIVO}>
+                          Activos
                         </SelectItem>
-                        <SelectItem value={EstadoRuta.PENDIENTE}>
-                          Pendiente
+                        <SelectItem value={EstadoCliente.MOROSO}>
+                          Morosos
                         </SelectItem>
-                        <SelectItem value={EstadoRuta.COMPLETADO}>
-                          Completado
+                        <SelectItem value={EstadoCliente.SUSPENDIDO}>
+                          Suspendidos
                         </SelectItem>
-                        <SelectItem value={EstadoRuta.INACTIVO}>
-                          Inactivo
+                        <SelectItem value={EstadoCliente.ATRASADO}>
+                          Inactivos
                         </SelectItem>
                       </SelectContent>
                     </Select>

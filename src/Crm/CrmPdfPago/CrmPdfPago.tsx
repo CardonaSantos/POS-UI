@@ -15,6 +15,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import type { FacturaInternet } from "./PdfPagoInterface";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formattMonedaGT } from "@/utils/formattMonedaGt";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -31,13 +32,6 @@ export default function CrmPdfPago() {
 
   const formatDate = (dateString: string) =>
     dayjs(dateString).format("DD/MM/YYYY");
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-GT", {
-      style: "currency",
-      currency: "GTQ",
-      minimumFractionDigits: 2,
-    }).format(amount);
 
   // Fetch invoice data
   useEffect(() => {
@@ -144,7 +138,7 @@ export default function CrmPdfPago() {
         {/* Header */}
         <div className="flex justify-between items-start border-b border-gray-300 p-5 rounded-t-lg">
           <div className="flex items-center">
-            <div className="w-24 h-24  border-gray-200  overflow-hidden mr-4">
+            <div className="w-28 h-28  border-gray-200  overflow-hidden mr-4">
               <img
                 src={logoCrm || "/placeholder.svg"}
                 alt="Logo"
@@ -181,7 +175,7 @@ export default function CrmPdfPago() {
         </div>
 
         {/* Cliente Info */}
-        <div className="mb-5 bg-gray-50 p-4 rounded-md border border-gray-200 mt-6 text-xs">
+        <div className="mb-5 p-4 rounded-md border-gray-200 mt-6 text-xs">
           <h2 className="font-medium text-gray-700 mb-2">
             Información del Cliente
           </h2>
@@ -190,12 +184,6 @@ export default function CrmPdfPago() {
               <p>
                 <span className="font-medium">Nombre:</span>{" "}
                 {factura.cliente.nombre} {factura.cliente.apellidos}
-              </p>
-            </div>
-            <div>
-              <p>
-                <span className="font-medium">Fecha de pago esperada:</span>{" "}
-                {formatDate(factura.fechaPagoEsperada)}
               </p>
             </div>
           </div>
@@ -219,8 +207,7 @@ export default function CrmPdfPago() {
           <div className="overflow-x-auto rounded-md border border-gray-200">
             <table className="min-w-full bg-white">
               <thead>
-                <tr className="bg-gray-50 text-gray-700">
-                  <th className="py-1.5 px-3 border-b text-left">No.</th>
+                <tr className="text-gray-700">
                   <th className="py-1.5 px-3 border-b text-left">Método</th>
                   <th className="py-1.5 px-3 border-b text-left">Monto</th>
                   <th className="py-1.5 px-3 border-b text-left">
@@ -230,17 +217,7 @@ export default function CrmPdfPago() {
               </thead>
               <tbody>
                 {factura.pagos.map((pago, idx, arr) => (
-                  <tr
-                    key={pago.id}
-                    className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
-                  >
-                    <td
-                      className={`py-1.5 px-3 ${
-                        idx !== arr.length - 1 ? "border-b" : ""
-                      }`}
-                    >
-                      {idx + 1}
-                    </td>
+                  <tr key={pago.id} className={idx % 2 === 0 ? "" : ""}>
                     <td
                       className={`py-1.5 px-3 font-medium ${
                         idx !== arr.length - 1 ? "border-b" : ""
@@ -253,7 +230,7 @@ export default function CrmPdfPago() {
                         idx !== arr.length - 1 ? "border-b" : ""
                       }`}
                     >
-                      {formatCurrency(pago.montoPagado)}
+                      {formattMonedaGT(pago.montoPagado)}
                     </td>
                     <td
                       className={`py-1.5 px-3 ${
@@ -312,7 +289,7 @@ export default function CrmPdfPago() {
                             idx !== arr.length - 1 ? "border-b" : ""
                           }`}
                         >
-                          {formatCurrency(serv.monto)}
+                          {formattMonedaGT(serv.monto)}
                         </td>
                       </tr>
                     ))}
@@ -323,27 +300,29 @@ export default function CrmPdfPago() {
         )}
 
         {/* Resumen */}
-        <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-5 text-xs">
+        <div className=" p-3 rounded-md border border-gray-200 mb-5 text-xs">
           <div className="flex justify-between space-x-4">
             {/* Monto a pagar */}
             <div className="flex-1 flex flex-col items-center">
               <span className="text-muted-foreground">Monto a pagar</span>
               <span className="font-medium">
-                {formatCurrency(factura.montoPago)}
+                {formattMonedaGT(factura.montoPago)}
               </span>
             </div>
 
             {/* Total pagado */}
             <div className="flex-1 flex flex-col items-center">
               <span className="text-muted-foreground">Total pagado</span>
-              <span className="font-medium">{formatCurrency(totalPagado)}</span>
+              <span className="font-medium">
+                {formattMonedaGT(totalPagado)}
+              </span>
             </div>
 
             {/* Saldo pendiente */}
             <div className="flex-1 flex flex-col items-center">
               <span className="text-muted-foreground">Saldo pendiente</span>
               <span className="font-medium">
-                {formatCurrency(factura.saldoPendiente)}
+                {formattMonedaGT(factura.saldoPendiente)}
               </span>
             </div>
           </div>
