@@ -16,6 +16,7 @@ import type { FacturaInternet } from "./PdfPagoInterface";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formattMonedaGT } from "@/utils/formattMonedaGt";
+import { formateDateWithMinutes } from "../Utils/FormateDate";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -111,15 +112,6 @@ export default function CrmPdfPago() {
       </div>
     );
   }
-  const totalServicios = factura.servicios.reduce(
-    (acc, total) => acc + total.pagado,
-    0
-  );
-
-  const totalPagado = factura.pagos.reduce(
-    (sum, pago) => sum + pago.montoPagado + totalServicios,
-    0
-  );
 
   const esDispositivoMovil = () =>
     /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
@@ -201,43 +193,55 @@ export default function CrmPdfPago() {
 
         {/* Pagos Realizados */}
         <div className="mb-5 text-xs">
-          <h2 className="font-medium text-gray-700 mb-2 border-b border-gray-200 pb-1">
+          <h2 className="font-medium text-gray-700 mb-2 pb-1">
             Pagos Realizados
           </h2>
-          <div className="overflow-x-auto rounded-md border border-gray-200">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr className="text-gray-700">
-                  <th className="py-1.5 px-3 border-b text-left">Método</th>
-                  <th className="py-1.5 px-3 border-b text-left">Monto</th>
-                  <th className="py-1.5 px-3 border-b text-left">
+
+          <div className="overflow-x-auto">
+            <table className="w-full  rounded-md  text-[0.85rem]">
+              <thead className="">
+                <tr>
+                  <th className="py-1.5 px-4 text-left font-semibold">
+                    Método
+                  </th>
+                  <th className="py-1.5 px-4 text-left font-semibold">Monto</th>
+                  <th className="py-1.5 px-4  text-left font-semibold">
                     Fecha pagada
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {factura.pagos.map((pago, idx, arr) => (
-                  <tr key={pago.id} className={idx % 2 === 0 ? "" : ""}>
+                  <tr
+                    key={pago.id}
+                    className={idx % 2 === 0 ? "" : ""} // alterna ligeramente
+                  >
                     <td
-                      className={`py-1.5 px-3 font-medium ${
-                        idx !== arr.length - 1 ? "border-b" : ""
-                      }`}
+                      className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
                     >
-                      {pago.metodoPago}
+                      <span className="font-medium">{pago.metodoPago}</span>
                     </td>
+
                     <td
-                      className={`py-1.5 px-3 ${
-                        idx !== arr.length - 1 ? "border-b" : ""
-                      }`}
+                      className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
                     >
                       {formattMonedaGT(pago.montoPagado)}
                     </td>
+
                     <td
-                      className={`py-1.5 px-3 ${
-                        idx !== arr.length - 1 ? "border-b" : ""
-                      }`}
+                      className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
                     >
-                      {formatDate(pago.fechaPago)}
+                      {formateDateWithMinutes(pago.fechaPago)}
                     </td>
                   </tr>
                 ))}
@@ -298,35 +302,6 @@ export default function CrmPdfPago() {
             </div>
           </div>
         )}
-
-        {/* Resumen */}
-        <div className=" p-3 rounded-md border border-gray-200 mb-5 text-xs">
-          <div className="flex justify-between space-x-4">
-            {/* Monto a pagar */}
-            <div className="flex-1 flex flex-col items-center">
-              <span className="text-muted-foreground">Monto a pagar</span>
-              <span className="font-medium">
-                {formattMonedaGT(factura.montoPago)}
-              </span>
-            </div>
-
-            {/* Total pagado */}
-            <div className="flex-1 flex flex-col items-center">
-              <span className="text-muted-foreground">Total pagado</span>
-              <span className="font-medium">
-                {formattMonedaGT(totalPagado)}
-              </span>
-            </div>
-
-            {/* Saldo pendiente */}
-            <div className="flex-1 flex flex-col items-center">
-              <span className="text-muted-foreground">Saldo pendiente</span>
-              <span className="font-medium">
-                {formattMonedaGT(factura.saldoPendiente)}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* Pie de página */}
         <div className="mt-6 pt-2 border-t border-gray-200 text-center text-gray-500 text-xs">
