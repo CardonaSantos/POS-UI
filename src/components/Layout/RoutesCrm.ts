@@ -19,6 +19,7 @@ import {
   LucideIcon,
   Target,
   ClipboardCheck,
+  Sheet,
 } from "lucide-react";
 
 export interface Route {
@@ -234,6 +235,7 @@ export const routesCrm_Admin = [
       },
     ],
   },
+  { icon: Sheet, label: "Reports", href: "/crm/reports" },
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },
@@ -321,6 +323,9 @@ export const routesCrm_Oficina = [
       },
     ],
   },
+
+  { icon: Sheet, label: "Reports", href: "/crm/reports" },
+
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];
 

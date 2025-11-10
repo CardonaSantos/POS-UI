@@ -94,6 +94,7 @@ import MetasTecnicosPage from "./Crm/CrmTicketsMeta/MetasTecnicosPage";
 import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
 import CustomerProfile from "./Crm/CrmCustomer/newCustomerPage/customer-profile";
 import RutasAsignadasMain from "./Crm/CrmRutas/_rutas_asignadas/rutas_asignadas_main";
+import ReportsMainPage from "./Crm/reports/page/ReportsMainPage";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -812,6 +813,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <DeletedInvoicesView />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/reports"
+              element={
+                <ProtectRouteCrmUser>
+                  <ReportsMainPage />
                 </ProtectRouteCrmUser>
               }
             />
