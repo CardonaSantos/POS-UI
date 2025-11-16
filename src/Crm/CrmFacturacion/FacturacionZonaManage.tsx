@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type {
   FacturacionZona,
   NuevaFacturacionZona,
-} from "./FacturacionZonaTypes";
+} from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 // Icons
 import {

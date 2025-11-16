@@ -29,7 +29,7 @@ import {
   WifiOff,
   AlertCircle,
 } from "lucide-react";
-import type { FacturacionZona } from "./FacturacionZonaTypes";
+import type { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ZonaTableProps {

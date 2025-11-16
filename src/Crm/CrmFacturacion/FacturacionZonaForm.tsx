@@ -30,7 +30,7 @@ import {
 import type {
   NuevaFacturacionZona,
   FacturacionZona,
-} from "./FacturacionZonaTypes";
+} from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 interface ZonaFormProps {
   initialData: NuevaFacturacionZona | FacturacionZona;

@@ -2,61 +2,29 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  User,
-  MessageSquare,
-  Wifi,
-  Map,
-  Save,
-  Check,
-  X,
-  AlertCircle,
-  ArrowLeft,
-  Loader2,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-
-import axios from "axios";
 import { toast } from "sonner";
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-import ReactSelectComponent, { type MultiValue } from "react-select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import DatePicker from "react-datepicker";
-
+import { type MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import { useGetSectores } from "../CrmRutas/hooks/Sectores/useGetSectores";
+import { useGetDepartamentos } from "../CrmRutas/hooks/Departamentos/useGetDepartamentos";
+import { useGetMunicipios } from "../CrmRutas/hooks/Municipios/useGetMunicipios";
+import { useGetCustomer } from "../CrmRutas/hooks/Client/useGetClient";
+import { useGetServicios } from "../CrmRutas/hooks/Servicios/useGetServicios";
+import { useGetServiciosWifi } from "../CrmRutas/hooks/ServiciosWfi/useGetServiciosWifi";
+import { useGetZonasFacturacion } from "../CrmRutas/hooks/Zonas-facturacion/useGetZonasFacturacion";
+import { UpdateCustomerDto } from "../features/update-customer/update-customer";
+import { useUpdateCustomer } from "../CrmRutas/hooks/useUpdateCustomer/useUpdateCustomer";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
+import { useDeleteCustomer } from "../CrmRutas/hooks/useDeleteCustomer/useDeleteCustomer";
+import { OptionSelected } from "../features/OptionSelected/OptionSelected";
+import { CustomerEditFormCard } from "./CustomerEditFormCard";
+import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
+import { PageHeaderCrm } from "../_Utils/components/PageHeader/PageHeaderCrm";
+import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
+import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 
 interface FormData {
   // Datos básicos
@@ -70,8 +38,6 @@ interface FormData {
   observaciones: string;
   contactoReferenciaNombre: string;
   contactoReferenciaTelefono: string;
-  // estadoCliente: "ACTIVO" | "INACTIVO"; // Puedes agregar más estados si lo deseas
-
   // Datos del servicio
   contrasenaWifi: string;
   ssidRouter: string;
@@ -87,46 +53,6 @@ interface FormData {
   estado: EstadoCliente;
 }
 
-export enum EstadoCliente {
-  ACTIVO = "ACTIVO",
-  PENDIENTE_ACTIVO = "PENDIENTE_ACTIVO",
-  PAGO_PENDIENTE = "PAGO_PENDIENTE",
-  MOROSO = "MOROSO",
-  ATRASADO = "ATRASADO",
-  SUSPENDIDO = "SUSPENDIDO",
-  DESINSTALADO = "DESINSTALADO",
-  EN_INSTALACION = "EN_INSTALACION",
-}
-
-interface Departamentos {
-  id: number;
-  nombre: string;
-}
-
-interface Municipios {
-  id: number;
-  nombre: string;
-}
-
-interface Servicios {
-  id: number;
-  nombre: string;
-}
-
-interface ServiciosInternet {
-  id: number;
-  nombre: string;
-  velocidad: string;
-}
-
-interface FacturacionZona {
-  id: number;
-  nombre: string;
-  velocidad: string;
-  clientesCount: number;
-  facturasCount: number;
-}
-
 interface ContratoID {
   clienteId: number;
   idContrato: string; //UNIQUE EL CAMPO
@@ -135,75 +61,27 @@ interface ContratoID {
   observaciones: string;
 }
 
-interface CustomerData {
-  id: number;
-  nombre: string;
-  apellidos: string;
-  telefono: string;
-  direccion: string;
-  dpi: string;
-  observaciones: string;
-  contactoReferenciaNombre: string;
-  contactoReferenciaTelefono: string;
-  coordenadas: string[];
-  ip: string;
-  gateway: string;
-  mascara: string;
-  contrasenaWifi: string;
-  ssidRouter: string;
-  fechaInstalacion: string;
-  estado: EstadoCliente;
-  departamento: Departamentos;
-  municipio: Municipios;
-  sector: Sector;
-  servicios: Servicios[];
-  servicioWifi: ServiciosInternet;
-  zonaFacturacion: FacturacionZona;
-  contrato?: {
-    idContrato: string;
-    fechaFirma: string;
-    archivoContrato: string;
-    observaciones: string;
-  };
-}
-interface Sector {
-  id: number;
-  nombre: string;
-}
-
 function EditCustomers() {
   const { customerId } = useParams();
+  const id = customerId ? parseInt(customerId) : 0;
   const navigate = useNavigate();
-
-  const [isLoading, setIsLoading] = useState(true);
   const [openConfirm, setOpenConfirm] = useState(false);
-
   const [openDelete, setOpenDelete] = useState(false);
-
-  const [departamentos, setDepartamentos] = useState<Departamentos[]>([]);
-  const [municipios, setMunicipios] = useState<Municipios[]>([]);
-  const [servicios, setServicios] = useState<Servicios[]>([]);
-  const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
-    []
-  );
-  const [serviciosWifi, setServiciosWifi] = useState<ServiciosInternet[]>([]);
 
   const [fechaInstalacion, setFechaInstalacion] = useState<Date | null>(
     new Date()
   );
 
-  const [depaSelected, setDepaSelected] = useState<string | null>(null);
-  const [muniSelected, setMuniSelected] = useState<string | null>(null);
-  const [serviceSelected, setServiceSelected] = useState<string[]>([]);
-  const [serviceWifiSelected, setServiceWifiSelected] = useState<string | null>(
+  const [depaSelected, setDepaSelected] = useState<number | null>(null);
+  const [muniSelected, setMuniSelected] = useState<number | null>(null);
+  const [serviceSelected, setServiceSelected] = useState<number[]>([]);
+  const [serviceWifiSelected, setServiceWifiSelected] = useState<number | null>(
     null
   );
   const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
-    string | null
+    number | null
   >(null);
-  const [sectorSelected, setSectorSelected] = useState<string | null>(null);
-  const [sectores, setSectores] = useState<Sector[]>([]);
-
+  const [sectorSelected, setSectorSelected] = useState<number | null>(null);
   // Estados para los campos del formulario
   const [formData, setFormData] = useState<FormData>({
     // Datos básicos
@@ -239,299 +117,109 @@ function EditCustomers() {
     observaciones: "",
   });
 
-  console.log("La data del cliente cambiando es: ", formData);
-  console.log("La data del contratro es: ", formDataContrato);
-  console.log("El depaSelected seleccionado es: ", depaSelected);
+  const { data: customer } = useGetCustomer(id);
 
-  console.log("El muniSelected seleccionado es: ", muniSelected);
+  const { data: zonasFacturacion } = useGetZonasFacturacion();
+  const { data: serviciosWifi } = useGetServiciosWifi();
+  const { data: servicios } = useGetServicios();
+  const { data: sectores } = useGetSectores();
+  const { data: departamentos } = useGetDepartamentos();
+  const { data: municipios } = useGetMunicipios(depaSelected);
+  const updateCustomer = useUpdateCustomer(id);
+  const deleteCustomer = useDeleteCustomer(id);
 
-  console.log("El serviceSelected  seleccionado es: ", serviceSelected);
+  //datos seguros
+  const secureSectores = sectores ? sectores : [];
+  const secureDepartamentos = departamentos ? departamentos : [];
+  const secureMunicipios = municipios ? municipios : [];
+  const secureServicios = servicios ? servicios : [];
 
-  console.log("El servicio wifi seleccionado es: ", serviceWifiSelected);
+  const secureServiciosWifi = serviciosWifi ? serviciosWifi : [];
+  const secureZonasFacturacion = zonasFacturacion ? zonasFacturacion : [];
 
-  // Fetch customer data
-  const fetchCustomerData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customer-to-edit/${customerId}`
-      );
+  const secureImages: CustomerImage[] = Array.isArray(customer?.imagenes)
+    ? customer!.imagenes.map((img) => ({
+        id: img.id,
+        categoria: img.categoria,
+        cdnUrl: img.cdnUrl,
+        descripcion: img.descripcion,
+        estado: img.estado,
+        titulo: img.titulo,
+        etiqueta: img.etiqueta,
+        customerId: img.customerId,
+      }))
+    : [];
 
-      if (response.status === 200) {
-        const customerData: CustomerData = response.data;
+  const optionsDepartamentos: OptionSelected[] = secureDepartamentos.map(
+    (depa) => ({
+      value: depa.id,
+      label: depa.nombre,
+    })
+  );
 
-        // Set form data
-        setFormData({
-          nombre: customerData.nombre || "",
-          apellidos: customerData.apellidos || "",
-          telefono: customerData.telefono || "",
-          direccion: customerData.direccion || "",
-          dpi: customerData.dpi || "",
-          observaciones: customerData.observaciones || "",
-          contactoReferenciaNombre: customerData.contactoReferenciaNombre || "",
-          contactoReferenciaTelefono:
-            customerData.contactoReferenciaTelefono || "",
-          coordenadas: customerData.coordenadas
-            ? customerData.coordenadas.join(", ")
-            : "",
-          ip: customerData.ip || "",
-          gateway: customerData.gateway || "",
-          mascara: customerData.mascara || "",
-          contrasenaWifi: customerData.contrasenaWifi || "",
-          ssidRouter: customerData.ssidRouter || "",
-          fechaInstalacion: customerData.fechaInstalacion
-            ? new Date(customerData.fechaInstalacion)
-            : null,
-          asesorId: "",
-          servicioId: "",
-          municipioId: customerData.municipio?.id?.toString() || "",
-          departamentoId: customerData.departamento?.id?.toString() || "",
-          empresaId: "1",
-          estado: customerData?.estado,
-        });
-
-        // Set contract data if exists
-        if (customerData.contrato) {
-          setFormDataContrato({
-            clienteId: customerData.id,
-            idContrato: customerData.contrato.idContrato || "",
-            fechaFirma: customerData.contrato.fechaFirma
-              ? new Date(customerData.contrato.fechaFirma)
-              : new Date(),
-            archivoContrato: customerData.contrato.archivoContrato || "",
-            observaciones: customerData.contrato.observaciones || "",
-          });
-        }
-
-        // Set date
-        if (customerData.fechaInstalacion) {
-          setFechaInstalacion(new Date(customerData.fechaInstalacion));
-        }
-
-        // Set selected values for dropdowns
-        if (customerData.departamento?.id) {
-          setDepaSelected(customerData.departamento.id.toString());
-        }
-
-        if (customerData.municipio?.id) {
-          setMuniSelected(customerData.municipio.id.toString());
-        }
-
-        if (customerData.sector?.id) {
-          setSectorSelected(customerData.sector.id.toString());
-        }
-
-        if (customerData.servicios && customerData.servicios.length > 0) {
-          setServiceSelected(
-            customerData.servicios.map((s) => s.id.toString())
-          );
-        }
-
-        if (customerData.servicioWifi?.id) {
-          setServiceWifiSelected(customerData.servicioWifi.id.toString());
-        }
-
-        if (customerData.zonaFacturacion?.id) {
-          setZonasFacturacionSelected(
-            customerData.zonaFacturacion.id.toString()
-          );
-        }
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Error fetching customer data:", error);
-      toast.error("Error al cargar los datos del cliente");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  // Fetch customer data using mock service
-
-  const getSectores = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/sector/sectores-to-select`
-      );
-
-      if (response.status === 200) {
-        setSectores(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getDepartamentos = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/location/get-all-departamentos`
-      );
-
-      if (response.status === 200) {
-        setDepartamentos(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getMunicipios = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/location/get-municipio/${Number(depaSelected)}`
-      );
-
-      if (response.status === 200) {
-        setMunicipios(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getServicios = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/servicio/get-servicios-to-customer`
-      );
-
-      if (response.status === 200) {
-        setServicios(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir servicios");
-    }
-  };
-
-  const getServiciosWifi = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/servicio-internet/get-services-to-customer`
-      );
-
-      if (response.status === 200) {
-        setServiciosWifi(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir servicios wifi");
-    }
-  };
-
-  const getFacturacionZona = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/facturacion-zona/get-zonas-facturacion-to-customer`
-      );
-
-      if (response.status === 200) {
-        setZonasFacturacion(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir zonas de facturación");
-    }
-  };
-
-  useEffect(() => {
-    // Load all required data
-    getDepartamentos();
-    getServicios();
-    getServiciosWifi();
-    getFacturacionZona();
-
-    getSectores();
-    // Fetch customer data if ID is available
-    if (customerId) {
-      fetchCustomerData();
-    }
-  }, [customerId]);
-
-  // Obtener municipios cuando depaSelected cambia
-  useEffect(() => {
-    if (depaSelected) {
-      getMunicipios();
-    } else {
-      setMunicipios([]);
-      setMuniSelected(null);
-    }
-  }, [depaSelected]);
-
-  interface OptionSelected {
-    value: string;
-    label: string;
-  }
-
-  const optionsDepartamentos: OptionSelected[] = departamentos.map((depa) => ({
-    value: depa.id.toString(),
-    label: depa.nombre,
-  }));
-
-  const optionsMunis: OptionSelected[] = municipios.map((muni) => ({
-    value: muni.id.toString(),
+  const optionsMunis: OptionSelected[] = secureMunicipios.map((muni) => ({
+    value: muni.id,
     label: muni.nombre,
   }));
 
-  const optionsServices: OptionSelected[] = servicios.map((service) => ({
-    value: service.id.toString(),
+  const optionsServices: OptionSelected[] = secureServicios.map((service) => ({
+    value: service.id,
     label: service.nombre,
   }));
 
-  const optionsServicesWifi: OptionSelected[] = serviciosWifi.map(
+  const optionsServicesWifi: OptionSelected[] = secureServiciosWifi.map(
     (service) => ({
-      value: service.id.toString(),
+      value: service.id,
       label: service.nombre,
     })
   );
 
-  const optionsZonasFacturacion: OptionSelected[] = zonasFacturacion.map(
+  const optionsZonasFacturacion: OptionSelected[] = secureZonasFacturacion.map(
     (zona) => ({
-      value: zona.id.toString(),
+      value: zona.id, // 👈 number directo
       label: `${zona.nombre} Clientes: (${zona.clientesCount}) Facturas:(${zona.facturasCount})`,
     })
   );
 
-  const optionsSectores: OptionSelected[] = sectores.map((sector) => ({
-    value: sector.id.toString(),
+  const optionsSectores: OptionSelected[] = secureSectores.map((sector) => ({
+    value: sector.id, // 👈 number directo
     label: sector.nombre,
   }));
 
-  // Manejar el cambio en el select de departamento
   const handleSelectDepartamento = (selectedOption: OptionSelected | null) => {
-    setDepaSelected(selectedOption ? selectedOption.value : null);
+    setDepaSelected(selectedOption ? Number(selectedOption.value) : null);
   };
 
-  // Manejar el cambio en el select de municipio
   const handleSelectMunicipio = (selectedOption: OptionSelected | null) => {
-    setMuniSelected(selectedOption ? selectedOption.value : null);
+    setMuniSelected(selectedOption ? Number(selectedOption.value) : null);
   };
 
-  //manejar cambio en el select de mis servicios
   const handleSelectService = (
     selectedOption: MultiValue<OptionSelected> | null
   ) => {
     setServiceSelected(
-      selectedOption ? selectedOption.map((option) => option.value) : []
+      selectedOption ? selectedOption.map((option) => Number(option.value)) : []
     );
   };
 
-  //manejar cambio en el select de mis servicios wifi
   const handleSelectServiceWifi = (selectedOption: OptionSelected | null) => {
-    setServiceWifiSelected(selectedOption ? selectedOption.value : null);
+    setServiceWifiSelected(
+      selectedOption ? Number(selectedOption.value) : null
+    );
   };
 
   const handleSelectSector = (selectedOption: OptionSelected | null) => {
-    setSectorSelected(selectedOption ? selectedOption.value : null);
+    setSectorSelected(selectedOption ? Number(selectedOption.value) : null);
   };
 
   const handleSelectZonaFacturacion = (
     selectedOption: OptionSelected | null
   ) => {
-    setZonasFacturacionSelected(selectedOption ? selectedOption.value : null);
+    setZonasFacturacionSelected(
+      selectedOption ? Number(selectedOption.value) : null
+    );
   };
 
-  // Manejador de cambios para los campos de texto
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -549,12 +237,10 @@ function EditCustomers() {
     }));
   };
 
-  // Manejador para enviar el formulario
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
 
-    // Asegúrate de convertir 'depaSelected' y 'muniSelected' a números si es necesario
-    const formDataToSend = {
+    const payload: UpdateCustomerDto = {
       id: Number(customerId),
       nombre: formData.nombre.trim(),
       apellidos: formData.apellidos.trim(),
@@ -567,22 +253,20 @@ function EditCustomers() {
       contactoReferenciaTelefono: formData.contactoReferenciaTelefono.trim(),
       contrasenaWifi: formData.contrasenaWifi.trim(),
       ssidRouter: formData.ssidRouter.trim(),
-      fechaInstalacion: fechaInstalacion,
-      municipioId: Number(muniSelected) || null,
-      departamentoId: Number(depaSelected) || null,
-      sectorId: Number(sectorSelected) || null, // Convertir a número
-
+      fechaInstalacion,
+      municipioId: muniSelected ?? null,
+      departamentoId: depaSelected ?? null,
+      sectorId: sectorSelected ?? null,
       empresaId: 1,
       coordenadas:
         formData.coordenadas && formData.coordenadas !== ""
           ? formData.coordenadas.split(",").map((item) => item.trim())
           : [],
-      servicesIds: serviceSelected.map((id) => Number.parseInt(id)),
-      servicioWifiId: Number(serviceWifiSelected),
-      zonaFacturacionId: Number(zonasFacturacionSelected),
+      servicesIds: serviceSelected,
+      servicioWifiId: serviceWifiSelected ?? null,
+      zonaFacturacionId: zonasFacturacionSelected ?? null,
       gateway: formData.gateway.trim(),
       mascara: formData.mascara.trim(),
-      //
       idContrato: formDataContrato.idContrato,
       fechaFirma: formDataContrato.fechaFirma,
       archivoContrato: formDataContrato.archivoContrato,
@@ -590,64 +274,27 @@ function EditCustomers() {
       estado: formData.estado,
     };
 
-    console.log("La data enviandose es: ", formDataToSend);
-
-    // Validar si municipio y departamento están seleccionados
-    if (!formDataToSend.municipioId) {
-      toast.info("Seleccione un municipio");
-      return;
-    }
-
-    if (!formDataToSend.departamentoId) {
-      toast.info("Seleccione un departamento");
-      return;
-    }
-
-    if (!formDataToSend.zonaFacturacionId) {
-      toast.warning("Debe agregar una zona de facturación");
-      return;
-    }
-
-    if (!formDataToSend.servicioWifiId) {
-      toast.warning("No puede actualizar un cliente sin asignarle un servicio");
-      return;
-    }
-
-    try {
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/internet-customer/update-customer/${customerId}`,
-        formDataToSend
-      );
-
-      if (response.status === 200) {
-        toast.success("Cliente actualizado correctamente");
-        setOpenConfirm(false);
-        // Opcional: redirigir a la lista de clientes o a la vista de detalles
-        // router.push("/customers");
-        navigate(`/crm/cliente/${customerId}`);
-      }
-    } catch (error) {
-      console.error("Error al actualizar los datos:", error);
-      toast.error("Error al actualizar el cliente");
-    }
+    toast.promise(updateCustomer.mutateAsync(payload), {
+      loading: "Cargando...",
+      success: "Cliente actualizado",
+      error: (error) => getApiErrorMessageAxios(error),
+    });
   };
 
-  const handleDelete = async () => {
-    try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/internet-customer/delete-one-customer/${customerId}`
-      );
-      if (response.status === 200 || response.status === 201) {
-        toast.info("Cliente eliminado");
-        setOpenDelete(false);
-
-        setTimeout(() => {
-          navigate("/crm-clientes");
-        }, 1000);
-      }
-    } catch (error) {
-      console.log("Proximamente...");
+  const handleDeleteCustomer = () => {
+    if (!id) {
+      toast.warning("ID de cliente no válido");
+      return;
     }
+
+    toast.promise(deleteCustomer.mutateAsync(), {
+      loading: "Eliminando cliente....",
+      success: "Cliente eliminado",
+      error: (error) => getApiErrorMessageAxios(error),
+    });
+    setTimeout(() => {
+      navigate("/crm-clientes");
+    }, 1000);
   };
 
   const handleSelectEstadoCliente = (value: EstadoCliente) => {
@@ -661,670 +308,175 @@ function EditCustomers() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-lg font-medium">Cargando datos del cliente...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!customer) return;
+
+    setFormData({
+      nombre: customer.nombre || "",
+      apellidos: customer.apellidos || "",
+      telefono: customer.telefono || "",
+      direccion: customer.direccion || "",
+      dpi: customer.dpi || "",
+      observaciones: customer.observaciones || "",
+      contactoReferenciaNombre: customer.contactoReferenciaNombre || "",
+      contactoReferenciaTelefono: customer.contactoReferenciaTelefono || "",
+      coordenadas: customer.coordenadas ? customer.coordenadas.join(", ") : "",
+      ip: customer.ip || "",
+      gateway: customer.gateway || "",
+      mascara: customer.mascara || "",
+      contrasenaWifi: customer.contrasenaWifi || "",
+      ssidRouter: customer.ssidRouter || "",
+      fechaInstalacion: customer.fechaInstalacion
+        ? new Date(customer.fechaInstalacion)
+        : null,
+      asesorId: "",
+      servicioId: "",
+      municipioId: customer.municipio?.id?.toString() || "",
+      departamentoId: customer.departamento?.id?.toString() || "",
+      empresaId: "1",
+      estado: customer.estado,
+    });
+
+    if (customer.fechaInstalacion) {
+      setFechaInstalacion(new Date(customer.fechaInstalacion));
+    }
+
+    setDepaSelected(customer.departamento?.id ?? null);
+    setMuniSelected(customer.municipio?.id ?? null);
+    setSectorSelected(customer.sector?.id ?? null);
+
+    setServiceSelected(customer.servicios?.map((s) => s.id) ?? []);
+
+    setServiceWifiSelected(customer.servicioWifi?.id ?? null);
+    setZonasFacturacionSelected(customer.zonaFacturacion?.id ?? null);
+
+    if (customer.contrato) {
+      setFormDataContrato({
+        clienteId: customer.id,
+        idContrato: customer.contrato.idContrato || "",
+        fechaFirma: customer.contrato.fechaFirma
+          ? new Date(customer.contrato.fechaFirma)
+          : new Date(),
+        archivoContrato: customer.contrato.archivoContrato || "",
+        observaciones: customer.contrato.observaciones || "",
+      });
+    }
+  }, [customer]);
+
+  const tabs = [
+    {
+      value: "General",
+      label: "General",
+      content: (
+        <CustomerEditFormCard
+          formData={formData}
+          formDataContrato={formDataContrato}
+          fechaInstalacion={fechaInstalacion}
+          depaSelected={depaSelected}
+          muniSelected={muniSelected}
+          sectorSelected={sectorSelected}
+          serviceSelected={serviceSelected}
+          serviceWifiSelected={serviceWifiSelected}
+          zonasFacturacionSelected={zonasFacturacionSelected}
+          optionsDepartamentos={optionsDepartamentos}
+          optionsMunis={optionsMunis}
+          optionsServices={optionsServices}
+          optionsServicesWifi={optionsServicesWifi}
+          optionsZonasFacturacion={optionsZonasFacturacion}
+          optionsSectores={optionsSectores}
+          secureDepartamentos={secureDepartamentos}
+          secureMunicipios={secureMunicipios}
+          secureSectores={secureSectores}
+          secureServiciosWifi={secureServiciosWifi}
+          secureZonasFacturacion={secureZonasFacturacion}
+          onChangeForm={handleChange}
+          onChangeContrato={handleChangeDataContrato}
+          onSelectDepartamento={handleSelectDepartamento}
+          onSelectMunicipio={handleSelectMunicipio}
+          onSelectSector={handleSelectSector}
+          onSelectService={handleSelectService}
+          onSelectServiceWifi={handleSelectServiceWifi}
+          onSelectZonaFacturacion={handleSelectZonaFacturacion}
+          onChangeFechaInstalacion={setFechaInstalacion}
+          onSelectEstadoCliente={handleSelectEstadoCliente}
+          onClickDelete={() => setOpenDelete(true)}
+          onClickOpenConfirm={() => setOpenConfirm(true)}
+          handleChangeDataContrato={handleChangeDataContrato}
+          setFormDataContrato={setFormDataContrato}
+        />
+      ),
+    },
+    {
+      value: "Imágenes",
+      label: "Imágenes",
+      content: (
+        <ImagesCustomer
+          clienteId={id}
+          empresaId={1}
+          imagenesCliente={secureImages || []}
+        />
+      ),
+    },
+  ];
+  console.log("La data del cliente: ", customer);
 
   return (
-    <div className="container">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="container mx-auto px-1 py-6"
-      >
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/crm/cliente/${customerId}`)}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <h1 className="text-2xl font-bold">Editar Cliente</h1>
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="w-full px-2"
+    >
+      <PageHeaderCrm title="Edición de cliente" fallbackBackTo="/" />
+      <ReusableTabs
+        className=""
+        tabs={tabs}
+        variant="compact"
+        defaultValue="General"
+      />
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl text-center">
-                Editar cliente: {formData.nombre} {formData.apellidos}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary dark:text-white" />
-                    Información Personal
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="nombre-all">
-                        Nombres <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="nombre-all"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        placeholder="Nombre completo"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="apellidos-all">
-                        Apellidos <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="apellidos-all"
-                        name="apellidos"
-                        value={formData.apellidos}
-                        onChange={handleChange}
-                        placeholder="Apellidos"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="telefono-all">Teléfono</Label>
-                      <Input
-                        id="telefono-all"
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                        placeholder="Teléfono"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="dpi-all">DPI</Label>
-                      <Input
-                        id="dpi-all"
-                        name="dpi"
-                        value={formData.dpi}
-                        onChange={handleChange}
-                        placeholder="DPI"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="direccion-all">Dirección</Label>
-                      <Textarea
-                        id="direccion-all"
-                        name="direccion"
-                        value={formData.direccion}
-                        onChange={handleChange}
-                        placeholder="Dirección"
-                        cols={3}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                </div>
+      {/* Tus dialogs se quedan en el padre */}
+      <AdvancedDialogCRM
+        type="info"
+        open={openConfirm}
+        onOpenChange={setOpenConfirm}
+        title="Confirmación de actualización"
+        description="¿Estás seguro de que deseas actualizar este cliente con los datos proporcionados?"
+        confirmButton={{
+          label: "Si, actualizar cliente",
+          disabled: updateCustomer.isPending,
+          loading: updateCustomer.isPending,
+          onClick: handleSubmit,
+          loadingText: "Actualizando cliente...",
+          variant: "destructive",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: updateCustomer.isPending,
+          onClick: () => setOpenConfirm(false),
+        }}
+      />
 
-                {/* Service Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <Wifi className="h-4 w-4 text-primary dark:text-white" />
-                    Información del Servicio
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex space-x-2">
-                        <div className="flex-1">
-                          <Label htmlFor="ip">IP</Label>
-                          <Input
-                            id="ip"
-                            name="ip"
-                            value={formData.ip}
-                            onChange={handleChange}
-                            placeholder="IP"
-                            required
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor="gateway">Gateway</Label>
-                          <Input
-                            id="gateway"
-                            name="gateway"
-                            value={formData.gateway}
-                            onChange={handleChange}
-                            placeholder="(opcional)"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor="mascara">Subnet Mask</Label>
-                          <Input
-                            id="mascara"
-                            name="mascara"
-                            value={formData.mascara}
-                            onChange={handleChange}
-                            placeholder="(opcional)"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label htmlFor="servicioWifiId-all">
-                        Servicio Wifi{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <ReactSelectComponent
-                        options={optionsServicesWifi}
-                        onChange={handleSelectServiceWifi}
-                        value={
-                          serviceWifiSelected
-                            ? {
-                                value: serviceWifiSelected,
-                                label:
-                                  serviciosWifi.find(
-                                    (s) =>
-                                      s.id.toString() === serviceWifiSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-sm text-black"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label htmlFor="servicioId-all">
-                        Otros Servicios{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <ReactSelectComponent
-                        isMulti={true}
-                        options={optionsServices}
-                        onChange={handleSelectService}
-                        value={optionsServices.filter((option) =>
-                          serviceSelected.includes(option.value)
-                        )}
-                        className="text-sm text-black"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label htmlFor="contrasenaWifi-all">
-                        Contraseña WiFi{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="contrasenaWifi-all"
-                        name="contrasenaWifi"
-                        value={formData.contrasenaWifi}
-                        onChange={handleChange}
-                        placeholder="Contraseña WiFi"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="ssidRouter-all">SSID</Label>
-                      <Input
-                        id="ssidRouter-all"
-                        name="ssidRouter"
-                        value={formData.ssidRouter}
-                        onChange={handleChange}
-                        placeholder="SSID"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <Map className="h-4 w-4 text-primary dark:text-white" />
-                    Ubicación y Contacto
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="ubicacionMaps-all">Ubicación Maps</Label>
-                      <Input
-                        id="coordenadas"
-                        name="coordenadas"
-                        value={formData.coordenadas}
-                        onChange={handleChange}
-                        placeholder="Coordenadas"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="departamentoId-all">Departamento</Label>
-                      <ReactSelectComponent
-                        options={optionsDepartamentos}
-                        value={
-                          depaSelected
-                            ? {
-                                value: depaSelected,
-                                label:
-                                  departamentos.find(
-                                    (depa) =>
-                                      depa.id.toString() === depaSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        onChange={handleSelectDepartamento}
-                        className="text-sm text-black"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="municipioId-all">Municipio</Label>
-                      <ReactSelectComponent
-                        options={optionsMunis}
-                        onChange={handleSelectMunicipio}
-                        value={
-                          muniSelected
-                            ? {
-                                value: muniSelected,
-                                label:
-                                  municipios.find(
-                                    (muni) =>
-                                      muni.id.toString() === muniSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-sm text-black"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label htmlFor="municipioId-all">Sectores</Label>
-                      <ReactSelectComponent
-                        isClearable
-                        options={optionsSectores}
-                        onChange={handleSelectSector}
-                        value={
-                          sectorSelected
-                            ? {
-                                value: sectorSelected,
-                                label:
-                                  sectores.find(
-                                    (muni) =>
-                                      muni.id.toString() == sectorSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-xs text-black"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label htmlFor="contactoReferenciaNombre-all">
-                        Nombre Referencia
-                      </Label>
-                      <Input
-                        id="contactoReferenciaNombre-all"
-                        name="contactoReferenciaNombre"
-                        value={formData.contactoReferenciaNombre}
-                        onChange={handleChange}
-                        placeholder="Nombre referencia"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="contactoReferenciaTelefono-all">
-                        Teléfono Referencia
-                      </Label>
-                      <Input
-                        id="contactoReferenciaTelefono-all"
-                        name="contactoReferenciaTelefono"
-                        value={formData.contactoReferenciaTelefono}
-                        onChange={handleChange}
-                        placeholder="Teléfono referencia"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="estadoCliente"
-                    className="font-medium col-span-3 md:col-span-1"
-                  >
-                    Estado del cliente
-                  </Label>
-                  <Select
-                    defaultValue={formData.estado}
-                    onValueChange={handleSelectEstadoCliente}
-                  >
-                    <SelectTrigger id="estadoCliente" className="w-[250px]">
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Estados disponibles</SelectLabel>
-                        <SelectItem value={EstadoCliente.ACTIVO}>
-                          ACTIVO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.ATRASADO}>
-                          ATRASADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.DESINSTALADO}>
-                          DESINSTALADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.EN_INSTALACION}>
-                          EN INSTALACIÓN
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.MOROSO}>
-                          MOROSO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.PAGO_PENDIENTE}>
-                          PAGO PENDIENTE
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.PENDIENTE_ACTIVO}>
-                          ATRASADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                          SUSPENDIDO
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-3 space-y-6">
-                  <div className="flex flex-col gap-4 md:grid md:grid-cols-1 md:gap-6">
-                    <Accordion
-                      type="single"
-                      collapsible
-                      className="w-full border rounded-lg shadow-sm"
-                    >
-                      <AccordionItem value="item-1" className="border-none">
-                        <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 font-medium">
-                          Detalles del contrato
-                        </AccordionTrigger>
-                        <AccordionContent className="px-1 pb-3">
-                          <Card className="border-0 shadow-none">
-                            <CardHeader className="px-4 pb-2">
-                              <CardTitle className="text-lg">
-                                Información de contrato
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="px-4">
-                              <div className="grid grid-cols-1 gap-5">
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="idcontrato"
-                                    className="font-medium"
-                                  >
-                                    ID de Contrato
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    id="idcontrato"
-                                    value={formDataContrato.idContrato}
-                                    onChange={handleChangeDataContrato}
-                                    name="idContrato"
-                                    placeholder="ejem: CONTRATO-910"
-                                    aria-label="ID de contrato"
-                                    className="w-full"
-                                  />
-                                </div>
-
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="archivoContrato"
-                                    className="font-medium"
-                                  >
-                                    Archivo contrato
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    id="archivoContrato"
-                                    value={formDataContrato.archivoContrato}
-                                    onChange={handleChangeDataContrato}
-                                    name="archivoContrato"
-                                    placeholder="Proximamente..."
-                                    aria-label="Archivo de contrato"
-                                    className="w-full"
-                                  />
-                                </div>
-
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="fechaFirma"
-                                    className="font-medium"
-                                  >
-                                    Fecha Firma
-                                  </Label>
-                                  <div className="w-full">
-                                    <DatePicker
-                                      className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                      selected={formDataContrato.fechaFirma}
-                                      onChange={(date) => {
-                                        setFormDataContrato((prevData) => ({
-                                          ...prevData,
-                                          fechaFirma: date,
-                                        }));
-                                      }}
-                                      aria-label="Fecha de firma"
-                                      id="fechaFirma"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="observaciones"
-                                    className="font-medium"
-                                  >
-                                    Observaciones
-                                  </Label>
-                                  <Textarea
-                                    id="observaciones"
-                                    value={formDataContrato.observaciones}
-                                    onChange={handleChangeDataContrato}
-                                    name="observaciones"
-                                    placeholder="Detalles de mi contrato"
-                                    aria-label="Observaciones del contrato"
-                                    className="w-full min-h-[100px] resize-y"
-                                  />
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-
-                  <div className="flex flex-col gap-3 w-full p-4 border rounded-lg shadow-sm">
-                    <Label
-                      htmlFor="fechaInstalacion-all"
-                      className="font-medium"
-                    >
-                      Fecha Instalación
-                    </Label>
-                    <div className="w-full">
-                      <DatePicker
-                        className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        selected={fechaInstalacion}
-                        onChange={(date) => {
-                          setFechaInstalacion(date);
-                        }}
-                        showTimeSelect
-                        dateFormat="Pp"
-                        aria-label="Fecha de instalación"
-                        id="fechaInstalacion-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="zonasFacturacion-all">
-                    Zonas de Facturación{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <ReactSelectComponent
-                    options={optionsZonasFacturacion}
-                    onChange={handleSelectZonaFacturacion}
-                    value={
-                      zonasFacturacionSelected
-                        ? {
-                            value: zonasFacturacionSelected,
-                            label:
-                              zonasFacturacion.find(
-                                (s) =>
-                                  s.id.toString() === zonasFacturacionSelected
-                              )?.nombre || "",
-                          }
-                        : null
-                    }
-                    className="text-sm text-black"
-                  />
-                </div>
-
-                {/* Observations - Full width */}
-                <div className="md:col-span-3 space-y-2">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-primary dark:text-white" />
-                    Observaciones
-                  </h3>
-                  <Textarea
-                    id="observaciones-all"
-                    name="observaciones"
-                    value={formData.observaciones}
-                    onChange={handleChange}
-                    placeholder="Observaciones adicionales"
-                    className="min-h-[80px]"
-                  />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setOpenDelete(true)}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Elininar
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setOpenConfirm(true)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Guardar Cambios
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
-
-        {/* Confirmation Dialog */}
-        <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
-          <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-lg border-0 shadow-lg">
-            {/* Header with icon */}
-            <DialogHeader className="pt-6 px-6 pb-2">
-              <DialogTitle
-                className="flex items-center gap-3 text-xl font-semibold
-                justify-center"
-              >
-                <div className="bg-amber-100 dark:bg-gray-900 p-2 rounded-full">
-                  <AlertCircle className="h-5 w-5 text-rose-500" />
-                </div>
-                Confirmación de actualización
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="px-6 py-4">
-              <div className="border border-gray-200 dark:border-gray-800 rounded-md p-4 mb-5 bg-gray-50 dark:bg-gray-800">
-                <h3 className="font-medium mb-2 text-gray-900 dark:text-gray-100">
-                  ¿Estás seguro de que deseas actualizar este cliente con los
-                  datos proporcionados?
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Por favor, revisa cuidadosamente los datos antes de proceder.
-                </p>
-              </div>
-
-              <div className="h-px bg-gray-200 dark:bg-gray-800 my-4"></div>
-
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setOpenConfirm(false)}
-                  className="border w-full bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-600 rounded-lg py-2 hover:text-white"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSubmit}
-                  className="bg-teal-600 text-white w-full hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg py-2 hover:text-white"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Sí, guardar cambios
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-          <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-lg border-0 shadow-lg">
-            {/* Header with icon */}
-            <DialogHeader className="pt-6 px-6 pb-2">
-              <DialogTitle
-                className="flex items-center gap-3 text-xl font-semibold
-                justify-center"
-              >
-                <div className="bg-amber-100 dark:bg-gray-900 p-2 rounded-full">
-                  <AlertCircle className="h-5 w-5 text-rose-500" />
-                </div>
-                Confirmación de eliminación
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="px-6 py-4">
-              <div className="border border-gray-200 dark:border-gray-800 rounded-md p-4 mb-5 bg-gray-50 dark:bg-gray-800">
-                <h3 className="font-medium mb-2 text-gray-900 dark:text-gray-100">
-                  ¿Estás seguro de que deseas eliminar este clientes?
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Por favor, revisa cuidadosamente los datos antes de procede.
-                  Los datos relacionados a este cliente podrían perderse
-                </p>
-              </div>
-
-              <div className="h-px bg-gray-200 dark:bg-gray-800 my-4"></div>
-
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setOpenDelete(false)}
-                  className="border w-full bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-600 rounded-lg py-2 hover:text-white"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleDelete}
-                  className="bg-teal-600 text-white w-full hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600 rounded-lg py-2 hover:text-white"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Sí, continuar y eliminar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </motion.div>
-    </div>
+      <AdvancedDialogCRM
+        open={openDelete}
+        onOpenChange={setOpenDelete}
+        title="Confirmación de eliminación"
+        description="Por favor, revisa cuidadosamente los datos antes de proceder. Los datos relacionados a este cliente podrían perderse"
+        confirmButton={{
+          label: "Sí, eliminar cliente",
+          disabled: deleteCustomer.isPending,
+          loading: deleteCustomer.isPending,
+          onClick: handleDeleteCustomer,
+          loadingText: "Eliminando cliente...",
+          variant: "destructive",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: deleteCustomer.isPending,
+          onClick: () => setOpenDelete(false),
+        }}
+      />
+    </motion.div>
   );
 }
 

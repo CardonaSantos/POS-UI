@@ -14,8 +14,6 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import type { FacturaInternet } from "./CustomerDetails"; // Asumiendo que tienes tus interfaces en este archivo
-// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 
 import { Link } from "react-router-dom";
@@ -33,6 +31,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { FacturaInternet } from "../features/cliente-interfaces/cliente-types";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isSameOrBefore);

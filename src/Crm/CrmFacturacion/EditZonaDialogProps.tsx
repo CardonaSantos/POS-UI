@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ZonaForm from "./ZonaForm";
-import type { FacturacionZona } from "./FacturacionZonaTypes";
+import type { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 interface EditZonaDialogProps {
   isOpen: boolean;

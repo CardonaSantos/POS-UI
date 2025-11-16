@@ -11,7 +11,7 @@ export const ESTADOS_CLIENTE_MAIN = [
   "DESCONOCIDO",
 ] as const;
 
-export type EstadoCliente = (typeof ESTADOS_CLIENTE_MAIN)[number];
+type EstadoCliente = (typeof ESTADOS_CLIENTE_MAIN)[number];
 
 // Label “bonito” (con espacios) si lo necesitas en UI
 export const ESTADO_LABEL: Record<EstadoCliente, string> = {

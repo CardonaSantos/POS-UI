@@ -3,8 +3,9 @@
 
 import * as React from "react";
 import ReactSelectComponent from "react-select";
-import type { OptionSelected, FacturacionZona } from "./rutas-types";
 import { compactSelectStyles } from "@/utils/_components/react_select_component_styles.ts/selectStyles";
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 
 interface SelectZonaFacturacionProps {
   zonas: FacturacionZona[];

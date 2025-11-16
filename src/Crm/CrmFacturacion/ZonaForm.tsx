@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 import type {
   FacturacionZona,
   NuevaFacturacionZona,
-} from "./FacturacionZonaTypes";
+} from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 interface ZonaFormProps {
   initialData: FacturacionZona | NuevaFacturacionZona;

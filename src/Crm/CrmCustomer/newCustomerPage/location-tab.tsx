@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { ClienteDetailsDto } from "./types";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface LocationTabProps {
   cliente: ClienteDetailsDto;

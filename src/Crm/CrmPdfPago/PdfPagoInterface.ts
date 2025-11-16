@@ -53,17 +53,17 @@ export interface ServicioAdicional {
 }
 
 // La factura principal de internet, ahora con el nuevo array
-export interface FacturaInternet {
-  id: number;
-  estadoFacturaInternet: string; // e.g. 'PAGADA' | 'PENDIENTE' | …
-  montoPago: number;
-  detalleFactura: string;
-  creadoEn: string;
-  fechaPagoEsperada: string;
-  saldoPendiente: number;
-  periodo: string;
-  cliente: Cliente;
-  empresa: Empresa;
-  pagos: Pago[];
-  servicios: ServicioAdicional[];
-}
+// export interface FacturaInternet {
+//   id: number;
+//   estadoFacturaInternet: string; // e.g. 'PAGADA' | 'PENDIENTE' | …
+//   montoPago: number;
+//   detalleFactura: string;
+//   creadoEn: string;
+//   fechaPagoEsperada: string;
+//   saldoPendiente: number;
+//   periodo: string;
+//   cliente: Cliente;
+//   empresa: Empresa;
+//   pagos: Pago[];
+//   servicios: ServicioAdicional[];
+// }

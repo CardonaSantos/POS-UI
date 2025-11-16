@@ -1,13 +1,3 @@
-export interface Sector {
-  id: number;
-  nombre: string;
-  descripcion: string | null;
-  municipioId: number;
-  clientes?: ClienteInternet[];
-  creadoEn: string | Date;
-  actualizadoEn: string | Date;
-}
-
 export interface Municipio {
   id: number;
   nombre: string;

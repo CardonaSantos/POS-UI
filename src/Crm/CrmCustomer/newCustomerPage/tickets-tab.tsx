@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
 import { TicketDetailsDialog } from "./ticket-details-dialog";
-import { TicketSoporte } from "./types";
+import { TicketSoporte } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 // Importar el nuevo componente de diálogo
 

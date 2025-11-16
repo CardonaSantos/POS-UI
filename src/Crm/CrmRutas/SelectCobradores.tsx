@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import ReactSelectComponent from "react-select";
 import axios from "axios";
-import type { OptionSelected, Usuario } from "./rutas-types";
+import type { Usuario } from "./rutas-types";
+import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 

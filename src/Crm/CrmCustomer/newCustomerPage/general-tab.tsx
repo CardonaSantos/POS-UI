@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { ClienteDetailsDto } from "./types";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface GeneralTabProps {
   cliente: ClienteDetailsDto;

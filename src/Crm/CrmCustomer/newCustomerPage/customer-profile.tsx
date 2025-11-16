@@ -1,29 +1,25 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { User, Ticket, Image } from "lucide-react"; // Mantener User y Ticket para otros triggers
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import axios from "axios";
-
-// Importar el nuevo componente combinado
-
-// Importar los otros componentes de tabs que no se fusionan
 import { LocationTab } from "./location-tab";
 import { TicketsTab } from "./tickets-tab";
 import { BillingTab } from "./billing-tab";
 import { CustomerHeader } from "./customer-header";
 import { CustomerDialogs } from "./customer-dialogs";
-
-// Import types
-import type { ClienteDetailsDto } from "./types"; // Asegúrate de que este tipo esté completo
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { ClientOverview } from "./overview";
-import ImagesCustomer from "./ImagesCustomer";
-
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+import {
+  useClienteDetails,
+  usePlantillasContrato,
+} from "../API/customer-profile.queries";
+import { clienteInitialState } from "../helpers/clienteInitialState";
+import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
+import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
+import EmptyImages from "./CrmCustomerGalery/EmptyImages";
 
 interface PlantillasInterface {
   id: number;
@@ -50,52 +46,23 @@ interface Contrato {
   ssid: string;
   wifiPassword: string;
 }
+type TabValue =
+  | "resumen"
+  | "imagenes"
+  | "ubicacion"
+  | "tickets"
+  | "facturacion";
 
 export default function CustomerProfile() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
-  const [searchParams] = useSearchParams();
   const { id } = useParams();
-
-  // Estados principales
-  const defaultTab = searchParams.get("tab") || "resumen"; // Cambiado a 'resumen'
-  const [activeTab, setActiveTab] = useState(defaultTab);
-  const [cliente, setCliente] = useState<ClienteDetailsDto>({
-    id: 0,
-    sector: { id: 1, nombre: "" },
-    nombre: "",
-    apellidos: "",
-    telefono: "",
-    direccion: "",
-    dpi: "",
-    observaciones: "",
-    contactoReferenciaNombre: "",
-    contactoReferenciaTelefono: "",
-    estadoCliente: "",
-    contrasenaWifi: "",
-    ssidRouter: "",
-    fechaInstalacion: "",
-    asesor: null,
-    servicio: null,
-    municipio: { id: 1, nombre: "" },
-    departamento: { id: 1, nombre: "" },
-    empresa: { id: 1, nombre: "" },
-    IP: { direccion: "192.168.100.1", gateway: "", id: 1, mascara: "" },
-    ubicacion: {
-      id: 1,
-      latitud: 15.667147636975496,
-      longitud: -91.71722598563508,
-    },
-    saldoCliente: null,
-    creadoEn: "",
-    actualizadoEn: "",
-    ticketSoporte: [],
-    facturaInternet: [],
-    clienteServicio: [],
-    contratoServicioInternet: null,
-  });
-
-  // Estados para diálogos
+  const clienteId = id ? Number(id) : 0;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const defaultTab = (searchParams.get("tab") as TabValue) || "resumen";
+  const [activeTab, setActiveTab] = useState<TabValue>(defaultTab);
+  // Estado local para mantener compatibilidad con el código existente
   const [plantillas, setPlantillas] = useState<PlantillasInterface[]>([]);
+  // Estados para diálogos
   const [openGenerarFactura, setOpenGenerarFactura] = useState(false);
   const [openGenerateFacturas, setOpenGenerateFacturas] = useState(false);
   const [openDeleteFactura, setOpenDeleteFactura] = useState(false);
@@ -106,7 +73,7 @@ export default function CustomerProfile() {
   const [motivo, setMotivo] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [dataContrato, setDataContrato] = useState<Contrato>({
-    clienteId: id ? Number(id) : 0,
+    clienteId: clienteId,
     fechaInstalacionProgramada: "",
     costoInstalacion: 0,
     fechaPago: "",
@@ -115,44 +82,62 @@ export default function CustomerProfile() {
     wifiPassword: "",
   });
 
-  // Funciones de API
-  const getClienteDetails = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customer-details/${Number(
-          id
-        )}`
-      );
-      if (response.status === 200) {
-        setCliente(response.data);
-      }
-    } catch (error) {
-      console.log(error);
+  const {
+    data: cliente,
+    // isLoading: isClienteLoading,
+    error: clienteError,
+    refetch: refetchCliente,
+  } = useClienteDetails(clienteId);
+
+  const {
+    data: plantillasData,
+    // isLoading: isPlantillasLoading,
+    error: plantillasError,
+  } = usePlantillasContrato();
+
+  const clienteSecure = cliente ? cliente : clienteInitialState;
+
+  useEffect(() => {
+    if (plantillasData) {
+      setPlantillas(plantillasData);
+    }
+  }, [plantillasData]);
+
+  useEffect(() => {
+    if (clienteError) {
+      console.error(clienteError);
       toast.info("Error al conseguir información sobre el cliente");
     }
+  }, [clienteError]);
+
+  useEffect(() => {
+    if (plantillasError) {
+      console.error(plantillasError);
+      toast.info("Error al cargar plantillas de contrato");
+    }
+  }, [plantillasError]);
+
+  const getClienteDetails = () => {
+    refetchCliente();
   };
 
-  const getPlantillas = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/contrato-cliente/plantillas-contrato`
-      );
-      if (response.status === 200) {
-        setPlantillas(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as TabValue);
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", value);
+    setSearchParams(params, { replace: true }); // replace para no llenar el historial, o quítalo si quieres que el back vaya tab por tab
   };
 
   useEffect(() => {
-    getClienteDetails();
-    getPlantillas();
-  }, []);
+    const urlTab = (searchParams.get("tab") as TabValue) || "resumen";
+    if (urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams, activeTab]);
 
   // Props comunes para los tabs
   const commonTabProps = {
-    cliente,
+    cliente: clienteSecure,
     getClienteDetails,
     setOpenGenerarFactura,
     setOpenGenerateFacturas,
@@ -160,24 +145,36 @@ export default function CustomerProfile() {
     setFacturaAction,
   };
 
-  console.log("Los datos del cliente son: ", cliente);
+  const secureImages: CustomerImage[] = Array.isArray(cliente?.imagenes)
+    ? cliente!.imagenes.map((img) => ({
+        id: img.id,
+        categoria: img.categoria,
+        cdnUrl: img.cdnUrl,
+        descripcion: img.descripcion,
+        estado: img.estado,
+        titulo: img.titulo,
+        etiqueta: img.etiqueta,
+        customerId: img.customerId,
+      }))
+    : [];
 
+  console.log("Los datos del cliente son: ", cliente);
   return (
-    <div className="container mx-auto py-4  sm:py-6">
+    <div className="container mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         <CustomerHeader
-          cliente={cliente}
+          cliente={clienteSecure}
           plantillas={plantillas}
           setOpenCreateContrato={setOpenCreateContrato}
         />
         <Tabs
           defaultValue="resumen" // Cambiado a 'resumen'
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
           className="space-y-4"
         >
           {/* Tabs mejorados para móvil */}
@@ -289,12 +286,18 @@ export default function CustomerProfile() {
 
           {/* Contenido de los tabs */}
           <TabsContent value="resumen" className="mt-4">
-            <ClientOverview cliente={cliente} />{" "}
-            {/* Renderiza el nuevo componente combinado */}
+            <ClientOverview cliente={clienteSecure} />{" "}
           </TabsContent>
 
           <TabsContent value="imagenes" className="mt-4">
-            <ImagesCustomer /> {/* Renderiza el nuevo componente combinado */}
+            {secureImages.length > 0 ? (
+              <CustomerImagesGallery
+                customerId={clienteSecure.id}
+                images={secureImages}
+              />
+            ) : (
+              <EmptyImages customerId={clienteSecure.id} />
+            )}
           </TabsContent>
 
           {/* Las TabsContent para "general" y "servicio" se eliminan */}
@@ -321,7 +324,7 @@ export default function CustomerProfile() {
         openCreateContrato={openCreateContrato}
         setOpenCreateContrato={setOpenCreateContrato}
         // Datos
-        cliente={cliente}
+        cliente={clienteSecure}
         facturaAction={facturaAction}
         setFacturaAction={setFacturaAction}
         motivo={motivo}

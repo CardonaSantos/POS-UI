@@ -19,7 +19,7 @@ import {
   Hash,
 } from "lucide-react";
 import dayjs from "dayjs";
-import { TicketSoporte } from "./types";
+import { TicketSoporte } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 // Asegúrate de que esta interfaz coincida con la estructura de tu ticket
 

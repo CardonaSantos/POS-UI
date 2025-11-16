@@ -15,10 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { Sector, Municipio } from "./types";
 import ReactSelectComponent from "react-select";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import { Departamento } from "@/Types/SalesHistory/HistorialVentas";
+import {
+  Municipio,
+  Sector,
+} from "../features/cliente-interfaces/cliente-types";
 
 interface EditSectorDialogProps {
   sector: Sector | null;

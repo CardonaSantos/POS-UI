@@ -29,7 +29,7 @@ import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import ReactSelectComponent from "react-select";
-import { FacturacionZona } from "../CrmFacturacion/FacturacionZonaTypes";
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 import { useDeferredValue } from "react";
 import { Label } from "@/components/ui/label";
@@ -655,7 +655,7 @@ export default function ClientesTable() {
                         {row.original.id}
                       </td>
                       <Link
-                        to={`/crm/cliente/${row.original.id}`}
+                        to={`/crm/cliente/${row.original.id}/?tab=resumen`}
                         className="contents"
                       >
                         <td className="px-3 py-2 truncate max-w-[120px] hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline">

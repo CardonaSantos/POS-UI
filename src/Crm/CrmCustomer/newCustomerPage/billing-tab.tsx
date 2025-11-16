@@ -10,9 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HistorialPagos } from "../HistorialPagos";
-import type { ClienteDetailsDto } from "./types";
 import currency from "currency.js";
 import dayjs from "dayjs";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface BillingTabProps {
   cliente: ClienteDetailsDto;

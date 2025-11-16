@@ -17,12 +17,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import type { ClienteDetailsDto } from "./types";
 import {
   getEstadoOperandoClienteColorBadge,
   returnStatusClient,
 } from "../../Utils/Utils2";
-import { EstadoCliente } from "@/Crm/CrmCustomers/CustomerTable";
+import {
+  ClienteDetailsDto,
+  EstadoCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface PlantillasInterface {
   id: number;

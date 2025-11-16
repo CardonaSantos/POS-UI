@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 
 import { CreateSectorDialog } from "./CreateSectorDialog";
 import { SectorDetailsDialog } from "./SectorDetailsDialog";
-import type { Sector } from "./types";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
@@ -36,8 +35,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import axios from "axios";
 import EditSectorDialog from "./EditSectorDialog";
-import { Departamentos } from "../CrmCustomerEdition/types";
 import DeleteDialog from "./DeleteDialog";
+import { Sector } from "../features/cliente-interfaces/cliente-types";
+import { Departamentos } from "../features/locations-interfaces/municipios_departamentos.interfaces";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
 dayjs.extend(utc);

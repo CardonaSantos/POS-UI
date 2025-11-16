@@ -1,39 +1,17 @@
 // Tipos para la aplicación
 
-// Departamentos
-export interface Departamentos {
-  id: number;
-  nombre: string;
-}
-
-// Municipios
-export interface Municipios {
-  id: number;
-  nombre: string;
-}
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+import { ServiciosInternet } from "../features/cliente-interfaces/cliente-types";
+import {
+  Departamentos,
+  Municipios,
+} from "../features/locations-interfaces/municipios_departamentos.interfaces";
 
 // Servicios
 export interface Servicios {
   id: number;
   nombre: string;
 }
-
-// Servicios de Internet
-export interface ServiciosInternet {
-  id: number;
-  nombre: string;
-  velocidad: string;
-}
-
-// Zonas de Facturación
-export interface FacturacionZona {
-  id: number;
-  nombre: string;
-  velocidad: string;
-  clientesCount: number;
-  facturasCount: number;
-}
-
 // Contrato
 export interface ContratoID {
   clienteId: number;

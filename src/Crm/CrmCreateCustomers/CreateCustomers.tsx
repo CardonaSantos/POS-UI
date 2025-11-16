@@ -48,6 +48,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
 
 interface FormData {
   // Datos básicos
@@ -119,17 +120,6 @@ interface contradoID {
 interface Sector {
   id: number;
   nombre: string;
-}
-
-export enum EstadoCliente {
-  ACTIVO = "ACTIVO",
-  PENDIENTE_ACTIVO = "PENDIENTE_ACTIVO",
-  PAGO_PENDIENTE = "PAGO_PENDIENTE",
-  MOROSO = "MOROSO",
-  ATRASADO = "ATRASADO",
-  SUSPENDIDO = "SUSPENDIDO",
-  DESINSTALADO = "DESINSTALADO",
-  EN_INSTALACION = "EN_INSTALACION",
 }
 
 function CreateCustomers() {

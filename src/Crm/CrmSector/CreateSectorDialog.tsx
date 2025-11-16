@@ -16,10 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { Municipio, Sector } from "./types";
-import { Departamentos } from "../CrmCustomerEdition/types";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import ReactSelectComponent from "react-select";
+import {
+  Municipio,
+  Sector,
+} from "../features/cliente-interfaces/cliente-types";
+import { Departamentos } from "../features/locations-interfaces/municipios_departamentos.interfaces";
 
 interface CreateSectorDialogProps {
   open: boolean;

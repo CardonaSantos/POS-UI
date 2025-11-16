@@ -1,12 +1,12 @@
-import type {
-  ClienteInternetFromCreateRuta,
-  EstadoCliente,
-  FacturacionZona,
-  Sector,
-} from "../rutas-types";
+import type { ClienteInternetFromCreateRuta } from "../rutas-types";
 import type { SortDir, SortField } from "../types/types";
 import { UseQueryResult } from "@tanstack/react-query";
 import { CRM } from "@/hooks/indexCalls";
+import {
+  EstadoCliente,
+  Sector,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
+import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
 
 // Paginado genérico
 export type Paged<T> = {

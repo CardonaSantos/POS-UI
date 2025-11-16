@@ -1,11 +1,15 @@
-/**
- * Tipos centralizados para el módulo de Servicios CRM
- */
+// src/Crm/.../crm-service.types.ts
 
-// Estado del servicio
+import currency from "currency.js";
+
+/**
+ * Estado del servicio en catálogo
+ */
 export type EstadoServicio = "ACTIVO" | "INACTIVO";
 
-// Interfaz para un tipo de servicio
+/**
+ * Tipo de servicio (ej: Internet, TV, Soporte, etc.)
+ */
 export interface TipoServicio {
   id: number;
   nombre: string;
@@ -15,8 +19,10 @@ export interface TipoServicio {
   actualizadoEn: string;
 }
 
-// Interfaz para un servicio existente
-export interface Servicio {
+/**
+ * Servicio tal como viene del backend para el listado
+ */
+export interface ServicioServiceManage {
   id: number;
   nombre: string;
   descripcion: string;
@@ -24,36 +30,34 @@ export interface Servicio {
   estado: EstadoServicio;
   tipoServicioId: number;
   empresaId: number;
-  creadoEn: string;
-  actualizadoEn: string;
-  clientesCount?: number; // Campo opcional para mostrar clientes vinculados
+  clientesCount?: number;
 }
 
-// Interfaz para crear un nuevo servicio
+/**
+ * Shape para formularios de creación / edición de servicio
+ */
 export interface NuevoServicio {
-  id?: number; // Opcional para cuando se edita un servicio existente
+  id?: number;
   nombre: string;
   descripcion: string;
   precio: number;
   estado: EstadoServicio;
-  tipoServicioId: string | null;
+  tipoServicioId: string | null; // compatible con <Select>
   empresaId: number;
 }
 
-// Interfaz para crear un nuevo tipo de servicio
+/**
+ * Shape para creación de tipo de servicio
+ */
 export interface NuevoTipoServicio {
   nombre: string;
   descripcion: string;
   estado: EstadoServicio;
 }
 
-// Interfaz para las opciones de select
-export interface OptionSelected {
-  value: string;
-  label: string;
-}
-
-// Función auxiliar para formatear moneda
+/**
+ * Helper para formatear moneda en Q
+ */
 export const formatearMoneda = (monto: number): string => {
   return currency(monto, {
     symbol: "Q",
@@ -62,6 +66,3 @@ export const formatearMoneda = (monto: number): string => {
     precision: 2,
   }).format();
 };
-
-// Importación necesaria para la función formatearMoneda
-import currency from "currency.js";

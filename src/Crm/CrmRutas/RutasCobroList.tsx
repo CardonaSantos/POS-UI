@@ -57,7 +57,7 @@ import { downloadExcelRutaCobro } from "./api";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { getEstadoBadgeColorRutaList } from "./_Utils/utilsBadge";
 import { getEstadoIconRutaList } from "./_Utils/getEstadoIconRutaList";
-import { AdvancedDialogCRM } from "../_Utils/AdvancedDialogCRM";
+import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { formattShortFecha } from "@/utils/formattFechas";
 import MiniPerfilClienteCard from "./_subcomponents/MiniPerfilClienteCard";
 import { CRM } from "@/hooks/indexCalls";

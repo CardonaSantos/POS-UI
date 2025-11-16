@@ -3,8 +3,9 @@
 
 import * as React from "react";
 import ReactSelectComponent from "react-select";
-import type { OptionSelected, Sector } from "./rutas-types";
 import { compactSelectStyles } from "@/utils/_components/react_select_component_styles.ts/selectStyles";
+import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
+import { Sector } from "../features/cliente-interfaces/cliente-types";
 
 interface Props {
   sectores: Sector[];
@@ -15,7 +16,7 @@ interface Props {
 export function SelectSectoresMulti({ sectores, value, onChange }: Props) {
   const options: OptionSelected[] = sectores.map((s) => ({
     value: String(s.id),
-    label: `${s.nombre} (${s.clientes ?? s.clientesCount ?? 0})`,
+    label: `${s.nombre}`,
   }));
 
   const [portal, setPortal] = React.useState<HTMLElement | null>(null);

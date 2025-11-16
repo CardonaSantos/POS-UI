@@ -27,7 +27,7 @@ import {
   Check,
   X,
 } from "lucide-react";
-import type { FacturacionZona } from "./FacturacionZonaTypes";
+import type { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 // import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 
 interface ZonaTableProps {

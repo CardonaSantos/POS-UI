@@ -36,7 +36,7 @@ import {
   File,
   FileCheck,
 } from "lucide-react";
-import { FacturacionZona } from "../CrmFacturacion/FacturacionZonaTypes";
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale";

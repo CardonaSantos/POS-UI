@@ -1,8 +1,6 @@
 // src/Crm/Utils/cliente-estado-badge.ts
 
-import { EstadoCliente } from "../CrmRutas/rutas-types";
-
-// Mapa de clases usando las *values* del enum (con guiones bajos)
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
 const ESTADO_BADGE: Record<EstadoCliente | "DESCONOCIDO", string> = {
   [EstadoCliente.ACTIVO]:
     "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",

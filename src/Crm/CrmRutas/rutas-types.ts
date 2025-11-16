@@ -1,3 +1,5 @@
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+
 // Enums
 export enum EstadoRuta {
   ACTIVO = "ACTIVO",
@@ -5,17 +7,6 @@ export enum EstadoRuta {
   COMPLETADO = "COMPLETADO",
   PENDIENTE = "PENDIENTE",
   CERRADO = "CERRADO",
-}
-
-export enum EstadoCliente {
-  ACTIVO = "ACTIVO", // pago al día
-  PENDIENTE_ACTIVO = "PENDIENTE_ACTIVO", // TIENE UN RECIBO PENDIENTE
-  PAGO_PENDIENTE = "PAGO_PENDIENTE", // tiene un pago pendiente vencido
-  MOROSO = "MOROSO", // más de ciertos pagos, 3 MESES SIN PAGAR Y CORTADO
-  ATRASADO = "ATRASADO", // DOS FACTURAS
-  SUSPENDIDO = "SUSPENDIDO", // servicio cortado
-  DESINSTALADO = "DESINSTALADO", // desinstalado
-  EN_INSTALACION = "EN_INSTALACION", // en instalación
 }
 
 // Interfaces
@@ -104,27 +95,4 @@ export interface CreateRutaDto {
   clientesIds: [];
 }
 
-export interface OptionSelected {
-  value: string;
-  label: string;
-}
-
-export interface Sector {
-  id: true;
-  nombre: true;
-  clientes: number;
-  clientesCount: number;
-}
-
-export interface FacturacionZona {
-  id: number;
-  creadoEn: string;
-  actualizadoEn: string;
-  nombreRuta: string;
-  diaPago: number;
-  diaGeneracionFactura: number;
-  diaCorte: number;
-  facturas: number;
-  clientes: number;
-}
 export type PagedResponse<T> = { items: T[]; total: number };

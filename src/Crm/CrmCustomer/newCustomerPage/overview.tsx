@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ClienteDetailsDto } from "./types";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 // Define la interfaz completa para los datos del cliente
 

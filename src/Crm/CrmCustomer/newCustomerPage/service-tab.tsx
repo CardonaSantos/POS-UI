@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { ClienteDetailsDto } from "./types";
 import currency from "currency.js";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface ServiceTabProps {
   cliente: ClienteDetailsDto;

@@ -7,8 +7,9 @@ import {
   useSectoresSelect,
   useZonasFacturacion,
 } from "../API/rutas-cobro.api";
-import { ClienteInternetFromCreateRuta, EstadoCliente } from "../rutas-types";
+import { ClienteInternetFromCreateRuta } from "../rutas-types";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+import { EstadoCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
 type ClientesPaged = Paged<ClienteInternetFromCreateRuta>;
 
 export function useRutasCreate(empresaId: number) {

@@ -1,7 +1,7 @@
 import type {
   FacturacionZona,
   NuevaFacturacionZona,
-} from "./FacturacionZonaTypes";
+} from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 // Validate that days are in logical order
 export const validateDays = (

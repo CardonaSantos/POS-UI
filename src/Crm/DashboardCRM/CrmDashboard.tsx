@@ -322,10 +322,7 @@ export default function CrmDashboard() {
   }
 
   return (
-    <motion.div
-      {...DesvanecerHaciaArriba}
-      className="container p-2 mx-auto space-y-2"
-    >
+    <motion.div {...DesvanecerHaciaArriba} className="w-full p-1">
       <h2 className="text-xl font-bold text-center underline">Dashboard CRM</h2>
 
       {rol !== "TECNICO" && dashboardData && (

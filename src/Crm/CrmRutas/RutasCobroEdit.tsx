@@ -82,21 +82,15 @@ import {
   Clock,
   Check,
 } from "lucide-react";
-
-// Custom Components
 import { SelectCobradores } from "./SelectCobradores";
-// import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
-
-// Types
 import {
   type ClienteInternetFromCreateRuta,
-  EstadoCliente,
-  type FacturacionZona,
-  // type OptionSelected,
   type Ruta,
   EstadoRuta,
 } from "./rutas-types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 const ITEMS_PER_PAGE = 10;

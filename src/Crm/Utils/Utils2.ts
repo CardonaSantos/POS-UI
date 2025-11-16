@@ -1,4 +1,4 @@
-import { EstadoCliente } from "../CrmCustomers/CustomerTable";
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
 
 export const returnStatusClient = (estado: EstadoCliente) => {
   let estadoDefined: string;

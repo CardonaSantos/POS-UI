@@ -19,9 +19,9 @@ import { toast } from "sonner";
 import axios, { type AxiosResponse } from "axios";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
-import type { ClienteDetailsDto } from "./types";
 import FacturaGenerateDialog from "./../Factura/FacturaGenerateDialog";
 import GenerateFacturas from "./../Factura/GenerateFacturas";
+import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 
 dayjs.extend(timezone);
 

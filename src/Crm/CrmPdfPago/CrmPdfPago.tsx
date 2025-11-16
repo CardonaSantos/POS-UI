@@ -12,11 +12,11 @@ import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 
-import type { FacturaInternet } from "./PdfPagoInterface";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formattMonedaGT } from "@/utils/formattMonedaGt";
 import { formateDateWithMinutes } from "../Utils/FormateDate";
+import { FacturaInternet } from "../features/cliente-interfaces/cliente-types";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -162,7 +162,7 @@ export default function CrmPdfPago() {
             <p>{factura.empresa.sitioWeb}</p>
           </div>
           <div>
-            <p className="font-medium">{factura.estadoFacturaInternet}</p>
+            <p className="font-medium">{factura.estado}</p>
           </div>
         </div>
 

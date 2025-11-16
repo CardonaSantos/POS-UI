@@ -1,8 +1,13 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "sonner";
+
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+
 import {
   Card,
   CardContent,
@@ -37,6 +42,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+import {
   PlusCircle,
   MoreVertical,
   Edit,
@@ -50,41 +65,49 @@ import {
   RefreshCw,
   FileText,
 } from "lucide-react";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-import axios from "axios";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Importación centralizada de tipos
+// 🔹 Tipos centralizados del módulo de servicios
 import {
-  type Servicio,
-  type TipoServicio,
-  type NuevoServicio,
-  type NuevoTipoServicio,
-  type EstadoServicio,
+  // type Servicio,
+  // type TipoServicio,
+  // type NuevoServicio,
+  // type NuevoTipoServicio,
+  // type EstadoServicio,
   formatearMoneda,
+  NuevoServicio,
+  NuevoTipoServicio,
+  ServicioServiceManage,
+  TipoServicio,
 } from "./crm-service.types";
+import { EstadoServicio } from "./CrmServiciosWifi/servicio-internet.types";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
+interface ServiceStats {
+  totalServicios: number;
+  totalTipos: number;
+  totalClientes: number;
+}
+
 const CrmServiceManage = () => {
-  // Estados principales
-  const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [tiposServicio, setTiposServicio] = useState<TipoServicio[]>([]);
+  // ==========================
+  // ESTADO PRINCIPAL
+  // ==========================
   const empresaID = useStoreCrm((state) => state.empresaId) ?? 0;
 
+  const [servicios, setServicios] = useState<ServicioServiceManage[]>([]);
+  const [tiposServicio, setTiposServicio] = useState<TipoServicio[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estados para formularios
+  const [stats, setStats] = useState<ServiceStats>({
+    totalServicios: 0,
+    totalTipos: 0,
+    totalClientes: 0,
+  });
+
+  // ==========================
+  // ESTADO FORMULARIOS
+  // ==========================
   const [nuevoServicio, setNuevoServicio] = useState<NuevoServicio>({
     nombre: "",
     descripcion: "",
@@ -102,38 +125,34 @@ const CrmServiceManage = () => {
     }
   );
 
+  const [serviceEdit, setServiceEdit] = useState<NuevoServicio | null>(null);
+
+  // ==========================
+  // ESTADO UI
+  // ==========================
   const [searchServicio, setSearchServicio] = useState("");
-  // Estados para diálogos
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [openCreateServicio, setOpenCreateServicio] = useState(false);
   const [openCreateTipoServicio, setOpenCreateTipoServicio] = useState(false);
-  const [serviceEdit, setServiceEdit] = useState<NuevoServicio | null>(null);
   const [serviceDeleteId, setServiceDeleteId] = useState<number | null>(null);
 
-  // Estadísticas
-  const [stats, setStats] = useState({
-    totalServicios: 0,
-    totalTipos: 0,
-    totalClientes: 0,
-  });
-
-  // Obtener datos iniciales
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      await Promise.all([getTiposServicio(), getServicios()]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // ==========================
+  // FETCHING
+  // ==========================
   const getTiposServicio = async () => {
     try {
-      const response = await axios.get(`${VITE_CRM_API_URL}/tipo-servicio`);
+      const response = await axios.get<TipoServicio[]>(
+        `${VITE_CRM_API_URL}/tipo-servicio`
+      );
+
       if (response.status === 200) {
-        setTiposServicio(response.data);
-        setStats((prev) => ({ ...prev, totalTipos: response.data.length }));
+        const tipos = response.data;
+        setTiposServicio(tipos);
+        setStats((prev) => ({
+          ...prev,
+          totalTipos: tipos.length,
+        }));
       }
     } catch (error) {
       console.error(error);
@@ -143,16 +162,23 @@ const CrmServiceManage = () => {
 
   const getServicios = async () => {
     try {
-      const response = await axios.get(`${VITE_CRM_API_URL}/servicio`);
+      const response = await axios.get<ServicioServiceManage[]>(
+        `${VITE_CRM_API_URL}/servicio`
+      );
+
       if (response.status === 200) {
-        setServicios(response.data);
+        const data = response.data;
+        setServicios(data);
+
+        const totalClientes = data.reduce(
+          (acc, curr) => acc + (curr.clientesCount ?? 0),
+          0
+        );
+
         setStats((prev) => ({
           ...prev,
-          totalServicios: response.data.length,
-          totalClientes: response.data.reduce(
-            (acc: number, curr: Servicio) => acc + (curr.clientesCount || 0),
-            0
-          ),
+          totalServicios: data.length,
+          totalClientes,
         }));
       }
     } catch (error) {
@@ -161,15 +187,28 @@ const CrmServiceManage = () => {
     }
   };
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([getTiposServicio(), getServicios()]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handlers para inputs de formularios
+  // ==========================
+  // HANDLERS FORMULARIOS
+  // ==========================
   const handleServicioChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
     setNuevoServicio((prev) => ({
       ...prev,
       [name]: name === "precio" ? Number.parseFloat(value) || 0 : value,
@@ -180,6 +219,7 @@ const CrmServiceManage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
     setServiceEdit((prev) =>
       prev
         ? {
@@ -194,6 +234,7 @@ const CrmServiceManage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
     setNuevoTipoServicio((prev) => ({
       ...prev,
       [name]: value,
@@ -207,7 +248,9 @@ const CrmServiceManage = () => {
     }));
   };
 
-  // Resetear formularios
+  // ==========================
+  // RESET FORMS
+  // ==========================
   const resetFormServicio = () => {
     setNuevoServicio({
       nombre: "",
@@ -227,7 +270,9 @@ const CrmServiceManage = () => {
     });
   };
 
-  // Handlers para envío de formularios
+  // ==========================
+  // SUBMITS
+  // ==========================
   const handleSubmitServicio = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -236,18 +281,22 @@ const CrmServiceManage = () => {
       return;
     }
 
-    if (!nuevoServicio.nombre) {
+    if (!nuevoServicio.nombre.trim()) {
       toast.info("Añada un nombre para su servicio");
       return;
     }
 
     setIsLoading(true);
+
     const dataToSend = {
       nombre: nuevoServicio.nombre.trim(),
       descripcion: nuevoServicio.descripcion.trim(),
       precio: nuevoServicio.precio,
-      estado: "ACTIVO",
-      // tipoServicioId: Number.parseInt(nuevoServicio.tipoServicioId),
+      estado: nuevoServicio.estado,
+      // Si luego usas tipoServicioId, aquí haces parseo:
+      // tipoServicioId: nuevoServicio.tipoServicioId
+      //   ? Number.parseInt(nuevoServicio.tipoServicioId)
+      //   : null,
       empresaId: Number(nuevoServicio.empresaId),
     };
 
@@ -256,6 +305,7 @@ const CrmServiceManage = () => {
         `${VITE_CRM_API_URL}/servicio`,
         dataToSend
       );
+
       if (response.status === 201) {
         toast.success("Servicio creado exitosamente");
         await getServicios();
@@ -273,23 +323,25 @@ const CrmServiceManage = () => {
   const handleSubmitTipoServicio = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!nuevoTipoServicio.nombre) {
+    if (!nuevoTipoServicio.nombre.trim()) {
       toast.info("Ingrese un nombre válido");
       return;
     }
 
-    if (!nuevoTipoServicio.descripcion) {
+    if (!nuevoTipoServicio.descripcion.trim()) {
       toast.info("Ingrese una descripción válida");
       return;
     }
 
     setIsLoading(true);
+
+    const dataToSend: NuevoTipoServicio = {
+      nombre: nuevoTipoServicio.nombre.trim(),
+      descripcion: nuevoTipoServicio.descripcion.trim(),
+      estado: nuevoTipoServicio.estado,
+    };
+
     try {
-      const dataToSend = {
-        nombre: nuevoTipoServicio.nombre.trim(),
-        descripcion: nuevoTipoServicio.descripcion.trim(),
-        estado: nuevoTipoServicio.estado,
-      };
       const response = await axios.post(
         `${VITE_CRM_API_URL}/tipo-servicio`,
         dataToSend
@@ -309,7 +361,6 @@ const CrmServiceManage = () => {
     }
   };
 
-  // Función para actualizar servicio
   const handleUpdateServicio = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -325,12 +376,13 @@ const CrmServiceManage = () => {
       return;
     }
 
-    if (!serviceEdit.nombre) {
+    if (!serviceEdit.nombre.trim()) {
       toast.info("Añada un nombre para su servicio");
       return;
     }
 
     setIsLoading(true);
+
     const dataToSend = {
       nombre: serviceEdit.nombre.trim(),
       descripcion: serviceEdit.descripcion.trim(),
@@ -360,7 +412,6 @@ const CrmServiceManage = () => {
     }
   };
 
-  // Función para eliminar servicio
   const handleDeleteServicio = async () => {
     if (!serviceDeleteId) return;
 
@@ -384,19 +435,25 @@ const CrmServiceManage = () => {
     }
   };
 
-  // Filtrar servicios y tipos de servicio según búsqueda
-  const filteredServicios = servicios.filter(
-    (servicio) =>
-      servicio.nombre.toLowerCase().includes(searchServicio.toLowerCase()) ||
-      servicio.descripcion?.toLowerCase().includes(searchServicio.toLowerCase())
-  );
+  // ==========================
+  // DERIVADOS / HELPERS
+  // ==========================
+  const filteredServicios = servicios.filter((servicio) => {
+    const term = searchServicio.toLowerCase();
+    return (
+      servicio.nombre.toLowerCase().includes(term) ||
+      servicio.descripcion?.toLowerCase().includes(term)
+    );
+  });
 
-  // Obtener nombre de tipo de servicio por ID
   const getTipoServicioNombre = (id: number) => {
     const tipo = tiposServicio.find((t) => t.id === id);
     return tipo ? tipo.nombre : "Desconocido";
   };
 
+  // ==========================
+  // RENDER
+  // ==========================
   return (
     <div className="container mx-auto py-4 space-y-6">
       <motion.div
@@ -405,7 +462,7 @@ const CrmServiceManage = () => {
         transition={{ duration: 0.3 }}
         className="space-y-6"
       >
-        {/* Encabezado */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
@@ -444,7 +501,7 @@ const CrmServiceManage = () => {
           </div>
         </div>
 
-        {/* Tarjetas de estadísticas */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
@@ -479,175 +536,170 @@ const CrmServiceManage = () => {
           </Card>
         </div>
 
-        {/* Contenido principal */}
-        {/* Contenido principal sin Tabs */}
-        <div className="w-full">
-          {/* Contenido de Servicios */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle className="text-xl">Servicios Existentes</CardTitle>
-                <CardDescription>
-                  Lista de servicios disponibles en el sistema
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+        {/* Tabla de servicios */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xl">Servicios Existentes</CardTitle>
+              <CardDescription>
+                Lista de servicios disponibles en el sistema
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead className="text-right">Precio</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Estado
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Clientes
+                      </TableHead>
+                      <TableHead className="w-[50px]" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
                       <TableRow>
-                        <TableHead>Nombre</TableHead>
-
-                        <TableHead className="text-right">Precio</TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          Estado
-                        </TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          Clientes
-                        </TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-muted-foreground py-6"
+                        >
+                          <div className="flex justify-center items-center">
+                            <RefreshCw className="h-5 w-5 animate-spin mr-2" />
+                            Cargando servicios...
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="text-center text-muted-foreground py-6"
-                          >
-                            <div className="flex justify-center items-center">
-                              <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-                              Cargando servicios...
+                    ) : filteredServicios.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center text-muted-foreground py-6"
+                        >
+                          <div className="flex flex-col items-center justify-center gap-2 py-4">
+                            <FileText className="h-10 w-10 text-muted-foreground opacity-50" />
+                            <p>No se encontraron servicios</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => setOpenCreateServicio(true)}
+                            >
+                              Crear nuevo servicio
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredServicios.map((servicio) => (
+                        <TableRow key={servicio.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {servicio.nombre}
+                              </div>
+                              <div className="text-sm text-muted-foreground md:hidden">
+                                {getTipoServicioNombre(servicio.tipoServicioId)}
+                              </div>
+                              <div className="text-sm text-muted-foreground truncate max-w-[200px] hidden sm:block">
+                                {servicio.descripcion}
+                              </div>
                             </div>
                           </TableCell>
-                        </TableRow>
-                      ) : filteredServicios.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="text-center text-muted-foreground py-6"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-2 py-4">
-                              <FileText className="h-10 w-10 text-muted-foreground opacity-50" />
-                              <p>No se encontraron servicios</p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2"
-                                onClick={() => setOpenCreateServicio(true)}
-                              >
-                                Crear nuevo servicio
-                              </Button>
+
+                          <TableCell className="text-right font-medium">
+                            {formatearMoneda(servicio.precio)}
+                          </TableCell>
+
+                          <TableCell className="hidden md:table-cell">
+                            <Badge
+                              variant={
+                                servicio.estado === "ACTIVO"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              className="gap-1"
+                            >
+                              {servicio.estado === "ACTIVO" ? (
+                                <CheckCircle className="h-3 w-3" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                              {servicio.estado}
+                            </Badge>
+                          </TableCell>
+
+                          <TableCell className="hidden md:table-cell">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span>{servicio.clientesCount ?? 0}</span>
                             </div>
                           </TableCell>
+
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                  <span className="sr-only">Abrir menú</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setServiceEdit({
+                                      id: servicio.id,
+                                      descripcion: servicio.descripcion,
+                                      empresaId: servicio.empresaId,
+                                      estado: servicio.estado,
+                                      nombre: servicio.nombre,
+                                      precio: servicio.precio,
+                                      tipoServicioId: String(
+                                        servicio.tipoServicioId
+                                      ),
+                                    });
+                                    setOpenEdit(true);
+                                  }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  <span>Editar</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setServiceDeleteId(servicio.id);
+                                    setOpenDelete(true);
+                                  }}
+                                  className="flex items-center gap-2 text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span>Eliminar</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
-                      ) : (
-                        filteredServicios.map((servicio) => (
-                          <TableRow key={servicio.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">
-                                  {servicio.nombre}
-                                </div>
-                                <div className="text-sm text-muted-foreground md:hidden">
-                                  {getTipoServicioNombre(
-                                    servicio.tipoServicioId
-                                  )}
-                                </div>
-                                <div className="text-sm text-muted-foreground truncate max-w-[200px] hidden sm:block">
-                                  {servicio.descripcion}
-                                </div>
-                              </div>
-                            </TableCell>
-
-                            <TableCell className="text-right font-medium">
-                              {formatearMoneda(servicio.precio)}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <Badge
-                                variant={
-                                  servicio.estado === "ACTIVO"
-                                    ? "default"
-                                    : "destructive"
-                                }
-                                className="gap-1"
-                              >
-                                {servicio.estado === "ACTIVO" ? (
-                                  <CheckCircle className="h-3 w-3" />
-                                ) : (
-                                  <XCircle className="h-3 w-3" />
-                                )}
-                                {servicio.estado}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <span>{servicio.clientesCount || 0}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                    <span className="sr-only">Abrir menú</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setServiceEdit({
-                                        id: servicio.id,
-                                        descripcion: servicio.descripcion,
-                                        empresaId: servicio.empresaId,
-                                        estado: servicio.estado,
-                                        nombre: servicio.nombre,
-                                        precio: servicio.precio,
-                                        tipoServicioId: String(
-                                          servicio.tipoServicioId
-                                        ),
-                                      });
-
-                                      setOpenEdit(true);
-                                    }}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                    <span>Editar</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setServiceDeleteId(servicio.id);
-                                      setOpenDelete(true);
-                                    }}
-                                    className="flex items-center gap-2 text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span>Eliminar</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Diálogo para Crear Servicio */}
+      {/* Dialog: Crear servicio */}
       <Dialog
         open={openCreateServicio}
         onOpenChange={(open) => {
@@ -729,7 +781,7 @@ const CrmServiceManage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo para Crear Tipo de Servicio */}
+      {/* Dialog: Crear tipo de servicio */}
       <Dialog
         open={openCreateTipoServicio}
         onOpenChange={(open) => {
@@ -809,7 +861,7 @@ const CrmServiceManage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de Edición de Servicio */}
+      {/* Dialog: Editar servicio */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -826,7 +878,7 @@ const CrmServiceManage = () => {
                   id="edit-nombre"
                   name="nombre"
                   placeholder="Ej: Internet 24 Mbps"
-                  value={serviceEdit?.nombre || ""}
+                  value={serviceEdit?.nombre ?? ""}
                   onChange={handleServicioEditChange}
                   required
                 />
@@ -840,7 +892,7 @@ const CrmServiceManage = () => {
                   placeholder="Descripción del servicio"
                   rows={2}
                   className="h-[60px] resize-none"
-                  value={serviceEdit?.descripcion || ""}
+                  value={serviceEdit?.descripcion ?? ""}
                   onChange={handleServicioEditChange}
                 />
               </div>
@@ -855,7 +907,7 @@ const CrmServiceManage = () => {
                     type="number"
                     className="pl-8"
                     placeholder="0.00"
-                    value={serviceEdit?.precio || ""}
+                    value={serviceEdit?.precio ?? ""}
                     onChange={handleServicioEditChange}
                     required
                   />
@@ -872,10 +924,10 @@ const CrmServiceManage = () => {
                             ...prev,
                             estado: value as EstadoServicio,
                           }
-                        : null
+                        : prev
                     )
                   }
-                  defaultValue={serviceEdit?.estado || "ACTIVO"}
+                  defaultValue={serviceEdit?.estado ?? "ACTIVO"}
                 >
                   <SelectTrigger id="edit-estado">
                     <SelectValue placeholder="Seleccione un estado" />
@@ -910,7 +962,7 @@ const CrmServiceManage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de Confirmación de Eliminación */}
+      {/* Dialog: Confirmar eliminación */}
       <Dialog open={openDelete} onOpenChange={setOpenDelete}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

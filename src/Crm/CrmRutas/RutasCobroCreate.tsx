@@ -37,18 +37,16 @@ import { SelectCobradores } from "./SelectCobradores";
 import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
 import { SelectSectoresMulti } from "./SelectSectores";
 // Tipos
-import {
-  type OptionSelected,
-  type CreateRutaDto,
-  EstadoCliente,
-} from "./rutas-types";
+import { type CreateRutaDto } from "./rutas-types";
 import { useRutasCreate } from "./hooks/useRutasCreate";
 import { TableBaseGeneric } from "../Utils/Components/TableBaseTanstakGeneric";
 import { columnsClientesRutaCreate } from "./_table_clientes_create/columns_create_ruta";
 import { RowSelectionState } from "@tanstack/react-table";
-import { AdvancedDialogCRM } from "../_Utils/AdvancedDialogCRM";
+import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 
 export function RutasCobroCreate() {
   const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(
@@ -441,7 +439,6 @@ export function RutasCobroCreate() {
         open={openCreate}
         confirmButton={{
           label: "Sí, crear ruta",
-          autoFocus: true,
           disabled: vm.isSubmitting,
           loading: vm.isSubmitting,
           loadingText: "Creando ruta...",

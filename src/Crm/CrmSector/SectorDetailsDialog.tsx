@@ -10,7 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Sector, Municipio } from "./types";
+import {
+  Municipio,
+  Sector,
+} from "../features/cliente-interfaces/cliente-types";
 
 interface SectorDetailsDialogProps {
   sector: Sector;
