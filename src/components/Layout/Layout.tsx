@@ -159,9 +159,8 @@ export default function Layout2({ children }: LayoutProps) {
   // -----------------------------
   const { data: sucursalInfo } = useCrmQuery<Sucursal>(
     ["sucursal-info", sucursalId],
-    `sucursales/get-info-sucursal/${sucursalId}`,
-    undefined,
-    { enabled: !!sucursalId }
+    `empresa/${sucursalId}/details`,
+    undefined
   );
 
   // -----------------------------
@@ -187,6 +186,7 @@ export default function Layout2({ children }: LayoutProps) {
     }
     window.location.reload();
   };
+  console.log("la data del empresa info es: ", sucursalInfo);
 
   return (
     <div className="flex min-h-screen bg-background">

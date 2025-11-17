@@ -44,8 +44,9 @@ import {
   ServiciosInternet,
 } from "../features/cliente-interfaces/cliente-types";
 import DatePicker from "react-datepicker";
+import { Switch } from "@/components/ui/switch";
 
-// ========= Tipos que ya tienes en el padre =========
+// ========= Tipos que ya tienes en el padre ========= USAR UNO SOLO
 interface FormData {
   nombre: string;
   coordenadas: string;
@@ -68,6 +69,7 @@ interface FormData {
   mascara: string;
   gateway: string;
   estado: EstadoCliente;
+  enviarRecordatorio: boolean;
 }
 
 interface ContratoID {
@@ -91,7 +93,6 @@ export interface CustomerEditFormCardProps {
   serviceSelected: number[];
   serviceWifiSelected: number | null;
   zonasFacturacionSelected: number | null;
-
   // options para react-select
   optionsDepartamentos: OptionSelected[];
   optionsMunis: OptionSelected[];
@@ -99,38 +100,34 @@ export interface CustomerEditFormCardProps {
   optionsServicesWifi: OptionSelected[];
   optionsZonasFacturacion: OptionSelected[];
   optionsSectores: OptionSelected[];
-
   // data “secure” para obtener labels
   secureDepartamentos: Departamentos[];
   secureMunicipios: Municipios[];
   secureSectores: Sector[];
   secureServiciosWifi: ServiciosInternet[];
   secureZonasFacturacion: FacturacionZona[];
-
   // handlers de inputs
   onChangeForm: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-
   onChangeContrato: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-
   onSelectDepartamento: (option: OptionSelected | null) => void;
   onSelectMunicipio: (option: OptionSelected | null) => void;
   onSelectSector: (option: OptionSelected | null) => void;
   onSelectService: (options: MultiValue<OptionSelected> | null) => void;
   onSelectServiceWifi: (option: OptionSelected | null) => void;
   onSelectZonaFacturacion: (option: OptionSelected | null) => void;
-
   onChangeFechaInstalacion: (date: Date | null) => void;
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
+  handleEnviarRecordatorioChange: (checked: boolean) => void;
+
   //hanlerss
   handleChangeDataContrato: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   setFormDataContrato: React.Dispatch<React.SetStateAction<ContratoID>>;
-
   // botones footer
   onClickDelete: () => void;
   onClickOpenConfirm: () => void;
@@ -171,6 +168,7 @@ export function CustomerEditFormCard({
   setFormDataContrato,
   //handlers
   handleChangeDataContrato,
+  handleEnviarRecordatorioChange,
 }: CustomerEditFormCardProps) {
   return (
     <Card>
@@ -499,6 +497,11 @@ export function CustomerEditFormCard({
                 </SelectGroup>
               </SelectContent>
             </Select>
+
+            <Switch
+              checked={formData.enviarRecordatorio}
+              onCheckedChange={handleEnviarRecordatorioChange}
+            />
           </div>
 
           {/* Contrato + fecha instalación */}

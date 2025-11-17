@@ -28,6 +28,7 @@ export interface CustomerDataResponse {
   contrasenaWifi: string;
   ssidRouter: string;
   fechaInstalacion: string;
+  enviarRecordatorio: boolean;
   estado: EstadoCliente;
   departamento: Departamentos;
   municipio: Municipios;

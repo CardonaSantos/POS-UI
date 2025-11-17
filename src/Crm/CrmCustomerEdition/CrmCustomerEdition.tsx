@@ -51,6 +51,7 @@ interface FormData {
   mascara: string;
   gateway: string;
   estado: EstadoCliente;
+  enviarRecordatorio: boolean;
 }
 
 interface ContratoID {
@@ -107,6 +108,7 @@ function EditCustomers() {
     departamentoId: "",
     empresaId: "",
     estado: EstadoCliente.ACTIVO,
+    enviarRecordatorio: true,
   });
 
   const [formDataContrato, setFormDataContrato] = useState<ContratoID>({
@@ -194,6 +196,13 @@ function EditCustomers() {
     setMuniSelected(selectedOption ? Number(selectedOption.value) : null);
   };
 
+  const handleEnviarRecordatorioChange = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      enviarRecordatorio: checked,
+    }));
+  };
+
   const handleSelectService = (
     selectedOption: MultiValue<OptionSelected> | null
   ) => {
@@ -272,6 +281,7 @@ function EditCustomers() {
       archivoContrato: formDataContrato.archivoContrato,
       observacionesContrato: formDataContrato.observaciones,
       estado: formData.estado,
+      enviarRecordatorio: formData.enviarRecordatorio,
     };
 
     toast.promise(updateCustomer.mutateAsync(payload), {
@@ -335,6 +345,7 @@ function EditCustomers() {
       departamentoId: customer.departamento?.id?.toString() || "",
       empresaId: "1",
       estado: customer.estado,
+      enviarRecordatorio: customer.enviarRecordatorio,
     });
 
     if (customer.fechaInstalacion) {
@@ -369,6 +380,7 @@ function EditCustomers() {
       label: "General",
       content: (
         <CustomerEditFormCard
+          handleEnviarRecordatorioChange={handleEnviarRecordatorioChange}
           formData={formData}
           formDataContrato={formDataContrato}
           fechaInstalacion={fechaInstalacion}
@@ -419,6 +431,7 @@ function EditCustomers() {
     },
   ];
   console.log("La data del cliente: ", customer);
+  console.log("La formData del cliente: ", formData);
 
   return (
     <motion.div

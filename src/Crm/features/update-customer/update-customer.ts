@@ -29,4 +29,5 @@ export interface UpdateCustomerDto {
   archivoContrato: string;
   observacionesContrato: string;
   estado: EstadoCliente;
+  enviarRecordatorio: boolean;
 }
