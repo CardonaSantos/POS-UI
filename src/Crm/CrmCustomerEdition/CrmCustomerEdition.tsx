@@ -1,7 +1,6 @@
 "use client";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { type MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
@@ -22,9 +21,9 @@ import { useDeleteCustomer } from "../CrmRutas/hooks/useDeleteCustomer/useDelete
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
 import { CustomerEditFormCard } from "./CustomerEditFormCard";
 import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
-import { PageHeaderCrm } from "../_Utils/components/PageHeader/PageHeaderCrm";
 import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 interface FormData {
   // Datos básicos
@@ -434,13 +433,11 @@ function EditCustomers() {
   console.log("La formData del cliente: ", formData);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="w-full px-2 py-1"
+    <PageTransitionCrm
+      titleHeader="Edición del cliente"
+      subtitle={`Configuración de facturación, notificaciones, credenciales, etc.`}
+      variant="fade-pure"
     >
-      <PageHeaderCrm title="Edición de cliente" fallbackBackTo="/" />
       <ReusableTabs
         className=""
         tabs={tabs}
@@ -489,7 +486,7 @@ function EditCustomers() {
           onClick: () => setOpenDelete(false),
         }}
       />
-    </motion.div>
+    </PageTransitionCrm>
   );
 }
 

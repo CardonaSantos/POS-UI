@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { User, Ticket, Image } from "lucide-react"; // Mantener User y Ticket para otros triggers
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -20,6 +19,7 @@ import { clienteInitialState } from "../helpers/clienteInitialState";
 import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
 import EmptyImages from "./CrmCustomerGalery/EmptyImages";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 interface PlantillasInterface {
   id: number;
@@ -160,29 +160,28 @@ export default function CustomerProfile() {
 
   console.log("Los datos del cliente son: ", cliente);
   return (
-    <div className="container mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+    <PageTransitionCrm
+      titleHeader="Perfil del cliente"
+      subtitle={``}
+      variant="fade-pure"
+    >
+      <CustomerHeader
+        cliente={clienteSecure}
+        plantillas={plantillas}
+        setOpenCreateContrato={setOpenCreateContrato}
+      />
+      <Tabs
+        defaultValue="resumen" // Cambiado a 'resumen'
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="space-y-4"
       >
-        <CustomerHeader
-          cliente={clienteSecure}
-          plantillas={plantillas}
-          setOpenCreateContrato={setOpenCreateContrato}
-        />
-        <Tabs
-          defaultValue="resumen" // Cambiado a 'resumen'
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="space-y-4"
-        >
-          {/* Tabs mejorados para móvil */}
-          <div className="w-full overflow-x-auto">
-            <TabsList className="flex w-full border-b border-gray-200 dark:border-gray-700">
-              <TabsTrigger
-                value="resumen"
-                className="
+        {/* Tabs mejorados para móvil */}
+        <div className="w-full overflow-x-auto">
+          <TabsList className="flex w-full border-b border-gray-200 dark:border-gray-700">
+            <TabsTrigger
+              value="resumen"
+              className="
         flex-1 flex justify-center items-center gap-1
         px-2 py-1 sm:px-3 sm:py-2
         text-xs sm:text-sm whitespace-nowrap
@@ -190,14 +189,14 @@ export default function CustomerProfile() {
         data-[state=active]:border-primary
         data-[state=active]:text-primary
       "
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden xs:inline">Resumen</span>
-              </TabsTrigger>
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden xs:inline">Resumen</span>
+            </TabsTrigger>
 
-              <TabsTrigger
-                value="imagenes"
-                className="
+            <TabsTrigger
+              value="imagenes"
+              className="
         flex-1 flex justify-center items-center gap-1
         px-2 py-1 sm:px-3 sm:py-2
         text-xs sm:text-sm whitespace-nowrap
@@ -205,15 +204,15 @@ export default function CustomerProfile() {
         data-[state=active]:border-primary
         data-[state=active]:text-primary
       "
-              >
-                <Image className="h-4 w-4" />
-                <span className="hidden xs:inline">Imagenes</span>
-              </TabsTrigger>
+            >
+              <Image className="h-4 w-4" />
+              <span className="hidden xs:inline">Imagenes</span>
+            </TabsTrigger>
 
-              {/** Ubicación **/}
-              <TabsTrigger
-                value="ubicacion"
-                className="
+            {/** Ubicación **/}
+            <TabsTrigger
+              value="ubicacion"
+              className="
         flex-1 flex justify-center items-center gap-1
         px-2 py-1 sm:px-3 sm:py-2
         text-xs sm:text-sm whitespace-nowrap
@@ -221,27 +220,27 @@ export default function CustomerProfile() {
         data-[state=active]:border-primary
         data-[state=active]:text-primary
       "
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                  />
-                </svg>
-                <span className="hidden xs:inline">Ubicación</span>
-              </TabsTrigger>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                />
+              </svg>
+              <span className="hidden xs:inline">Ubicación</span>
+            </TabsTrigger>
 
-              {/** Tickets **/}
-              <TabsTrigger
-                value="tickets"
-                className="
+            {/** Tickets **/}
+            <TabsTrigger
+              value="tickets"
+              className="
         flex-1 flex justify-center items-center gap-1
         px-2 py-1 sm:px-3 sm:py-2
         text-xs sm:text-sm whitespace-nowrap
@@ -249,15 +248,15 @@ export default function CustomerProfile() {
         data-[state=active]:border-primary
         data-[state=active]:text-primary
       "
-              >
-                <Ticket className="h-4 w-4" />
-                <span className="hidden xs:inline">Tickets</span>
-              </TabsTrigger>
+            >
+              <Ticket className="h-4 w-4" />
+              <span className="hidden xs:inline">Tickets</span>
+            </TabsTrigger>
 
-              {/** Facturación **/}
-              <TabsTrigger
-                value="facturacion"
-                className="
+            {/** Facturación **/}
+            <TabsTrigger
+              value="facturacion"
+              className="
         flex-1 flex justify-center items-center gap-1
         px-2 py-1 sm:px-3 sm:py-2
         text-xs sm:text-sm whitespace-nowrap
@@ -265,53 +264,52 @@ export default function CustomerProfile() {
         data-[state=active]:border-primary
         data-[state=active]:text-primary
       "
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  />
-                </svg>
-                <span className="hidden xs:inline">Facturación</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                />
+              </svg>
+              <span className="hidden xs:inline">Facturación</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          {/* Contenido de los tabs */}
-          <TabsContent value="resumen" className="mt-4">
-            <ClientOverview cliente={clienteSecure} />{" "}
-          </TabsContent>
+        {/* Contenido de los tabs */}
+        <TabsContent value="resumen" className="mt-4">
+          <ClientOverview cliente={clienteSecure} />{" "}
+        </TabsContent>
 
-          <TabsContent value="imagenes" className="mt-4">
-            {secureImages.length > 0 ? (
-              <CustomerImagesGallery
-                customerId={clienteSecure.id}
-                images={secureImages}
-              />
-            ) : (
-              <EmptyImages customerId={clienteSecure.id} />
-            )}
-          </TabsContent>
+        <TabsContent value="imagenes" className="mt-4">
+          {secureImages.length > 0 ? (
+            <CustomerImagesGallery
+              customerId={clienteSecure.id}
+              images={secureImages}
+            />
+          ) : (
+            <EmptyImages customerId={clienteSecure.id} />
+          )}
+        </TabsContent>
 
-          {/* Las TabsContent para "general" y "servicio" se eliminan */}
-          <TabsContent value="ubicacion" className="mt-4">
-            <LocationTab {...commonTabProps} />
-          </TabsContent>
-          <TabsContent value="tickets" className="mt-4">
-            <TicketsTab {...commonTabProps} />
-          </TabsContent>
-          <TabsContent value="facturacion" className="mt-4">
-            <BillingTab {...commonTabProps} />
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+        {/* Las TabsContent para "general" y "servicio" se eliminan */}
+        <TabsContent value="ubicacion" className="mt-4">
+          <LocationTab {...commonTabProps} />
+        </TabsContent>
+        <TabsContent value="tickets" className="mt-4">
+          <TicketsTab {...commonTabProps} />
+        </TabsContent>
+        <TabsContent value="facturacion" className="mt-4">
+          <BillingTab {...commonTabProps} />
+        </TabsContent>
+      </Tabs>
       {/* Diálogos modularizados */}
       <CustomerDialogs
         // Estados de diálogos
@@ -336,6 +334,6 @@ export default function CustomerProfile() {
         userId={userId}
         getClienteDetails={getClienteDetails}
       />
-    </div>
+    </PageTransitionCrm>
   );
 }
