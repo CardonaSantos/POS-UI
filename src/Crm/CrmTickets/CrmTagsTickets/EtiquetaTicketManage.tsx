@@ -53,6 +53,7 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -313,7 +314,11 @@ const EtiquetaTicketManage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <PageTransitionCrm
+      titleHeader="Etiquetas de Soporte"
+      subtitle={``}
+      variant="fade-pure"
+    >
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -679,7 +684,7 @@ const EtiquetaTicketManage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransitionCrm>
   );
 };
 

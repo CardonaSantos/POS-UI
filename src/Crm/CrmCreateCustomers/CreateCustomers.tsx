@@ -1,7 +1,6 @@
 "use client";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   User,
   MessageSquare,
@@ -49,6 +48,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 interface FormData {
   // Datos básicos
@@ -550,611 +550,596 @@ function CreateCustomers() {
   };
 
   return (
-    <div className="container ">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="container  mx-auto px-1 py-6"
-      >
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl text-center">
-                Añadir nuevo cliente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary dark:text-white" />
-                    Información Personal
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="nombre-all">
-                        Nombres <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="nombre-all"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        placeholder="Nombre completo"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="apellidos-all">
-                        Apellidos <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="apellidos-all"
-                        name="apellidos"
-                        value={formData.apellidos}
-                        onChange={handleChange}
-                        placeholder="Apellidos"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="telefono-all">Teléfono</Label>
-                      <Input
-                        id="telefono-all"
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                        placeholder="Teléfono"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="dpi-all">DPI</Label>
-                      <Input
-                        id="dpi-all"
-                        name="dpi"
-                        value={formData.dpi}
-                        onChange={handleChange}
-                        placeholder="DPI"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="direccion-all">Dirección</Label>
-                      <Textarea
-                        id="direccion-all"
-                        name="direccion"
-                        value={formData.direccion}
-                        onChange={handleChange}
-                        placeholder="Dirección"
-                        cols={3}
-                        rows={3}
-                      />
-                    </div>
+    <PageTransitionCrm
+      titleHeader="Añadir nuevo cliente"
+      subtitle={``}
+      variant="fade-pure"
+    >
+      <form onSubmit={handleSubmit}>
+        <Card>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h3 className="font-medium flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary dark:text-white" />
+                  Información Personal
+                </h3>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="nombre-all">
+                      Nombres <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="nombre-all"
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleChange}
+                      placeholder="Nombre completo"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="apellidos-all">
+                      Apellidos <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="apellidos-all"
+                      name="apellidos"
+                      value={formData.apellidos}
+                      onChange={handleChange}
+                      placeholder="Apellidos"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="telefono-all">Teléfono</Label>
+                    <Input
+                      id="telefono-all"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleChange}
+                      placeholder="Teléfono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="dpi-all">DPI</Label>
+                    <Input
+                      id="dpi-all"
+                      name="dpi"
+                      value={formData.dpi}
+                      onChange={handleChange}
+                      placeholder="DPI"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="direccion-all">Dirección</Label>
+                    <Textarea
+                      id="direccion-all"
+                      name="direccion"
+                      value={formData.direccion}
+                      onChange={handleChange}
+                      placeholder="Dirección"
+                      cols={3}
+                      rows={3}
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Service Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <Wifi className="h-4 w-4 text-primary dark:text-white" />
-                    Información del Servicio
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex space-x-2">
-                        {" "}
-                        {/* Contenedor flexible para los tres inputs */}
-                        <div className="flex-1">
-                          <Label htmlFor="ip">IP</Label>
-                          <Input
-                            id="ip"
-                            name="ip"
-                            value={formData.ip}
-                            onChange={handleChange}
-                            placeholder="IP"
-                            required
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor="gateway">Gateway</Label>
-                          <Input
-                            id="gateway"
-                            name="gateway"
-                            value={formData.gateway}
-                            onChange={handleChange}
-                            placeholder="(opcional)"
-                            required
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Label htmlFor="mascara">Subnet Mask</Label>
-                          <Input
-                            id="mascara"
-                            name="mascara"
-                            value={formData.mascara}
-                            onChange={handleChange}
-                            placeholder="(opcional)"
-                            required
-                          />
-                        </div>
+              {/* Service Information */}
+              <div className="space-y-4">
+                <h3 className="font-medium flex items-center gap-2">
+                  <Wifi className="h-4 w-4 text-primary dark:text-white" />
+                  Información del Servicio
+                </h3>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex space-x-2">
+                      {" "}
+                      {/* Contenedor flexible para los tres inputs */}
+                      <div className="flex-1">
+                        <Label htmlFor="ip">IP</Label>
+                        <Input
+                          id="ip"
+                          name="ip"
+                          value={formData.ip}
+                          onChange={handleChange}
+                          placeholder="IP"
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="gateway">Gateway</Label>
+                        <Input
+                          id="gateway"
+                          name="gateway"
+                          value={formData.gateway}
+                          onChange={handleChange}
+                          placeholder="(opcional)"
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor="mascara">Subnet Mask</Label>
+                        <Input
+                          id="mascara"
+                          name="mascara"
+                          value={formData.mascara}
+                          onChange={handleChange}
+                          placeholder="(opcional)"
+                          required
+                        />
                       </div>
                     </div>
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="servicioWifiId-all">
-                        Servicio Wifi{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <ReactSelectComponent
-                        options={optionsServicesWifi}
-                        onChange={handleSelectServiceWifi}
-                        value={
-                          serviceWifiSelected
-                            ? {
-                                value: serviceWifiSelected,
-                                label:
-                                  serviciosWifi.find(
-                                    (s) =>
-                                      s.id.toString() === serviceWifiSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-sm text-black"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="servicioWifiId-all">
+                      Servicio Wifi <span className="text-destructive">*</span>
+                    </Label>
+                    <ReactSelectComponent
+                      options={optionsServicesWifi}
+                      onChange={handleSelectServiceWifi}
+                      value={
+                        serviceWifiSelected
+                          ? {
+                              value: serviceWifiSelected,
+                              label:
+                                serviciosWifi.find(
+                                  (s) => s.id.toString() === serviceWifiSelected
+                                )?.nombre || "",
+                            }
+                          : null
+                      }
+                      className="text-sm text-black"
+                    />
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="servicioId-all">
-                        Otros Servicios{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <ReactSelectComponent
-                        isMulti={true}
-                        options={optionsServices}
-                        onChange={handleSelectService}
-                        value={optionsServices.filter((option) =>
-                          serviceSelected.includes(option.value)
-                        )}
-                        className="text-sm text-black"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="servicioId-all">
+                      Otros Servicios{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <ReactSelectComponent
+                      isMulti={true}
+                      options={optionsServices}
+                      onChange={handleSelectService}
+                      value={optionsServices.filter((option) =>
+                        serviceSelected.includes(option.value)
+                      )}
+                      className="text-sm text-black"
+                    />
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="contrasenaWifi-all">
-                        Contraseña WiFi{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="contrasenaWifi-all"
-                        name="contrasenaWifi"
-                        value={formData.contrasenaWifi}
-                        onChange={handleChange}
-                        placeholder="Contraseña WiFi"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="ssidRouter-all">SSID</Label>
-                      <Input
-                        id="ssidRouter-all"
-                        name="ssidRouter"
-                        value={formData.ssidRouter}
-                        onChange={handleChange}
-                        placeholder="SSID"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="contrasenaWifi-all">
+                      Contraseña WiFi{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="contrasenaWifi-all"
+                      name="contrasenaWifi"
+                      value={formData.contrasenaWifi}
+                      onChange={handleChange}
+                      placeholder="Contraseña WiFi"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="ssidRouter-all">SSID</Label>
+                    <Input
+                      id="ssidRouter-all"
+                      name="ssidRouter"
+                      value={formData.ssidRouter}
+                      onChange={handleChange}
+                      placeholder="SSID"
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Location Information */}
-                <div className="space-y-4">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <Map className="h-4 w-4 text-primary dark:text-white" />
-                    Ubicación y Contacto
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="ubicacionMaps-all">Ubicación Maps</Label>
-                      <Input
-                        id="coordenadas"
-                        name="coordenadas"
-                        value={formData.coordenadas}
-                        onChange={handleChange}
-                        placeholder="Coordenadas"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="departamentoId-all">Departamento</Label>
-                      <ReactSelectComponent
-                        options={optionsDepartamentos}
-                        value={
-                          depaSelected
-                            ? {
-                                value: depaSelected,
-                                label:
-                                  departamentos.find(
-                                    (depa) =>
-                                      depa.id.toString() === depaSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        onChange={handleSelectDepartamento}
-                        className="text-sm text-black"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="municipioId-all">Municipio</Label>
-                      <ReactSelectComponent
-                        options={optionsMunis}
-                        onChange={handleSelectMunicipio}
-                        //si el valor seleccionado, el select muestra, el objeto, value que es el seleccionado, y el label es un find, donde el seleccionado fin en el array.nombre porque nombre es el label, sino un string vacio o null
-                        value={
-                          muniSelected
-                            ? {
-                                value: muniSelected,
-                                label:
-                                  municipios.find(
-                                    (muni) => muni.id.toString() == muniSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-sm text-black"
-                      />
-                    </div>
+              {/* Location Information */}
+              <div className="space-y-4">
+                <h3 className="font-medium flex items-center gap-2">
+                  <Map className="h-4 w-4 text-primary dark:text-white" />
+                  Ubicación y Contacto
+                </h3>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="ubicacionMaps-all">Ubicación Maps</Label>
+                    <Input
+                      id="coordenadas"
+                      name="coordenadas"
+                      value={formData.coordenadas}
+                      onChange={handleChange}
+                      placeholder="Coordenadas"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="departamentoId-all">Departamento</Label>
+                    <ReactSelectComponent
+                      options={optionsDepartamentos}
+                      value={
+                        depaSelected
+                          ? {
+                              value: depaSelected,
+                              label:
+                                departamentos.find(
+                                  (depa) => depa.id.toString() === depaSelected
+                                )?.nombre || "",
+                            }
+                          : null
+                      }
+                      onChange={handleSelectDepartamento}
+                      className="text-sm text-black"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="municipioId-all">Municipio</Label>
+                    <ReactSelectComponent
+                      options={optionsMunis}
+                      onChange={handleSelectMunicipio}
+                      //si el valor seleccionado, el select muestra, el objeto, value que es el seleccionado, y el label es un find, donde el seleccionado fin en el array.nombre porque nombre es el label, sino un string vacio o null
+                      value={
+                        muniSelected
+                          ? {
+                              value: muniSelected,
+                              label:
+                                municipios.find(
+                                  (muni) => muni.id.toString() == muniSelected
+                                )?.nombre || "",
+                            }
+                          : null
+                      }
+                      className="text-sm text-black"
+                    />
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="municipioId-all">Sectores</Label>
-                      <ReactSelectComponent
-                        isClearable
-                        options={optionsSectores}
-                        onChange={handleSelectSector}
-                        value={
-                          sectorSelected
-                            ? {
-                                value: sectorSelected,
-                                label:
-                                  sectores.find(
-                                    (muni) =>
-                                      muni.id.toString() == sectorSelected
-                                  )?.nombre || "",
-                              }
-                            : null
-                        }
-                        className="text-xs text-black"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="municipioId-all">Sectores</Label>
+                    <ReactSelectComponent
+                      isClearable
+                      options={optionsSectores}
+                      onChange={handleSelectSector}
+                      value={
+                        sectorSelected
+                          ? {
+                              value: sectorSelected,
+                              label:
+                                sectores.find(
+                                  (muni) => muni.id.toString() == sectorSelected
+                                )?.nombre || "",
+                            }
+                          : null
+                      }
+                      className="text-xs text-black"
+                    />
+                  </div>
 
-                    <div className="space-y-1">
-                      <Label htmlFor="contactoReferenciaNombre-all">
-                        Nombre Referencia
-                      </Label>
-                      <Input
-                        id="contactoReferenciaNombre-all"
-                        name="contactoReferenciaNombre"
-                        value={formData.contactoReferenciaNombre}
-                        onChange={handleChange}
-                        placeholder="Nombre referencia"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="contactoReferenciaTelefono-all">
-                        Teléfono Referencia
-                      </Label>
-                      <Input
-                        id="contactoReferenciaTelefono-all"
-                        name="contactoReferenciaTelefono"
-                        value={formData.contactoReferenciaTelefono}
-                        onChange={handleChange}
-                        placeholder="Teléfono referencia"
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="contactoReferenciaNombre-all">
+                      Nombre Referencia
+                    </Label>
+                    <Input
+                      id="contactoReferenciaNombre-all"
+                      name="contactoReferenciaNombre"
+                      value={formData.contactoReferenciaNombre}
+                      onChange={handleChange}
+                      placeholder="Nombre referencia"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="contactoReferenciaTelefono-all">
+                      Teléfono Referencia
+                    </Label>
+                    <Input
+                      id="contactoReferenciaTelefono-all"
+                      name="contactoReferenciaTelefono"
+                      value={formData.contactoReferenciaTelefono}
+                      onChange={handleChange}
+                      placeholder="Teléfono referencia"
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="estadoCliente"
-                    className="font-medium col-span-3 md:col-span-1"
+              <div className="space-y-1">
+                <Label
+                  htmlFor="estadoCliente"
+                  className="font-medium col-span-3 md:col-span-1"
+                >
+                  Estado del cliente
+                </Label>
+                <Select
+                  defaultValue={EstadoCliente.ACTIVO}
+                  onValueChange={handleSelectEstadoCliente}
+                >
+                  <SelectTrigger id="estadoCliente" className="w-[250px]">
+                    <SelectValue placeholder="Selecciona un estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Estados disponibles</SelectLabel>
+                      <SelectItem value={EstadoCliente.ACTIVO}>
+                        ACTIVO
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.ATRASADO}>
+                        ATRASADO
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.DESINSTALADO}>
+                        DESINSTALADO
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.EN_INSTALACION}>
+                        EN INSTALACIÓN
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.MOROSO}>
+                        MOROSO
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.PAGO_PENDIENTE}>
+                        PAGO PENDIENTE
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.PENDIENTE_ACTIVO}>
+                        ATRASADO
+                      </SelectItem>
+                      <SelectItem value={EstadoCliente.SUSPENDIDO}>
+                        SUSPENDIDO
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="md:col-span-3 space-y-6">
+                <div className="flex flex-col gap-4 md:grid md:grid-cols-1 md:gap-6">
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className="w-full border rounded-lg shadow-sm"
                   >
-                    Estado del cliente
-                  </Label>
-                  <Select
-                    defaultValue={EstadoCliente.ACTIVO}
-                    onValueChange={handleSelectEstadoCliente}
-                  >
-                    <SelectTrigger id="estadoCliente" className="w-[250px]">
-                      <SelectValue placeholder="Selecciona un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Estados disponibles</SelectLabel>
-                        <SelectItem value={EstadoCliente.ACTIVO}>
-                          ACTIVO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.ATRASADO}>
-                          ATRASADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.DESINSTALADO}>
-                          DESINSTALADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.EN_INSTALACION}>
-                          EN INSTALACIÓN
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.MOROSO}>
-                          MOROSO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.PAGO_PENDIENTE}>
-                          PAGO PENDIENTE
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.PENDIENTE_ACTIVO}>
-                          ATRASADO
-                        </SelectItem>
-                        <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                          SUSPENDIDO
-                        </SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <AccordionItem value="item-1" className="border-none">
+                      <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 font-medium">
+                        Detalles del contrato
+                      </AccordionTrigger>
+                      <AccordionContent className="px-1 pb-3">
+                        <Card className="border-0 shadow-none">
+                          <CardHeader className="px-4 pb-2">
+                            <CardTitle className="text-lg">
+                              Información de contrato
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="px-4">
+                            <div className="grid grid-cols-1 gap-5">
+                              <div className="space-y-2 w-full">
+                                <Label
+                                  htmlFor="idcontrato"
+                                  className="font-medium"
+                                >
+                                  ID de Contrato
+                                </Label>
+                                <Input
+                                  type="text"
+                                  id="idcontrato"
+                                  value={formDataContrado.idContrato}
+                                  onChange={handleChangeDataContrato}
+                                  name="idContrato"
+                                  placeholder="ejem: CONTRATO-910"
+                                  aria-label="ID de contrato"
+                                  className="w-full"
+                                />
+                              </div>
 
-                <div className="md:col-span-3 space-y-6">
-                  <div className="flex flex-col gap-4 md:grid md:grid-cols-1 md:gap-6">
-                    <Accordion
-                      type="single"
-                      collapsible
-                      className="w-full border rounded-lg shadow-sm"
-                    >
-                      <AccordionItem value="item-1" className="border-none">
-                        <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 font-medium">
-                          Detalles del contrato
-                        </AccordionTrigger>
-                        <AccordionContent className="px-1 pb-3">
-                          <Card className="border-0 shadow-none">
-                            <CardHeader className="px-4 pb-2">
-                              <CardTitle className="text-lg">
-                                Información de contrato
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="px-4">
-                              <div className="grid grid-cols-1 gap-5">
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="idcontrato"
-                                    className="font-medium"
-                                  >
-                                    ID de Contrato
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    id="idcontrato"
-                                    value={formDataContrado.idContrato}
-                                    onChange={handleChangeDataContrato}
-                                    name="idContrato"
-                                    placeholder="ejem: CONTRATO-910"
-                                    aria-label="ID de contrato"
-                                    className="w-full"
-                                  />
-                                </div>
+                              <div className="space-y-2 w-full">
+                                <Label
+                                  htmlFor="archivoContrato"
+                                  className="font-medium"
+                                >
+                                  Archivo contrato
+                                </Label>
+                                <Input
+                                  type="text"
+                                  id="archivoContrato"
+                                  value={formDataContrado.archivoContrato}
+                                  onChange={handleChangeDataContrato}
+                                  name="archivoContrato"
+                                  placeholder="Proximamente..."
+                                  aria-label="Archivo de contrato"
+                                  className="w-full"
+                                />
+                              </div>
 
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="archivoContrato"
-                                    className="font-medium"
-                                  >
-                                    Archivo contrato
-                                  </Label>
-                                  <Input
-                                    type="text"
-                                    id="archivoContrato"
-                                    value={formDataContrado.archivoContrato}
-                                    onChange={handleChangeDataContrato}
-                                    name="archivoContrato"
-                                    placeholder="Proximamente..."
-                                    aria-label="Archivo de contrato"
-                                    className="w-full"
-                                  />
-                                </div>
-
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="fechaFirma"
-                                    className="font-medium"
-                                  >
-                                    Fecha Firma
-                                  </Label>
-                                  <div className="w-full">
-                                    <DatePicker
-                                      className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                      selected={formDataContrado.fechaFirma}
-                                      onChange={(date) => {
-                                        setFormDataContrato((previaData) => ({
-                                          ...previaData,
-                                          fechaFirma: date,
-                                        }));
-                                      }}
-                                      aria-label="Fecha de firma"
-                                      id="fechaFirma"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2 w-full">
-                                  <Label
-                                    htmlFor="observaciones"
-                                    className="font-medium"
-                                  >
-                                    Observaciones
-                                  </Label>
-                                  <Textarea
-                                    id="observaciones"
-                                    value={formDataContrado.observaciones}
-                                    onChange={handleChangeDataContrato}
-                                    name="observaciones"
-                                    placeholder="Detalles de mi contrato"
-                                    aria-label="Observaciones del contrato"
-                                    className="w-full min-h-[100px] resize-y"
+                              <div className="space-y-2 w-full">
+                                <Label
+                                  htmlFor="fechaFirma"
+                                  className="font-medium"
+                                >
+                                  Fecha Firma
+                                </Label>
+                                <div className="w-full">
+                                  <DatePicker
+                                    className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    selected={formDataContrado.fechaFirma}
+                                    onChange={(date) => {
+                                      setFormDataContrato((previaData) => ({
+                                        ...previaData,
+                                        fechaFirma: date,
+                                      }));
+                                    }}
+                                    aria-label="Fecha de firma"
+                                    id="fechaFirma"
                                   />
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
 
-                  <div className="flex flex-col gap-3 w-full p-4 border rounded-lg shadow-sm">
-                    <Label
-                      htmlFor="fechaInstalacion-all"
-                      className="font-medium"
-                    >
-                      Fecha Instalación
-                    </Label>
-                    <div className="w-full">
-                      <DatePicker
-                        className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        selected={fechaInstalacion}
-                        onChange={(date) => {
-                          setFechaInstalacion(date);
-                        }}
-                        showTimeSelect
-                        dateFormat="Pp"
-                        aria-label="Fecha de instalación"
-                        id="fechaInstalacion-all"
-                      />
-                    </div>
-                  </div>
+                              <div className="space-y-2 w-full">
+                                <Label
+                                  htmlFor="observaciones"
+                                  className="font-medium"
+                                >
+                                  Observaciones
+                                </Label>
+                                <Textarea
+                                  id="observaciones"
+                                  value={formDataContrado.observaciones}
+                                  onChange={handleChangeDataContrato}
+                                  name="observaciones"
+                                  placeholder="Detalles de mi contrato"
+                                  aria-label="Observaciones del contrato"
+                                  className="w-full min-h-[100px] resize-y"
+                                />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="zonasFacturacion-all">
-                    Zonas de Facturación{" "}
-                    <span className="text-destructive">*</span>
+                <div className="flex flex-col gap-3 w-full p-4 border rounded-lg shadow-sm">
+                  <Label htmlFor="fechaInstalacion-all" className="font-medium">
+                    Fecha Instalación
                   </Label>
-                  <ReactSelectComponent
-                    options={optionsZonasFacturacion}
-                    onChange={handleSelectZonaFacturacion}
-                    value={
-                      zonasFacturacionSelected
-                        ? {
-                            value: zonasFacturacionSelected,
-                            label:
-                              zonasFacturacion.find(
-                                (s) =>
-                                  s.id.toString() === zonasFacturacionSelected
-                              )?.nombre || "",
-                          }
-                        : null
-                    }
-                    className="text-sm text-black"
-                  />
-                </div>
-
-                {/* Observations - Full width */}
-                <div className="md:col-span-3 space-y-2">
-                  <h3 className="font-medium flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-primary dark:text-white" />
-                    Observaciones
-                  </h3>
-                  <Textarea
-                    id="observaciones-all"
-                    name="observaciones"
-                    value={formData.observaciones}
-                    onChange={handleChange}
-                    placeholder="Observaciones adicionales"
-                    className="min-h-[80px]"
-                  />
+                  <div className="w-full">
+                    <DatePicker
+                      className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      selected={fechaInstalacion}
+                      onChange={(date) => {
+                        setFechaInstalacion(date);
+                      }}
+                      showTimeSelect
+                      dateFormat="Pp"
+                      aria-label="Fecha de instalación"
+                      id="fechaInstalacion-all"
+                    />
+                  </div>
                 </div>
               </div>
-            </CardContent>
-            <div className="m-2">
+
+              <div className="space-y-1">
+                <Label htmlFor="zonasFacturacion-all">
+                  Zonas de Facturación{" "}
+                  <span className="text-destructive">*</span>
+                </Label>
+                <ReactSelectComponent
+                  options={optionsZonasFacturacion}
+                  onChange={handleSelectZonaFacturacion}
+                  value={
+                    zonasFacturacionSelected
+                      ? {
+                          value: zonasFacturacionSelected,
+                          label:
+                            zonasFacturacion.find(
+                              (s) =>
+                                s.id.toString() === zonasFacturacionSelected
+                            )?.nombre || "",
+                        }
+                      : null
+                  }
+                  className="text-sm text-black"
+                />
+              </div>
+
+              {/* Observations - Full width */}
+              <div className="md:col-span-3 space-y-2">
+                <h3 className="font-medium flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-primary dark:text-white" />
+                  Observaciones
+                </h3>
+                <Textarea
+                  id="observaciones-all"
+                  name="observaciones"
+                  value={formData.observaciones}
+                  onChange={handleChange}
+                  placeholder="Observaciones adicionales"
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+          </CardContent>
+          <div className="m-2">
+            <Button
+              type="button"
+              onClick={() => setOpenConfirm(true)}
+              className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              variant={"outline"}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Guardar Cliente
+            </Button>
+          </div>
+        </Card>
+      </form>
+      {/* Confirmation Dialog */}
+      <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
+          {/* Warning icon */}
+          <div className="flex justify-center mt-6">
+            <div className="rounded-full p-3 shadow-lg border-4 border-white">
+              <div className="bg-amber-100 p-3 rounded-full animate-pulse">
+                <AlertCircle className="h-8 w-8 text-amber-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Header */}
+          <DialogHeader className="pt-8 px-6 pb-2">
+            <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
+              Confirmación de Cliente
+            </DialogTitle>
+            <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
+              Por favor revise los datos antes de continuar
+            </p>
+          </DialogHeader>
+
+          <div className="px-6 py-4">
+            {/* Question card */}
+            <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
+              <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
+                ¿Estás seguro de que deseas crear este cliente con los datos
+                proporcionados?
+              </h3>
+              <p className="text-sm text-gray-600 text-center dark:text-gray-400">
+                Por favor, revisa cuidadosamente los datos antes de proceder.
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
+              <Button
+                variant="outline"
+                onClick={() => setOpenConfirm(false)}
+                className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancelar
+              </Button>
               <Button
                 type="button"
-                onClick={() => setOpenConfirm(true)}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                variant={"outline"}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
               >
-                <Save className="mr-2 h-4 w-4" />
-                Guardar Cliente
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Crear Cliente
+                  </>
+                )}
               </Button>
             </div>
-          </Card>
-        </form>
-        {/* Confirmation Dialog */}
-        <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
-          <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
-            {/* Warning icon */}
-            <div className="flex justify-center mt-6">
-              <div className="rounded-full p-3 shadow-lg border-4 border-white">
-                <div className="bg-amber-100 p-3 rounded-full animate-pulse">
-                  <AlertCircle className="h-8 w-8 text-amber-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* Header */}
-            <DialogHeader className="pt-8 px-6 pb-2">
-              <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
-                Confirmación de Cliente
-              </DialogTitle>
-              <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
-                Por favor revise los datos antes de continuar
-              </p>
-            </DialogHeader>
-
-            <div className="px-6 py-4">
-              {/* Question card */}
-              <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
-                <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
-                  ¿Estás seguro de que deseas crear este cliente con los datos
-                  proporcionados?
-                </h3>
-                <p className="text-sm text-gray-600 text-center dark:text-gray-400">
-                  Por favor, revisa cuidadosamente los datos antes de proceder.
-                </p>
-              </div>
-
-              {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
-
-              {/* Action buttons */}
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setOpenConfirm(false)}
-                  className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Crear Cliente
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </motion.div>
-    </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </PageTransitionCrm>
   );
 }
 

@@ -57,6 +57,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
 export default function PlantillasMensajesView() {
@@ -248,7 +249,11 @@ export default function PlantillasMensajesView() {
   };
 
   return (
-    <div className="container">
+    <PageTransitionCrm
+      titleHeader="Mensajes automáticos Twilio"
+      subtitle={``}
+      variant="fade-pure"
+    >
       <div className="space-y-4">
         {/* Barra de herramientas */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
@@ -755,6 +760,6 @@ export default function PlantillasMensajesView() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </PageTransitionCrm>
   );
 }

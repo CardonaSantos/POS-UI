@@ -438,7 +438,7 @@ function EditCustomers() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="w-full px-2"
+      className="w-full px-2 py-1"
     >
       <PageHeaderCrm title="Edición de cliente" fallbackBackTo="/" />
       <ReusableTabs

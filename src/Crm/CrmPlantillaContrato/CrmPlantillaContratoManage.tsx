@@ -50,11 +50,11 @@ import {
   RefreshCw,
   Copy,
   Eye,
-  FileSignature,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -316,42 +316,35 @@ const PlantillaContratoManage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <PageTransitionCrm
+      titleHeader="Plantillas de contrato"
+      subtitle={``}
+      variant="fade-pure"
+    >
       {/* Encabezado */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <FileSignature className="h-5 w-5" />
-            Plantillas de Contrato
-          </h1>
-          <p className="text-muted-foreground">
-            Gestione las plantillas para generar contratos para sus clientes
-          </p>
+      <div className="flex items-center gap-2">
+        <div className="relative w-full md:w-auto">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar plantillas..."
+            className="pl-8 w-full md:w-[250px]"
+            value={searchPlantilla}
+            onChange={(e) => setSearchPlantilla(e.target.value)}
+          />
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative w-full md:w-auto">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar plantillas..."
-              className="pl-8 w-full md:w-[250px]"
-              value={searchPlantilla}
-              onChange={(e) => setSearchPlantilla(e.target.value)}
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={fetchPlantillas}
-            title="Actualizar"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button className="gap-1" onClick={() => setIsCreateDialogOpen(true)}>
-            <PlusCircle className="h-4 w-4" />
-            <span className="hidden md:inline">Nueva Plantilla</span>
-            <span className="md:hidden">Nueva</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={fetchPlantillas}
+          title="Actualizar"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+        <Button className="gap-1" onClick={() => setIsCreateDialogOpen(true)}>
+          <PlusCircle className="h-4 w-4" />
+          <span className="hidden md:inline">Nueva Plantilla</span>
+          <span className="md:hidden">Nueva</span>
+        </Button>
       </div>
 
       {/* Mensajes de error */}
@@ -764,7 +757,7 @@ const PlantillaContratoManage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransitionCrm>
   );
 };
 

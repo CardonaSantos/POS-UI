@@ -1,7 +1,6 @@
 "use client";
 
 import DesvanecerHaciaArriba from "@/Crm/Motion/DashboardAnimations";
-import { PageHeader } from "@/Crm/Utils/Components/PageHeader";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { motion } from "framer-motion";
 import { FindRutasAsignadasResult } from "./rutas-asignadas.type";
@@ -51,6 +50,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Variants, Transition, MotionProps } from "framer-motion";
 import { Link } from "react-router-dom";
 import { CRM } from "@/hooks/indexCalls";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 // Define el transition con tipo explícito (evita el "string" ensanchado)
 const SPRING: Transition = {
@@ -354,12 +354,6 @@ function RutasAsignadasMain() {
         className="container mx-auto px-3 sm:px-6 py-4"
         {...DesvanecerHaciaArriba}
       >
-        <PageHeader
-          sticky={false}
-          title="Rutas de cobro asignadas"
-          subtitle="Gestiona tus rutas y asignaciones"
-          fallbackBackTo="/crm"
-        />
         <div className="mt-3">
           <SkeletonList />
         </div>
@@ -368,17 +362,11 @@ function RutasAsignadasMain() {
   }
 
   return (
-    <motion.div
-      className="container mx-auto px-3 sm:px-6 py-4"
-      {...DesvanecerHaciaArriba}
+    <PageTransitionCrm
+      titleHeader="Mis rutas de cobro"
+      subtitle={``}
+      variant="fade-pure"
     >
-      <PageHeader
-        sticky={false}
-        title="Rutas de cobro asignadas"
-        subtitle="Gestiona tus rutas y asignaciones"
-        fallbackBackTo="/crm"
-      />
-
       {/* Barra de acciones + KPIs (mobile-first) */}
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
@@ -449,7 +437,7 @@ function RutasAsignadasMain() {
           </div>
         )
       )}
-    </motion.div>
+    </PageTransitionCrm>
   );
 }
 

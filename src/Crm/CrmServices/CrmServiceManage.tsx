@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -80,34 +79,17 @@ import {
   TipoServicio,
 } from "./crm-service.types";
 import { EstadoServicio } from "./CrmServiciosWifi/servicio-internet.types";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
-interface ServiceStats {
-  totalServicios: number;
-  totalTipos: number;
-  totalClientes: number;
-}
-
 const CrmServiceManage = () => {
-  // ==========================
-  // ESTADO PRINCIPAL
-  // ==========================
   const empresaID = useStoreCrm((state) => state.empresaId) ?? 0;
 
   const [servicios, setServicios] = useState<ServicioServiceManage[]>([]);
   const [tiposServicio, setTiposServicio] = useState<TipoServicio[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [stats, setStats] = useState<ServiceStats>({
-    totalServicios: 0,
-    totalTipos: 0,
-    totalClientes: 0,
-  });
-
-  // ==========================
-  // ESTADO FORMULARIOS
-  // ==========================
   const [nuevoServicio, setNuevoServicio] = useState<NuevoServicio>({
     nombre: "",
     descripcion: "",
@@ -127,9 +109,6 @@ const CrmServiceManage = () => {
 
   const [serviceEdit, setServiceEdit] = useState<NuevoServicio | null>(null);
 
-  // ==========================
-  // ESTADO UI
-  // ==========================
   const [searchServicio, setSearchServicio] = useState("");
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
@@ -137,9 +116,6 @@ const CrmServiceManage = () => {
   const [openCreateTipoServicio, setOpenCreateTipoServicio] = useState(false);
   const [serviceDeleteId, setServiceDeleteId] = useState<number | null>(null);
 
-  // ==========================
-  // FETCHING
-  // ==========================
   const getTiposServicio = async () => {
     try {
       const response = await axios.get<TipoServicio[]>(
@@ -149,10 +125,6 @@ const CrmServiceManage = () => {
       if (response.status === 200) {
         const tipos = response.data;
         setTiposServicio(tipos);
-        setStats((prev) => ({
-          ...prev,
-          totalTipos: tipos.length,
-        }));
       }
     } catch (error) {
       console.error(error);
@@ -169,17 +141,6 @@ const CrmServiceManage = () => {
       if (response.status === 200) {
         const data = response.data;
         setServicios(data);
-
-        const totalClientes = data.reduce(
-          (acc, curr) => acc + (curr.clientesCount ?? 0),
-          0
-        );
-
-        setStats((prev) => ({
-          ...prev,
-          totalServicios: data.length,
-          totalClientes,
-        }));
       }
     } catch (error) {
       console.error(error);
@@ -198,12 +159,8 @@ const CrmServiceManage = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ==========================
-  // HANDLERS FORMULARIOS
-  // ==========================
   const handleServicioChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -248,9 +205,6 @@ const CrmServiceManage = () => {
     }));
   };
 
-  // ==========================
-  // RESET FORMS
-  // ==========================
   const resetFormServicio = () => {
     setNuevoServicio({
       nombre: "",
@@ -270,9 +224,6 @@ const CrmServiceManage = () => {
     });
   };
 
-  // ==========================
-  // SUBMITS
-  // ==========================
   const handleSubmitServicio = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -455,249 +406,198 @@ const CrmServiceManage = () => {
   // RENDER
   // ==========================
   return (
-    <div className="container mx-auto py-4 space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
-      >
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <PageTransitionCrm
+      titleHeader="Servicios Adicionales"
+      subtitle={``}
+      variant="fade-pure"
+    >
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full md:w-auto">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar servicios..."
+              className="pl-8 w-full md:w-[250px]"
+              value={searchServicio}
+              onChange={(e) => setSearchServicio(e.target.value)}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={fetchData}
+            title="Actualizar"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button className="gap-1" onClick={() => setOpenCreateServicio(true)}>
+            <PlusCircle className="h-4 w-4" />
+            <span className="hidden md:inline">Nuevo Servicio</span>
+            <span className="md:hidden">Nuevo</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabla de servicios */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Gestión de Servicios
-            </h1>
-            <p className="text-muted-foreground">
-              Administre los servicios y tipos de servicio para sus clientes
-            </p>
+            <CardTitle className="text-lg">Servicios Existentes</CardTitle>
+            <CardDescription>
+              Lista de servicios disponibles en el sistema
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-full md:w-auto">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar servicios..."
-                className="pl-8 w-full md:w-[250px]"
-                value={searchServicio}
-                onChange={(e) => setSearchServicio(e.target.value)}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={fetchData}
-              title="Actualizar"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button
-              className="gap-1"
-              onClick={() => setOpenCreateServicio(true)}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Nuevo Servicio</span>
-              <span className="md:hidden">Nuevo</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Servicios
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-bold">{stats.totalServicios}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Servicios configurados
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Clientes
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-bold">{stats.totalClientes}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes asignados
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabla de servicios */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div>
-              <CardTitle className="text-xl">Servicios Existentes</CardTitle>
-              <CardDescription>
-                Lista de servicios disponibles en el sistema
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead className="text-right">Precio</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Estado
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Clientes
+                    </TableHead>
+                    <TableHead className="w-[50px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
                     <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead className="text-right">Precio</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Estado
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Clientes
-                      </TableHead>
-                      <TableHead className="w-[50px]" />
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground py-6"
+                      >
+                        <div className="flex justify-center items-center">
+                          <RefreshCw className="h-5 w-5 animate-spin mr-2" />
+                          Cargando servicios...
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="text-center text-muted-foreground py-6"
-                        >
-                          <div className="flex justify-center items-center">
-                            <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-                            Cargando servicios...
+                  ) : filteredServicios.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground py-6"
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2 py-4">
+                          <FileText className="h-10 w-10 text-muted-foreground opacity-50" />
+                          <p>No se encontraron servicios</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setOpenCreateServicio(true)}
+                          >
+                            Crear nuevo servicio
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredServicios.map((servicio) => (
+                      <TableRow key={servicio.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{servicio.nombre}</div>
+                            <div className="text-sm text-muted-foreground md:hidden">
+                              {getTipoServicioNombre(servicio.tipoServicioId)}
+                            </div>
+                            <div className="text-sm text-muted-foreground truncate max-w-[200px] hidden sm:block">
+                              {servicio.descripcion}
+                            </div>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ) : filteredServicios.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="text-center text-muted-foreground py-6"
-                        >
-                          <div className="flex flex-col items-center justify-center gap-2 py-4">
-                            <FileText className="h-10 w-10 text-muted-foreground opacity-50" />
-                            <p>No se encontraron servicios</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => setOpenCreateServicio(true)}
-                            >
-                              Crear nuevo servicio
-                            </Button>
+
+                        <TableCell className="text-right font-medium">
+                          {formatearMoneda(servicio.precio)}
+                        </TableCell>
+
+                        <TableCell className="hidden md:table-cell">
+                          <Badge
+                            variant={
+                              servicio.estado === "ACTIVO"
+                                ? "default"
+                                : "destructive"
+                            }
+                            className="gap-1"
+                          >
+                            {servicio.estado === "ACTIVO" ? (
+                              <CheckCircle className="h-3 w-3" />
+                            ) : (
+                              <XCircle className="h-3 w-3" />
+                            )}
+                            {servicio.estado}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span>{servicio.clientesCount ?? 0}</span>
                           </div>
                         </TableCell>
+
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Abrir menú</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setServiceEdit({
+                                    id: servicio.id,
+                                    descripcion: servicio.descripcion,
+                                    empresaId: servicio.empresaId,
+                                    estado: servicio.estado,
+                                    nombre: servicio.nombre,
+                                    precio: servicio.precio,
+                                    tipoServicioId: String(
+                                      servicio.tipoServicioId
+                                    ),
+                                  });
+                                  setOpenEdit(true);
+                                }}
+                                className="flex items-center gap-2"
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span>Editar</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setServiceDeleteId(servicio.id);
+                                  setOpenDelete(true);
+                                }}
+                                className="flex items-center gap-2 text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span>Eliminar</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
-                    ) : (
-                      filteredServicios.map((servicio) => (
-                        <TableRow key={servicio.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {servicio.nombre}
-                              </div>
-                              <div className="text-sm text-muted-foreground md:hidden">
-                                {getTipoServicioNombre(servicio.tipoServicioId)}
-                              </div>
-                              <div className="text-sm text-muted-foreground truncate max-w-[200px] hidden sm:block">
-                                {servicio.descripcion}
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          <TableCell className="text-right font-medium">
-                            {formatearMoneda(servicio.precio)}
-                          </TableCell>
-
-                          <TableCell className="hidden md:table-cell">
-                            <Badge
-                              variant={
-                                servicio.estado === "ACTIVO"
-                                  ? "default"
-                                  : "destructive"
-                              }
-                              className="gap-1"
-                            >
-                              {servicio.estado === "ACTIVO" ? (
-                                <CheckCircle className="h-3 w-3" />
-                              ) : (
-                                <XCircle className="h-3 w-3" />
-                              )}
-                              {servicio.estado}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span>{servicio.clientesCount ?? 0}</span>
-                            </div>
-                          </TableCell>
-
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">Abrir menú</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setServiceEdit({
-                                      id: servicio.id,
-                                      descripcion: servicio.descripcion,
-                                      empresaId: servicio.empresaId,
-                                      estado: servicio.estado,
-                                      nombre: servicio.nombre,
-                                      precio: servicio.precio,
-                                      tipoServicioId: String(
-                                        servicio.tipoServicioId
-                                      ),
-                                    });
-                                    setOpenEdit(true);
-                                  }}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setServiceDeleteId(servicio.id);
-                                    setOpenDelete(true);
-                                  }}
-                                  className="flex items-center gap-2 text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span>Eliminar</span>
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Dialog: Crear servicio */}
       <Dialog
@@ -1010,7 +910,7 @@ const CrmServiceManage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransitionCrm>
   );
 };
 

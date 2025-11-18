@@ -26,6 +26,7 @@ import { RolUsuario, type UserProfile } from "./interfacesProfile";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 function CrmProfileConfig() {
   // const userId = searchParams.get("id");
@@ -107,8 +108,12 @@ function CrmProfileConfig() {
   }
 
   return (
-    <div className="container flex justify-center items-center py-4 min-h-[calc(100vh-100px)]">
-      <Card className="w-full max-w-3xl shadow-md">
+    <PageTransitionCrm
+      titleHeader="Mi perfil"
+      subtitle={``}
+      variant="fade-pure"
+    >
+      <Card className="w-full">
         <CardHeader className="pb-4 border-b">
           <CardTitle className="text-xl text-center sm:text-left ">
             <p className="text-center">Actualizar Perfil de Usuario</p>
@@ -245,7 +250,7 @@ function CrmProfileConfig() {
           </CardFooter>
         </form>
       </Card>
-    </div>
+    </PageTransitionCrm>
   );
 }
 

@@ -41,6 +41,7 @@ import { getFacturasEliminadas } from "./api";
 import { toast } from "sonner";
 import axios from "axios";
 import { formatearMoneda, formateDate } from "../Utils/FormateDate";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 // Interface para mapear los datos
 interface Usuario {
@@ -116,30 +117,18 @@ export default function DeletedInvoicesView() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-red-100 rounded-lg">
-          <Trash2 className="h-6 w-6 text-red-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Facturas Eliminadas
-          </h1>
-          <p className="text-gray-600">
-            Gestión de facturas eliminadas del sistema
-          </p>
-        </div>
-      </div>
-
+    <PageTransitionCrm
+      titleHeader="Facturas eliminadas"
+      subtitle={``}
+      variant="fade-pure"
+    >
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Registro de Facturas Eliminadas
           </CardTitle>
-          <CardDescription>
-            Total de {eliminados.length} facturas eliminadas
-          </CardDescription>
+          <CardDescription>Total {eliminados.length}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -385,6 +374,6 @@ export default function DeletedInvoicesView() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageTransitionCrm>
   );
 }

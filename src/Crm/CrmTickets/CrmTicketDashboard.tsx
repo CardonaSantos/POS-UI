@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import TicketList from "./CrmTicketList";
 import TicketDetail from "./CrmTicketDetails";
 import TicketFilters from "./CrmTicketFilter";
@@ -12,6 +11,8 @@ import axios from "axios";
 // import { set } from "date-fns";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import { MultiValue } from "react-select";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { EstadoTicketSoporte } from "../DashboardCRM/types";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -198,15 +199,23 @@ export default function TicketDashboard() {
       detailRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
   }
+  const abiertos = tickets.filter(
+    (t) => t.status === EstadoTicketSoporte.ABIERTA
+  ).length;
+  const proceso = tickets.filter(
+    (t) => t.status === EstadoTicketSoporte.EN_PROCESO
+  ).length;
+  const resueltos = tickets.filter(
+    (t) => t.status === EstadoTicketSoporte.RESUELTA
+  ).length;
 
   return (
-    <div className="">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-full"
-      >
+    <PageTransitionCrm
+      titleHeader="Tickets Soporte"
+      subtitle={`${abiertos} abiertos · ${proceso} en proceso · ${resueltos} cerrados hoy`}
+      variant="fade-pure"
+    >
+      <div className="">
         <TicketFilters
           tickets={filterTickets(tickets)}
           onFilterChange={setFilterText}
@@ -228,14 +237,7 @@ export default function TicketDashboard() {
           dateRange={dateRange}
           setDateRange={setDateRange}
         />
-      </motion.div>
-      <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-220px)]">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="min-h-0 h-full overflow-hidden"
-        >
+        <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-220px)]">
           <div className="flex flex-col h-full">
             <TicketList
               // FUNCION PARA ATRAER AL TICKET
@@ -245,19 +247,9 @@ export default function TicketDashboard() {
               onSelectTicketDown={(ticket) => setSelectedTicketId(ticket.id)}
             />
           </div>
-        </motion.div>
 
-        {/* ── RIGHT COLUMN: ticket detail */}
-        {selectedTicket && (
-          <motion.div
-            key="ticket-detail"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="bg-card rounded-lg shadow min-h-0 h-full overflow-hidden"
-            ref={detailRef}
-          >
+          {/* ── RIGHT COLUMN: ticket detail */}
+          {selectedTicket && (
             <TicketDetail
               // setSelectedTicketId={setSelectedTicketId}
               ticket={selectedTicket}
@@ -266,9 +258,9 @@ export default function TicketDashboard() {
               optionsTecs={optionsTecs}
               setSelectedTicketId={setSelectedTicketId}
             />
-          </motion.div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </PageTransitionCrm>
   );
 }

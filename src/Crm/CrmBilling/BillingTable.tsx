@@ -29,13 +29,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import {
-  ChevronDown,
-  ChevronUp,
-  CreditCard,
-  File,
-  FileCheck,
-} from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
@@ -44,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { useWindowScrollPosition } from "../Utils/useWindow";
 import { TableSkeleton } from "./SkeletonTable";
 import { stateInvoice } from "./Utils/Utils";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -453,11 +448,13 @@ export default function BilingTable() {
   ]);
 
   return (
-    <div className="relative overflow-x-auto border rounded-md">
+    <PageTransitionCrm
+      titleHeader="Facuturación"
+      subtitle={`${facutracionData.facturados} Facturados · ${facutracionData.cobrados} Cobrados · ${facutracionData.porCobrar} Por cobrar`}
+      variant="fade-pure"
+    >
       <Card className="max-w-full text-xs border border-gray-300 shadow-lg">
         <CardContent>
-          <div className="flex items-center justify-between mb-4"></div>
-          {/* **Campo de Búsqueda** */}
           <Input
             ref={inputRef}
             style={{ boxShadow: "none" }}
@@ -465,36 +462,12 @@ export default function BilingTable() {
             placeholder="Buscar por nombre, telefono o ip"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-2 py-1 mb-3 text-xs border-2"
+            className="px-2 py-1 mb-3 mt-2 text-xs border-2"
           />
 
           {/* **Selector de Cantidad de Filas** */}
           <div>
-            {/* **Filtros de Facturación** */}
             <div className="mb-4 space-y-4">
-              {/* Resumen de facturación */}
-              <div className="flex flex-wrap items-center gap-4 p-2 rounded-lg bg-muted/20">
-                <div className="flex items-center">
-                  <File className="w-5 h-5 mr-2 dark:text-white" />
-                  <span className="text-sm font-semibold">
-                    Facturados: {facutracionData.facturados}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2 dark:text-white" />
-                  <span className="text-sm font-semibold">
-                    Cobrados: {facutracionData.cobrados}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <FileCheck className="w-5 h-5 mr-2 dark:text-white" />
-                  <span className="text-sm font-semibold">
-                    Por Cobrar: {facutracionData.porCobrar}
-                  </span>
-                </div>
-              </div>
-
-              {/* Filtros */}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {/* Rango de fechas */}
                 <div className="space-y-1">
@@ -823,6 +796,6 @@ export default function BilingTable() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageTransitionCrm>
   );
 }

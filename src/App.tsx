@@ -60,8 +60,6 @@ import Metas from "./Pages/Metas/Metas";
 import MyGoals from "./Pages/Metas/MyGoals";
 import ReportesExcel from "./Pages/Reports/Ventas/ReportesExcel";
 import CrmDashboard from "./Crm/DashboardCRM/CrmDashboard";
-import CrmCustomers from "./Crm/CrmCustomers/CrmCustomers";
-import Billing from "./Crm/CrmBilling/CrmBilling";
 import TicketDashboard from "./Crm/CrmTickets/CrmTicketDashboard";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
@@ -95,6 +93,8 @@ import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
 import CustomerProfile from "./Crm/CrmCustomer/newCustomerPage/customer-profile";
 import RutasAsignadasMain from "./Crm/CrmRutas/_rutas_asignadas/rutas_asignadas_main";
 import ReportsMainPage from "./Crm/reports/page/ReportsMainPage";
+import BilingTable from "./Crm/CrmBilling/BillingTable";
+import ClientesTable from "./Crm/CrmCustomers/CrmCustomerTable";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -568,7 +568,7 @@ function App() {
               path="/crm-clientes"
               element={
                 <ProtectRouteCrmUser>
-                  <CrmCustomers />
+                  <ClientesTable />
                 </ProtectRouteCrmUser>
               }
             />
@@ -595,7 +595,7 @@ function App() {
               path="/crm/facturacion"
               element={
                 <ProtectRouteCrmUser>
-                  <Billing />
+                  <BilingTable />
                 </ProtectRouteCrmUser>
               }
             />

@@ -5,7 +5,7 @@ import { User, LogOut, AtSign } from "lucide-react";
 
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { ModeToggle } from "../mode-toggle";
-import logo from "@/assets/LOGOPNG.png";
+import logo from "@/assets/LogoCrmPng.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +53,6 @@ export default function Layout2({ children }: LayoutProps) {
 
   const posNombre = useStore((state) => state.userNombre);
   const posCorreo = useStore((state) => state.userCorreo);
-  const sucursalId = useStore((state) => state.sucursalId);
 
   // -----------------------------
   // CRM STORE
@@ -64,6 +63,7 @@ export default function Layout2({ children }: LayoutProps) {
   const setRolCrm = useStoreCrm((state) => state.setRol);
   const setUserIdCrm = useStoreCrm((state) => state.setUserIdCrm);
   const setEmpresaIdCrm = useStoreCrm((state) => state.setEmpresaId);
+  const empresaId = useStoreCrm((state) => state.empresaId);
 
   const nombreCrm = useStoreCrm((state) => state.nombre);
   const correoCrm = useStoreCrm((state) => state.correo);
@@ -157,10 +157,13 @@ export default function Layout2({ children }: LayoutProps) {
   // -----------------------------
   // INFO SUCURSAL (CRM API)
   // -----------------------------
-  const { data: sucursalInfo } = useCrmQuery<Sucursal>(
-    ["sucursal-info", sucursalId],
-    `empresa/${sucursalId}/details`,
-    undefined
+  const { data: empresaInfo } = useCrmQuery<Sucursal>(
+    ["empresa-info", empresaId],
+    `empresa/${empresaId}/details`,
+    undefined,
+    {
+      enabled: !!empresaId, // solo cuando ya tengas el id
+    }
   );
 
   // -----------------------------
@@ -186,7 +189,7 @@ export default function Layout2({ children }: LayoutProps) {
     }
     window.location.reload();
   };
-  console.log("la data del empresa info es: ", sucursalInfo);
+  console.log("la data del empresa info es: ", empresaInfo);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -208,7 +211,7 @@ export default function Layout2({ children }: LayoutProps) {
                   />
                 </Link>
                 <p className="text-xs sm:text-sm truncate max-w-[160px] sm:max-w-xs">
-                  {sucursalInfo?.nombre || ""}
+                  {empresaInfo?.nombre || ""}
                 </p>
               </div>
 

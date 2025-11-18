@@ -130,7 +130,7 @@ export const routesCrm_SuperAdmin = [
 ];
 
 export const routesCrm_Admin = [
-  { icon: Home, label: "Inicio", href: "/crm" },
+  { icon: Home, label: "Dashboard", href: "/crm" },
 
   {
     icon: Users,
@@ -242,7 +242,7 @@ export const routesCrm_Admin = [
 ];
 
 export const routesCrm_Oficina = [
-  { icon: Home, label: "Inicio", href: "/crm" },
+  { icon: Home, label: "Dashboard", href: "/crm" },
 
   {
     icon: Users,
@@ -330,7 +330,7 @@ export const routesCrm_Oficina = [
 ];
 
 export const routesCrm_Tecnico = [
-  { icon: Home, label: "Inicio", href: "/crm" },
+  { icon: Home, label: "Dashboard", href: "/crm" },
   { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
   {
     icon: MonitorSmartphone,

@@ -80,7 +80,7 @@ import { openNumberPhone } from "@/utils/openNumberPhone";
 import { useApiQuery } from "@/hooks/genericoCall/genericoCallHook";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-import { PageHeader } from "@/Crm/Utils/Components/PageHeader";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -299,6 +299,11 @@ function RutaCobro() {
     }
   };
 
+  const facturasPorCobrar = ruta.clientes.reduce(
+    (acc, customer) => acc + customer.facturas.length,
+    0
+  );
+
   {
     isRutaError && (
       <Alert variant="destructive" className="mt-2">
@@ -312,14 +317,11 @@ function RutaCobro() {
   }
 
   return (
-    <motion.div className="container mx-auto ">
-      <PageHeader
-        sticky={false}
-        title="Ruta de cobro asignada"
-        subtitle="Gestiona tus rutas y asignaciones"
-        fallbackBackTo="/crm" // si no hay history
-      />
-
+    <PageTransitionCrm
+      titleHeader={`Ruta de cobro #${rutaId}`}
+      subtitle={`${ruta.clientes.length} Clientes Asignados · ${facturasPorCobrar} Facturas por cobrar`}
+      variant="fade-pure"
+    >
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -885,7 +887,7 @@ function RutaCobro() {
           </div>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </PageTransitionCrm>
   );
 }
 

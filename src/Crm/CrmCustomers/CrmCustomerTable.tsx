@@ -1,3 +1,4 @@
+"use client";
 import { useDebounce } from "use-debounce";
 import { useEffect, useState } from "react";
 import {
@@ -37,6 +38,7 @@ import { useRef } from "react";
 import { useWindowScrollPosition } from "../Utils/useWindow";
 import { ClientTableSkeleton } from "./SkeletonTable";
 import { getEstadoColorText, returnStatusClient } from "../Utils/Utils2";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -119,12 +121,25 @@ const estadosConDescripcion = [
   { value: "EN_INSTALACION", label: "EN INSTALACION" },
 ];
 
+interface Summary {
+  activo: number;
+  moroso: number;
+  pendiente_activo: number;
+  atrasado: number;
+}
+
 export default function ClientesTable() {
   //referencias
   const [searchParam] = useSearchParams();
   const estadoQuery = searchParam.get("estado") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [summary, setSummary] = useState<Summary>({
+    activo: 0,
+    atrasado: 0,
+    moroso: 0,
+    pendiente_activo: 0,
+  });
 
   //PAGINACION
   const [totalCount, setTotalCount] = useState(0);
@@ -327,9 +342,12 @@ export default function ClientesTable() {
           },
         }
       );
+      console.log("El responda data es: ", response.data);
+
       if (response.status === 200) {
         setClientes(response.data.data);
         setTotalCount(response.data.totalCount);
+        setSummary(response.data.summary);
         // Reset pagination when new data is fetched
       }
     } catch (error) {
@@ -420,10 +438,14 @@ export default function ClientesTable() {
     estadoSelected,
   ]);
 
-  console.log("Clientes son: ", clientes);
+  //Reemplazar con un dato calculado del server
 
   return (
-    <div className="relative overflow-x-auto rounded-md border">
+    <PageTransitionCrm
+      titleHeader="Lista de clientes"
+      subtitle={`${summary.activo} Activos · ${summary.atrasado} Atrasados · ${summary.moroso} Morosos · ${summary.pendiente_activo} Pendiente Activo`}
+      variant="fade-pure"
+    >
       <Card className="max-w-full shadow-lg">
         <CardContent>
           <div className="flex items-center justify-between mb-4"></div>
@@ -732,6 +754,6 @@ export default function ClientesTable() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageTransitionCrm>
   );
 }

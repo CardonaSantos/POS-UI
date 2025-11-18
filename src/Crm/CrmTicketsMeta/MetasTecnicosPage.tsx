@@ -71,6 +71,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Metricas from "./Metricas";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 // Mock data para técnicos (en un caso real vendría de otra API)
@@ -355,8 +356,44 @@ export default function MetasTecnicosPage() {
 
   const isAllowed = !rolesPermitidos.includes(userRol);
 
+  interface Objreturn {
+    total: number;
+    cerradas: number;
+    abiertas: number;
+    finalizadas: number;
+  }
+
+  const summary = metas.reduce(
+    (acc: Objreturn, meta) => {
+      acc.total += meta.metaTickets;
+
+      if (meta.estado === "ABIERTO") {
+        acc.abiertas++;
+      }
+
+      if (meta.estado === "CERRADO") {
+        acc.cerradas++;
+      }
+      if (meta.estado === "FINALIZADO") {
+        acc.finalizadas++;
+      }
+
+      return acc;
+    },
+    {
+      total: 0,
+      cerradas: 0,
+      abiertas: 0,
+      finalizadas: 0,
+    }
+  );
+
   return (
-    <div className="container p-4 mx-auto space-y-6">
+    <PageTransitionCrm
+      titleHeader="Metas Ticket"
+      subtitle={`${totalMetas} Totales · ${summary.abiertas} Abiertas · ${summary.cerradas} Cerradas · ${summary.finalizadas} Finalizadas  `}
+      variant="fade-pure"
+    >
       <Tabs defaultValue="ticketsMeta">
         <div>
           <TabsList className="w-full">
@@ -964,6 +1001,6 @@ export default function MetasTecnicosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransitionCrm>
   );
 }

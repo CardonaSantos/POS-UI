@@ -23,7 +23,7 @@ export function PageHeaderCrm({
           : ""
       }
     >
-      <div className="container mx-auto mb-2">
+      <div className="container mx-auto">
         <div className="flex items-center gap-3 ">
           <BackButtonCrm fallback={fallbackBackTo} />
           <div className="flex-1 min-w-0">

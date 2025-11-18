@@ -17,7 +17,6 @@ import {
   Kanban,
   UserX,
 } from "lucide-react";
-import DesvanecerHaciaArriba from "../Motion/DashboardAnimations";
 import { motion } from "framer-motion";
 import MyTickets from "./MyTickets";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
@@ -28,6 +27,7 @@ import TicketsEnProcesoCard from "../CrmTicketsMeta/TicketsEnProcesoTable";
 import { TicketMoment } from "../CrmTicketsMeta/types";
 import { FormattedTicket, formatearMoneda } from "./types";
 import { Link } from "react-router-dom";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 const tokencrm = localStorage.getItem("authTokenCRM");
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -322,9 +322,11 @@ export default function CrmDashboard() {
   }
 
   return (
-    <motion.div {...DesvanecerHaciaArriba} className="w-full p-1">
-      <h2 className="text-xl font-bold text-center underline">Dashboard CRM</h2>
-
+    <PageTransitionCrm
+      titleHeader="Dashboard"
+      subtitle={`Panel principal`}
+      variant="fade-pure"
+    >
       {rol !== "TECNICO" && dashboardData && (
         <>
           {/* Resumen Ejecutivo */}
@@ -477,6 +479,6 @@ export default function CrmDashboard() {
         tickets={tickets}
       />
       <TicketsEnProcesoCard data={dataTicketsEnProceso} />
-    </motion.div>
+    </PageTransitionCrm>
   );
 }

@@ -23,6 +23,7 @@ import DialogEdit from "./DialogEdit";
 import DialogDelete from "./DialogDelete";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 function CrmUsers() {
   const [openEdit, setOpenEdit] = useState<boolean>(false);
@@ -134,7 +135,7 @@ function CrmUsers() {
   console.log("El usuario editando o eliminar es: ", user);
 
   return (
-    <div className="container p-4">
+    <PageTransitionCrm titleHeader="Usuarios" subtitle={``} variant="fade-pure">
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
@@ -225,7 +226,7 @@ function CrmUsers() {
         handleDeleteUser={handleDeleteUser}
         isSubmiting={isSubmiting}
       />
-    </div>
+    </PageTransitionCrm>
   );
 }
 

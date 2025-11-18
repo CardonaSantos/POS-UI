@@ -1,10 +1,11 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Download, Filter, RefreshCw } from "lucide-react";
 import { useApiQuery } from "@/hooks/genericoCall/genericoCallHook";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 type ActivosFilter = "all" | "true" | "false";
 
@@ -83,11 +84,10 @@ export default function ReportsMainPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
+    <PageTransitionCrm titleHeader="Reportes" subtitle={``} variant="fade-pure">
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl sm:text-2xl">Reportes</CardTitle>
             <div className="text-sm text-muted-foreground">
               Clientes de Internet
             </div>
@@ -171,6 +171,6 @@ export default function ReportsMainPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageTransitionCrm>
   );
 }

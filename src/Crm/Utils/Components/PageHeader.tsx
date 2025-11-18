@@ -1,21 +1,19 @@
-// src/components/layout/PageHeader.tsx
-
-import { BackButton } from "./BackButton";
+import { BackButtonCrm } from "@/Crm/_Utils/components/PageHeader/BackButton";
 
 type PageHeaderProps = {
   title: string;
   subtitle?: string;
-  fallbackBackTo?: string; // dónde caer si no hay history
-  actions?: React.ReactNode; // botones a la derecha
-  sticky?: boolean; // encabezado pegajoso
+  fallbackBackTo?: string;
+  actions?: React.ReactNode;
+  sticky?: boolean;
 };
 
-export function PageHeader({
+export function PageHeaderCrm({
   title,
   subtitle,
   fallbackBackTo = "/",
   actions,
-  sticky = true,
+  sticky = false,
 }: PageHeaderProps) {
   return (
     <div
@@ -25,15 +23,15 @@ export function PageHeader({
           : ""
       }
     >
-      <div className="container mx-auto mb-2">
+      <div className="container mx-auto px-2 py-1">
         <div className="flex items-center gap-3 ">
-          <BackButton fallback={fallbackBackTo} />
+          <BackButtonCrm fallback={fallbackBackTo} />
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold tracking-tight truncate">
+            <h1 className="text-base font-bold tracking-tight truncate">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {subtitle}
               </p>
             )}

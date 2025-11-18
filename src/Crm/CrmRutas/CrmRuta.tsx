@@ -4,21 +4,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Plus } from "lucide-react";
 import { RutasCobroList } from "./RutasCobroList";
 import { RutasCobroCreate } from "./RutasCobroCreate";
-import { PageHeader } from "../Utils/Components/PageHeader";
-import { motion } from "framer-motion";
-import DesvanecerHaciaArriba from "../Motion/DashboardAnimations";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 export default function RutasCobroPage() {
   const [activeTab, setActiveTab] = useState<string>("rutas");
 
   return (
-    <motion.div className="container mx-auto" {...DesvanecerHaciaArriba}>
-      <PageHeader
-        sticky={false}
-        title="Rutas de Cobro"
-        subtitle="Gestiona tus rutas y asignaciones"
-        fallbackBackTo="/crm" // si no hay history
-      />
-
+    <PageTransitionCrm
+      titleHeader="Rutas de cobro"
+      subtitle=""
+      variant="fade-pure"
+    >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full ">
         <TabsList className="grid w-full grid-cols-2 md:w-auto h-8 p-0.5 rounded-lg">
           <TabsTrigger
@@ -46,6 +41,6 @@ export default function RutasCobroPage() {
           <RutasCobroCreate />
         </TabsContent>
       </Tabs>
-    </motion.div>
+    </PageTransitionCrm>
   );
 }
