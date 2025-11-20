@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
 import { useGetSectores } from "../CrmRutas/hooks/Sectores/useGetSectores";
 import { useGetDepartamentos } from "../CrmRutas/hooks/Departamentos/useGetDepartamentos";
@@ -24,6 +24,7 @@ import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
 import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
 
 interface FormData {
   // Datos básicos
@@ -67,10 +68,12 @@ function EditCustomers() {
   const navigate = useNavigate();
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [fechaInstalacion, setFechaInstalacion] = useState<Date | null>(
     new Date()
   );
+  const [activeTab, setActiveTab] = useState<string>("general");
 
   const [depaSelected, setDepaSelected] = useState<number | null>(null);
   const [muniSelected, setMuniSelected] = useState<number | null>(null);
@@ -116,6 +119,13 @@ function EditCustomers() {
     fechaFirma: new Date(),
     idContrato: "",
     observaciones: "",
+  });
+
+  const handleTabChange = useTabChangeWithUrl({
+    activeTab,
+    setActiveTab,
+    searchParams,
+    setSearchParams,
   });
 
   const { data: customer } = useGetCustomer(id);
@@ -375,7 +385,7 @@ function EditCustomers() {
 
   const tabs = [
     {
-      value: "General",
+      value: "general",
       label: "General",
       content: (
         <CustomerEditFormCard
@@ -418,7 +428,7 @@ function EditCustomers() {
       ),
     },
     {
-      value: "Imágenes",
+      value: "media",
       label: "Imágenes",
       content: (
         <ImagesCustomer
@@ -429,8 +439,6 @@ function EditCustomers() {
       ),
     },
   ];
-  console.log("La data del cliente: ", customer);
-  console.log("La formData del cliente: ", formData);
 
   return (
     <PageTransitionCrm
@@ -439,10 +447,12 @@ function EditCustomers() {
       variant="fade-pure"
     >
       <ReusableTabs
-        className=""
+        setActiveTab={setActiveTab}
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
         tabs={tabs}
         variant="compact"
-        defaultValue="General"
+        defaultValue="general"
       />
 
       {/* Tus dialogs se quedan en el padre */}

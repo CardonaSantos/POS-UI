@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -93,6 +92,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isSameOrBefore);
@@ -548,942 +548,929 @@ const CrmPaymentFactura: React.FC = () => {
   console.log("La factura a pagar es: ", factura);
 
   return (
-    <div className="container mx-auto py-6 space-y-6 print:py-0">
-      {/* Botón de volver y título */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold tracking-tight">
-            Pago de Factura de Internet
-          </h1>
-        </div>
-      </div>
+    <PageTransitionCrm titleHeader="Factura" subtitle={``} variant="fade-pure">
+      <div className="">
+        {error && (
+          <Alert variant="destructive" className="print:hidden">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Mensajes de error y éxito */}
-      {error && (
-        <Alert variant="destructive" className="print:hidden">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : !factura ? (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Factura no encontrada</AlertTitle>
-          <AlertDescription>
-            No se pudo encontrar la factura solicitada.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Información de la factura */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <ReceiptText className="h-5 w-5" />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : !factura ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Factura no encontrada</AlertTitle>
+            <AlertDescription>
+              No se pudo encontrar la factura solicitada.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Información de la factura */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-1">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <ReceiptText className="h-4 w-4" />
                     Factura #{factura.id}
                   </CardTitle>
-                  <CardDescription>
-                    Detalles de la factura de servicio de internet
-                  </CardDescription>
-                </div>
-                <Badge
-                  className={`${getEstadoBadgeColor(
-                    factura.estadoFacturaInternet
-                  )} flex items-center`}
-                >
-                  {getEstadoIcon(factura.estadoFacturaInternet)}
-                  {factura.estadoFacturaInternet}
-                </Badge>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-full hover:bg-muted dark:hover:bg-gray-800"
-                    >
-                      <EllipsisVertical className="h-3.5 w-3.5" />
-                      <span className="sr-only">Acciones</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end" className="w-36">
-                    <DropdownMenuLabel className="text-sm">
-                      Acciones
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to={`/crm/editar?factura=${factura.id}`}
-                        className="flex items-center text-green-600 dark:text-green-400 focus:text-green-700 dark:focus:text-green-300"
-                      >
-                        <FilePenLine className="h-3.5 w-3.5 mr-2" />
-                        Editar
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setFacturaIdDelete(factura.id);
-                        setOpenDelete(true);
-                      }}
-                      className="text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 ">
-              {/* Detalles principales */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Servicio
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Wifi className="h-4 w-4 text-primary dark:text-white" />
-                    <span className="font-medium">
-                      {factura.cliente.servicioInternet?.nombre ||
-                        "Plan de Internet"}
-                    </span>
-                    {factura.cliente.servicioInternet?.velocidad && (
-                      <span className="text-sm text-muted-foreground">
-                        ({factura.cliente.servicioInternet.velocidad})
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Fecha de Pago Esperada
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CalendarClock
-                      className={`dark:text-white h-4 w-4 ${
-                        isFacturaVencida() ? "text-destructive" : "text-primary"
-                      }`}
-                    />
-                    <span
-                      className={
-                        isFacturaVencida() ? "text-destructive font-medium" : ""
-                      }
-                    >
-                      {formatDate(factura.fechaPagoEsperada)}
-                    </span>
-                    {isFacturaVencida() && (
-                      <Badge variant="destructive" className="text-xs">
-                        Vencida
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Fecha Pagada
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary dark:text-white " />
-                    <span>{formatDate(factura.fechaPagada)}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Monto Total
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-primary dark:text-white" />
-                    <span className="font-medium text-lg">
-                      {formatMoney(factura.montoPago)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Saldo Pendiente
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-primary dark:text-white" />
-                    <span
-                      className={`font-medium text-lg ${
-                        factura.saldoPendiente
-                          ? "text-destructive"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {formatMoney(factura.saldoPendiente)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Generado por
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {factura?.creador ? (
-                      <User className="h-4 w-4 text-primary dark:text-white" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-primary dark:text-white" />
-                    )}
-                    <span
-                      className={`font-medium text-lg ${
-                        factura.saldoPendiente
-                          ? "text-destructive"
-                          : "text-gray-600 dark:text-white"
-                      }`}
-                    >
-                      {factura?.creador?.nombre
-                        ? factura?.creador?.nombre
-                        : "Sistema Auto"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Detalles adicionales */}
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Detalle de la Factura
-                </div>
-                <div className="p-3 bg-muted rounded-md">
-                  {factura.detalleFactura || "Sin detalles adicionales"}
-                </div>
-              </div>
-
-              {/* Zona de facturación */}
-              {factura.facturacionZona && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Zona de Facturación
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary dark:text-white" />
-                    <span>{factura.facturacionZona.nombre}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Historial de pagos */}
-              {factura.pagos.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      Historial de Pagos
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs"
-                      onClick={() => setShowHistorial(true)}
-                    >
-                      <History className="h-3.5 w-3.5 mr-1" />
-                      Ver historial
-                    </Button>
-                  </div>
-                  <div className="text-sm">
-                    {factura.pagos.length === 1 ? (
-                      <span>1 pago registrado</span>
-                    ) : (
-                      <span>{factura.pagos.length} pagos registrados</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Otros servicios adquiridos */}
-              {/* {servicios && servicios.length > 0 && ( */}
-              <Card className="w-full shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Otros servicios adquiridos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    {servicios.map((servicio) => (
-                      <div
-                        key={servicio.id}
-                        className="flex items-center justify-between rounded-md border border-border/60 bg-card/50 p-2.5 hover:bg-accent/5 transition-colors"
-                      >
-                        <div className="flex items-start gap-2">
-                          <Badge
-                            variant="outline"
-                            className="flex h-6 items-center gap-1 bg-background"
-                          >
-                            <Globe className="h-3 w-3" />
-                            <span className="text-xs font-medium">
-                              {servicio.nombre}
-                            </span>
-                          </Badge>
-
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-semibold">
-                                {formatMoney(servicio.precio)}
-                              </span>
-
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                                  </TooltipTrigger>
-                                  <TooltipContent
-                                    side="top"
-                                    className="max-w-[200px] text-xs"
-                                  >
-                                    <p>{servicio.descripcion}</p>
-                                    <p className="mt-1 text-muted-foreground">
-                                      Adquirido: {formatDate(servicio.creadoEn)}
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Switch
-                          checked={serviciosSeleccionados?.includes(
-                            servicio.id
-                          )}
-                          onCheckedChange={(checked) => {
-                            handleCheckedServicio(checked, servicio.id);
-                          }}
-                          aria-label={`Agregar ${servicio.nombre} a la factura`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* )} */}
-            </CardContent>
-          </Card>
-
-          {/* Información del cliente */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5" />
-                Información del Cliente
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Nombre Completo
-                </div>
-                <div className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4 text-primary dark:text-white" />
-                  <span className="font-medium text-blue-500 underline">
-                    <Link to={`/crm/cliente/${factura.cliente.id}`}>
-                      {factura.cliente.nombre} {factura.cliente.apellidos || ""}
-                    </Link>
-                  </span>
-                </div>
-              </div>
-
-              {factura.cliente.telefono && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Teléfono
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary dark:text-white" />
-                    <span>{factura.cliente.telefono}</span>
-                  </div>
-                </div>
-              )}
-
-              {factura.cliente.direccion && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Dirección
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-primary mt-0.5 dark:text-white" />
-                    <span>{factura.cliente.direccion}</span>
-                  </div>
-                </div>
-              )}
-
-              {factura.cliente.dpi && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    DPI
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary dark:text-white" />
-                    <span>{factura.cliente.dpi}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Estado del Cliente
-                </div>
-                <div className="flex items-center gap-2">
                   <Badge
-                    className={
-                      factura.cliente.estadoCliente === EstadoCliente.ACTIVO
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : factura.cliente.estadoCliente === EstadoCliente.MOROSO
-                        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                    }
+                    className={`${getEstadoBadgeColor(
+                      factura.estadoFacturaInternet
+                    )} flex items-center text-xs`}
                   >
-                    {factura.cliente.estadoCliente === EstadoCliente.ACTIVO && (
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    {factura.cliente.estadoCliente === EstadoCliente.MOROSO && (
-                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    {factura.cliente.estadoCliente ===
-                      EstadoCliente.SUSPENDIDO && (
-                      <XCircle className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    {factura.cliente.estadoCliente}
+                    {getEstadoIcon(factura.estadoFacturaInternet)}
+                    {factura.estadoFacturaInternet}
                   </Badge>
-                </div>
-              </div>
 
-              <Separator />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full hover:bg-muted dark:hover:bg-gray-800"
+                      >
+                        <EllipsisVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
 
-              {/* Facturas pendientes */}
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Otras Facturas Pendientes
-                </div>
-                {facturasPendientes.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    No hay otras facturas pendientes
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <ScrollArea className="h-72">
-                      {facturasPendientes.map((facturaPendiente) => (
+                    <DropdownMenuContent align="end" className="w-32">
+                      <DropdownMenuLabel className="text-xs">
+                        Acciones
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
                         <Link
-                          to={`/crm/facturacion/pago-factura/${facturaPendiente.id}`}
+                          className="flex items-center text-xs"
+                          to={`/crm/editar?factura=${factura.id}`}
                         >
-                          <div
-                            key={facturaPendiente.id}
-                            className="flex justify-between items-center p-3 bg-muted rounded-md mb-2"
-                          >
-                            {/* Columna izquierda: ícono + info */}
-                            <div className="flex items-start gap-3">
-                              <Receipt className="h-5 w-5 text-primary dark:text-white mt-0.5" />
-                              <div className="space-y-1">
-                                <div className="text-sm font-medium">
-                                  Factura #{facturaPendiente.id}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Vence:{" "}
-                                  {formatDate(
-                                    facturaPendiente.fechaPagoEsperada
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Columna derecha: estado + monto */}
-                            <div className="flex flex-col items-end gap-1">
-                              <Badge
-                                className={`${getEstadoBadgeColor(
-                                  facturaPendiente.estadoFacturaInternet
-                                )}`}
-                              >
-                                {facturaPendiente.estadoFacturaInternet}
-                              </Badge>
-                              <div className="text-sm font-semibold">
-                                {formatMoney(facturaPendiente.montoPago)}
-                              </div>
-                            </div>
-                          </div>
+                          <FilePenLine className="h-3 w-3 mr-2" />
+                          Editar
                         </Link>
-                      ))}
-                    </ScrollArea>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                      </DropdownMenuItem>
 
-          {/* Formulario de pago */}
-          {canPayFactura() && (
-            <Card className="lg:col-span-3 print:hidden">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Wallet className="h-5 w-5" />
-                  Registrar Pago
-                </CardTitle>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setFacturaIdDelete(factura.id);
+                          setOpenDelete(true);
+                        }}
+                        className="text-red-600 dark:text-red-400 text-xs"
+                      >
+                        <Trash2 className="h-3 w-3 mr-2" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="montoPagado">Monto a Pagar</Label>
-                    <div className="relative">
-                      <CreditCard className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="montoPagado"
-                        name="montoPagado"
-                        type="number"
-                        step="0.01"
-                        className="pl-8"
-                        value={nuevoPago.montoPagado || ""}
-                        onChange={handleInputChange}
-                        required
-                        min="0.01"
-                        max={factura.saldoPendiente || factura.montoPago || 0}
+              <CardContent className="space-y-4 pt-2">
+                {/* Detalles principales */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Servicio */}
+                  <CompactField
+                    icon={<Wifi className="h-4 w-4" />}
+                    label="Servicio"
+                    value={
+                      factura.cliente.servicioInternet?.nombre ||
+                      "Plan de Internet"
+                    }
+                    extra={factura.cliente.servicioInternet?.velocidad}
+                  />
+
+                  {/* Fecha esperada */}
+                  <CompactField
+                    icon={
+                      <CalendarClock
+                        className={`h-4 w-4 ${
+                          isFacturaVencida()
+                            ? "text-destructive"
+                            : "text-primary dark:text-white"
+                        }`}
                       />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Saldo pendiente:{" "}
-                      {formatMoney(factura.saldoPendiente || factura.montoPago)}
+                    }
+                    label="Fecha de Pago Esperada"
+                    value={formatDate(factura.fechaPagoEsperada)}
+                    badge={
+                      isFacturaVencida() && (
+                        <Badge
+                          variant="destructive"
+                          className="text-[10px] px-1"
+                        >
+                          Vencida
+                        </Badge>
+                      )
+                    }
+                  />
+
+                  {/* Fecha pagada */}
+                  <CompactField
+                    icon={<Calendar className="h-4 w-4" />}
+                    label="Fecha Pagada"
+                    value={formatDate(factura.fechaPagada)}
+                  />
+
+                  {/* Monto total */}
+                  <CompactField
+                    icon={<CreditCard className="h-4 w-4" />}
+                    label="Monto Total"
+                    value={formatMoney(factura.montoPago)}
+                    valueClass="text-base"
+                  />
+
+                  {/* Saldo */}
+                  <CompactField
+                    icon={<CreditCard className="h-4 w-4" />}
+                    label="Saldo Pendiente"
+                    value={formatMoney(factura.saldoPendiente)}
+                    valueClass={`text-base ${
+                      factura.saldoPendiente
+                        ? "text-destructive"
+                        : "text-green-600"
+                    }`}
+                  />
+
+                  {/* Generado por */}
+                  <CompactField
+                    icon={
+                      factura?.creador ? (
+                        <User className="h-4 w-4" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
+                      )
+                    }
+                    label="Generado por"
+                    value={factura?.creador?.nombre ?? "Sistema Auto"}
+                    valueClass="text-base"
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Detalles adicionales */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Detalle de la Factura
+                  </div>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-xs">
+                      {factura.detalleFactura || "Sin detalles adicionales"}
                     </p>
                   </div>
+                </div>
 
+                {/* Zona de facturación */}
+                {factura.facturacionZona && (
                   <div className="space-y-2">
-                    <Label htmlFor="metodoPago">Método de Pago</Label>
-                    <Select
-                      onValueChange={(value) =>
-                        handleSelectChange("metodoPago", value)
-                      }
-                      defaultValue={nuevoPago.metodoPago}
-                    >
-                      <SelectTrigger id="metodoPago">
-                        <SelectValue placeholder="Seleccione un método de pago" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={MetodoPagoFacturaInternet.EFECTIVO}>
-                          <div className="flex items-center">
-                            <Coins className="h-4 w-4 mr-2" />
-                            Efectivo
-                          </div>
-                        </SelectItem>
-
-                        <SelectItem value={MetodoPagoFacturaInternet.DEPOSITO}>
-                          <div className="flex items-center">
-                            <Building className="h-4 w-4 mr-2" />
-                            Depósito
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={MetodoPagoFacturaInternet.TARJETA}>
-                          <div className="flex items-center">
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            Tarjeta
-                          </div>
-                        </SelectItem>
-
-                        <SelectItem value={MetodoPagoFacturaInternet.OTRO}>
-                          <div className="flex items-center">
-                            <Wallet className="h-4 w-4 mr-2" />
-                            Otro
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="fechaPago">Método de Pago</Label>
-                    <Input
-                      id="fechaPago"
-                      type="date"
-                      value={dayjs(nuevoPago.fechaPago).format("YYYY-MM-DD")}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const dateStr = e.target.value;
-                        const fechaGt = dayjs
-                          .tz(dateStr, "America/Guatemala")
-                          .toDate();
-                        setNuevoPago((prev) => ({
-                          ...prev,
-                          fechaPago: fechaGt,
-                        }));
-                      }}
-                    />
-                  </div>
-
-                  {/* Conditional field for receipt number when payment method is DEPOSITO */}
-                  {nuevoPago.metodoPago === "DEPOSITO" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="numeroBoleta">No. Boleta</Label>
-                      <div className="relative">
-                        <Receipt className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="numeroBoleta"
-                          name="numeroBoleta"
-                          className="pl-8"
-                          value={nuevoPago.numeroBoleta || ""}
-                          onChange={handleInputChange}
-                          placeholder="Ingrese número de boleta"
-                          required
-                        />
-                      </div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Zona de Facturación
                     </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary dark:text-white" />
+                      <span>{factura.facturacionZona.nombre}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Historial de pagos */}
+                {factura.pagos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Historial de Pagos
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setShowHistorial(true)}
+                      >
+                        <History className="h-3.5 w-3.5 mr-1" />
+                        Ver historial
+                      </Button>
+                    </div>
+                    <div className="text-sm">
+                      {factura.pagos.length === 1 ? (
+                        <span>1 pago registrado</span>
+                      ) : (
+                        <span>{factura.pagos.length} pagos registrados</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Otros servicios adquiridos */}
+                {/* {servicios && servicios.length > 0 && ( */}
+                <Card className="w-full shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Otros servicios adquiridos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      {servicios.map((servicio) => (
+                        <div
+                          key={servicio.id}
+                          className="flex items-center justify-between rounded-md border border-border/60 bg-card/50 p-2.5 hover:bg-accent/5 transition-colors"
+                        >
+                          <div className="flex items-start gap-2">
+                            <Badge
+                              variant="outline"
+                              className="flex h-6 items-center gap-1 bg-background"
+                            >
+                              <Globe className="h-3 w-3" />
+                              <span className="text-xs font-medium">
+                                {servicio.nombre}
+                              </span>
+                            </Badge>
+
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold">
+                                  {formatMoney(servicio.precio)}
+                                </span>
+
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="top"
+                                      className="max-w-[200px] text-xs"
+                                    >
+                                      <p>{servicio.descripcion}</p>
+                                      <p className="mt-1 text-muted-foreground">
+                                        Adquirido:{" "}
+                                        {formatDate(servicio.creadoEn)}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Switch
+                            checked={serviciosSeleccionados?.includes(
+                              servicio.id
+                            )}
+                            onCheckedChange={(checked) => {
+                              handleCheckedServicio(checked, servicio.id);
+                            }}
+                            aria-label={`Agregar ${servicio.nombre} a la factura`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* )} */}
+              </CardContent>
+            </Card>
+
+            {/* Información del cliente */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="pb-1">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <User className="h-4 w-4" />
+                  Información del Cliente
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                {/* Nombre */}
+                <CompactField
+                  label="Nombre Completo"
+                  icon={
+                    <UserCheck className="h-4 w-4 text-primary dark:text-white" />
+                  }
+                  value={
+                    <Link
+                      to={`/crm/cliente/${factura.cliente.id}`}
+                      className="font-medium text-blue-500 underline"
+                    >
+                      {factura.cliente.nombre} {factura.cliente.apellidos || ""}
+                    </Link>
+                  }
+                />
+
+                {/* Teléfono */}
+                {factura.cliente.telefono && (
+                  <CompactField
+                    label="Teléfono"
+                    icon={
+                      <Phone className="h-4 w-4 text-primary dark:text-white" />
+                    }
+                    value={factura.cliente.telefono}
+                  />
+                )}
+
+                {/* Dirección */}
+                {factura.cliente.direccion && (
+                  <CompactField
+                    label="Dirección"
+                    icon={
+                      <MapPin className="h-4 w-4 mt-0.5 text-primary dark:text-white" />
+                    }
+                    value={factura.cliente.direccion}
+                  />
+                )}
+
+                {/* DPI */}
+                {factura.cliente.dpi && (
+                  <CompactField
+                    label="DPI"
+                    icon={
+                      <FileText className="h-4 w-4 text-primary dark:text-white" />
+                    }
+                    value={factura.cliente.dpi}
+                  />
+                )}
+
+                {/* Estado del Cliente */}
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Estado del Cliente
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={
+                        factura.cliente.estadoCliente === EstadoCliente.ACTIVO
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : factura.cliente.estadoCliente ===
+                            EstadoCliente.MOROSO
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                      }
+                    >
+                      {factura.cliente.estadoCliente ===
+                        EstadoCliente.ACTIVO && (
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                      )}
+                      {factura.cliente.estadoCliente ===
+                        EstadoCliente.MOROSO && (
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                      )}
+                      {factura.cliente.estadoCliente ===
+                        EstadoCliente.SUSPENDIDO && (
+                        <XCircle className="h-3 w-3 mr-1" />
+                      )}
+                      {factura.cliente.estadoCliente}
+                    </Badge>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Facturas pendientes */}
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    Otras Facturas Pendientes
+                  </div>
+
+                  {facturasPendientes.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">
+                      No hay otras facturas pendientes
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-64">
+                      <div className="space-y-2">
+                        {facturasPendientes.map((f) => (
+                          <Link
+                            key={f.id}
+                            to={`/crm/facturacion/pago-factura/${f.id}`}
+                            className="block"
+                          >
+                            <div className="flex justify-between items-center p-2.5 bg-muted rounded-md">
+                              {/* Izquierda */}
+                              <div className="flex items-start gap-2">
+                                <Receipt className="h-4 w-4 text-primary dark:text-white mt-0.5" />
+                                <div className="space-y-0.5">
+                                  <div className="text-sm font-medium">
+                                    Factura #{f.id}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Vence: {formatDate(f.fechaPagoEsperada)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Derecha */}
+                              <div className="flex flex-col items-end gap-1">
+                                <Badge
+                                  className={getEstadoBadgeColor(
+                                    f.estadoFacturaInternet
+                                  )}
+                                >
+                                  {f.estadoFacturaInternet}
+                                </Badge>
+                                <div className="text-sm font-semibold">
+                                  {formatMoney(f.montoPago)}
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   )}
                 </div>
               </CardContent>
-
-              <CardFooter className="flex justify-end">
-                <Button
-                  onClick={() => setOpenConfirm(true)}
-                  type="button"
-                  // variant={"outline"}
-                  className="w-full md:w-auto bg-zinc-900 hover:bg-zinc-800"
-                  disabled={
-                    isSubmitting ||
-                    !nuevoPago.montoPagado ||
-                    Number(nuevoPago.montoPagado) <= 0
-                  }
-                >
-                  <Save className="mr-2 h-4 w-4 " />
-                  Registrar
-                </Button>
-              </CardFooter>
             </Card>
-          )}
-        </div>
-      )}
 
-      {/* Diálogo de historial de pagos */}
-      <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
-        {factura && (
-          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader className="space-y-3">
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <History className="h-5 w-5 text-blue-600" />
-                </div>
-                Historial de Pagos
-              </DialogTitle>
-              <div className="flex items-center justify-between">
-                <DialogDescription className="text-base">
-                  Factura #{factura?.id} • {factura?.pagos.length || 0} pago
-                  {factura?.pagos.length !== 1 ? "s" : ""} registrado
-                  {factura?.pagos.length !== 1 ? "s" : ""}
-                </DialogDescription>
-                <Badge variant="secondary" className="text-sm font-semibold">
-                  Total: {formatMoney(totalPagado)}
-                </Badge>
-              </div>
-            </DialogHeader>
-
-            <Separator />
-
-            <div className="flex-1 overflow-y-auto py-4">
-              {factura?.pagos.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="p-3 bg-gray-100 rounded-full mb-4">
-                      <FileText className="h-8 w-8 text-gray-400" />
+            {/* Formulario de pago */}
+            {canPayFactura() && (
+              <Card className="lg:col-span-3 print:hidden">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Wallet className="h-5 w-5" />
+                    Registrar Pago
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="montoPagado">Monto a Pagar</Label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="montoPagado"
+                          name="montoPagado"
+                          type="number"
+                          step="0.01"
+                          className="pl-8"
+                          value={nuevoPago.montoPagado || ""}
+                          onChange={handleInputChange}
+                          required
+                          min="0.01"
+                          max={factura.saldoPendiente || factura.montoPago || 0}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Saldo pendiente:{" "}
+                        {formatMoney(
+                          factura.saldoPendiente || factura.montoPago
+                        )}
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Sin pagos registrados
-                    </h3>
-                    <p className="text-gray-500 max-w-sm">
-                      No hay pagos registrados para esta factura. Los pagos
-                      aparecerán aquí una vez que se procesen.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {factura?.pagos.map((pago: any) => (
-                    <Card
-                      key={pago.id}
-                      className="hover:shadow-md transition-shadow duration-200"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex-shrink-0">
-                              <div className="p-2 bg-gray-100 dark:bg-zinc-900 rounded-lg">
-                                {getMetodoPagoIcon(pago.metodoPago)}
-                              </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="metodoPago">Método de Pago</Label>
+                      <Select
+                        onValueChange={(value) =>
+                          handleSelectChange("metodoPago", value)
+                        }
+                        defaultValue={nuevoPago.metodoPago}
+                      >
+                        <SelectTrigger id="metodoPago">
+                          <SelectValue placeholder="Seleccione un método de pago" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem
+                            value={MetodoPagoFacturaInternet.EFECTIVO}
+                          >
+                            <div className="flex items-center">
+                              <Coins className="h-4 w-4 mr-2" />
+                              Efectivo
                             </div>
+                          </SelectItem>
 
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-500">
-                                  {formatMoney(pago.montoPagado)}
-                                </h4>
-                                <Badge
-                                  variant="secondary"
-                                  className={getMetodoPagoBadgeColor(
-                                    pago.metodoPago
-                                  )}
-                                >
-                                  {pago.metodoPago}
-                                </Badge>
-                              </div>
-
-                              <div className="flex items-center gap-4 text-sm text-gray-600">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {formateDateWithMinutes(pago.fechaPago)}
-                                </div>
-
-                                <div className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {pago?.cobrador?.nombre || "No registrado"}
-                                </div>
-                              </div>
+                          <SelectItem
+                            value={MetodoPagoFacturaInternet.DEPOSITO}
+                          >
+                            <div className="flex items-center">
+                              <Building className="h-4 w-4 mr-2" />
+                              Depósito
                             </div>
-                          </div>
+                          </SelectItem>
+                          <SelectItem value={MetodoPagoFacturaInternet.TARJETA}>
+                            <div className="flex items-center">
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Tarjeta
+                            </div>
+                          </SelectItem>
 
-                          <div className="flex-shrink-0">
-                            <Link
-                              to={`/crm/factura-pago/pago-servicio-pdf/${facturaId}`}
-                            >
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="hover:bg-gray-50"
-                              >
-                                <Printer className="h-4 w-4 mr-2" />
-                                Imprimir
-                              </Button>
-                            </Link>
-                          </div>
+                          <SelectItem value={MetodoPagoFacturaInternet.OTRO}>
+                            <div className="flex items-center">
+                              <Wallet className="h-4 w-4 mr-2" />
+                              Otro
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="fechaPago">Método de Pago</Label>
+                      <Input
+                        id="fechaPago"
+                        type="date"
+                        value={dayjs(nuevoPago.fechaPago).format("YYYY-MM-DD")}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const dateStr = e.target.value;
+                          const fechaGt = dayjs
+                            .tz(dateStr, "America/Guatemala")
+                            .toDate();
+                          setNuevoPago((prev) => ({
+                            ...prev,
+                            fechaPago: fechaGt,
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    {/* Conditional field for receipt number when payment method is DEPOSITO */}
+                    {nuevoPago.metodoPago === "DEPOSITO" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="numeroBoleta">No. Boleta</Label>
+                        <div className="relative">
+                          <Receipt className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="numeroBoleta"
+                            name="numeroBoleta"
+                            className="pl-8"
+                            value={nuevoPago.numeroBoleta || ""}
+                            onChange={handleInputChange}
+                            placeholder="Ingrese número de boleta"
+                            required
+                          />
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            <div className="flex justify-between items-center pt-4">
-              <div className="text-sm text-gray-500">
-                {factura?.pagos.length > 0 && (
-                  <>
-                    Último pago:{" "}
-                    {formateDateWithMinutes(
-                      factura.pagos[factura.pagos.length - 1]?.fechaPago
+                      </div>
                     )}
-                  </>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex justify-end">
+                  <Button
+                    onClick={() => setOpenConfirm(true)}
+                    type="button"
+                    // variant={"outline"}
+                    className="w-full md:w-auto bg-zinc-900 hover:bg-zinc-800"
+                    disabled={
+                      isSubmitting ||
+                      !nuevoPago.montoPagado ||
+                      Number(nuevoPago.montoPagado) <= 0
+                    }
+                  >
+                    <Save className="mr-2 h-4 w-4 " />
+                    Registrar
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Diálogo de historial de pagos */}
+        <Dialog open={showHistorial} onOpenChange={setShowHistorial}>
+          {factura && (
+            <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
+              <DialogHeader className="space-y-3">
+                <DialogTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <History className="h-5 w-5 text-blue-600" />
+                  </div>
+                  Historial de Pagos
+                </DialogTitle>
+                <div className="flex items-center justify-between">
+                  <DialogDescription className="text-base">
+                    Factura #{factura?.id} • {factura?.pagos.length || 0} pago
+                    {factura?.pagos.length !== 1 ? "s" : ""} registrado
+                    {factura?.pagos.length !== 1 ? "s" : ""}
+                  </DialogDescription>
+                  <Badge variant="secondary" className="text-sm font-semibold">
+                    Total: {formatMoney(totalPagado)}
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              <Separator />
+
+              <div className="flex-1 overflow-y-auto py-4">
+                {factura?.pagos.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="p-3 bg-gray-100 rounded-full mb-4">
+                        <FileText className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Sin pagos registrados
+                      </h3>
+                      <p className="text-gray-500 max-w-sm">
+                        No hay pagos registrados para esta factura. Los pagos
+                        aparecerán aquí una vez que se procesen.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {factura?.pagos.map((pago: any) => (
+                      <Card
+                        key={pago.id}
+                        className="hover:shadow-md transition-shadow duration-200"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-shrink-0">
+                                <div className="p-2 bg-gray-100 dark:bg-zinc-900 rounded-lg">
+                                  {getMetodoPagoIcon(pago.metodoPago)}
+                                </div>
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-500">
+                                    {formatMoney(pago.montoPagado)}
+                                  </h4>
+                                  <Badge
+                                    variant="secondary"
+                                    className={getMetodoPagoBadgeColor(
+                                      pago.metodoPago
+                                    )}
+                                  >
+                                    {pago.metodoPago}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {formateDateWithMinutes(pago.fechaPago)}
+                                  </div>
+
+                                  <div className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {pago?.cobrador?.nombre || "No registrado"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex-shrink-0">
+                              <Link
+                                to={`/crm/factura-pago/pago-servicio-pdf/${facturaId}`}
+                              >
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="hover:bg-gray-50"
+                                >
+                                  <Printer className="h-4 w-4 mr-2" />
+                                  Imprimir
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
-              <Button
-                onClick={() => setShowHistorial(false)}
-                className="min-w-[100px]"
-              >
-                Cerrar
-              </Button>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
 
-      <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
-          {/* Warning icon */}
-          <div className="flex justify-center mt-6">
-            <div className="rounded-full p-3 shadow-lg border-4 border-white">
-              <div className="bg-amber-100 p-3 rounded-full animate-pulse">
-                <AlertCircle className="h-8 w-8 text-amber-600" />
+              <Separator />
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="text-sm text-gray-500">
+                  {factura?.pagos.length > 0 && (
+                    <>
+                      Último pago:{" "}
+                      {formateDateWithMinutes(
+                        factura.pagos[factura.pagos.length - 1]?.fechaPago
+                      )}
+                    </>
+                  )}
+                </div>
+                <Button
+                  onClick={() => setShowHistorial(false)}
+                  className="min-w-[100px]"
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </DialogContent>
+          )}
+        </Dialog>
+
+        <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
+          <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
+            {/* Warning icon */}
+            <div className="flex justify-center mt-6">
+              <div className="rounded-full p-3 shadow-lg border-4 border-white">
+                <div className="bg-amber-100 p-3 rounded-full animate-pulse">
+                  <AlertCircle className="h-8 w-8 text-amber-600" />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Header */}
-          <DialogHeader className="pt-8 px-6 pb-2">
-            <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
-              Confirmación de Pago
-            </DialogTitle>
-            <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
-              Por favor revise los datos antes de continuar
-            </p>
-          </DialogHeader>
-
-          <div className="px-6 py-4">
-            {/* Question card */}
-            <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
-              <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
-                ¿Estás seguro de que deseas registrar este pago con estos datos?
-              </h3>
-              <p className="text-sm text-gray-600 text-center dark:text-gray-400">
-                Por favor, revisa cuidadosamente los datos antes de proceder.
+            {/* Header */}
+            <DialogHeader className="pt-8 px-6 pb-2">
+              <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
+                Confirmación de Pago
+              </DialogTitle>
+              <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
+                Por favor revise los datos antes de continuar
               </p>
+            </DialogHeader>
+
+            <div className="px-6 py-4">
+              {/* Question card */}
+              <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
+                <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
+                  ¿Estás seguro de que deseas registrar este pago con estos
+                  datos?
+                </h3>
+                <p className="text-sm text-gray-600 text-center dark:text-gray-400">
+                  Por favor, revisa cuidadosamente los datos antes de proceder.
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenConfirm(false)}
+                  className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmitPago}
+                  className="w-full bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Registrar Pago
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={openPdfPago} onOpenChange={setOpenPdfPago}>
+          <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl hite">
+            {/* Success icon */}
+            <div className="flex justify-center mt-6">
+              <div className="rounded-full p-3 shadow-lg border-4 border-white">
+                <div className="bg-emerald-100 p-3 rounded-full animate-pulse">
+                  <BadgeCheck className="h-8 w-8 text-emerald-600" />
+                </div>
+              </div>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
+            {/* Header */}
+            <DialogHeader className="pt-8 px-6 pb-2">
+              <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
+                Pago registrado exitosamente
+              </DialogTitle>
+              <p
+                className="text-center text-gray-600 text-sm mt-1 
+            dark:text-gray-400
+            "
+              >
+                Su transacción ha sido procesada correctamente
+              </p>
+            </DialogHeader>
 
-            {/* Action buttons */}
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
+            <div className="px-6 py-4">
+              {/* Question card */}
+              <div
+                className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner
+            dark:bg-stone-950
+            "
+              >
+                <h3
+                  className="font-medium mb-2 text-gray-800 text-center
+            dark:text-gray-400
+              
+              "
+                >
+                  ¿Desea imprimir su comprobante?
+                </h3>
+                <p
+                  className="text-sm text-gray-600 text-center
+            dark:text-gray-400
+              
+              "
+                >
+                  Puede descargar el comprobante ahora o acceder a él más tarde
+                  desde su historial.
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenPdfPago(false)}
+                  className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cerrar
+                </Button>
+                <Link
+                  to={`/crm/factura-pago/pago-servicio-pdf/${facturaId}`}
+                  className="w-full sm:w-auto"
+                >
+                  <Button
+                    onClick={() => setOpenPdfPago(false)}
+                    className="w-full bg-zinc-900  hover:bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar comprobante
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={openDelete} onOpenChange={setOpenDelete}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                Confirmar Eliminación
+              </DialogTitle>
+              <DialogDescription className="text-center">
+                ¿Está seguro que desea eliminar esta factura? Esta acción no se
+                puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Advertencia</AlertTitle>
+                <AlertDescription>
+                  El saldo y estado del cliente se verán afectados en función de
+                  su saldo actual y su relacion con sus facturas.
+                </AlertDescription>
+              </Alert>
+            </div>
+            <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setOpenConfirm(false)}
-                className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
+                onClick={() => setOpenDelete(false)}
+                // disabled={isLoading}
               >
-                <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
               <Button
-                type="button"
-                onClick={handleSubmitPago}
-                className="w-full bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
+                variant="destructive"
+                onClick={handleDeleteFactura}
+                disabled={isDeleting}
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Registrar Pago
-                  </>
-                )}
+                Eliminar
               </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openPdfPago} onOpenChange={setOpenPdfPago}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl hite">
-          {/* Success icon */}
-          <div className="flex justify-center mt-6">
-            <div className="rounded-full p-3 shadow-lg border-4 border-white">
-              <div className="bg-emerald-100 p-3 rounded-full animate-pulse">
-                <BadgeCheck className="h-8 w-8 text-emerald-600" />
-              </div>
-            </div>
-          </div>
-
-          {/* Header */}
-          <DialogHeader className="pt-8 px-6 pb-2">
-            <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
-              Pago registrado exitosamente
-            </DialogTitle>
-            <p
-              className="text-center text-gray-600 text-sm mt-1 
-            dark:text-gray-400
-            "
-            >
-              Su transacción ha sido procesada correctamente
-            </p>
-          </DialogHeader>
-
-          <div className="px-6 py-4">
-            {/* Question card */}
-            <div
-              className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner
-            dark:bg-stone-950
-            "
-            >
-              <h3
-                className="font-medium mb-2 text-gray-800 text-center
-            dark:text-gray-400
-              
-              "
-              >
-                ¿Desea imprimir su comprobante?
-              </h3>
-              <p
-                className="text-sm text-gray-600 text-center
-            dark:text-gray-400
-              
-              "
-              >
-                Puede descargar el comprobante ahora o acceder a él más tarde
-                desde su historial.
-              </p>
-            </div>
-
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
-
-            {/* Action buttons */}
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
-              <Button
-                variant="outline"
-                onClick={() => setOpenPdfPago(false)}
-                className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cerrar
-              </Button>
-              <Link
-                to={`/crm/factura-pago/pago-servicio-pdf/${facturaId}`}
-                className="w-full sm:w-auto"
-              >
-                <Button
-                  onClick={() => setOpenPdfPago(false)}
-                  className="w-full bg-zinc-900  hover:bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Descargar comprobante
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              Confirmar Eliminación
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              ¿Está seguro que desea eliminar esta factura? Esta acción no se
-              puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Advertencia</AlertTitle>
-              <AlertDescription>
-                El saldo y estado del cliente se verán afectados en función de
-                su saldo actual y su relacion con sus facturas.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpenDelete(false)}
-              // disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteFactura}
-              disabled={isDeleting}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageTransitionCrm>
   );
 };
 
 export default CrmPaymentFactura;
+function CompactField({ icon, label, value, extra, badge, valueClass }: any) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className={`font-medium ${valueClass || "text-sm"}`}>
+          {value}
+        </span>
+        {extra && (
+          <span className="text-xs text-muted-foreground">({extra})</span>
+        )}
+        {badge}
+      </div>
+    </div>
+  );
+}

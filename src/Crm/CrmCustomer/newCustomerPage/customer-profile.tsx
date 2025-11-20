@@ -1,7 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { User, Ticket, Image } from "lucide-react"; // Mantener User y Ticket para otros triggers
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { LocationTab } from "./location-tab";
@@ -20,7 +18,14 @@ import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
 import EmptyImages from "./CrmCustomerGalery/EmptyImages";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
-
+import {
+  ReusableTabs,
+  TabItem,
+} from "@/Crm/Utils/Components/tabs/reusable-tabs";
+import { FileText, Image, MapPinned, Ticket, User } from "lucide-react";
+import { useTabChangeWithUrl } from "@/Crm/Utils/Components/handleTabChangeWithParamURL";
+import { MikroTikIcon } from "@/Crm/Icons/MikroTikIcon";
+import CustomerNetworkControl from "./CustomerNetworkControl/customer-network-controll";
 interface PlantillasInterface {
   id: number;
   nombre: string;
@@ -46,20 +51,14 @@ interface Contrato {
   ssid: string;
   wifiPassword: string;
 }
-type TabValue =
-  | "resumen"
-  | "imagenes"
-  | "ubicacion"
-  | "tickets"
-  | "facturacion";
 
 export default function CustomerProfile() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const { id } = useParams();
   const clienteId = id ? Number(id) : 0;
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = (searchParams.get("tab") as TabValue) || "resumen";
-  const [activeTab, setActiveTab] = useState<TabValue>(defaultTab);
+  const defaultTab = (searchParams.get("tab") as string) || "resumen";
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
   // Estado local para mantener compatibilidad con el código existente
   const [plantillas, setPlantillas] = useState<PlantillasInterface[]>([]);
   // Estados para diálogos
@@ -121,15 +120,15 @@ export default function CustomerProfile() {
     refetchCliente();
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as TabValue);
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", value);
-    setSearchParams(params, { replace: true }); // replace para no llenar el historial, o quítalo si quieres que el back vaya tab por tab
-  };
+  const handleChangeTabs = useTabChangeWithUrl({
+    activeTab,
+    setActiveTab,
+    searchParams,
+    setSearchParams,
+  });
 
   useEffect(() => {
-    const urlTab = (searchParams.get("tab") as TabValue) || "resumen";
+    const urlTab = (searchParams.get("tab") as string) || "resumen";
     if (urlTab !== activeTab) {
       setActiveTab(urlTab);
     }
@@ -159,6 +158,58 @@ export default function CustomerProfile() {
     : [];
 
   console.log("Los datos del cliente son: ", cliente);
+  const contentMediaSection = secureImages.length ? (
+    <CustomerImagesGallery
+      customerId={clienteSecure.id}
+      images={secureImages}
+    />
+  ) : (
+    <EmptyImages customerId={clienteSecure.id} />
+  );
+
+  const tabs: Array<TabItem> = [
+    {
+      value: "resumen",
+      label: "General",
+      content: <ClientOverview cliente={clienteSecure} />,
+      icon: <User size={16} />,
+    },
+
+    {
+      value: "imagenes",
+      label: "Media",
+      content: contentMediaSection,
+      icon: <Image size={16} />,
+    },
+
+    {
+      value: "ubicacion",
+      label: "Dirección",
+      content: <LocationTab {...commonTabProps} />,
+      icon: <MapPinned size={16} />,
+    },
+
+    {
+      value: "tickets",
+      label: "Soporte",
+      content: <TicketsTab {...commonTabProps} />,
+      icon: <Ticket size={16} />,
+    },
+    {
+      value: "facturacion",
+      label: "Facturación",
+      content: <BillingTab {...commonTabProps} />,
+      icon: <FileText size={16} />,
+    },
+
+    {
+      value: "mikrotik",
+      label: "MikroTik",
+      content: <CustomerNetworkControl cliente={clienteSecure} />,
+      icon: <MikroTikIcon scale={16} />,
+    },
+  ];
+
   return (
     <PageTransitionCrm
       titleHeader="Perfil del cliente"
@@ -170,146 +221,13 @@ export default function CustomerProfile() {
         plantillas={plantillas}
         setOpenCreateContrato={setOpenCreateContrato}
       />
-      <Tabs
-        defaultValue="resumen" // Cambiado a 'resumen'
-        value={activeTab}
-        onValueChange={handleTabChange}
-        className="space-y-4"
-      >
-        {/* Tabs mejorados para móvil */}
-        <div className="w-full overflow-x-auto">
-          <TabsList className="flex w-full border-b border-gray-200 dark:border-gray-700">
-            <TabsTrigger
-              value="resumen"
-              className="
-        flex-1 flex justify-center items-center gap-1
-        px-2 py-1 sm:px-3 sm:py-2
-        text-xs sm:text-sm whitespace-nowrap
-        data-[state=active]:border-b-2
-        data-[state=active]:border-primary
-        data-[state=active]:text-primary
-      "
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden xs:inline">Resumen</span>
-            </TabsTrigger>
+      <ReusableTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        handleTabChange={handleChangeTabs}
+        tabs={tabs}
+      />
 
-            <TabsTrigger
-              value="imagenes"
-              className="
-        flex-1 flex justify-center items-center gap-1
-        px-2 py-1 sm:px-3 sm:py-2
-        text-xs sm:text-sm whitespace-nowrap
-        data-[state=active]:border-b-2
-        data-[state=active]:border-primary
-        data-[state=active]:text-primary
-      "
-            >
-              <Image className="h-4 w-4" />
-              <span className="hidden xs:inline">Imagenes</span>
-            </TabsTrigger>
-
-            {/** Ubicación **/}
-            <TabsTrigger
-              value="ubicacion"
-              className="
-        flex-1 flex justify-center items-center gap-1
-        px-2 py-1 sm:px-3 sm:py-2
-        text-xs sm:text-sm whitespace-nowrap
-        data-[state=active]:border-b-2
-        data-[state=active]:border-primary
-        data-[state=active]:text-primary
-      "
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                />
-              </svg>
-              <span className="hidden xs:inline">Ubicación</span>
-            </TabsTrigger>
-
-            {/** Tickets **/}
-            <TabsTrigger
-              value="tickets"
-              className="
-        flex-1 flex justify-center items-center gap-1
-        px-2 py-1 sm:px-3 sm:py-2
-        text-xs sm:text-sm whitespace-nowrap
-        data-[state=active]:border-b-2
-        data-[state=active]:border-primary
-        data-[state=active]:text-primary
-      "
-            >
-              <Ticket className="h-4 w-4" />
-              <span className="hidden xs:inline">Tickets</span>
-            </TabsTrigger>
-
-            {/** Facturación **/}
-            <TabsTrigger
-              value="facturacion"
-              className="
-        flex-1 flex justify-center items-center gap-1
-        px-2 py-1 sm:px-3 sm:py-2
-        text-xs sm:text-sm whitespace-nowrap
-        data-[state=active]:border-b-2
-        data-[state=active]:border-primary
-        data-[state=active]:text-primary
-      "
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                />
-              </svg>
-              <span className="hidden xs:inline">Facturación</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Contenido de los tabs */}
-        <TabsContent value="resumen" className="mt-4">
-          <ClientOverview cliente={clienteSecure} />{" "}
-        </TabsContent>
-
-        <TabsContent value="imagenes" className="mt-4">
-          {secureImages.length > 0 ? (
-            <CustomerImagesGallery
-              customerId={clienteSecure.id}
-              images={secureImages}
-            />
-          ) : (
-            <EmptyImages customerId={clienteSecure.id} />
-          )}
-        </TabsContent>
-
-        {/* Las TabsContent para "general" y "servicio" se eliminan */}
-        <TabsContent value="ubicacion" className="mt-4">
-          <LocationTab {...commonTabProps} />
-        </TabsContent>
-        <TabsContent value="tickets" className="mt-4">
-          <TicketsTab {...commonTabProps} />
-        </TabsContent>
-        <TabsContent value="facturacion" className="mt-4">
-          <BillingTab {...commonTabProps} />
-        </TabsContent>
-      </Tabs>
       {/* Diálogos modularizados */}
       <CustomerDialogs
         // Estados de diálogos

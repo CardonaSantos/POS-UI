@@ -35,100 +35,92 @@ export function LocationTab({ cliente }: LocationTabProps) {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      {" "}
-      {/* Añadido padding general */}
-      <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-        <CardHeader className="pb-3">
-          {" "}
-          {/* Ajustado padding-bottom */}
-          <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-            {" "}
-            {/* Título más grande y con color */}
-            <Map className="h-4 w-4 mr-2 text-primary dark:text-white" />
-            Ubicación del Cliente
-          </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            {" "}
-            {/* Tamaño de texto y color */}
-            Dirección: {cliente.direccion || "Dirección no especificada"}
-          </CardDescription>
-          <CardDescription className="text-sm text-muted-foreground">
-            {" "}
-            {/* Tamaño de texto y color */}
-            Sector: {cliente.sector?.nombre || "Sector no especificado"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {cliente.ubicacion ? (
-            <div className="space-y-4">
-              <div className="aspect-video w-full rounded-md overflow-hidden border border-gray-200 dark:border-gray-700">
-                {" "}
-                {/* Borde más claro */}
-                <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyD_hzrV-YS5EaHDm-UK3jL0ny6gsJoj_18&q=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Ubicación del cliente"
-                />
+    <Card className="border border-gray-200 dark:border-gray-700">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
+          <Map className="h-4 w-4 mr-2 text-primary dark:text-white" />
+          Ubicación del Cliente
+        </CardTitle>
+
+        <CardDescription className="text-xs text-muted-foreground">
+          Dirección: {cliente.direccion || "Dirección no especificada"}
+        </CardDescription>
+        <CardDescription className="text-xs text-muted-foreground">
+          Sector: {cliente.sector?.nombre || "Sector no especificado"}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {cliente.ubicacion ? (
+          <div className="space-y-3">
+            {/* MAPA COMPACTO */}
+            <div
+              className="
+              w-full
+              overflow-hidden
+              rounded-md
+              border border-gray-200 dark:border-gray-700
+              h-[220px] sm:h-[260px]    /* 👈 ALTURA AJUSTADA */
+            "
+            >
+              <iframe
+                src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyD_hzrV-YS5EaHDm-UK3jL0ny6gsJoj_18&q=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación del cliente"
+              />
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={abrirGoogleMaps}
+                className="flex-1 text-xs"
+                size="sm"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Ver en Maps
+              </Button>
+              <Button
+                onClick={iniciarRuta}
+                variant="outline"
+                className="flex-1 text-xs"
+                size="sm"
+              >
+                <Navigation className="h-4 w-4 mr-1" />
+                Iniciar Ruta
+              </Button>
+            </div>
+
+            {/* Coordenadas */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p className="font-medium text-muted-foreground">Latitud</p>
+                <p className="font-mono text-gray-900 dark:text-gray-50">
+                  {cliente.ubicacion.latitud}
+                </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                {" "}
-                {/* Espaciado entre botones */}
-                <Button
-                  onClick={abrirGoogleMaps}
-                  className="flex-1 text-sm"
-                  size="sm" // Tamaño de botón consistente
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />{" "}
-                  {/* Icono más grande */}
-                  Ver en Maps
-                </Button>
-                <Button
-                  onClick={iniciarRuta}
-                  variant="outline"
-                  className="flex-1 text-sm bg-transparent"
-                  size="sm" // Tamaño de botón consistente
-                >
-                  <Navigation className="h-4 w-4 mr-2" />{" "}
-                  {/* Icono más grande */}
-                  Iniciar Ruta
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                {" "}
-                {/* Espaciado y tamaño de texto */}
-                <div>
-                  <p className="font-medium text-muted-foreground">Latitud</p>
-                  <p className="font-mono text-gray-900 dark:text-gray-50">
-                    {cliente.ubicacion.latitud}
-                  </p>{" "}
-                  {/* Color de texto */}
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Longitud</p>
-                  <p className="font-mono text-gray-900 dark:text-gray-50">
-                    {cliente.ubicacion.longitud}
-                  </p>{" "}
-                  {/* Color de texto */}
-                </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Longitud</p>
+                <p className="font-mono text-gray-900 dark:text-gray-50">
+                  {cliente.ubicacion.longitud}
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Map className="h-16 w-16 mx-auto text-muted-foreground opacity-50 mb-4" />{" "}
-              {/* Icono más grande y margen */}
-              <p className="mt-2 text-base text-muted-foreground">
-                No hay información de ubicación disponible.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <Map className="h-10 w-10 mx-auto text-muted-foreground opacity-50 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              No hay información de ubicación disponible.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

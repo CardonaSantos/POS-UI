@@ -47,7 +47,7 @@ export function CustomerHeader({
   setOpenCreateContrato,
 }: CustomerHeaderProps) {
   return (
-    <div className="flex flex-col gap-2 mb-4">
+    <div className="flex flex-col mb-1">
       {/* Información del cliente */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-1 truncate">

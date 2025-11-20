@@ -15,18 +15,19 @@ interface ReusableTabsProps {
   defaultValue?: string;
   className?: string;
   variant?: "default" | "compact" | "minimal";
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  activeTab: string;
+  handleTabChange?: (value: string) => void;
 }
 
 export function ReusableTabs({
   tabs,
-  defaultValue,
+  // defaultValue,
   className,
   variant = "default",
+  handleTabChange,
+  activeTab,
 }: ReusableTabsProps) {
-  const [activeTab, setActiveTab] = React.useState(
-    defaultValue || tabs[0]?.value || ""
-  );
-
   const variantStyles = {
     default: {
       list: "w-full sm:w-auto overflow-x-auto",
@@ -51,7 +52,7 @@ export function ReusableTabs({
   return (
     <Tabs
       value={activeTab}
-      onValueChange={setActiveTab}
+      onValueChange={handleTabChange}
       className={cn("w-full", className)}
     >
       <TabsList
@@ -70,7 +71,7 @@ export function ReusableTabs({
             )}
           >
             {tab.icon && (
-              <span className="mr-1.5 hidden sm:inline">{tab.icon}</span>
+              <span className="mr-1.5 hidden sm:inline ">{tab.icon}</span>
             )}
             <span className="truncate">{tab.label}</span>
           </TabsTrigger>
