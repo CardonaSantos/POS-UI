@@ -17,6 +17,8 @@ export interface UpdateCustomerDto {
   municipioId: number | null;
   departamentoId: number | null;
   sectorId: number | null;
+  mikrotikRouterId: number | null;
+
   empresaId: number;
   coordenadas: string[];
   servicesIds: number[];

@@ -73,7 +73,7 @@ import CrmServiceManage from "./Crm/CrmServices/CrmServiceManage";
 import ServicioInternetManage from "./Crm/CrmServices/CrmServiciosWifi/CrmServicesWifi";
 import FacturacionZonaManage from "./Crm/CrmFacturacion/FacturacionZonaManage";
 import Samples1 from "./Samples/Samples1";
-import EtiquetaTicketManage from "./Crm/CrmTickets/CrmTagsTickets/EtiquetaTicketManage";
+import EtiquetaTicketManage from "./Crm/CrmTickets/CrmUtilidadesSoporte/UtilidadesSoporteMain";
 import CrmPaymentFactura from "./Crm/CrmBilling/CrmFacturacion/CrmPaymentFactura";
 import CrmRuta from "./Crm/CrmRutas/CrmRuta";
 import CrmPdfPago from "./Crm/CrmPdfPago/CrmPdfPago";

@@ -54,6 +54,7 @@ import {
 } from "../features/cliente-interfaces/cliente-types";
 import DatePicker from "react-datepicker";
 import { Switch } from "@/components/ui/switch";
+import { MikrotikRoutersResponse } from "../features/mikro-tiks/mikrotiks.interfaces";
 
 // ========= Tipos que ya tienes en el padre ========= USAR UNO SOLO
 interface FormData {
@@ -115,6 +116,9 @@ export interface CustomerEditFormCardProps {
   secureSectores: Sector[];
   secureServiciosWifi: ServiciosInternet[];
   secureZonasFacturacion: FacturacionZona[];
+
+  mikrotiks: MikrotikRoutersResponse[];
+  optionsMikrotiks: OptionSelected[];
   // handlers de inputs
   onChangeForm: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -131,6 +135,7 @@ export interface CustomerEditFormCardProps {
   onChangeFechaInstalacion: (date: Date | null) => void;
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
   handleEnviarRecordatorioChange: (checked: boolean) => void;
+  handleSelectMk: (selectedOption: OptionSelected | null) => void;
 
   //hanlerss
   handleChangeDataContrato: (
@@ -140,6 +145,7 @@ export interface CustomerEditFormCardProps {
   // botones footer
   onClickDelete: () => void;
   onClickOpenConfirm: () => void;
+  mkSelected: number | null;
 }
 
 export function CustomerEditFormCard({
@@ -175,10 +181,18 @@ export function CustomerEditFormCard({
   onClickDelete,
   onClickOpenConfirm,
   setFormDataContrato,
+  mkSelected,
+  mikrotiks,
+  // mikrotiks,
+  optionsMikrotiks,
+  handleSelectMk,
+
   // handlers
   handleChangeDataContrato,
   handleEnviarRecordatorioChange,
 }: CustomerEditFormCardProps) {
+  console.log("El form data es: ", formData);
+
   return (
     <Card>
       <CardContent>
@@ -523,7 +537,7 @@ export function CustomerEditFormCard({
                     Estado del cliente
                   </Label>
                   <Select
-                    defaultValue={formData.estado}
+                    value={formData.estado}
                     onValueChange={onSelectEstadoCliente}
                   >
                     <SelectTrigger id="estadoCliente" className="w-full">
@@ -618,6 +632,31 @@ export function CustomerEditFormCard({
                   id="fechaInstalacion-all"
                 />
               </div>
+            </div>
+          </section>
+
+          <section>
+            <div className="space-y-1">
+              <Label htmlFor="servicioWifiId-all">
+                MIKROTIK <span className="text-destructive">*</span>
+              </Label>
+              <ReactSelectComponent
+                placeholder="Selecciona un Router Mk"
+                isClearable
+                options={optionsMikrotiks}
+                onChange={handleSelectMk}
+                value={
+                  mkSelected !== null
+                    ? {
+                        value: mkSelected,
+                        label:
+                          mikrotiks.find((s) => s.id === mkSelected)?.nombre ||
+                          "",
+                      }
+                    : null
+                }
+                className="text-sm text-black"
+              />
             </div>
           </section>
 

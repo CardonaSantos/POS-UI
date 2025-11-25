@@ -42,7 +42,7 @@ const formatearMoneda = (valor: number) => {
 
 export function ClientOverview({ cliente }: ClientOverviewProps) {
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Información Personal & Contacto de Referencia */}
         <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">

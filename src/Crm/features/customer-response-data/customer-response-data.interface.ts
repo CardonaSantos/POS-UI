@@ -10,6 +10,7 @@ import {
   Municipios,
 } from "../locations-interfaces/municipios_departamentos.interfaces";
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
+import { MikroTikCustomerResponse } from "../mikro-tiks/mikrotiks.interfaces";
 
 export interface CustomerDataResponse {
   id: number;
@@ -33,6 +34,7 @@ export interface CustomerDataResponse {
   departamento: Departamentos;
   municipio: Municipios;
   sector: Sector;
+  mikrotik: MikroTikCustomerResponse;
   servicios: Servicio[];
   servicioWifi: ServiciosInternet;
   zonaFacturacion: FacturacionZona;

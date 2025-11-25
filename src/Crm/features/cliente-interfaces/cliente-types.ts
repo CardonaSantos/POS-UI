@@ -2,6 +2,7 @@
 // ROOT: ClienteDetailsDto
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
 import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
+import { MikrotikRoutersResponse } from "../mikro-tiks/mikrotiks.interfaces";
 export interface ClienteDetailsDto {
   id: number;
   nombre: string;
@@ -23,6 +24,7 @@ export interface ClienteDetailsDto {
   departamento: Departamentos;
   empresa: Empresa;
   IP: IP;
+  mikrotik: MikrotikRoutersResponse;
   ubicacion: Ubicacion;
   saldoCliente: SaldoCliente | null;
   creadoEn: string;

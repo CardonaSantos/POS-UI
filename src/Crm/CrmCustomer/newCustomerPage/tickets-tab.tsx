@@ -104,7 +104,7 @@ export function TicketsTab({ cliente }: TicketsTabProps) {
   console.log("Los tickets de soporte son: ", cliente.ticketSoporte);
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       {" "}
       {/* Añadido padding general */}
       <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">

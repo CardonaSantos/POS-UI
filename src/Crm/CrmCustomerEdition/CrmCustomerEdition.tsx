@@ -25,6 +25,7 @@ import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
+import { useGetMikroTiks } from "../CrmRutas/hooks/Mikrotik/useGetMikroTik";
 
 interface FormData {
   // Datos básicos
@@ -78,6 +79,8 @@ function EditCustomers() {
   const [depaSelected, setDepaSelected] = useState<number | null>(null);
   const [muniSelected, setMuniSelected] = useState<number | null>(null);
   const [serviceSelected, setServiceSelected] = useState<number[]>([]);
+  const [mkSelected, setMkSelected] = useState<number | null>(null);
+
   const [serviceWifiSelected, setServiceWifiSelected] = useState<number | null>(
     null
   );
@@ -129,6 +132,7 @@ function EditCustomers() {
   });
 
   const { data: customer } = useGetCustomer(id);
+  const { data: mikrotiksResponse } = useGetMikroTiks();
 
   const { data: zonasFacturacion } = useGetZonasFacturacion();
   const { data: serviciosWifi } = useGetServiciosWifi();
@@ -144,7 +148,7 @@ function EditCustomers() {
   const secureDepartamentos = departamentos ? departamentos : [];
   const secureMunicipios = municipios ? municipios : [];
   const secureServicios = servicios ? servicios : [];
-
+  const secureMikroTiks = mikrotiksResponse ? mikrotiksResponse : [];
   const secureServiciosWifi = serviciosWifi ? serviciosWifi : [];
   const secureZonasFacturacion = zonasFacturacion ? zonasFacturacion : [];
 
@@ -160,6 +164,11 @@ function EditCustomers() {
         customerId: img.customerId,
       }))
     : [];
+
+  const optionsMikrotiks: OptionSelected[] = secureMikroTiks.map((mk) => ({
+    value: mk.id,
+    label: mk.nombre,
+  }));
 
   const optionsDepartamentos: OptionSelected[] = secureDepartamentos.map(
     (depa) => ({
@@ -187,13 +196,13 @@ function EditCustomers() {
 
   const optionsZonasFacturacion: OptionSelected[] = secureZonasFacturacion.map(
     (zona) => ({
-      value: zona.id, // 👈 number directo
+      value: zona.id,
       label: `${zona.nombre} Clientes: (${zona.clientesCount}) Facturas:(${zona.facturasCount})`,
     })
   );
 
   const optionsSectores: OptionSelected[] = secureSectores.map((sector) => ({
-    value: sector.id, // 👈 number directo
+    value: sector.id,
     label: sector.nombre,
   }));
 
@@ -218,6 +227,10 @@ function EditCustomers() {
     setServiceSelected(
       selectedOption ? selectedOption.map((option) => Number(option.value)) : []
     );
+  };
+
+  const handleSelectMk = (selectedOption: OptionSelected | null) => {
+    setMkSelected(selectedOption ? Number(selectedOption.value) : null);
   };
 
   const handleSelectServiceWifi = (selectedOption: OptionSelected | null) => {
@@ -289,9 +302,11 @@ function EditCustomers() {
       fechaFirma: formDataContrato.fechaFirma,
       archivoContrato: formDataContrato.archivoContrato,
       observacionesContrato: formDataContrato.observaciones,
-      estado: formData.estado,
+      estado: formData.estado as EstadoCliente,
       enviarRecordatorio: formData.enviarRecordatorio,
+      mikrotikRouterId: mkSelected ?? null,
     };
+    console.log("El payload es: ", payload);
 
     toast.promise(updateCustomer.mutateAsync(payload), {
       loading: "Cargando...",
@@ -353,7 +368,7 @@ function EditCustomers() {
       municipioId: customer.municipio?.id?.toString() || "",
       departamentoId: customer.departamento?.id?.toString() || "",
       empresaId: "1",
-      estado: customer.estado,
+      estado: customer.estado as EstadoCliente,
       enviarRecordatorio: customer.enviarRecordatorio,
     });
 
@@ -369,7 +384,7 @@ function EditCustomers() {
 
     setServiceWifiSelected(customer.servicioWifi?.id ?? null);
     setZonasFacturacionSelected(customer.zonaFacturacion?.id ?? null);
-
+    setMkSelected(customer.mikrotik?.id ?? null);
     if (customer.contrato) {
       setFormDataContrato({
         clienteId: customer.id,
@@ -389,6 +404,10 @@ function EditCustomers() {
       label: "General",
       content: (
         <CustomerEditFormCard
+          mkSelected={mkSelected}
+          handleSelectMk={handleSelectMk}
+          optionsMikrotiks={optionsMikrotiks}
+          mikrotiks={secureMikroTiks}
           handleEnviarRecordatorioChange={handleEnviarRecordatorioChange}
           formData={formData}
           formDataContrato={formDataContrato}

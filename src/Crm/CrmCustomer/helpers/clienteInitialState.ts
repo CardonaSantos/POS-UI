@@ -62,4 +62,16 @@ export const clienteInitialState: ClienteDetailsDto = {
   creadoEn: "",
   actualizadoEn: "",
   imagenes: [],
+  mikrotik: {
+    activo: true,
+    actualizadoEn: "",
+    creadoEn: "",
+    empresaId: 1,
+    host: "",
+    id: 1,
+    nombre: "",
+    passwordEnc: "",
+    sshPort: 1,
+    usuario: "",
+  },
 };

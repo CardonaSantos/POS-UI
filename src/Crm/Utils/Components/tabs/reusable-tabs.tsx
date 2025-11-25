@@ -48,7 +48,6 @@ export function ReusableTabs({
   };
 
   const styles = variantStyles[variant];
-
   return (
     <Tabs
       value={activeTab}
