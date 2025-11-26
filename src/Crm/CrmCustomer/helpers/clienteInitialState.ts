@@ -1,4 +1,7 @@
-import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
+import {
+  ClienteDetailsDto,
+  EstadoServicioMikrotik,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 
 export const clienteInitialState: ClienteDetailsDto = {
   id: 0,
@@ -74,4 +77,6 @@ export const clienteInitialState: ClienteDetailsDto = {
     sshPort: 1,
     usuario: "",
   },
+  estadoServicioMikrotik: EstadoServicioMikrotik.ACTIVO,
+  servicioEstado: true,
 };

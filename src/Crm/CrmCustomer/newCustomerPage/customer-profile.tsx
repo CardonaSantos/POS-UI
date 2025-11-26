@@ -157,7 +157,6 @@ export default function CustomerProfile() {
       }))
     : [];
 
-  console.log("Los datos del cliente son: ", cliente);
   const contentMediaSection = secureImages.length ? (
     <CustomerImagesGallery
       customerId={clienteSecure.id}

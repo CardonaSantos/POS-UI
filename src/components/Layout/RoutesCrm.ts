@@ -20,6 +20,9 @@ import {
   Target,
   ClipboardCheck,
   Sheet,
+  Route,
+  Router,
+  Cable,
 } from "lucide-react";
 
 export interface Route {
@@ -225,6 +228,24 @@ export const routesCrm_Admin = [
   },
 
   {
+    icon: Cable,
+    label: "Optico",
+    submenu: [
+      {
+        icon: Route,
+        label: "OLT",
+        href: "/crm/olt",
+      },
+
+      {
+        icon: Router,
+        label: "Routers Mk",
+        href: "crm/routers?tab=mk",
+      },
+    ],
+  },
+
+  {
     icon: MapIcon,
     label: "Registros eliminados",
     submenu: [
@@ -235,6 +256,7 @@ export const routesCrm_Admin = [
       },
     ],
   },
+
   { icon: Sheet, label: "Reports", href: "/crm/reports" },
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },

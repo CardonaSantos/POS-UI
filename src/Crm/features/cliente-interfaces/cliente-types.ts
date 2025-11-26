@@ -34,6 +34,16 @@ export interface ClienteDetailsDto {
   clienteServicio: ClienteServicio[];
   contratoServicioInternet: ContratoServicioInternet | null;
   imagenes: CustomerImage[];
+  estadoServicioMikrotik: EstadoServicioMikrotik;
+  servicioEstado: boolean;
+}
+
+export enum EstadoServicioMikrotik {
+  SIN_MIKROTIK = "SIN_MIKROTIK",
+  ACTIVO = "ACTIVO",
+  SUSPENDIDO = "SUSPENDIDO",
+  PENDIENTE_APLICAR = "PENDIENTE_APLICAR",
+  ERROR = "ERROR",
 }
 
 // Servicios de Internet

@@ -95,6 +95,8 @@ import RutasAsignadasMain from "./Crm/CrmRutas/_rutas_asignadas/rutas_asignadas_
 import ReportsMainPage from "./Crm/reports/page/ReportsMainPage";
 import BilingTable from "./Crm/CrmBilling/BillingTable";
 import ClientesTable from "./Crm/CrmCustomers/CrmCustomerTable";
+import RouterMainPage from "./Crm/routers/page";
+import OltMainPage from "./Crm/Olt/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -814,6 +816,24 @@ function App() {
                 <ProtectRouteCrmUser>
                   <DeletedInvoicesView />
                 </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/olt"
+              element={
+                <ProtectRouteAdmin>
+                  <OltMainPage />
+                </ProtectRouteAdmin>
+              }
+            />
+
+            <Route
+              path="/crm/routers"
+              element={
+                <ProtectRouteAdmin>
+                  <RouterMainPage />
+                </ProtectRouteAdmin>
               }
             />
 
