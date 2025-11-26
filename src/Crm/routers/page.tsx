@@ -15,7 +15,7 @@ import {
   useDeleteRouterMk,
   useGetMikroTiks,
   useUpdateMikrotikRouter,
-} from "../CrmRutas/hooks/Mikrotik/useGetMikroTik";
+} from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
 import { MikrotikRoutersResponse } from "../features/mikro-tiks/mikrotiks.interfaces";
 import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";

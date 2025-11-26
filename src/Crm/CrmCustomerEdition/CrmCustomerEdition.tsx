@@ -6,18 +6,18 @@ import { type MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
-import { useGetSectores } from "../CrmRutas/hooks/Sectores/useGetSectores";
-import { useGetDepartamentos } from "../CrmRutas/hooks/Departamentos/useGetDepartamentos";
-import { useGetMunicipios } from "../CrmRutas/hooks/Municipios/useGetMunicipios";
-import { useGetCustomer } from "../CrmRutas/hooks/Client/useGetClient";
-import { useGetServicios } from "../CrmRutas/hooks/Servicios/useGetServicios";
-import { useGetServiciosWifi } from "../CrmRutas/hooks/ServiciosWfi/useGetServiciosWifi";
-import { useGetZonasFacturacion } from "../CrmRutas/hooks/Zonas-facturacion/useGetZonasFacturacion";
+import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
+import { useGetDepartamentos } from "../CrmHooks/hooks/Departamentos/useGetDepartamentos";
+import { useGetMunicipios } from "../CrmHooks/hooks/Municipios/useGetMunicipios";
+import { useGetCustomer } from "../CrmHooks/hooks/Client/useGetClient";
+import { useGetServicios } from "../CrmHooks/hooks/Servicios/useGetServicios";
+import { useGetServiciosWifi } from "../CrmHooks/hooks/ServiciosWfi/useGetServiciosWifi";
+import { useGetZonasFacturacion } from "../CrmHooks/hooks/Zonas-facturacion/useGetZonasFacturacion";
 import { UpdateCustomerDto } from "../features/update-customer/update-customer";
-import { useUpdateCustomer } from "../CrmRutas/hooks/useUpdateCustomer/useUpdateCustomer";
+import { useUpdateCustomer } from "../CrmHooks/hooks/useUpdateCustomer/useUpdateCustomer";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
-import { useDeleteCustomer } from "../CrmRutas/hooks/useDeleteCustomer/useDeleteCustomer";
+import { useDeleteCustomer } from "../CrmHooks/hooks/useDeleteCustomer/useDeleteCustomer";
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
 import { CustomerEditFormCard } from "./CustomerEditFormCard";
 import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
@@ -25,7 +25,7 @@ import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
-import { useGetMikroTiks } from "../CrmRutas/hooks/Mikrotik/useGetMikroTik";
+import { useGetMikroTiks } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
 
 interface FormData {
   // Datos básicos

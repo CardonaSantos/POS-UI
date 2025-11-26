@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-import { customerQkeys } from "@/Crm/CrmRutas/hooks/Client/Qk";
+import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
 
 interface Props {
   clienteId: number;

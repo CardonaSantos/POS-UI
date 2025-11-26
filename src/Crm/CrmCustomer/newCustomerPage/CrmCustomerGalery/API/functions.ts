@@ -1,5 +1,5 @@
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
-import { customerQkeys } from "@/Crm/CrmRutas/hooks/Client/Qk";
+import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
 import { useQueryClient } from "@tanstack/react-query";
 import { clienteKeys } from "@/Crm/CrmCustomer/API/QK/queries-keys";
 

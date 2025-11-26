@@ -17,7 +17,7 @@ import { Power, PowerOff, Router, Signal, Network } from "lucide-react";
 import {
   useMikrotikActivar,
   useMikrotikSuspend,
-} from "@/Crm/CrmRutas/hooks/mikrotik-actions/useMikrotikActions";
+} from "@/Crm/CrmHooks/hooks/mikrotik-actions/useMikrotikActions";
 import { suspendCustomerDto } from "@/Crm/features/mikrotik-actions-interfaces/mikrotik-actions.dto";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { toast } from "sonner";

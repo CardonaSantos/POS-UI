@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
-import { ITEMS_PER_PAGE, SortDir, SortField } from "../types/types";
+import { ITEMS_PER_PAGE, SortDir, SortField } from "../../CrmRutas/types/types";
 import {
   Paged,
   useClientesRuta,
   useCrearRutaMutation,
   useSectoresSelect,
   useZonasFacturacion,
-} from "../API/rutas-cobro.api";
-import { ClienteInternetFromCreateRuta } from "../rutas-types";
+} from "../../CrmRutas/API/rutas-cobro.api";
+import { ClienteInternetFromCreateRuta } from "../../CrmRutas/rutas-types";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { EstadoCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
 type ClientesPaged = Paged<ClienteInternetFromCreateRuta>;

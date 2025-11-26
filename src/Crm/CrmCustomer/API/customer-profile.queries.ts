@@ -3,7 +3,7 @@ import { PlantillasInterface } from "@/Crm/features/plantilla-contratos/plantill
 import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 import { clienteKeys } from "./QK/queries-keys";
 import { useQueryClient } from "@tanstack/react-query";
-import { customerQkeys } from "@/Crm/CrmRutas/hooks/Client/Qk";
+import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
 // Cliente
 export function useClienteDetails(clienteId: number) {
   return useCrmQuery<ClienteDetailsDto>(

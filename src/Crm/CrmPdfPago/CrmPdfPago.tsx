@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { formattMonedaGT } from "@/utils/formattMonedaGt";
 import { formateDateWithMinutes } from "../Utils/FormateDate";
 import { FacturaInternet } from "../features/cliente-interfaces/cliente-types";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
@@ -119,243 +120,247 @@ export default function CrmPdfPago() {
     );
 
   return (
-    <div className="p-6">
-      <div
-        ref={invoiceRef}
-        className={`${
-          pdfUrl ? "hidden" : "block"
-        } mx-auto shadow-lg rounded-lg bg-white text-black`}
-        style={{ width: "210mm", minHeight: "297mm", padding: "32px 48px" }}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-start border-b border-gray-300 p-5 rounded-t-lg">
-          <div className="flex items-center">
-            <div className="w-28 h-28  border-gray-200  overflow-hidden mr-4">
-              <img
-                src={logoCrm || "/placeholder.svg"}
-                alt="Logo"
-                className="w-full h-full object-contain"
-              />
+    <PageTransitionCrm titleHeader="Factura" subtitle={``} variant="fade-pure">
+      <div className="">
+        <div
+          ref={invoiceRef}
+          className={`${
+            pdfUrl ? "hidden" : "block"
+          } mx-auto shadow-lg rounded-lg bg-white text-black`}
+          style={{ width: "210mm", minHeight: "297mm", padding: "32px 48px" }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-start border-b border-gray-300 p-5 rounded-t-lg">
+            <div className="flex items-center">
+              <div className="w-28 h-28  border-gray-200  overflow-hidden mr-4">
+                <img
+                  src={logoCrm || "/placeholder.svg"}
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight">
+                  {factura.empresa.nombre}
+                </h1>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                {factura.empresa.nombre}
-              </h1>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-medium text-gray-700">#{factura.id}</p>
-            <p className="text-xs font-medium text-gray-700">
-              Periodo #{factura?.periodo ?? "N/A"}
-            </p>
-          </div>
-        </div>
-
-        {/* Empresa & Estado */}
-        <div className="flex justify-between mt-5 text-xs text-gray-600">
-          <div>
-            <p>{factura.empresa.direccion}</p>
-            <p>
-              Tel: {factura.empresa.telefono} | PBX: {factura.empresa.pbx}
-            </p>
-            <p>{factura.empresa.correo}</p>
-            <p>{factura.empresa.sitioWeb}</p>
-          </div>
-          <div>
-            <p className="font-medium">{factura.estado}</p>
-          </div>
-        </div>
-
-        {/* Cliente Info */}
-        <div className="mb-5 p-4 rounded-md border-gray-200 mt-6 text-xs">
-          <h2 className="font-medium text-gray-700 mb-2">
-            Información del Cliente
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <p>
-                <span className="font-medium">Nombre:</span>{" "}
-                {factura.cliente.nombre} {factura.cliente.apellidos}
+            <div className="text-right">
+              <p className="text-xs font-medium text-gray-700">#{factura.id}</p>
+              <p className="text-xs font-medium text-gray-700">
+                Periodo #{factura?.periodo ?? "N/A"}
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Detalles de Servicio */}
-        <div className="mb-5 mt-4 text-xs">
-          <h2 className="font-medium text-gray-700 mb-2 border-b border-gray-200 pb-1">
-            Detalles del Servicio
-          </h2>
-          <p className="bg-gray-50 p-3 rounded-md mb-3">
-            {factura.detalleFactura}
-          </p>
-        </div>
-
-        {/* Pagos Realizados */}
-        <div className="mb-5 text-xs">
-          <h2 className="font-medium text-gray-700 mb-2 pb-1">
-            Pagos Realizados
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full  rounded-md  text-[0.85rem]">
-              <thead className="">
-                <tr>
-                  <th className="py-1.5 px-4 text-left font-semibold">
-                    Método
-                  </th>
-                  <th className="py-1.5 px-4 text-left font-semibold">Monto</th>
-                  <th className="py-1.5 px-4  text-left font-semibold">
-                    Fecha pagada
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {factura.pagos.map((pago, idx, arr) => (
-                  <tr
-                    key={pago.id}
-                    className={idx % 2 === 0 ? "" : ""} // alterna ligeramente
-                  >
-                    <td
-                      className={`
-                py-1.5 px-4 
-                ${idx !== arr.length - 1 ? "" : ""}
-              `}
-                    >
-                      <span className="font-medium">{pago.metodoPago}</span>
-                    </td>
-
-                    <td
-                      className={`
-                py-1.5 px-4 
-                ${idx !== arr.length - 1 ? "" : ""}
-              `}
-                    >
-                      {formattMonedaGT(pago.montoPagado)}
-                    </td>
-
-                    <td
-                      className={`
-                py-1.5 px-4 
-                ${idx !== arr.length - 1 ? "" : ""}
-              `}
-                    >
-                      {formateDateWithMinutes(pago.fechaPago)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Empresa & Estado */}
+          <div className="flex justify-between mt-5 text-xs text-gray-600">
+            <div>
+              <p>{factura.empresa.direccion}</p>
+              <p>
+                Tel: {factura.empresa.telefono} | PBX: {factura.empresa.pbx}
+              </p>
+              <p>{factura.empresa.correo}</p>
+              <p>{factura.empresa.sitioWeb}</p>
+            </div>
+            <div>
+              <p className="font-medium">{factura.estado}</p>
+            </div>
           </div>
-        </div>
 
-        {/* Servicios Adicionales */}
-        {factura.servicios?.length > 0 && (
-          <div className="mb-5 text-xs">
+          {/* Cliente Info */}
+          <div className="mb-5 p-4 rounded-md border-gray-200 mt-6 text-xs">
             <h2 className="font-medium text-gray-700 mb-2">
-              Servicios Adicionales
+              Información del Cliente
             </h2>
-            <div className="overflow-x-auto rounded-md border border-gray-200">
-              <table className="min-w-full bg-white">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-700">
-                    <th className="py-1.5 px-3 border-b text-left">Nombre</th>
-                    <th className="py-1.5 px-3 border-b text-left">
-                      Fecha Emisión
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p>
+                  <span className="font-medium">Nombre:</span>{" "}
+                  {factura.cliente.nombre} {factura.cliente.apellidos}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Detalles de Servicio */}
+          <div className="mb-5 mt-4 text-xs">
+            <h2 className="font-medium text-gray-700 mb-2 border-b border-gray-200 pb-1">
+              Detalles del Servicio
+            </h2>
+            <p className="bg-gray-50 p-3 rounded-md mb-3">
+              {factura.detalleFactura}
+            </p>
+          </div>
+
+          {/* Pagos Realizados */}
+          <div className="mb-5 text-xs">
+            <h2 className="font-medium text-gray-700 mb-2 pb-1">
+              Pagos Realizados
+            </h2>
+
+            <div className="overflow-x-auto">
+              <table className="w-full  rounded-md  text-[0.85rem]">
+                <thead className="">
+                  <tr>
+                    <th className="py-1.5 px-4 text-left font-semibold">
+                      Método
                     </th>
-                    <th className="py-1.5 px-3 border-b text-left">Monto</th>
+                    <th className="py-1.5 px-4 text-left font-semibold">
+                      Monto
+                    </th>
+                    <th className="py-1.5 px-4  text-left font-semibold">
+                      Fecha pagada
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {factura.servicios &&
-                    factura.servicios.map((serv, idx, arr) => (
-                      <tr
-                        key={serv.facturaId || idx}
-                        className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                  {factura.pagos.map((pago, idx, arr) => (
+                    <tr
+                      key={pago.id}
+                      className={idx % 2 === 0 ? "" : ""} // alterna ligeramente
+                    >
+                      <td
+                        className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
                       >
-                        <td
-                          className={`py-1.5 px-3 ${
-                            idx !== arr.length - 1 ? "border-b" : ""
-                          }`}
-                        >
-                          {serv.nombre}
-                        </td>
-                        <td
-                          className={`py-1.5 px-3 ${
-                            idx !== arr.length - 1 ? "border-b" : ""
-                          }`}
-                        >
-                          {formatDate(serv.fecha)}
-                        </td>
-                        <td
-                          className={`py-1.5 px-3 ${
-                            idx !== arr.length - 1 ? "border-b" : ""
-                          }`}
-                        >
-                          {formattMonedaGT(serv.monto)}
-                        </td>
-                      </tr>
-                    ))}
+                        <span className="font-medium">{pago.metodoPago}</span>
+                      </td>
+
+                      <td
+                        className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
+                      >
+                        {formattMonedaGT(pago.montoPagado)}
+                      </td>
+
+                      <td
+                        className={`
+                py-1.5 px-4 
+                ${idx !== arr.length - 1 ? "" : ""}
+              `}
+                      >
+                        {formateDateWithMinutes(pago.fechaPago)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
-        )}
 
-        {/* Pie de página */}
-        <div className="mt-6 pt-2 border-t border-gray-200 text-center text-gray-500 text-xs">
-          <p>
-            Este documento es un comprobante de pago oficial de{" "}
-            <span className="font-medium">{factura.empresa.nombre}</span>.
-          </p>
-          <p>
-            Para cualquier consulta, comuníquese al teléfono{" "}
-            <span className="font-medium">{factura.empresa.telefono}</span>.
-          </p>
-          <p className="mt-2 text-[10px]">
-            Registro generado el{" "}
-            {new Date().toLocaleDateString("es-GT", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        </div>
-      </div>
+          {/* Servicios Adicionales */}
+          {factura.servicios?.length > 0 && (
+            <div className="mb-5 text-xs">
+              <h2 className="font-medium text-gray-700 mb-2">
+                Servicios Adicionales
+              </h2>
+              <div className="overflow-x-auto rounded-md border border-gray-200">
+                <table className="min-w-full bg-white">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700">
+                      <th className="py-1.5 px-3 border-b text-left">Nombre</th>
+                      <th className="py-1.5 px-3 border-b text-left">
+                        Fecha Emisión
+                      </th>
+                      <th className="py-1.5 px-3 border-b text-left">Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {factura.servicios &&
+                      factura.servicios.map((serv, idx, arr) => (
+                        <tr
+                          key={serv.facturaId || idx}
+                          className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                        >
+                          <td
+                            className={`py-1.5 px-3 ${
+                              idx !== arr.length - 1 ? "border-b" : ""
+                            }`}
+                          >
+                            {serv.nombre}
+                          </td>
+                          <td
+                            className={`py-1.5 px-3 ${
+                              idx !== arr.length - 1 ? "border-b" : ""
+                            }`}
+                          >
+                            {formatDate(serv.fecha)}
+                          </td>
+                          <td
+                            className={`py-1.5 px-3 ${
+                              idx !== arr.length - 1 ? "border-b" : ""
+                            }`}
+                          >
+                            {formattMonedaGT(serv.monto)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
-      {/* PDF Preview */}
-      {pdfUrl && !esDispositivoMovil() && (
-        <div className="mt-6">
-          <iframe
-            src={pdfUrl}
-            className="w-full h-[80vh] border rounded shadow-md"
-            title="Vista previa del PDF"
-          />
-        </div>
-      )}
-
-      {pdfUrl && esDispositivoMovil() && (
-        <div className="mt-6 flex justify-center">
-          <div className="flex items-center gap-2">
-            <Button
-              className="bg-green-600 font-semibold text-white px-4 py-2 rounded-md shadow-md hover:bg-green-700"
-              asChild
-            >
-              <a
-                href={pdfUrl}
-                download={`comprobante-${factura.id}.pdf`}
-                className="flex items-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                Descargar comprobante PDF
-              </a>
-            </Button>
+          {/* Pie de página */}
+          <div className="mt-6 pt-2 border-t border-gray-200 text-center text-gray-500 text-xs">
+            <p>
+              Este documento es un comprobante de pago oficial de{" "}
+              <span className="font-medium">{factura.empresa.nombre}</span>.
+            </p>
+            <p>
+              Para cualquier consulta, comuníquese al teléfono{" "}
+              <span className="font-medium">{factura.empresa.telefono}</span>.
+            </p>
+            <p className="mt-2 text-[10px]">
+              Registro generado el{" "}
+              {new Date().toLocaleDateString("es-GT", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* PDF Preview */}
+        {pdfUrl && !esDispositivoMovil() && (
+          <div className="mt-6">
+            <iframe
+              src={pdfUrl}
+              className="w-full h-[80vh] border rounded shadow-md"
+              title="Vista previa del PDF"
+            />
+          </div>
+        )}
+
+        {pdfUrl && esDispositivoMovil() && (
+          <div className="mt-6 flex justify-center">
+            <div className="flex items-center gap-2">
+              <Button
+                className="bg-green-600 font-semibold text-white px-4 py-2 rounded-md shadow-md hover:bg-green-700"
+                asChild
+              >
+                <a
+                  href={pdfUrl}
+                  download={`comprobante-${factura.id}.pdf`}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Descargar comprobante PDF
+                </a>
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </PageTransitionCrm>
   );
 }
