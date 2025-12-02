@@ -117,5 +117,15 @@ export const posApi = axios.create({
 });
 attachLogging(posApi, "POS");
 
+// 🔹 API BOT
+
+export const botApi = axios.create({
+  baseURL: import.meta.env.VITE_BOT_API_URL, // <-- define esta env en tu .env
+  withCredentials: false,
+  timeout: 10000,
+  headers: { Accept: "application/json" },
+});
+attachLogging(botApi, "BOT");
+
 // (Opcional) compatibilidad hacia atrás: tu código viejo puede seguir importando axiosClient
 export const axiosClient = crmApi;

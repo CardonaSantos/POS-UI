@@ -23,6 +23,7 @@ import {
   Route,
   Router,
   Cable,
+  Bot,
 } from "lucide-react";
 
 export interface Route {
@@ -258,6 +259,8 @@ export const routesCrm_Admin = [
   },
 
   { icon: Sheet, label: "Reports", href: "/crm/reports" },
+
+  { icon: Bot, label: "Bot", href: "/crm/bot" },
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },

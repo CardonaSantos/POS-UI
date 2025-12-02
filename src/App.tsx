@@ -97,6 +97,7 @@ import BilingTable from "./Crm/CrmBilling/BillingTable";
 import ClientesTable from "./Crm/CrmCustomers/CrmCustomerTable";
 import RouterMainPage from "./Crm/routers/page";
 import OltMainPage from "./Crm/Olt/page";
+import BotMainPage from "./Crm/CrmBot/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -806,6 +807,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <MetasTecnicosPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/bot"
+              element={
+                <ProtectRouteCrmUser>
+                  <BotMainPage />
                 </ProtectRouteCrmUser>
               }
             />
