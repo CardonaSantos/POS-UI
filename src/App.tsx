@@ -98,6 +98,9 @@ import ClientesTable from "./Crm/CrmCustomers/CrmCustomerTable";
 import RouterMainPage from "./Crm/routers/page";
 import OltMainPage from "./Crm/Olt/page";
 import BotMainPage from "./Crm/CrmBot/page";
+import { MainDashboardPage } from "./Crm/CrmNewDashboard/page";
+import TecDashboard from "./Crm/CrmNewDashboard/tec-dashboard";
+import TicketAsignadoDetails from "./Crm/CrmNewDashboard/_components/tec-ticket/ticket-details";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -553,7 +556,7 @@ function App() {
               path="/crm"
               element={
                 <ProtectRouteCrmUser>
-                  <CrmDashboard />
+                  <MainDashboardPage />
                 </ProtectRouteCrmUser>
               }
             />
@@ -852,6 +855,33 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <ReportsMainPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/new-dashboard"
+              element={
+                <ProtectRouteCrmUser>
+                  <MainDashboardPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/tec-dashboard"
+              element={
+                <ProtectRouteCrmUser>
+                  <TecDashboard />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/ticket-detalles/:id"
+              element={
+                <ProtectRouteCrmUser>
+                  <TicketAsignadoDetails />
                 </ProtectRouteCrmUser>
               }
             />

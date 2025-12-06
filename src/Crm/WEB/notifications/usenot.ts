@@ -57,7 +57,7 @@ export function useNotificationsRealtime(opts: Options = {}) {
 
   // 🔌 Evento "nuevo" moderno
   useSocketEvent(
-    "noti:new",
+    "facturacion:change-event",
     (payload) => {
       const n = normalizeNoti(payload as any);
       if (showToast) toast.info(n.titulo, { description: n.mensaje });

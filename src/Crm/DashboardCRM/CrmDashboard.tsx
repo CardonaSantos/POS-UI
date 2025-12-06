@@ -56,8 +56,6 @@ export interface DashboardData {
   pendientesPago: number;
   atrasados: number;
 }
-// src/interfaces/ticket.ts
-
 export default function CrmDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
@@ -124,8 +122,6 @@ export default function CrmDashboard() {
       console.error(err);
     }
   };
-
-  console.log("La data de las cards es: ", dashboardData);
 
   interface DashboardData {
     activeClients: number;

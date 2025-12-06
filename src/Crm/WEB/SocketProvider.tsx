@@ -72,9 +72,8 @@ export function useSocketEvent<E extends WsEventName>(
   useEffect(() => {
     if (!socket) return;
 
-    // 👇 firma compatible con Socket.IO: (...args:any[]) => void
     const h = (...args: unknown[]) => {
-      handler(args[0] as WsEventMap[E]); // tomamos el primer argumento como payload
+      handler(args[0] as WsEventMap[E]);
     };
 
     socket.on(event as string, h);

@@ -264,6 +264,8 @@ export const routesCrm_Admin = [
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },
+
+  { icon: Users, label: "nuevoDashboard", href: "/crm/new-dashboard" },
 ];
 
 export const routesCrm_Oficina = [
@@ -355,7 +357,7 @@ export const routesCrm_Oficina = [
 ];
 
 export const routesCrm_Tecnico = [
-  { icon: Home, label: "Dashboard", href: "/crm" },
+  { icon: Home, label: "Dashboard", href: "/crm/tec-dashboard" },
   { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
   {
     icon: MonitorSmartphone,

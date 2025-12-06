@@ -40,6 +40,7 @@ interface LayoutProps {
 export default function Layout2({ children }: LayoutProps) {
   const location = useLocation();
   const isCrmLocation = location.pathname.startsWith("/crm");
+  useRequestNotificationPermission();
 
   // -----------------------------
   // POS STORE
@@ -313,4 +314,14 @@ export default function Layout2({ children }: LayoutProps) {
       />
     </div>
   );
+}
+function useRequestNotificationPermission() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
 }

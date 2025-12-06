@@ -5,7 +5,7 @@ import { motion, type Variants } from "framer-motion";
 import * as React from "react";
 
 // Variants (los dejo como ya los tenías)
-const fadeElegant: Variants = {
+export const fadeElegant: Variants = {
   initial: { opacity: 0, y: 12 },
   animate: {
     opacity: 1,
