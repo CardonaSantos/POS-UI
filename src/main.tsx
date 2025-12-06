@@ -13,8 +13,7 @@ import {
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "./utils/getApiAxiosMessage.ts";
 import { SocketProvider } from "./Crm/WEB/SocketProvider.tsx";
-
-const VITE_WS_URL = "http://localhost:3000";
+const VITE_WS_URL = import.meta.env.VITE_WS_URL;
 const VITE_WS_NAMESPACE = "/ws";
 const VITE_WS_PATH = "/socket.io";
 
