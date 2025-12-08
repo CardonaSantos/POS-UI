@@ -36,10 +36,18 @@ export interface TicketAsignadoTecnico {
   clienteNombre: string;
   clienteTel: string | null;
   referenciaContacto: string | null;
-  direccion: string | null;
+
+  direccion: Direccion;
+  observaciones: string;
 
   ubicacionMaps: UbicacionMaps | null;
   medias: TicketMedia[]; // siempre array (vacío si no hay nada)
+}
+
+interface Direccion {
+  direccion: string;
+  sector: string;
+  municipio: string;
 }
 
 // Conveniente para la respuesta completa:

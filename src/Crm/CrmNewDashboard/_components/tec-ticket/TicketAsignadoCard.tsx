@@ -233,7 +233,9 @@ export function TicketAsignadoCard({ ticket }: TicketCardProps) {
             {ticket.direccion && (
               <div className="mt-0.5 flex items-start gap-1 text-[11px] text-muted-foreground">
                 <MapPin className="w-3 h-3 mt-[1px]" />
-                <span className="line-clamp-2">{ticket.direccion}</span>
+                <span className="line-clamp-2">
+                  {ticket.direccion.direccion}
+                </span>
               </div>
             )}
 
@@ -385,7 +387,7 @@ export function TicketAsignadoCard({ ticket }: TicketCardProps) {
           </Button>
 
           <Link
-            to={`/crm/tecnico/ticket/${ticket.id}`}
+            to={`/crm/ticket-detalles/${ticket.id}`}
             className="w-full sm:w-auto"
           >
             <Button

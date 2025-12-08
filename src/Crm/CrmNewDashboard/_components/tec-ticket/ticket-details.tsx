@@ -12,6 +12,8 @@ import {
   ExternalLink,
   MessageCircle,
   Copy,
+  Map,
+  Text,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,7 +83,6 @@ function formatFechaCompleta(fechaIso: string | null | undefined): string {
     return "Sin fecha";
   }
 }
-
 const INITIAL_TICKET_ASIGNADO: TicketAsignadoTecnico = {
   id: 0,
   titulo: "",
@@ -93,364 +94,415 @@ const INITIAL_TICKET_ASIGNADO: TicketAsignadoTecnico = {
   clienteNombre: "",
   clienteTel: "",
   referenciaContacto: "",
-  direccion: "",
+  direccion: {
+    direccion: "",
+    municipio: "",
+    sector: "",
+  },
+  observaciones: "",
   ubicacionMaps: null,
   medias: [],
 };
 
-// --- COMPONENTE AUXILIAR: menú de teléfono ---
+// --- COMPONENTES AUXILIARES ---
 
+// 1. Componente para mostrar un dato (Label + Valor)
+const InfoItem = ({
+  icon: Icon,
+  label,
+  children,
+  className = "",
+}: {
+  icon?: any;
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={`space-y-1 ${className}`}>
+    <div className="flex items-center gap-1.5 text-muted-foreground">
+      {Icon && <Icon className="w-3.5 h-3.5" />}
+      <span className="text-[10px] uppercase tracking-wider font-semibold">
+        {label}
+      </span>
+    </div>
+    <div className="text-sm font-medium text-foreground">{children || "—"}</div>
+  </div>
+);
+
+// 2. Menú de teléfono
 interface PhoneMenuProps {
   label: string;
-  phone: string;
+  phone: string | null;
 }
 
 const PhoneDropdown: React.FC<PhoneMenuProps> = ({ label, phone }) => {
-  if (!phone) {
-    return <p className="text-sm text-muted-foreground">N/A</p>;
-  }
-
-  const openWhatsApp = () => {
-    window.open(handleOpenWhatsapp(phone), "_blank");
-  };
-
-  const openCall = () => {
-    window.location.href = handleCall(phone);
-  };
-
-  const copyPhone = () => {
-    copyToClipBoard(phone);
-  };
+  if (!phone)
+    return (
+      <span className="text-sm text-muted-foreground italic">
+        No registrado
+      </span>
+    );
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="inline-flex items-center gap-2 text-sm font-mono px-2 py-1 rounded-md border bg-background hover:bg-muted transition-colors">
-          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-          <span>{phone}</span>
-        </button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-2 font-mono text-xs"
+        >
+          <Phone className="w-3.5 h-3.5 text-emerald-600" />
+          {phone}
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
+      <DropdownMenuContent className="w-56" align="start">
         <DropdownMenuLabel>{label}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={openWhatsApp}>
+        <DropdownMenuItem
+          onClick={() => window.open(handleOpenWhatsapp(phone), "_blank")}
+        >
           <MessageCircle className="w-3.5 h-3.5 mr-2 text-emerald-600" />
-          Abrir en WhatsApp
+          WhatsApp
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={openCall}>
+        <DropdownMenuItem
+          onClick={() => (window.location.href = handleCall(phone))}
+        >
           <Phone className="w-3.5 h-3.5 mr-2" />
           Llamar
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={copyPhone}>
+        <DropdownMenuItem onClick={() => copyToClipBoard(phone)}>
           <Copy className="w-3.5 h-3.5 mr-2" />
-          Copiar número
+          Copiar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
+// --- COMPONENTE PRINCIPAL ---
+
 function TicketAsignadoDetails() {
   const { id } = useParams();
   const ticketId = id ? parseInt(id) : 0;
   const { data: t } = useGetTicketDetails(ticketId);
-  const ticket = t ? t : INITIAL_TICKET_ASIGNADO;
+  const ticket = t || INITIAL_TICKET_ASIGNADO;
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
-  const contactPhone = ticket.clienteTel ?? "";
-  const refPhone = ticket.referenciaContacto ?? "";
-  const hasLocation = !!ticket.ubicacionMaps;
 
+  // Helpers de ubicación
+  const hasLocation = !!ticket.ubicacionMaps;
   const handleOpenMaps = () => {
     if (!ticket.ubicacionMaps) return;
     const { lat, lng } = ticket.ubicacionMaps;
-    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+      "_blank"
+    );
   };
-
   const handleStartRouteMaps = () => {
     if (!ticket.ubicacionMaps) return;
     const { lat, lng } = ticket.ubicacionMaps;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      "_blank"
+    );
   };
-
   const handleCopyCoords = () => {
     if (!ticket.ubicacionMaps) return;
-    const { lat, lng } = ticket.ubicacionMaps;
-    copyToClipBoard(`${lat}, ${lng}`);
+    copyToClipBoard(`${ticket.ubicacionMaps.lat}, ${ticket.ubicacionMaps.lng}`);
   };
-  // Hooks de patch
+
+  // Lógica de estado
   const patchEnProceso = usePatchTicketEnProceso(ticketId);
   const patchEnRevision = usePatchTicketEnRevision(ticketId);
-
-  // ¿Está ya iniciado?
   const isIniciado = ticket.estado === "EN_PROCESO";
 
-  // Acción que se disparará al confirmar en el dialog
   const handleConfirmAction = async () => {
     const fn = isIniciado
       ? () => patchEnRevision.mutateAsync()
       : () => patchEnProceso.mutateAsync();
-
-    const loadingText = isIniciado
-      ? "Marcando como pendiente revisión..."
-      : "Marcando ticket en proceso...";
-
+    const loadingText = isIniciado ? "Finalizando..." : "Iniciando...";
     const successText = isIniciado
-      ? "Ticket marcado como pendiente de revisión"
-      : "Ticket tomado en proceso";
+      ? "Ticket enviado a revisión"
+      : "Ticket en proceso";
 
     await toast.promise(fn(), {
       loading: loadingText,
       success: successText,
-      error: "Ocurrió un error al actualizar el ticket",
+      error: "Error al actualizar estado",
     });
-
     setIsActionDialogOpen(false);
   };
 
   return (
     <PageTransitionCrm
       titleHeader={`Ticket #${ticket.id}`}
-      subtitle="Detalles completos del soporte"
+      subtitle="Gestión de soporte en campo"
       variant="fade-pure"
     >
-      <div className="pb-24 max-w-3xl mx-auto">
-        {/* HEADER: Estado, Prioridad, Título, Fecha */}
+      <div className="pb-28 max-w-5xl mx-auto px-1 sm:px-0">
+        {/* --- HEADER --- */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="outline"
-              className={`text-xs px-2.5 py-0.5 border ${getEstadoBadgeClasses(
-                ticket.estado
-              )}`}
-            >
+            <Badge className={getEstadoBadgeClasses(ticket.estado)}>
               {ticket.estado.replace("_", " ")}
             </Badge>
             <Badge
               variant="outline"
-              className={`text-xs px-2.5 py-0.5 border ${getPrioridadBadgeClasses(
-                ticket.prioridad
-              )}`}
+              className={getPrioridadBadgeClasses(ticket.prioridad)}
             >
-              Prioridad {ticket.prioridad}
+              {ticket.prioridad}
             </Badge>
+            <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+              <Calendar className="w-3.5 h-3.5" />
+              {formatFechaCompleta(ticket.abiertoEn)}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {ticket.titulo || "Sin título"}
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* --- COLUMNA 1: Contexto y Cliente --- */}
+          <div className="space-y-6">
+            {/* CARD: Descripción */}
+            <section className="bg-card rounded-xl border shadow-sm p-5 space-y-4">
+              <div className="flex items-center gap-2 border-b pb-2 mb-2">
+                <Text className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">Descripcion</h3>
+              </div>
+
+              <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-line">
+                {ticket.descripcion || "Sin descripción detallada."}
+              </div>
+            </section>
+
+            {/* CARD: Cliente */}
+            <section className="bg-card rounded-xl border shadow-sm p-5 space-y-4">
+              <div className="flex items-center gap-2 border-b pb-2 mb-2">
+                <User className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">
+                  Información del Cliente
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <InfoItem label="Cliente" icon={null}>
+                  <span className="text-base font-semibold">
+                    {ticket.clienteNombre}
+                  </span>
+                </InfoItem>
+
+                <div className="grid grid-cols-2 gap-1 ">
+                  <div className="space-y-1 space-x-2">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                      Contacto Principal
+                    </span>
+                    <PhoneDropdown
+                      label="Llamar a principal"
+                      phone={ticket.clienteTel}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                      Referencia
+                    </span>
+                    <PhoneDropdown
+                      label="Llamar a referencia"
+                      phone={ticket.referenciaContacto}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold leading-tight text-foreground">
-              {ticket.titulo || "Ticket sin título"}
-            </h1>
-            <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-muted-foreground">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{formatFechaCompleta(ticket.abiertoEn)}</span>
-            </div>
+          {/* --- COLUMNA 2: Ubicación y Media --- */}
+          <div className="space-y-6">
+            {/* CARD: Dirección y Mapa */}
+            <section className="bg-card rounded-xl border shadow-sm p-5 space-y-4 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b pb-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">
+                    Ubicación y Dirección
+                  </h3>
+                </div>
+                {hasLocation && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100 text-[10px]"
+                  >
+                    GPS ACTIVO
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem label="Municipio" icon={null} className="col-span-1">
+                  {ticket.direccion.municipio}
+                </InfoItem>
+                <InfoItem
+                  label="Sector / Zona"
+                  icon={null}
+                  className="col-span-1"
+                >
+                  {ticket.direccion.sector}
+                </InfoItem>
+                <InfoItem
+                  label="Dirección exacta"
+                  icon={null}
+                  className="col-span-2"
+                >
+                  <div className="bg-muted/50 p-2 rounded-md text-sm">
+                    {ticket.direccion.direccion}
+                  </div>
+                </InfoItem>
+              </div>
+
+              {ticket.observaciones && (
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-md p-3">
+                  <InfoItem label="Observaciones Adicionales" icon={null}>
+                    {ticket.observaciones}
+                  </InfoItem>
+                </div>
+              )}
+
+              {hasLocation ? (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenMaps}
+                    className="w-full"
+                  >
+                    <Map className="w-3.5 h-3.5 mr-2" />
+                    Ver Mapa
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" className="w-full">
+                        <Navigation className="w-3.5 h-3.5 mr-2" />
+                        Ir ahora
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={handleStartRouteMaps}>
+                        Iniciar Ruta (GPS)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleCopyCoords}>
+                        Copiar Coordenadas
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 rounded-md text-xs mt-2 border border-orange-100 dark:border-orange-900">
+                  <Clock className="w-4 h-4" />
+                  No hay coordenadas GPS registradas para este ticket.
+                </div>
+              )}
+            </section>
+
+            {/* CARD: Multimedia */}
+            {ticket.medias && ticket.medias.length > 0 && (
+              <section className="bg-card rounded-xl border shadow-sm p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2 mb-2">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">
+                    Evidencia Multimedia ({ticket.medias.length})
+                  </h3>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {ticket.medias.map((media) => (
+                    <div
+                      key={media.id}
+                      onClick={() => setSelectedImage(media.cdnUrl)}
+                      className="aspect-square relative group cursor-pointer rounded-md overflow-hidden border bg-muted"
+                    >
+                      <img
+                        src={media.cdnUrl}
+                        alt="Evidencia"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ExternalLink className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
 
-        {/* 1. DESCRIPCIÓN */}
-        <section className="bg-card rounded-xl border p-4">
-          <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-            {ticket.descripcion ||
-              "No se proporcionó una descripción detallada para este ticket."}
-          </div>
-        </section>
-
-        {/* 2. CLIENTE Y CONTACTOS */}
-        <section className="mt-4 bg-card rounded-xl border p-4">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" />
-            Información del Cliente
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Nombre */}
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                Nombre
-              </span>
-              <p className="text-sm font-medium">{ticket.clienteNombre}</p>
-            </div>
-
-            {/* Teléfono principal (menú de acciones) */}
-            <div className="space-y-1 space-x-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                Teléfono Principal
-              </span>
-              <PhoneDropdown label="Contacto principal" phone={contactPhone} />
-            </div>
-
-            {/* Teléfono referencia (menú de acciones) */}
-            <div className="space-y-1 sm:col-span-2 space-x-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                Teléfono de referencia
-              </span>
-              <PhoneDropdown label="Contacto de referencia" phone={refPhone} />
-            </div>
-          </div>
-        </section>
-
-        {/* 3. UBICACIÓN */}
-        <section className="mt-4 bg-card rounded-xl border p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
-              Ubicación
-            </h3>
-            {hasLocation && (
-              <Badge
-                variant="secondary"
-                className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-              >
-                GPS disponible
-              </Badge>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <div className="p-3 bg-muted/40 rounded-md">
-              <p className="text-sm italic text-foreground/90 leading-snug">
-                {ticket.direccion || "Dirección no especificada"}
-              </p>
-            </div>
-
-            {hasLocation ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs h-9"
-                  onClick={handleOpenMaps}
-                >
-                  <MapPin className="w-3.5 h-3.5 mr-2" />
-                  Ver en mapa
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="w-full text-xs h-9"
-                    >
-                      <Navigation className="w-3.5 h-3.5 mr-2" />
-                      Opciones de ruta
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>Acciones de ubicación</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleStartRouteMaps}>
-                      <Navigation className="w-3.5 h-3.5 mr-2" />
-                      Iniciar ruta en Maps
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCopyCoords}>
-                      <Copy className="w-3.5 h-3.5 mr-2" />
-                      Copiar coordenadas
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-100">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Sin coordenadas GPS registradas.</span>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* 4. MULTIMEDIA */}
-        {ticket.medias && ticket.medias.length > 0 && (
-          <section className="mt-4 bg-card rounded-xl border p-4">
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-primary" />
-              Multimedia
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {ticket.medias.map((media) => (
-                <div
-                  key={media.id}
-                  className="relative aspect-square rounded-md overflow-hidden border bg-muted group cursor-pointer"
-                  onClick={() => setSelectedImage(media.cdnUrl)}
-                >
-                  <img
-                    src={media.cdnUrl}
-                    alt="Evidencia"
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                    <ExternalLink className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 drop-shadow-md" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* BARRA DE ACCIÓN INFERIOR */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t z-10 sm:static sm:bg-transparent sm:border-0 sm:p-0 sm:mt-6">
-          <div className="max-w-3xl mx-auto flex gap-3">
+        {/* --- BOTTOM ACTION BAR (Móvil Fixed / Desktop Static) --- */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t z-20 md:static md:bg-transparent md:border-0 md:p-0 md:mt-8">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row gap-3">
             <Button
-              className="flex-[2] sm:w-auto"
+              size="lg"
+              className={`w-full shadow-lg ${
+                isIniciado
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-primary hover:bg-primary/90"
+              }`}
               onClick={() => setIsActionDialogOpen(true)}
               disabled={patchEnProceso.isPending || patchEnRevision.isPending}
             >
-              {isIniciado ? "Marcar pendiente revisión" : "Tomar en proceso"}
+              {isIniciado ? (
+                <>
+                  <Clock className="mr-2 h-5 w-5" /> Marcar como Pendiente
+                  Revisión
+                </>
+              ) : (
+                <>
+                  <Navigation className="mr-2 h-5 w-5" /> Tomar Ticket en
+                  Proceso
+                </>
+              )}
             </Button>
           </div>
         </div>
 
+        {/* --- DIALOGOS --- */}
         <AdvancedDialogCRM
           type="info"
           open={isActionDialogOpen}
           onOpenChange={setIsActionDialogOpen}
           title={
-            isIniciado
-              ? "Marcar ticket como pendiente de revisión"
-              : "Tomar en proceso este ticket"
+            isIniciado ? "¿Terminar labor en sitio?" : "¿Iniciar atención?"
           }
           description={
             isIniciado
-              ? `El ticket #${ticket.id} (${
-                  ticket.titulo || "sin título"
-                }) se marcará como PENDIENTE_REVISION.`
-              : `Se registrará el inicio de atención para el ticket #${
-                  ticket.id
-                } (${
-                  ticket.titulo || "sin título"
-                }), y pasará a estado EN_PROCESO.`
+              ? "El ticket pasará a estado PENDIENTE_REVISION. Asegúrate de haber cargado toda la evidencia."
+              : "Se registrará el inicio de tu labor y el tiempo comenzará a correr."
           }
           confirmButton={{
-            label: isIniciado
-              ? "Marcar pendiente revisión"
-              : "Confirmar inicio",
-            loadingText: isIniciado ? "Marcando..." : "Iniciando...",
-            onClick: handleConfirmAction, // 👈 aquí se conecta la mutación
+            label: isIniciado ? "Finalizar Labor" : "Comenzar",
+            loadingText: "Procesando...",
+            onClick: handleConfirmAction,
           }}
-          cancelButton={{
-            label: "Cancelar",
-            loadingText: "...",
-          }}
+          cancelButton={{ label: "Cancelar", loadingText: "..." }}
         />
 
-        {/* DIALOG IMAGEN GRANDE */}
         <Dialog
           open={!!selectedImage}
           onOpenChange={(open) => !open && setSelectedImage(null)}
         >
-          <DialogContent className="max-w-3xl p-1 bg-transparent border-0">
+          <DialogContent className="max-w-4xl p-0 bg-transparent border-0 shadow-none flex justify-center items-center">
             {selectedImage && (
-              <div className="relative rounded-lg overflow-hidden">
+              <div className="relative">
                 <img
                   src={selectedImage}
-                  alt="Vista previa"
-                  className="w-full h-auto max-h-[80vh] object-contain bg-black/50 rounded-lg"
+                  alt="Full preview"
+                  className="max-h-[85vh] w-auto object-contain rounded-md shadow-2xl"
                 />
                 <Button
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full h-8 w-8 p-0"
+                  variant="secondary"
+                  size="icon"
+                  className="absolute -top-3 -right-3 rounded-full shadow-md"
                   onClick={() => setSelectedImage(null)}
                 >
                   ×
