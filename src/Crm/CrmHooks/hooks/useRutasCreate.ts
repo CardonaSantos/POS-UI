@@ -104,14 +104,14 @@ export function useRutasCreate(empresaId: number) {
     nombreRuta: string;
     cobradorId?: string | number | null;
     observaciones?: string;
-    facturasIds: string[]; // 👈 ahora obligatorio aquí
+    clientesIds: string[]; // 👈 ahora obligatorio aquí
     asignadaPor?: number;
   }) => {
-    const { nombreRuta, cobradorId, observaciones, facturasIds } = form;
+    const { nombreRuta, cobradorId, observaciones, clientesIds } = form;
 
     if (!nombreRuta.trim())
       throw new Error("El nombre de la ruta es obligatorio");
-    if ((facturasIds?.length ?? 0) === 0)
+    if ((clientesIds?.length ?? 0) === 0)
       throw new Error("Seleccione al menos una factura");
     if (!empresaId) throw new Error("Empresa requerida");
 
@@ -121,7 +121,7 @@ export function useRutasCreate(empresaId: number) {
       nombreRuta,
       cobradorId: cobradorId ? Number(cobradorId) : undefined,
       empresaId,
-      facturas: facturasIds.map(Number), // 👈 importante
+      clientesIds: clientesIds.map(Number), // 👈 importante
       observaciones: observaciones?.trim() || undefined,
       asignadoPor: userID,
     };

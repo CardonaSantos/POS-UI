@@ -157,14 +157,17 @@ export function RutasCobroCreate() {
 
   const createRuta = async () => {
     const facturasIds = Array.from(selectedFacturaIds);
-    console.log("Las facturas a enviar son: ", facturasIds);
+    const clientesIds = Array.from(selectedClientIds);
+
+    console.log("Clientes seleccionados:", clientesIds);
+    console.log("Facturas seleccionadas:", facturasIds);
 
     try {
       await vm.create({
         nombreRuta: nuevaRuta.nombreRuta,
         cobradorId: nuevaRuta.cobradorId,
         observaciones: nuevaRuta.observaciones,
-        facturasIds,
+        clientesIds,
       });
 
       // limpia UI local
@@ -424,9 +427,9 @@ export function RutasCobroCreate() {
             enableRowSelection
             rowSelection={rowSelection}
             onRowSelectionChange={handleRowSelectionChange}
-            getRowCanSelect={(row) =>
-              ((row.facturasPendientes ?? row.facturas?.length) || 0) > 0
-            }
+            // getRowCanSelect={(row) =>
+            //   ((row.facturasPendientes ?? row.facturas?.length) || 0) > 0
+            // }
           />
         </CardContent>
       </Card>
