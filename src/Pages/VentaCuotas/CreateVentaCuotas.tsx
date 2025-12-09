@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import {
   BarChart,
@@ -15,12 +15,13 @@ import {
   ShoppingCart,
   Trash,
   Users,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SelectM, { SingleValue } from "react-select"; // Importación correcta de react-select
+import SelectM, { SingleValue } from "react-select";
 
 import { toast } from "sonner";
 import { useStore } from "@/components/Context/ContextSucursal";
@@ -58,7 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Testigo {
+interface TestigoForm {
   nombre: string;
   direccion: string;
   telefono: string;
@@ -80,7 +81,7 @@ interface FormData {
   fechaInicio: string;
   estado: string;
   dpi: string;
-  testigos: Testigo[];
+  testigos: TestigoForm[];
   fechaContrato: string;
   montoVenta: number;
   garantiaMeses: string;
@@ -127,11 +128,17 @@ interface OptionTypeTS {
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
-//VERIFICAR PORQUE LA FUNCION NO MUESTRA EL PRODUCTO EN EL PDF
+
 export default function CreateVentaCuotaForm() {
   const sucursalId = useStore((state) => state.sucursalId) ?? 0;
   const userId = useStore((state) => state.userId) ?? 0;
+
   const [isLoading, setIsLoading] = useState(false);
+  const [customers, setCustomers] = useState<CustomersToCredit[]>([]);
+  const [products, setProducts] = useState<ProductToCredit[]>([]);
+  const [creditos, setCreditos] = useState<CreditoRegistro[]>([]);
+  const [openCreate, setOpenCreate] = useState(false);
+
   const [formData, setFormData] = useState<FormData>({
     clienteId: 0,
     usuarioId: "",
@@ -139,11 +146,11 @@ export default function CreateVentaCuotaForm() {
     totalVenta: 0,
     cuotaInicial: 0,
     cuotasTotales: 0,
-    fechaInicio: "", //MOVER AQUI
+    fechaInicio: "",
     estado: "ACTIVA",
     dpi: "",
     testigos: [],
-    fechaContrato: "", //MOVER AQUI,
+    fechaContrato: "",
     montoVenta: 0,
     garantiaMeses: "",
     productos: [],
@@ -151,14 +158,123 @@ export default function CreateVentaCuotaForm() {
     interes: 0,
   });
 
+  const [productSelected, setProductSelected] =
+    useState<ProductToCredit | null>(null);
+  const [customerSelected, setCustomerSelected] =
+    useState<SingleValue<OptionTypeTS> | null>(null);
+
+  const [selectedPrice, setSelectedPrice] = useState<Precio | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+
+  const formatearMoneda = (cantidad: number) => {
+    return new Intl.NumberFormat("es-GT", {
+      style: "currency",
+      currency: "GTQ",
+    }).format(cantidad);
+  };
+
+  // ===== TOP DASHBOARD: RESUMEN CRÉDITOS (tipado con CreditoRegistro) =====
+  const creditSummary = useMemo(() => {
+    if (!creditos || creditos.length === 0) {
+      return {
+        totalCredits: 0,
+        activeCredits: 0,
+        paidCredits: 0,
+        pendingCredits: 0,
+        totalAmount: 0,
+        collectedAmount: 0,
+        pendingAmount: 0,
+        pendingInstallments: 0, // 👈 NUEVO
+      };
+    }
+
+    let totalAmount = 0;
+    let collectedAmount = 0;
+    let pendingAmount = 0;
+    let activeCredits = 0;
+    let paidCredits = 0;
+    let pendingInstallments = 0; // 👈 NUEVO
+
+    creditos.forEach((c: CreditoRegistro) => {
+      const estadoUpper = (c.estado ?? "").toUpperCase();
+
+      const isActive = ["ACTIVA", "ACTIVO"].includes(estadoUpper);
+      const isPaid = [
+        "PAGADO",
+        "PAGADA",
+        "CANCELADO",
+        "CANCELADA",
+        "FINALIZADO",
+        "FINALIZADA",
+      ].includes(estadoUpper);
+
+      if (isActive) activeCredits++;
+      if (isPaid) paidCredits++;
+
+      // 💱 montos
+      const creditTotal =
+        typeof c.montoTotalConInteres === "number" && c.montoTotalConInteres > 0
+          ? c.montoTotalConInteres
+          : c.totalVenta || 0;
+
+      const pagado = c.totalPagado || 0;
+      const pendiente = Math.max(creditTotal - pagado, 0);
+
+      totalAmount += creditTotal;
+      collectedAmount += pagado;
+      pendingAmount += pendiente;
+
+      // 🧮 cuotas pendientes (por crédito)
+      (c.cuotas ?? []).forEach((q) => {
+        const qEstado = (q.estado ?? "").toUpperCase();
+        const cuotaPagada = [
+          "PAGADO",
+          "PAGADA",
+          "CANCELADO",
+          "CANCELADA",
+        ].includes(qEstado);
+
+        if (!cuotaPagada) {
+          pendingInstallments += 1;
+        }
+      });
+    });
+
+    const totalCredits = creditos.length;
+    const pendingCredits = Math.max(totalCredits - paidCredits, 0);
+
+    return {
+      totalCredits,
+      activeCredits,
+      paidCredits,
+      pendingCredits,
+      totalAmount,
+      collectedAmount,
+      pendingAmount,
+      pendingInstallments, // 👈 NUEVO
+    };
+  }, [creditos]);
+
+  const {
+    totalCredits,
+    activeCredits,
+    paidCredits,
+    pendingCredits,
+    collectedAmount,
+    pendingAmount,
+    pendingInstallments,
+  } = creditSummary;
+
+  // ===== HANDLERS FORM =====
+
   const handleChangeDate = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: "fechaInicio" | "fechaContrato"
   ) => {
-    const dateStr = e.target.value; // Toma el valor directamente como string en formato 'yyyy-MM-dd'
+    const dateStr = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
-      [field]: dateStr, // Almacenamos solo la fecha sin la parte de la hora
+      [field]: dateStr,
     }));
   };
 
@@ -169,7 +285,7 @@ export default function CreateVentaCuotaForm() {
 
   const handleTestigoChange = (
     index: number,
-    field: keyof Testigo,
+    field: keyof TestigoForm,
     value: string
   ) => {
     const newTestigos = [...formData.testigos];
@@ -195,7 +311,6 @@ export default function CreateVentaCuotaForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validaciones antes de enviar la data
     if (!formData.clienteId || Number(formData.clienteId) <= 0) {
       toast.info("Debe seleccionar un cliente.");
       setIsLoading(false);
@@ -221,7 +336,7 @@ export default function CreateVentaCuotaForm() {
     }
 
     if (!formData.interes) {
-      toast.info("Debe especificar el interés del credito.");
+      toast.info("Debe especificar el interés del crédito.");
       setIsLoading(false);
       return;
     }
@@ -238,20 +353,6 @@ export default function CreateVentaCuotaForm() {
       return;
     }
 
-    console.log("LOS DATOS A ENVIAR:", {
-      ...formData,
-      clienteId: Number(formData.clienteId),
-      usuarioId: Number(formData.usuarioId),
-      sucursalId: Number(formData.sucursalId),
-      totalVenta: Number(formData.cuotaInicial), // INTENTANDO QUE LA VENTA SEA EL TOTAL DE LA CUOTA INICIAL
-      cuotaInicial: Number(formData.cuotaInicial),
-      cuotasTotales: Number(formData.cuotasTotales),
-      montoVenta: Number(totalVentaCrédito),
-      garantiaMeses: Number(formData.garantiaMeses),
-      fechaInicio: formData.fechaInicio, // Enviamos la fecha de inicio correctamente
-      fechaContrato: formData.fechaContrato,
-    });
-
     try {
       const response = await axios.post(`${API_URL}/cuotas`, {
         ...formData,
@@ -264,15 +365,13 @@ export default function CreateVentaCuotaForm() {
         cuotasTotales: Number(formData.cuotasTotales),
         montoVenta: Number(totalVentaCrédito),
         garantiaMeses: Number(formData.garantiaMeses),
-
-        fechaInicio: formData.fechaInicio, // Mandamos solo la fecha (yyyy-MM-dd)
-        fechaContrato: formData.fechaContrato, // Mandamos solo la fecha (yyyy-MM-dd)
+        fechaInicio: formData.fechaInicio,
+        fechaContrato: formData.fechaContrato,
       });
 
       if (response.status === 201) {
         toast.success("Se ha registrado correctamente el crédito.");
 
-        // Reset form
         setFormData({
           clienteId: 0,
           usuarioId: "",
@@ -294,6 +393,8 @@ export default function CreateVentaCuotaForm() {
 
         setCustomerSelected(null);
         setOpenCreate(false);
+
+        // Si quieres mantener el comportamiento original:
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -308,14 +409,13 @@ export default function CreateVentaCuotaForm() {
     }
   };
 
-  const [customers, setCustomers] = useState<CustomersToCredit[]>([]);
-  const [products, setProducts] = useState<ProductToCredit[]>([]);
+  // ===== FETCH DATA =====
 
   const getClientes = async () => {
     try {
-      const respose = await axios.get(`${API_URL}/client/get-clients`);
-      if (respose.status === 200) {
-        setCustomers(respose.data);
+      const response = await axios.get(`${API_URL}/client/get-clients`);
+      if (response.status === 200) {
+        setCustomers(response.data);
       }
     } catch (error) {
       console.log(error);
@@ -325,41 +425,46 @@ export default function CreateVentaCuotaForm() {
 
   const getProductos = async () => {
     try {
-      const respose = await axios.get(
+      const response = await axios.get(
         `${API_URL}/products/sucursal/${sucursalId}`
       );
-      if (respose.status === 200) {
-        setProducts(respose.data);
+      if (response.status === 200) {
+        setProducts(response.data);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Error al conseguir datos de clientes");
+      toast.error("Error al conseguir datos de productos");
+    }
+  };
+
+  const getRegistCredits = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/cuotas/get/credits`);
+      setCreditos(response.data as CreditoRegistro[]);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al obtener registros");
     }
   };
 
   useEffect(() => {
     getClientes();
     getProductos();
+    getRegistCredits();
   }, []);
 
-  const [productSelected, setProductSelected] =
-    useState<ProductToCredit | null>(null);
-
-  const [customerSelected, setCustomerSelected] =
-    useState<SingleValue<OptionTypeTS> | null>(null);
+  // ===== OPTIONS & SELECCIONES =====
 
   const handleChangeSelectCustomer = (option: SingleValue<OptionTypeTS>) => {
     setCustomerSelected(option);
-
     if (option) {
-      //VERIFICAR QUE SÍ ESTE DISPONIBLE EL VALOR
       setFormData((previaData) => ({
         ...previaData,
-        clienteId: option?.value,
+        clienteId: option.value,
       }));
     }
   };
-  //EL VALOR DE LA SELECCIÓN, SERÁ EL QUE LE PASEMOS POR EL VALUE
+
   const optionsProductsFormat = products.map((prod) => ({
     value: prod.id,
     label: `${prod.nombre} (${prod.codigoProducto})`,
@@ -370,15 +475,11 @@ export default function CreateVentaCuotaForm() {
     label: `${cust.nombre} - ${cust.telefono} (${cust.dpi})`,
   }));
 
-  //==============================================================>
-  const [selectedPrice, setSelectedPrice] = useState<Precio | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
-
   const handleChangeSelectProduct = (option: OptionTypeTS) => {
     const product = products.find((prod) => prod.id === option.value);
     setProductSelected(product || null);
-    setSelectedPrice(product?.precios[0] || null); // Selecciona el primer precio por defecto
-    setQuantity(1); // Reinicia la cantidad
+    setSelectedPrice(product?.precios[0] || null);
+    setQuantity(1);
   };
 
   const handleChangeSelectPrice = (option: OptionTypeTS) => {
@@ -392,14 +493,11 @@ export default function CreateVentaCuotaForm() {
     setQuantity(Number(e.target.value));
   };
 
-  // Formatear precios para el select de precios
   const optionsPricesFormat =
     productSelected?.precios.map((price) => ({
       value: price.id,
       label: `${price.precio}`,
     })) || [];
-
-  console.log("El producto seleccionado es: ", productSelected);
 
   const handleAddProduct = () => {
     if (productSelected && selectedPrice) {
@@ -417,20 +515,17 @@ export default function CreateVentaCuotaForm() {
         return;
       }
 
-      // Crea un nuevo objeto de producto con los datos seleccionados
       const newProduct: Producto = {
         productoId: productSelected.id,
         cantidad: quantity,
         precioVenta: selectedPrice.precio,
       };
 
-      // Calcula el nuevo montoVenta y totalVenta agregando el precio del producto seleccionado
       const newMontoVenta =
         formData.montoVenta + newProduct.precioVenta * quantity;
       const newTotalVenta =
         formData.totalVenta + newProduct.precioVenta * quantity;
 
-      // Agrega el nuevo producto al array de productos en formData
       setFormData((prev) => ({
         ...prev,
         productos: [...prev.productos, newProduct],
@@ -439,34 +534,28 @@ export default function CreateVentaCuotaForm() {
       }));
 
       toast.success("Producto añadido");
-
-      // Opcional: Limpiar el estado de la selección de producto, precio y cantidad
       setProductSelected(null);
       setSelectedPrice(null);
-      setQuantity(1); // Resetea la cantidad a 1 si es necesario
+      setQuantity(1);
     }
   };
 
-  const handleDeleteFromData = async (id: number) => {
-    // Elimina el producto de la lista de productos
+  const handleDeleteFromData = (id: number) => {
     const updatedProductos = formData.productos.filter(
       (product) => product.productoId !== id
     );
 
-    // Actualiza el estado con la nueva lista de productos
     setFormData((prev) => ({
       ...prev,
       productos: updatedProductos,
     }));
 
-    // Recalcular el montoVenta y totalVenta después de eliminar el producto
     const newMontoVenta = updatedProductos.reduce(
       (total, product) => total + product.precioVenta * product.cantidad,
       0
     );
-    const newTotalVenta = newMontoVenta; // Si quieres que totalVenta sea igual a montoVenta
+    const newTotalVenta = newMontoVenta;
 
-    // Actualizar los valores de montoVenta y totalVenta en el estado
     setFormData((prevData) => ({
       ...prevData,
       montoVenta: newMontoVenta,
@@ -476,32 +565,10 @@ export default function CreateVentaCuotaForm() {
     toast.success("Producto eliminado de la lista");
   };
 
-  console.log("El FORMDATA: ", formData);
-
   const totalVentaCrédito = formData.productos.reduce(
     (total, prod) => total + prod.precioVenta * prod.cantidad,
     0
   );
-
-  const [openCreate, setOpenCreate] = useState(false);
-  const [creditos, setCreditos] = useState<CreditoRegistro[]>([]);
-
-  // Simplifica la función sin useCallback
-  const getRegistCredits = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/cuotas/get/credits`);
-      setCreditos(response.data);
-      console.log("Lista de créditos actualizada");
-    } catch (error) {
-      console.error(error);
-      toast.error("Error al obtener registros");
-    }
-  };
-
-  // Ejecutar solo al montar el componente
-  useEffect(() => {
-    getRegistCredits();
-  }, []); // <-- Array de dependencias vacío
 
   const calcularCuotas = () => {
     if (
@@ -510,16 +577,9 @@ export default function CreateVentaCuotaForm() {
       formData.interes &&
       formData.cuotasTotales
     ) {
-      // Monto de interés sobre el total de la venta
       const montoInteres = formData.totalVenta * (formData.interes / 100);
-
-      // Monto total con interés (precio original + interés)
       const montoTotalConInteres = formData.totalVenta + montoInteres;
-
-      // Saldo restante después del enganche (basado en el monto total con interés)
       const saldoRestante = montoTotalConInteres - formData.cuotaInicial;
-
-      // Pago por cuota (saldo restante dividido entre el número de cuotas)
       const pagoPorCuota = saldoRestante / formData.cuotasTotales;
 
       return {
@@ -538,24 +598,98 @@ export default function CreateVentaCuotaForm() {
     };
   };
 
-  // Llamamos a la función para obtener los valores correctos
   const { saldoRestante, montoInteres, montoTotalConInteres, pagoPorCuota } =
     calcularCuotas();
 
-  //DIFERENCIA ENTRE LA GANANCIA Y EL PRECIO DEL PRODUCTO PARA SACAR LOS PAGOS DE LAS CUOTAS
-
-  const formatearMoneda = (cantidad: number) => {
-    return new Intl.NumberFormat("es-GT", {
-      style: "currency",
-      currency: "GTQ",
-    }).format(cantidad);
-  };
-  console.log("Los creditos son: ", creditos);
-
   return (
-    <Tabs defaultValue="account" className="w-full">
-      <div className="flex flex-col items-center w-full">
-        <TabsList className="flex w-full max-w-5xl justify-center">
+    <Tabs defaultValue="account" className="w-full px-2 py-2">
+      {/* TOP: MINI DASHBOARD + TABS */}
+      <div className="w-full flex flex-col items-center gap-4 mb-4">
+        {/* MINI DASHBOARD CRÉDITOS */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <Card className="border border-muted/60 shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Créditos totales
+                </p>
+                <p className="text-xl font-semibold">{totalCredits}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {paidCredits} pagados
+                </p>
+              </div>
+              <div className="rounded-full bg-primary/10 p-2">
+                <CreditCard className="w-4 h-4 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-muted/60 shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Activos
+                </p>
+                <p className="text-xl font-semibold">{activeCredits}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {pendingCredits} en seguimiento
+                </p>
+              </div>
+              <div className="rounded-full bg-amber-100 dark:bg-amber-900/40 p-2">
+                <ClipboardList className="w-4 h-4 text-amber-600 dark:text-amber-300" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-muted/60 shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Monto cobrado
+                </p>
+                <p className="text-lg font-semibold">
+                  {formatearMoneda(collectedAmount)}
+                </p>
+              </div>
+              <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/40 p-2">
+                <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-muted/60 shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Pendiente por cobrar
+                </p>
+                <p className="text-lg font-semibold">
+                  {formatearMoneda(pendingAmount)}
+                </p>
+              </div>
+              <div className="rounded-full bg-red-100 dark:bg-red-900/40 p-2">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-300" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-muted/60 shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Cuotas pendientes por cobrar
+                </p>
+                <p className="text-lg font-semibold">{pendingInstallments}</p>
+              </div>
+              <div className="rounded-full bg-red-100 dark:bg-red-900/40 p-2">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-300" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* TABS */}
+        <TabsList className="flex w-full justify-center">
           <TabsTrigger value="account" className="flex-1 text-center">
             Registros de Créditos
           </TabsTrigger>
@@ -564,48 +698,65 @@ export default function CreateVentaCuotaForm() {
           </TabsTrigger>
         </TabsList>
       </div>
-      {/* MOSTRAR LOS DATOS DE LOS REGISTROS DE CREDITOS */}
-      <TabsContent value="account">
-        <CreditRecordsTable
-          userId={userId}
-          sucursalId={sucursalId}
-          getCredits={getRegistCredits}
-          records={creditos}
-        />
-      </TabsContent>
-      {/* MOSTRAR LOS DATOS DE LOS REGISTROS DE CREDITOS */}
 
-      <TabsContent value="password">
-        <Card className="w-full max-w-5xl mx-auto shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
-            <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
-              <CreditCard className="h-6 w-6" />
-              Crear Nuevo Crédito
+      {/* LISTA DE CRÉDITOS */}
+      <TabsContent value="account" className="w-full">
+        <div className="w-full  mx-auto">
+          <Card className="border border-muted/60 shadow-sm">
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart className="w-4 h-4" />
+                Historial de créditos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <CreditRecordsTable
+                userId={userId}
+                sucursalId={sucursalId}
+                getCredits={getRegistCredits}
+                records={creditos}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      {/* CREAR NUEVO CRÉDITO */}
+      <TabsContent value="password" className="w-full">
+        <Card className="w-full  mx-auto shadow-sm border border-muted/60">
+          <CardHeader className="py-3 px-4 bg-muted/40 dark:bg-muted/10">
+            <CardTitle className="text-lg font-semibold text-center flex items-center justify-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Crear nuevo crédito
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Selección de productos */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4">
-                <div className="col-span-2">
-                  <h3 className="text-center text-md font-semibold flex items-center justify-center gap-2 mb-2">
-                    <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    Selección de productos
-                  </h3>
-                  <Separator className="my-2 border-t border-gray-300" />
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="col-span-1">
-                    <Label className="mb-1 block">Producto</Label>
+          <CardContent className="p-4 md:p-5 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* SECCIÓN PRODUCTOS */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-md p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Package className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    Productos del crédito
+                  </h3>
+                  <span className="text-[11px] text-muted-foreground">
+                    {formData.productos.length} producto(s)
+                  </span>
+                </div>
+                <Separator className="border-t border-gray-200 dark:border-gray-700" />
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div className="md:col-span-2 space-y-1">
+                    <Label className="text-xs">Producto</Label>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div>
                             <SelectM
-                              className="text-black"
+                              className="text-black text-sm"
                               placeholder="Seleccione un producto"
-                              isClearable={true}
+                              isClearable
                               value={
                                 productSelected
                                   ? {
@@ -620,27 +771,6 @@ export default function CreateVentaCuotaForm() {
                                 )
                               }
                               options={optionsProductsFormat}
-                              classNames={{
-                                control: (state) =>
-                                  `!rounded-md !border-input !shadow-sm ${
-                                    state.isFocused
-                                      ? "!border-blue-500 !ring-1 !ring-blue-500"
-                                      : ""
-                                  }`,
-                                placeholder: () => "text-muted-foreground",
-                                menu: () =>
-                                  "!bg-white dark:!bg-gray-800 !rounded-md !shadow-lg !border !border-input",
-                                option: (state) =>
-                                  `${
-                                    state.isFocused
-                                      ? "!bg-blue-50 dark:!bg-blue-900"
-                                      : ""
-                                  } ${
-                                    state.isSelected
-                                      ? "!bg-blue-100 dark:!bg-blue-800"
-                                      : ""
-                                  }`,
-                              }}
                             />
                           </div>
                         </TooltipTrigger>
@@ -651,98 +781,60 @@ export default function CreateVentaCuotaForm() {
                     </TooltipProvider>
                   </div>
 
-                  {/* Selección de precio */}
                   {productSelected && (
-                    <div className="col-span-1">
-                      <Label className="mb-1 block">Precio</Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SelectM
-                                isClearable={true}
-                                placeholder="Seleccione un precio"
-                                className="text-black"
-                                value={
-                                  selectedPrice
-                                    ? {
-                                        value: selectedPrice.id,
-                                        label: `${selectedPrice.precio}`,
-                                      }
-                                    : null
-                                }
-                                onChange={(option) =>
-                                  handleChangeSelectPrice(
-                                    option as OptionTypeTS
-                                  )
-                                }
-                                options={optionsPricesFormat}
-                                classNames={{
-                                  control: (state) =>
-                                    `!rounded-md !border-input !shadow-sm ${
-                                      state.isFocused
-                                        ? "!border-blue-500 !ring-1 !ring-blue-500"
-                                        : ""
-                                    }`,
-                                  placeholder: () => "text-muted-foreground",
-                                  menu: () =>
-                                    "!bg-white dark:!bg-gray-800 !rounded-md !shadow-lg !border !border-input",
-                                  option: (state) =>
-                                    `${
-                                      state.isFocused
-                                        ? "!bg-blue-50 dark:!bg-blue-900"
-                                        : ""
-                                    } ${
-                                      state.isSelected
-                                        ? "!bg-blue-100 dark:!bg-blue-800"
-                                        : ""
-                                    }`,
-                                }}
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Seleccione el precio del producto
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Precio</Label>
+                      <SelectM
+                        isClearable
+                        placeholder="Seleccione un precio"
+                        className="text-black text-sm"
+                        value={
+                          selectedPrice
+                            ? {
+                                value: selectedPrice.id,
+                                label: `${selectedPrice.precio}`,
+                              }
+                            : null
+                        }
+                        onChange={(option) =>
+                          handleChangeSelectPrice(option as OptionTypeTS)
+                        }
+                        options={optionsPricesFormat}
+                      />
                     </div>
                   )}
 
-                  {/* Input para la cantidad */}
-                  <div className="col-span-1">
-                    <Label className="mb-1 block">Cantidad</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Cantidad</Label>
                     <Input
                       type="number"
                       min="1"
                       value={quantity}
                       onChange={handleQuantityChange}
-                      className="focus:ring-1 focus:ring-blue-500"
+                      className="h-8 text-sm"
                     />
                   </div>
 
-                  {/* Botón para agregar el producto */}
-                  <div className="col-span-1 flex items-end">
+                  <div className="flex items-end">
                     <Button
-                      className="w-full"
+                      className="w-full h-8 text-xs"
                       variant="default"
                       type="button"
                       onClick={handleAddProduct}
                       disabled={!productSelected || !selectedPrice}
                     >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Agregar Producto
+                      <ShoppingCart className="mr-1 h-3 w-3" />
+                      Agregar
                     </Button>
                   </div>
                 </div>
 
-                {/* Productos seleccionados */}
                 {formData.productos?.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium mb-2">
+                  <div className="mt-2">
+                    <h4 className="text-xs font-medium mb-1">
                       Productos seleccionados
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                       {formData.productos?.map((productForm) => {
                         const productoFind = products.find(
                           (prod) => prod.id === productForm.productoId
@@ -754,22 +846,22 @@ export default function CreateVentaCuotaForm() {
                             key={productForm.productoId}
                             className="overflow-hidden border border-blue-100 dark:border-blue-900"
                           >
-                            <CardContent className="p-3">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                            <CardContent className="p-2.5">
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                                     {productoFind.nombre}
                                   </p>
-                                  <div className="flex gap-2 mt-1">
+                                  <div className="flex flex-wrap gap-1 mt-1">
                                     <Badge
                                       variant="outline"
-                                      className="text-xs"
+                                      className="text-[10px] px-1.5"
                                     >
                                       Cant: {productForm.cantidad}
                                     </Badge>
                                     <Badge
                                       variant="secondary"
-                                      className="text-xs"
+                                      className="text-[10px] px-1.5"
                                     >
                                       {formatearMoneda(productForm.precioVenta)}
                                     </Badge>
@@ -782,9 +874,9 @@ export default function CreateVentaCuotaForm() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                  className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 flex-shrink-0"
                                 >
-                                  <Trash className="h-4 w-4" />
+                                  <Trash className="h-3 w-3" />
                                   <span className="sr-only">
                                     Eliminar producto
                                   </span>
@@ -799,21 +891,20 @@ export default function CreateVentaCuotaForm() {
                 )}
               </div>
 
-              {/* Datos del cliente y crédito */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4">
-                <h3 className="text-center text-md font-semibold flex items-center justify-center gap-2 mb-2">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  Datos del cliente y condiciones de crédito
-                </h3>
-                <Separator className="my-2 border-t border-gray-300" />
+              {/* CLIENTE Y CONDICIONES */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-md p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    Datos del cliente y condiciones
+                  </h3>
+                </div>
+                <Separator className="border-t border-gray-200 dark:border-gray-700" />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="clienteId"
-                      className="flex items-center gap-1"
-                    >
-                      <Users className="h-4 w-4" /> Cliente
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Users className="h-3 w-3" /> Cliente
                     </Label>
                     <SelectM
                       placeholder="Seleccione un cliente"
@@ -827,56 +918,26 @@ export default function CreateVentaCuotaForm() {
                       }
                       options={optionsCustomersFormat}
                       onChange={handleChangeSelectCustomer}
-                      isClearable={true}
-                      className="text-black"
-                      classNames={{
-                        control: (state) =>
-                          `!rounded-md !border-input !shadow-sm ${
-                            state.isFocused
-                              ? "!border-blue-500 !ring-1 !ring-blue-500"
-                              : ""
-                          }`,
-                        placeholder: () => "text-muted-foreground",
-                        menu: () =>
-                          "!bg-white dark:!bg-gray-800 !rounded-md !shadow-lg !border !border-input",
-                        option: (state) =>
-                          `${
-                            state.isFocused
-                              ? "!bg-blue-50 dark:!bg-blue-900"
-                              : ""
-                          } ${
-                            state.isSelected
-                              ? "!bg-blue-100 dark:!bg-blue-800"
-                              : ""
-                          }`,
-                      }}
+                      isClearable
+                      className="text-black text-sm"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="fechaInicio"
-                      className="flex items-center gap-1"
-                    >
-                      Fecha de inicio
-                    </Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Fecha de inicio</Label>
                     <input
                       type="date"
                       id="fechaInicio"
                       name="fechaInicio"
-                      value={formData.fechaInicio} // Asignamos la fecha directamente del estado
-                      onChange={(e) => handleChangeDate(e, "fechaInicio")} // Actualizamos la fecha
-                      className="w-full py-2 px-3 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.fechaInicio}
+                      onChange={(e) => handleChangeDate(e, "fechaInicio")}
+                      className="w-full h-8 px-2 border rounded-md text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="cuotaInicial"
-                      className="flex items-center gap-1"
-                    >
-                      <DollarSign className="h-4 w-4" /> Pago de Cuota Inicial
-                      (enganche)
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" /> Cuota inicial
                     </Label>
                     <Input
                       id="cuotaInicial"
@@ -886,16 +947,13 @@ export default function CreateVentaCuotaForm() {
                       required
                       value={formData.cuotaInicial}
                       onChange={handleInputChange}
-                      className="focus:ring-1 focus:ring-blue-500"
+                      className="h-8 text-sm"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="cuotasTotales"
-                      className="flex items-center gap-1"
-                    >
-                      <ClipboardList className="h-4 w-4" /> Número de Cuotas
-                      Totales
+
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <ClipboardList className="h-3 w-3" /> Nº de cuotas
                     </Label>
                     <Input
                       type="number"
@@ -907,17 +965,14 @@ export default function CreateVentaCuotaForm() {
                           e as React.ChangeEvent<HTMLInputElement>
                         )
                       }
-                      className="w-full py-2 px-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Ingrese el número de cuotas"
+                      className="h-8 text-sm"
+                      placeholder="Ej: 12"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="garantiaMeses"
-                      className="flex items-center gap-1"
-                    >
-                      <Calendar className="h-4 w-4" /> Garantía (meses)
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Calendar className="h-3 w-3" /> Garantía (meses)
                     </Label>
                     <Input
                       id="garantiaMeses"
@@ -927,17 +982,13 @@ export default function CreateVentaCuotaForm() {
                       step="1"
                       value={formData.garantiaMeses}
                       onChange={handleInputChange}
-                      className="focus:ring-1 focus:ring-blue-500"
+                      className="h-8 text-sm"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="diasEntrePagos"
-                      className="flex items-center gap-1"
-                    >
-                      <Calendar className="h-4 w-4" /> Días entre pagos
-                      (intervalo)
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Calendar className="h-3 w-3" /> Días entre pagos
                     </Label>
                     <Select
                       name="diasEntrePagos"
@@ -954,7 +1005,7 @@ export default function CreateVentaCuotaForm() {
                         );
                       }}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full h-8 text-sm">
                         <SelectValue placeholder="Seleccione intervalo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -967,14 +1018,11 @@ export default function CreateVentaCuotaForm() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="interes"
-                      className="flex items-center gap-1"
-                    >
-                      <Percent className="h-4 w-4" /> Porcentaje de interés
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Percent className="h-3 w-3" /> Interés
                     </Label>
-                    <div className="flex gap-2 justify-center items-center">
+                    <div className="flex gap-2 items-center">
                       <Input
                         id="interes"
                         name="interes"
@@ -983,18 +1031,15 @@ export default function CreateVentaCuotaForm() {
                         step="1"
                         value={formData.interes}
                         onChange={handleInputChange}
-                        className="focus:ring-1 focus:ring-blue-500"
+                        className="h-8 text-sm"
                       />
-                      <span className="text-lg font-medium">%</span>
+                      <span className="text-xs font-medium">%</span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="totalVenta"
-                      className="flex items-center gap-1"
-                    >
-                      <DollarSign className="h-4 w-4" /> Total de la Venta
+                  <div className="space-y-1">
+                    <Label className="text-xs flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" /> Total venta
                     </Label>
                     <Input
                       id="totalVenta"
@@ -1004,69 +1049,69 @@ export default function CreateVentaCuotaForm() {
                       required
                       value={totalVentaCrédito}
                       readOnly
-                      className="bg-gray-50 dark:bg-gray-800"
+                      className="h-8 text-sm bg-gray-50 dark:bg-gray-800"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Resumen */}
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30 rounded-lg p-4">
-                <h3 className="mb-3 text-xl font-medium text-center">
-                  Resumen del Crédito
+              {/* RESUMEN DEL CRÉDITO */}
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30 rounded-md p-3 space-y-3">
+                <h3 className="text-sm font-semibold text-center">
+                  Resumen del crédito
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm flex items-center gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm flex items-center gap-3">
                     <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full">
-                      <DollarSign className="text-green-600 dark:text-green-400 h-5 w-5" />
+                      <DollarSign className="text-green-600 dark:text-green-400 h-4 w-4" />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">
-                        Saldo Restante a Pagar
-                      </label>
-                      <p className="text-lg font-semibold">
+                      <p className="text-[11px] text-muted-foreground">
+                        Saldo restante
+                      </p>
+                      <p className="text-sm font-semibold">
                         {formatearMoneda(saldoRestante)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm flex items-center gap-3">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm flex items-center gap-3">
                     <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                      <Percent className="text-blue-600 dark:text-blue-400 h-5 w-5" />
+                      <Percent className="text-blue-600 dark:text-blue-400 h-4 w-4" />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">
-                        Monto de Interés
-                      </label>
-                      <p className="text-lg font-semibold">
+                      <p className="text-[11px] text-muted-foreground">
+                        Monto de interés
+                      </p>
+                      <p className="text-sm font-semibold">
                         {formatearMoneda(montoInteres)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm flex items-center gap-3">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm flex items-center gap-3">
                     <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-full">
-                      <BarChart className="text-orange-600 dark:text-orange-400 h-5 w-5" />
+                      <BarChart className="text-orange-600 dark:text-orange-400 h-4 w-4" />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">
-                        Monto Total con Interés
-                      </label>
-                      <p className="text-lg font-semibold">
+                      <p className="text-[11px] text-muted-foreground">
+                        Total con interés
+                      </p>
+                      <p className="text-sm font-semibold">
                         {formatearMoneda(montoTotalConInteres)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm flex items-center gap-3">
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm flex items-center gap-3">
                     <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-full">
-                      <Calendar className="text-purple-600 dark:text-purple-400 h-5 w-5" />
+                      <Calendar className="text-purple-600 dark:text-purple-400 h-4 w-4" />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">
-                        Pago por cada Cuota
-                      </label>
-                      <p className="text-lg font-semibold">
+                      <p className="text-[11px] text-muted-foreground">
+                        Pago por cuota
+                      </p>
+                      <p className="text-sm font-semibold">
                         {typeof pagoPorCuota === "number" &&
                         !isNaN(pagoPorCuota) &&
                         isFinite(pagoPorCuota)
@@ -1078,29 +1123,25 @@ export default function CreateVentaCuotaForm() {
                 </div>
               </div>
 
-              {/* Testigos */}
+              {/* TESTIGOS */}
               <Accordion
                 type="single"
                 collapsible
-                className="w-full border rounded-lg overflow-hidden"
+                className="w-full border rounded-md overflow-hidden"
               >
                 <AccordionItem value="item-1" className="border-0">
-                  <AccordionTrigger className="px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <AccordionTrigger className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
-                      <span>Añadir Testigos ({formData.testigos.length})</span>
+                      <span>Testigos ({formData.testigos.length})</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 py-3">
-                    <div className="space-y-4">
-                      <Label className="mr-5 flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Testigos
-                      </Label>
+                  <AccordionContent className="px-3 py-3">
+                    <div className="space-y-3">
                       {formData.testigos.map((testigo, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-1 md:grid-cols-4 gap-3"
+                          className="grid grid-cols-1 md:grid-cols-4 gap-2"
                         >
                           <Input
                             placeholder="Nombre"
@@ -1112,7 +1153,7 @@ export default function CreateVentaCuotaForm() {
                                 e.target.value
                               )
                             }
-                            className="col-span-1 focus:ring-1 focus:ring-blue-500"
+                            className="h-8 text-sm"
                           />
                           <Input
                             placeholder="Dirección"
@@ -1124,9 +1165,9 @@ export default function CreateVentaCuotaForm() {
                                 e.target.value
                               )
                             }
-                            className="col-span-1 md:col-span-2 focus:ring-1 focus:ring-blue-500"
+                            className="h-8 text-sm md:col-span-2"
                           />
-                          <div className="col-span-1 flex gap-2">
+                          <div className="flex gap-2">
                             <Input
                               placeholder="Teléfono"
                               value={testigo.telefono}
@@ -1137,17 +1178,16 @@ export default function CreateVentaCuotaForm() {
                                   e.target.value
                                 )
                               }
-                              className="flex-1 focus:ring-1 focus:ring-blue-500"
+                              className="h-8 text-sm flex-1"
                             />
                             <Button
                               type="button"
                               variant="destructive"
                               size="icon"
                               onClick={() => removeTestigo(index)}
-                              className="flex-shrink-0"
+                              className="h-8 w-8 flex-shrink-0"
                             >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">Eliminar testigo</span>
+                              <Trash className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
@@ -1156,50 +1196,52 @@ export default function CreateVentaCuotaForm() {
                         type="button"
                         onClick={addTestigo}
                         variant="outline"
-                        className="mt-2"
+                        size="sm"
+                        className="mt-1"
                       >
-                        <Plus className="h-4 w-4 mr-2" /> Agregar Testigo
+                        <Plus className="h-4 w-4 mr-1" /> Agregar testigo
                       </Button>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              {/* Confirmación del registro */}
-              <div className="flex justify-center pt-4">
+              {/* BOTÓN CONFIRMACIÓN */}
+              <div className="flex justify-center pt-2">
                 <Button
                   onClick={() => setOpenCreate(true)}
                   type="button"
-                  className="px-6 py-6 text-lg font-medium"
+                  className="px-5 h-9 text-sm font-medium"
                 >
-                  <Save className="h-5 w-5 mr-2" />
-                  Iniciar Registro
+                  <Save className="h-4 w-4 mr-2" />
+                  Iniciar registro
                 </Button>
               </div>
 
+              {/* DIALOG CONFIRMACIÓN */}
               <Dialog onOpenChange={setOpenCreate} open={openCreate}>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="text-center text-xl">
-                      Confirmación de Registro
+                    <DialogTitle className="text-center text-lg">
+                      Confirmar registro
                     </DialogTitle>
-                    <DialogDescription className="text-center">
-                      ¿Estás seguro de que deseas proceder con la creación de
-                      este registro de crédito con los datos actuales?
+                    <DialogDescription className="text-center text-sm">
+                      ¿Deseas crear este registro de crédito con la información
+                      actual?
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="grid grid-cols-2 gap-3 mt-3">
                     <Button
                       variant="outline"
                       onClick={() => setOpenCreate(false)}
-                      className="w-full"
+                      className="w-full h-9 text-sm"
                     >
                       Cancelar
                     </Button>
                     <Button
                       onClick={handleSubmit}
                       type="submit"
-                      className="w-full"
+                      className="w-full h-9 text-sm"
                       disabled={isLoading}
                     >
                       {isLoading ? (
