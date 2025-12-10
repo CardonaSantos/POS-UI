@@ -310,7 +310,10 @@ function EditCustomers() {
 
     toast.promise(updateCustomer.mutateAsync(payload), {
       loading: "Cargando...",
-      success: "Cliente actualizado",
+      success: () => {
+        setOpenConfirm(false);
+        return "Cliente actualizado";
+      },
       error: (error) => getApiErrorMessageAxios(error),
     });
   };

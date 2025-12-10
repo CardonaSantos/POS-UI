@@ -53,6 +53,7 @@ export default function TicketDashboard() {
     return tickets.filter((ticket) => {
       const matchesText =
         ticket.title.toLowerCase().includes(filterText.toLowerCase()) ||
+        ticket.customer.name.toLowerCase().includes(filterText.toLowerCase()) ||
         ticket.description.toLowerCase().includes(filterText.toLowerCase()) ||
         ticket.id.toString().includes(filterText);
 

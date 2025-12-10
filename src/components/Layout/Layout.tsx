@@ -251,7 +251,7 @@ export default function Layout2({ children }: LayoutProps) {
                       aria-label="User menu"
                     >
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="h-8 w-8 bg-[#29daa5] text-white font-semibold uppercase flex items-center justify-center">
+                        <AvatarFallback className="h-8 w-8 bg-[#13cd95] text-white font-semibold uppercase flex items-center justify-center">
                           {getInitials(displayName)}
                         </AvatarFallback>
                       </Avatar>

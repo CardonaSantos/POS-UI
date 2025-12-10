@@ -113,6 +113,7 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
       mapTypeControl={false} // sin botón para cambiar tipo de mapa
       fullscreenControl={true} // dejamos solo pantalla completa
       // Tipo de mapa inicial: satélite
+      // mapTypeId="hybrid"
       mapTypeId="hybrid"
     >
       {validPersonas.map((persona) => (

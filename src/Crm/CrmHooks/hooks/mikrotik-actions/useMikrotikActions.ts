@@ -2,6 +2,7 @@ import { suspendCustomerDto } from "@/Crm/features/mikrotik-actions-interfaces/m
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { customerQkeys } from "../Client/Qk";
+import { clienteKeys } from "@/Crm/CrmCustomer/API/QK/queries-keys";
 
 export function useMikrotikSuspend(customerId: number) {
   const queryClient = useQueryClient();
@@ -13,6 +14,9 @@ export function useMikrotikSuspend(customerId: number) {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: customerQkeys.specificCustomer(customerId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: clienteKeys.details(customerId),
         });
       },
     }
@@ -29,6 +33,10 @@ export function useMikrotikActivar(customerId: number) {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: customerQkeys.specificCustomer(customerId),
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: clienteKeys.details(customerId),
         });
       },
     }

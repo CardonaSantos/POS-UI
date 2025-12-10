@@ -29,9 +29,10 @@ interface CustomerNetworkControlProps {
 
 function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
   console.log("cliente es: ", cliente);
-  const hasMikrotik = !!cliente.mikrotik; // hay router asignado
-  const isServiceActive =
-    hasMikrotik && cliente.estadoServicioMikrotik === "ACTIVO";
+  const hasMikrotik = !!cliente.mikrotik;
+  const hasIp = !!cliente.IP.direccion;
+
+  const isServiceActive = hasMikrotik && cliente.servicioEstado;
 
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [password, setPassword] = useState<string>("");
@@ -84,7 +85,10 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
     : "¿Está seguro de activar el servicio de este cliente?";
 
   const switchDisabled =
-    !hasMikrotik || suspendCustomer.isPending || activateCustomer.isPending;
+    !hasMikrotik ||
+    !hasIp ||
+    suspendCustomer.isPending ||
+    activateCustomer.isPending;
 
   return (
     <div className="space-y-4">
@@ -114,6 +118,8 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
                 <p className="text-xs text-muted-foreground">
                   {!hasMikrotik
                     ? "Asigne un Mikrotik para controlar el servicio."
+                    : !hasIp
+                    ? "Asigne una IP al cliente para poder suspender/activar."
                     : isServiceActive
                     ? "Suspender el servicio"
                     : "Activar el servicio"}

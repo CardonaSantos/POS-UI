@@ -1,11 +1,9 @@
 "use client";
 import { useDebounce } from "use-debounce";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   ColumnDef,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -32,18 +30,18 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import ReactSelectComponent from "react-select";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 
-import { useDeferredValue } from "react";
 import { Label } from "@/components/ui/label";
-import { useRef } from "react";
 import { useWindowScrollPosition } from "../Utils/useWindow";
 import { ClientTableSkeleton } from "./SkeletonTable";
 import { getEstadoColorText, returnStatusClient } from "../Utils/Utils2";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+
 function parseIp(ipString: string) {
   const parts = ipString.split(".");
   const octets = parts.map((p) => parseInt(p, 10));
@@ -63,6 +61,7 @@ function compareIp(a: string, b: string) {
   }
   return 0;
 }
+
 // **Definir columnas de la tabla**
 const columns: ColumnDef<ClienteDto>[] = [
   { accessorKey: "id", header: "ID" },
@@ -72,13 +71,11 @@ const columns: ColumnDef<ClienteDto>[] = [
     accessorKey: "direccionIp",
     header: "IP",
     sortingFn: (rowA, rowB, columnId) => {
-      // Aseguramos que los valores de las celdas sean strings
-      const ipA = rowA.getValue(columnId) as string; // Aseguramos que ipA sea un string
-      const ipB = rowB.getValue(columnId) as string; // Aseguramos que ipB sea un string
-      return compareIp(ipA, ipB); // Compara IPs numéricamente
+      const ipA = rowA.getValue(columnId) as string;
+      const ipB = rowB.getValue(columnId) as string;
+      return compareIp(ipA, ipB);
     },
   },
-
   { accessorKey: "creadoEn", header: "Plan Internet" },
   { accessorKey: "facturacionZona", header: "Zona Facturación" },
   { accessorKey: "estadoCliente", header: "Estado cliente" },
@@ -98,8 +95,9 @@ interface Municipios {
   id: number;
   nombre: string;
 }
+
 interface OptionSelected {
-  value: string; // Cambiar 'number' a 'string'
+  value: string;
   label: string;
 }
 
@@ -109,7 +107,6 @@ interface Sector {
   clientesCount: number;
 }
 
-// O si quieres mantener los textos descriptivos pero de forma más limpia:
 const estadosConDescripcion = [
   { value: "ACTIVO", label: "ACTIVO " },
   { value: "PENDIENTE_ACTIVO", label: "PENDIENTE ACTIVO " },
@@ -129,10 +126,10 @@ interface Summary {
 }
 
 export default function ClientesTable() {
-  //referencias
   const [searchParam] = useSearchParams();
   const estadoQuery = searchParam.get("estado") ?? "";
   const inputRef = useRef<HTMLInputElement>(null);
+
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [summary, setSummary] = useState<Summary>({
     activo: 0,
@@ -141,10 +138,9 @@ export default function ClientesTable() {
     pendiente_activo: 0,
   });
 
-  //PAGINACION
+  // PAGINACIÓN
   const [totalCount, setTotalCount] = useState(0);
   const [filter, setFilter] = useState("");
-  const filtered2 = useDeferredValue(filter);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState<any>([]);
   const [clientes, setClientes] = useState<ClienteDto[]>([]);
@@ -164,23 +160,33 @@ export default function ClientesTable() {
   const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
     []
   );
-
   const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
     string | null
   >(null);
+
+  const atBottom = useWindowScrollPosition();
+
+  const handleToggle = () => {
+    if (atBottom) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const handleSelectDepartamento = (selectedOption: OptionSelected | null) => {
     setDepaSelected(selectedOption ? selectedOption.value : null);
   };
 
-  // Manejar el cambio en el select de municipio
   const handleSelectMunicipio = (selectedOption: OptionSelected | null) => {
     setMuniSelected(selectedOption ? selectedOption.value : null);
   };
 
-  // Cambiar 'optionsDepartamentos' para mapear los departamentos a 'string' para 'value'
   const optionsDepartamentos: OptionSelected[] = departamentos.map((depa) => ({
-    value: depa.id.toString(), // Asegúrate de convertir el 'id' a 'string'
+    value: depa.id.toString(),
     label: depa.nombre,
   }));
 
@@ -188,21 +194,6 @@ export default function ClientesTable() {
     value: muni.id.toString(),
     label: muni.nombre,
   }));
-
-  const atBottom = useWindowScrollPosition();
-
-  const handleToggle = () => {
-    if (atBottom) {
-      // Volver arriba
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      // Ir hasta el final de la página
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  };
 
   const getDepartamentos = async () => {
     try {
@@ -250,22 +241,6 @@ export default function ClientesTable() {
     }
   };
 
-  useEffect(() => {
-    getFacturacionZona();
-    getDepartamentos();
-    getSectores();
-  }, []);
-
-  // Obtener municipios cuando depaSelected cambia
-  useEffect(() => {
-    if (depaSelected) {
-      getMunicipios();
-    } else {
-      setMunicipios([]);
-      setMuniSelected(null);
-    }
-  }, [depaSelected]);
-
   const getFacturacionZona = async () => {
     try {
       const response = await axios.get(
@@ -280,6 +255,21 @@ export default function ClientesTable() {
       toast.info("Error al conseguir servicios wifi");
     }
   };
+
+  useEffect(() => {
+    getFacturacionZona();
+    getDepartamentos();
+    getSectores();
+  }, []);
+
+  useEffect(() => {
+    if (depaSelected) {
+      getMunicipios();
+    } else {
+      setMunicipios([]);
+      setMuniSelected(null);
+    }
+  }, [depaSelected]);
 
   const optionsZonasFacturacion: OptionSelected[] = zonasFacturacion
     .sort((a, b) => {
@@ -312,16 +302,24 @@ export default function ClientesTable() {
     { label: "Ordenar por IP (desc)", value: "ip-desc" },
     { label: "Ordenar por Nombre (asc)", value: "nombre-asc" },
     { label: "Ordenar por Nombre (desc)", value: "nombre-desc" },
-    { label: "Ordenar por Fecha Creación (asc)", value: "fechapago-asc" },
-    { label: "Ordenar por Fecha Creación (desc)", value: "fechapago-desc" },
+    {
+      label: "Ordenar por Fecha Creación (asc)",
+      value: "fechapago-asc",
+    },
+    {
+      label: "Ordenar por Fecha Creación (desc)",
+      value: "fechapago-desc",
+    },
   ];
 
-  // Map the short key to the actual field in ClienteDto
   const fieldMapping: Record<string, keyof ClienteDto> = {
     ip: "direccionIp",
     nombre: "nombreCompleto",
     fechapago: "creadoEn",
   };
+
+  // 🔹 Búsqueda con debounce (lo que se manda al backend)
+  const [debouncedQuery] = useDebounce(filter, 500);
 
   const getClientes = async () => {
     try {
@@ -332,8 +330,7 @@ export default function ClientesTable() {
           params: {
             page: pagination.pageIndex + 1, // API expects 1-based index
             limite: pagination.pageSize,
-            paramSearch: filter,
-            //otros filtros
+            paramSearch: debouncedQuery, // usar el debounced
             zonasFacturacionSelected: zonasFacturacionSelected,
             muniSelected: muniSelected,
             depaSelected: depaSelected,
@@ -348,7 +345,6 @@ export default function ClientesTable() {
         setClientes(response.data.data);
         setTotalCount(response.data.totalCount);
         setSummary(response.data.summary);
-        // Reset pagination when new data is fetched
       }
     } catch (error) {
       console.log(error);
@@ -358,10 +354,31 @@ export default function ClientesTable() {
     }
   };
 
+  // 🔹 Cuando cambie búsqueda o filtros → siempre regresar a página 1
   useEffect(() => {
-    // getClientes();
-    getFacturacionZona();
-  }, []);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [
+    debouncedQuery,
+    zonasFacturacionSelected,
+    muniSelected,
+    depaSelected,
+    sectorSelected,
+    estadoSelected,
+  ]);
+
+  // 🔹 Llamar al backend cuando cambien página, tamaño, filtros o búsqueda
+  useEffect(() => {
+    getClientes();
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    zonasFacturacionSelected,
+    muniSelected,
+    depaSelected,
+    sectorSelected,
+    debouncedQuery,
+    estadoSelected,
+  ]);
 
   useEffect(() => {
     if (!isSearching) {
@@ -369,7 +386,6 @@ export default function ClientesTable() {
     }
   }, [isSearching]);
 
-  // Handle sort selection change from react-select
   const handleSortChange = (option: OptionSelect | null) => {
     if (!option) {
       setSorting([]);
@@ -382,63 +398,21 @@ export default function ClientesTable() {
     }
   };
 
-  useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [zonasFacturacionSelected]); // Resetear a página 1 cuando el filtro cambie
-
-  // **Configuración de la tabla**
+  // 🔹 Tabla solo con paginación server-side (sin filtro global local)
   const table = useReactTable({
-    pageCount: Math.ceil(totalCount / pagination.pageSize),
-    manualPagination: true, // Habilitar paginación manual
-    //paginacion
-    data: clientes, // Cambiar a filteredClientesZona
+    data: clientes,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    pageCount: Math.ceil(totalCount / pagination.pageSize) || 0,
+    manualPagination: true,
     state: {
-      globalFilter: filtered2,
       pagination,
       sorting,
     },
-    onGlobalFilterChange: setFilter,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    globalFilterFn: (row, columnId, value) => {
-      console.log(columnId);
-
-      const search = value.toLowerCase().trim();
-      const cliente = row.original as ClienteDto;
-
-      return (
-        (cliente.id?.toString() || "").includes(search) ||
-        (cliente.nombreCompleto || "").toLowerCase().includes(search) ||
-        // (cliente.apellidos || "").toLowerCase().includes(search) ||
-        (cliente.telefono || "").toLowerCase().includes(search) ||
-        (cliente.direccionIp || "").toLowerCase().includes(search) ||
-        (cliente.direccion || "").toLowerCase().includes(search) ||
-        (cliente.dpi || "").toLowerCase().includes(search)
-      );
-    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
-
-  const [debouncedQuery] = useDebounce(filter, 500);
-  useEffect(() => {
-    getClientes();
-    // Actualizar la tabla cuando cambie la página o el tamaño de página
-  }, [
-    pagination.pageIndex,
-    pagination.pageSize,
-    zonasFacturacionSelected,
-    muniSelected,
-    depaSelected,
-    sectorSelected,
-    debouncedQuery,
-    estadoSelected,
-  ]);
-
-  //Reemplazar con un dato calculado del server
 
   return (
     <PageTransitionCrm
@@ -449,21 +423,20 @@ export default function ClientesTable() {
       <Card className="max-w-full shadow-lg">
         <CardContent>
           <div className="flex items-center justify-between mb-4"></div>
-          {/* **Campo de Búsqueda** */}
+
+          {/* Campo de Búsqueda (solo server-side) */}
           <Input
             style={{ boxShadow: "none" }}
             type="text"
             placeholder="Buscar por Nombre, Teléfono, Dirección, DPI o IP..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            // className="mb-3 border-2
             className="px-2 py-1 mb-3 text-xs border-2"
             ref={inputRef}
           />
 
-          {/* **Controles: Selector de Orden y Cantidad de Filas** */}
+          {/* Controles de filtrado y ordenamiento */}
           <div className="mb-4">
-            {/* **Controles de filtrado y ordenamiento** */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {/* Departamento */}
               <div className="space-y-1">
@@ -513,7 +486,7 @@ export default function ClientesTable() {
 
               {/* Sector */}
               <div className="space-y-1">
-                <Label htmlFor="municipioId-all">Sector</Label>
+                <Label htmlFor="sectorId-all">Sector</Label>
                 <ReactSelectComponent
                   placeholder="Seleccione un sector"
                   isClearable
@@ -534,9 +507,9 @@ export default function ClientesTable() {
                 />
               </div>
 
-              {/* ESTADO CLIENTE */}
+              {/* Estado cliente */}
               <div className="space-y-1">
-                <Label htmlFor="municipioId-all">Estado</Label>
+                <Label htmlFor="estadoId-all">Estado</Label>
                 <ReactSelectComponent
                   placeholder="Seleccione un estado"
                   options={estadosConDescripcion}
@@ -581,7 +554,7 @@ export default function ClientesTable() {
                 <ReactSelectComponent
                   className="text-xs text-black"
                   options={sortOptions}
-                  isClearable={true}
+                  isClearable
                   onChange={handleSortChange}
                   placeholder="Ordenar por..."
                 />
@@ -592,7 +565,10 @@ export default function ClientesTable() {
                 <Label>Items por página</Label>
                 <Select
                   onValueChange={(value) =>
-                    setPagination({ ...pagination, pageSize: Number(value) })
+                    setPagination((prev) => ({
+                      ...prev,
+                      pageSize: Number(value),
+                    }))
                   }
                   defaultValue={String(pagination.pageSize)}
                 >
@@ -608,23 +584,18 @@ export default function ClientesTable() {
                 </Select>
               </div>
 
+              {/* Botón scroll top/bottom */}
               <button
                 onClick={handleToggle}
                 className="fixed z-50 flex items-center justify-center w-10 h-10 text-white transition-colors rounded-full shadow-lg bottom-6 right-6 bg-rose-500 hover:bg-rose-600"
                 aria-label={atBottom ? "Ir al tope" : "Ir al final"}
               >
-                {atBottom ? (
-                  <ChevronUp></ChevronUp>
-                ) : (
-                  <span>
-                    <ChevronDown></ChevronDown>
-                  </span>
-                )}
+                {atBottom ? <ChevronUp /> : <ChevronDown />}
               </button>
             </div>
           </div>
 
-          {/* **Tabla** */}
+          {/* Tabla */}
           <div className="overflow-x-auto border border-gray-200 rounded-md shadow-sm dark:border-gray-800 dark:bg-transparent dark:shadow-gray-900/30">
             {isSearching ? (
               <ClientTableSkeleton />
@@ -650,11 +621,9 @@ export default function ClientesTable() {
                     <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
                       Zona de Facturación
                     </th>
-
                     <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
                       Estado cliente
                     </th>
-
                     <th className="px-3 py-2 font-medium text-left text-gray-600 dark:text-gray-300">
                       Acciones
                     </th>
@@ -671,7 +640,7 @@ export default function ClientesTable() {
                         stiffness: 120,
                         damping: 22,
                       }}
-                      className="bg-white hover:bg-gray-50 dark:bg-transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
+                      className="bg-white hover:bg-gray-50 dark:bg.transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
                     >
                       <td className="px-3 py-2 font-medium text-center">
                         {row.original.id}
@@ -698,7 +667,6 @@ export default function ClientesTable() {
                       <td className="px-3 py-2 truncate max-w-[100px] whitespace-nowrap text-gray-600 dark:text-gray-400">
                         {row.original.facturacionZona}
                       </td>
-
                       <td
                         className={`px-3 py-2 truncate max-w-[100px] whitespace-nowrap ${getEstadoColorText(
                           returnStatusClient(row.original.estado)
@@ -726,7 +694,7 @@ export default function ClientesTable() {
             )}
           </div>
 
-          {/* **Controles de Paginación** */}
+          {/* Controles de Paginación */}
           <div className="flex items-center justify-between px-4 py-3 mt-0 text-xs border-t border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-transparent dark:text-gray-300 rounded-b-md">
             <Button
               variant="outline"

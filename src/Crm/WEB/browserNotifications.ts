@@ -1,8 +1,11 @@
-// src/Crm/WEB/browserNotifications.ts
+import logo from "@/assets/LogoCrmPng.png";
+import ring from "@/assets/audio/ring.wav";
+
 export type TicketStatusPayload = {
   ticketId: number;
   nuevoEstado: string;
   titulo?: string;
+  tecnico?: string;
 };
 
 export function showTicketBrowserNotification(data: TicketStatusPayload) {
@@ -10,7 +13,7 @@ export function showTicketBrowserNotification(data: TicketStatusPayload) {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
-  const { ticketId, nuevoEstado, titulo } = data;
+  const { ticketId, nuevoEstado, titulo, tecnico } = data;
 
   const title =
     nuevoEstado === "EN_PROCESO"
@@ -19,27 +22,39 @@ export function showTicketBrowserNotification(data: TicketStatusPayload) {
       ? `Ticket #${ticketId} pendiente de revisión`
       : `Ticket #${ticketId} actualizado`;
 
-  const body = titulo || "";
+  const accion =
+    nuevoEstado === "EN_PROCESO"
+      ? "iniciado"
+      : nuevoEstado === "PENDIENTE_REVISION"
+      ? "finalizado"
+      : "actualizado";
+
+  let body = "";
+
+  if (tecnico && titulo) {
+    body = `${tecnico} ha ${accion} el ticket: ${titulo}`;
+  } else if (tecnico) {
+    body = `${tecnico} ha ${accion} el ticket #${ticketId}`;
+  } else if (titulo) {
+    body = `El ticket "${titulo}" ha sido ${accion}`;
+  } else {
+    body = `El ticket #${ticketId} ha sido ${accion}`;
+  }
 
   const notif = new Notification(title, {
     body,
-    icon: "/icons/ticket-notification.png", // pon aquí tu icono en /public
-    tag: `ticket-${ticketId}`, // evita spam de muchas notis duplicadas
+    icon: logo,
   });
 
-  // Cuando el user hace click en la notificación
   notif.onclick = () => {
     window.focus();
-    // abre / lleva al detalle del ticket (ajusta la ruta a tu gusto)
-    window.open(`/crm/tecnico/ticket/${ticketId}`, "_self");
+    window.open(`/crm/ticket-detalles/${ticketId}`, "_self");
   };
 
-  // === Sonidito tipo WhatsApp ===
   try {
-    const audio = new Audio("/sounds/ticket.mp3"); // pon un mp3 en /public/sounds
-    audio.play().catch(() => {
-      // algunos navegadores bloquean autoplay; ignoramos el error
-    });
+    const audio = new Audio(ring);
+    audio.volume = 0.7;
+    audio.play().catch(() => {});
   } catch {
     // ignore
   }

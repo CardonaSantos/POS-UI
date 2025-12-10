@@ -26,6 +26,7 @@ import { useInvalidateQk } from "../CrmHooks/hooks/useInvalidateQk/useInvalidate
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { showTicketBrowserNotification } from "../WEB/browserNotifications";
+
 const DEFAULT_DASHBOARD_DATA: DashboardData = {
   clientes: {
     totalEnSistema: 0,
@@ -131,8 +132,8 @@ function NewDashboard() {
       showTicketBrowserNotification({
         ticketId: payload.ticketId,
         nuevoEstado: payload.nuevoEstado,
-        // si quieres pasar título, deberías incluirlo en el payload del backend
-        // titulo: payload.titulo,
+        titulo: payload.titulo,
+        tecnico: payload.tecnico,
       });
     },
     [invalidateQk]

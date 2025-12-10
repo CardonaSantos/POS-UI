@@ -12,6 +12,7 @@ import {
   Clock,
   Trash2,
 } from "lucide-react";
+import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 
 interface DashboardKpisSectionProps {
   kpisData: DashboardData;
@@ -29,6 +30,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-2">
+          {/* Cantidades (facturas) */}
           <KpiCard
             type="FACTURACION"
             linkValue=""
@@ -45,11 +47,13 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             color="bg-emerald-500 dark:bg-emerald-600"
             Icon={DollarSign}
           />
+
+          {/* Montos en Q */}
           <KpiCard
             type="FACTURACION"
             linkValue=""
-            title="Total gen."
-            value={facturacion.montoFacturadoMes}
+            title="Facturado mes"
+            value={formattMonedaGT(facturacion.montoFacturadoMes)}
             color="bg-indigo-500 dark:bg-indigo-600"
             Icon={CreditCard}
           />
@@ -57,7 +61,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             type="FACTURACION"
             linkValue="PENDIENTE"
             title="Sin pagar"
-            value={facturacion.montoPendienteMes}
+            value={formattMonedaGT(facturacion.montoPendienteMes)}
             color="bg-rose-500 dark:bg-rose-600"
             Icon={AlertTriangle}
           />
@@ -67,7 +71,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
               Total pagadas
             </p>
             <p className="text-lg md:text-xl font-bold mt-1">
-              {facturacion.montoCobradoMes}
+              {formattMonedaGT(facturacion.montoCobradoMes)}
             </p>
           </div>
         </div>
@@ -76,7 +80,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
       {/* ESTADO DE CLIENTES */}
       <section>
         <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-          clientes
+          Clientes
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">

@@ -4,11 +4,58 @@ import type { ChartDataLineNivo } from "./LineChart.interfaces";
 
 interface LineChartNivoProps {
   data: ChartDataLineNivo;
-  height?: number; // altura del chart en px
-  axisBottomLabel?: string; // texto debajo del eje X
-  axisLeftLabel?: string; // texto al lado del eje Y
-  stacked?: boolean; // true = suma series / false = líneas independientes
+  height?: number;
+  axisBottomLabel?: string;
+  axisLeftLabel?: string;
+  stacked?: boolean;
+  /** modo oscuro (puedes pasarlo desde tu theme/store) */
+  isDark?: boolean;
+  /** colores de las series */
+  colors?: string[];
 }
+
+const getNivoTheme = (isDark: boolean) => ({
+  textColor: isDark ? "#e5e7eb" : "#0f172a", // tailwind: slate-200 / slate-900
+  fontSize: 11,
+  axis: {
+    domain: {
+      line: {
+        stroke: isDark ? "#4b5563" : "#e5e7eb", // slate-600 / slate-200
+        strokeWidth: 1,
+      },
+    },
+    ticks: {
+      line: {
+        stroke: isDark ? "#4b5563" : "#9ca3af", // slate-600 / gray-400
+        strokeWidth: 1,
+      },
+      text: {
+        fill: isDark ? "#cbd5f5" : "#4b5563", // slate-300 / slate-600
+      },
+    },
+  },
+  grid: {
+    line: {
+      stroke: isDark ? "#1f2937" : "#e5e7eb", // slate-800 / slate-200
+      strokeWidth: 1,
+    },
+  },
+  legends: {
+    text: {
+      fill: isDark ? "#e5e7eb" : "#4b5563",
+    },
+  },
+  tooltip: {
+    container: {
+      background: isDark ? "#020617" : "#ffffff", // bg tooltip
+      color: isDark ? "#e5e7eb" : "#111827",
+      fontSize: 11,
+      borderRadius: 6,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
+      padding: "6px 9px",
+    },
+  },
+});
 
 export const LineChartNivo = ({
   data,
@@ -16,20 +63,19 @@ export const LineChartNivo = ({
   axisBottomLabel = "",
   axisLeftLabel = "",
   stacked = false,
+  isDark = false,
+  colors = ["#16d099", "#474747", "#83e0c6"], // naranja, verde, azul
 }: LineChartNivoProps) => (
   <div style={{ height }}>
     <ResponsiveLine
       data={data}
-      // margen interno del lienzo (deja espacio para labels y ticks)
       margin={{
         top: 24,
         right: 40,
         bottom: axisBottomLabel ? 50 : 30,
         left: axisLeftLabel ? 60 : 45,
       }}
-      // X como puntos categóricos (fechas "DD/MM")
       xScale={{ type: "point" }}
-      // Y lineal, desde 0 hasta el máximo
       yScale={{
         type: "linear",
         min: 0,
@@ -37,16 +83,16 @@ export const LineChartNivo = ({
         stacked,
         reverse: false,
       }}
-      // eje X
+      colors={colors}
+      theme={getNivoTheme(isDark)}
       axisBottom={{
         tickSize: 5,
         tickPadding: 5,
-        tickRotation: -45, // gira un poco las fechas si son muchas
+        tickRotation: -45,
         legend: axisBottomLabel,
         legendOffset: 40,
         legendPosition: "middle",
       }}
-      // eje Y
       axisLeft={{
         tickSize: 5,
         tickPadding: 5,
@@ -54,14 +100,13 @@ export const LineChartNivo = ({
         legendOffset: -45,
         legendPosition: "middle",
       }}
-      // suavizar la línea un poco
       curve="monotoneX"
       pointSize={6}
       pointColor={{ theme: "background" }}
       pointBorderWidth={2}
       pointBorderColor={{ from: "seriesColor" }}
       enablePoints={true}
-      useMesh={true} // mejora el hover
+      useMesh={true}
       legends={[
         {
           anchor: "bottom-right",

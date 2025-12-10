@@ -4,23 +4,57 @@ import { NivoBarData } from "./bar-chart.interface";
 
 interface BarChartNivoProps {
   data: NivoBarData;
-  /**
-   * Claves que se van a graficar como series (columnas).
-   * Ejemplo: ["hot dog", "burger", "sandwich"]
-   */
   keys: string[];
-  /**
-   * Campo que se usa como índice en el eje X.
-   * En tu ejemplo es "country", pero para meses podrías usar "month".
-   */
   indexBy?: string;
-  /**
-   * Altura del chart en px.
-   */
   height?: number;
   axisBottomLabel?: string;
   axisLeftLabel?: string;
+  isDark?: boolean;
+  colors?: string[];
 }
+
+const getNivoTheme = (isDark: boolean) => ({
+  textColor: isDark ? "#e5e7eb" : "#0f172a",
+  fontSize: 11,
+  axis: {
+    domain: {
+      line: {
+        stroke: isDark ? "#4b5563" : "#e5e7eb",
+        strokeWidth: 1,
+      },
+    },
+    ticks: {
+      line: {
+        stroke: isDark ? "#4b5563" : "#9ca3af",
+        strokeWidth: 1,
+      },
+      text: {
+        fill: isDark ? "#cbd5f5" : "#4b5563",
+      },
+    },
+  },
+  grid: {
+    line: {
+      stroke: isDark ? "#1f2937" : "#e5e7eb",
+      strokeWidth: 1,
+    },
+  },
+  legends: {
+    text: {
+      fill: isDark ? "#e5e7eb" : "#4b5563",
+    },
+  },
+  tooltip: {
+    container: {
+      background: isDark ? "#020617" : "#ffffff",
+      color: isDark ? "#e5e7eb" : "#111827",
+      fontSize: 11,
+      borderRadius: 6,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
+      padding: "6px 9px",
+    },
+  },
+});
 
 export const BarChartNivo = ({
   data,
@@ -29,6 +63,8 @@ export const BarChartNivo = ({
   height = 320,
   axisBottomLabel,
   axisLeftLabel,
+  isDark = false,
+  colors = ["#13cd95"], // un solo color por defecto
 }: BarChartNivoProps) => (
   <div style={{ height }}>
     <ResponsiveBar
@@ -44,6 +80,8 @@ export const BarChartNivo = ({
       padding={0.3}
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
+      colors={colors}
+      theme={getNivoTheme(isDark)}
       axisBottom={{
         tickSize: 5,
         tickPadding: 5,
