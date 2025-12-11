@@ -72,6 +72,11 @@ import {
 
 import currency from "currency.js";
 import { useStore } from "@/components/Context/ContextSucursal";
+import { useApiMutation } from "@/hooks/genericoCall/genericoCallHook";
+const API_URL = import.meta.env.VITE_API_URL;
+dayjs.extend(utc);
+dayjs.extend(localizedFormat);
+dayjs.locale("es");
 
 const formatearMoneda = (monto: number) => {
   return currency(monto, {
@@ -81,11 +86,6 @@ const formatearMoneda = (monto: number) => {
     precision: 2,
   }).format();
 };
-
-const API_URL = import.meta.env.VITE_API_URL;
-dayjs.extend(utc);
-dayjs.extend(localizedFormat);
-dayjs.locale("es");
 
 interface CreditRecordsTableProps {
   getCredits: () => Promise<void>;
@@ -151,18 +151,10 @@ export function CreditRecordsTable({
 
   const calcularCuotas = () => {
     if (selectedRecord) {
-      // Monto de interés sobre el total de la venta
-      // const montoInteres2 = selectedRecord.montoTotalConInteres
       const montoInteres =
         selectedRecord.totalVenta * (selectedRecord.interes / 100);
-
-      // Total con interés
       const montoTotalConInteres = selectedRecord.montoTotalConInteres;
-
-      // Saldo restante después del enganche
       const saldoRestante = montoTotalConInteres - selectedRecord.cuotaInicial;
-
-      // Pago por cuota
       const pagoPorCuota = saldoRestante / selectedRecord.cuotasTotales;
 
       return {
@@ -181,14 +173,8 @@ export function CreditRecordsTable({
   };
 
   const calcularMontoInteres = (totalVenta: number, interes: number) => {
-    // Monto de interés sobre el total de la venta
     const montoInteres = totalVenta * (interes / 100);
-
-    // Total con interés
     const montoTotalConInteres = totalVenta + montoInteres;
-
-    // Saldo restante después del enganche
-
     return {
       montoTotalConInteres,
     };
@@ -197,6 +183,34 @@ export function CreditRecordsTable({
   const [passwordAdmin, setPasswordAdmin] = useState("");
   const [creditId, setCreditId] = useState<number | null>(null);
   const [openDeleteCredit, setOpenDeleteCredit] = useState(false);
+
+  const [selectedID, setSelectedID] = useState<number | null>(null);
+
+  const [openCloseCredito, setOpenCloseCredito] = useState<boolean>(false);
+
+  const cambiarEstadoCredito = useApiMutation(
+    "patch",
+    `cuotas/close-credit-regist/${selectedID}`,
+    {}
+  );
+
+  const handleCloseCredito = async () => {
+    if (!selectedID) {
+      toast.info("Seleccione un crédito");
+      return;
+    }
+    const toastId = toast.loading("Cerrando crédito...");
+    try {
+      await cambiarEstadoCredito.mutateAsync({});
+      toast.success("Crédito cerrado correctamente", { id: toastId });
+      setOpenCloseCredito(false);
+      setSelectedID(null);
+      await getCredits();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al cerrar el crédito", { id: toastId });
+    }
+  };
 
   const handleDeleteCreditRegist = async () => {
     if (!passwordAdmin || !creditId) {
@@ -220,9 +234,6 @@ export function CreditRecordsTable({
         setOpenDeleteCredit(false);
         setCreditId(null);
         setPasswordAdmin("");
-
-        // await new Promise((resolve) => setTimeout(resolve, 1000));
-
         await getCredits();
       }
     } catch (error) {
@@ -469,7 +480,6 @@ export function CreditRecordsTable({
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   // Obtener los elementos de la página actual
   const currentItems = filtrados.slice(indexOfFirstItem, indexOfLastItem);
-
   // Cambiar de página
   const onPageChange = (page: number) => {
     setCurrentPage(page);
@@ -496,10 +506,11 @@ export function CreditRecordsTable({
               <TableHead>Monto con interés</TableHead>
               <TableHead>Total Pagado</TableHead>
               <TableHead>Por pagar</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Ver Detalles</TableHead>
               <TableHead>Imprimir</TableHead>
               <TableHead>Eliminar</TableHead>
+              <TableHead>Cerrar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -581,6 +592,21 @@ export function CreditRecordsTable({
                       <DeleteIcon className="h-4 w-4" />
                     </Button>
                   </TableCell>
+
+                  <TableCell>
+                    <Button
+                      className="flex justify-center items-center"
+                      variant={
+                        record.estado === "ACTIVA" ? "outline" : "default"
+                      }
+                      onClick={() => {
+                        setOpenCloseCredito(true);
+                        setSelectedID(record.id);
+                      }}
+                    >
+                      {record.estado === "ACTIVA" ? "Cerrar" : "Activar"}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
@@ -591,252 +617,317 @@ export function CreditRecordsTable({
         open={!!selectedRecord}
         onOpenChange={(open) => !open && setSelectedRecord(null)}
       >
-        <DialogContent className="max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>Más detalles del registro</DialogTitle>
+        {/* Aumentamos un poco el ancho máximo para aprovechar las 3 columnas */}
+        <DialogContent className="max-w-6xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle>Detalle del Registro</DialogTitle>
           </DialogHeader>
+
           {selectedRecord && (
-            <ScrollArea className="h-[85vh] pr-4">
-              <div className="grid grid-cols-2 gap-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <User className="mr-2 h-5 w-5" /> Información del Cliente
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>
-                      <strong>Nombre:</strong> {selectedRecord.cliente.nombre}
-                    </p>
+            <ScrollArea className="max-h-[80vh]">
+              <div className="p-4 space-y-4">
+                {/* GRID PRINCIPAL: 3 COLUMNAS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* COLUMNA 1: CLIENTE Y TESTIGOS */}
+                  <div className="space-y-3">
+                    <Card>
+                      <CardHeader className="p-3 pb-2 bg-muted/20">
+                        <CardTitle className="text-sm font-semibold flex items-center">
+                          <User className="mr-2 h-4 w-4" /> Cliente
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 text-sm grid gap-1">
+                        <div className="flex justify-between border-b pb-1">
+                          <span className="font-medium">DPI:</span>
+                          <span>{selectedRecord.dpi}</span>
+                        </div>
+                        <div className="pt-1">
+                          <p className="font-bold">
+                            {selectedRecord.cliente.nombre}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {selectedRecord.cliente.direccion ??
+                              "Sin dirección"}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {selectedRecord.cliente.telefono ?? "Sin teléfono"}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                    <p>
-                      <strong>Dirección:</strong>{" "}
-                      {selectedRecord.cliente.direccion ?? "N/A"}
-                    </p>
-                    <p>
-                      <strong>Teléfono:</strong>{" "}
-                      {selectedRecord.cliente.telefono ?? "N/A"}
-                    </p>
-                    <p>
-                      <strong>DPI:</strong> {selectedRecord.dpi}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <CreditCard className="mr-2 h-5 w-5" /> Detalles del
-                      Crédito
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>
-                      <strong>Total Venta:</strong>{" "}
-                      {formatearMoneda(selectedRecord.totalVenta)}
-                    </p>
-                    <p>
-                      <strong>Pago Enganche:</strong>{" "}
-                      {formatearMoneda(selectedRecord.cuotaInicial)}
-                    </p>
-                    <p>
-                      <strong>Cuotas Totales:</strong>{" "}
-                      {selectedRecord.cuotasTotales}
-                    </p>
-                    <p>
-                      <strong>Cuotas Pagadas:</strong>{" "}
-                      {selectedRecord.cuotas.length
-                        ? selectedRecord.cuotas.length
-                        : "Ninguna"}
-                    </p>
-                    <p>
-                      <strong>Pago por cuotas:</strong>{" "}
-                      {formatearMoneda(calcularCuotas().pagoPorCuota)}
-                    </p>
-                    <p>
-                      <strong>Monto Total con Interés:</strong>{" "}
-                      <span className="text-green-500 font-bold">
-                        {formatearMoneda(calcularCuotas().montoTotalConInteres)}
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Total Pagado:</strong>{" "}
-                      <span
-                        className={
-                          selectedRecord.totalPagado <
-                          calcularCuotas().montoTotalConInteres
-                            ? "text-red-500 font-bold"
-                            : "text-green-500 font-bold"
-                        }
-                      >
-                        {new Intl.NumberFormat("es-GT", {
-                          style: "currency",
-                          currency: "GTQ",
-                        }).format(selectedRecord.totalPagado)}
-                      </span>
-                    </p>
-
-                    <p>
-                      <strong>Por pagar:</strong>{" "}
-                      <span
-                        className={
-                          selectedRecord.totalPagado <
-                          calcularCuotas().montoTotalConInteres
-                            ? "text-red-500 font-bold"
-                            : "text-green-500 font-bold"
-                        }
-                      >
-                        {new Intl.NumberFormat("es-GT", {
-                          style: "currency",
-                          currency: "GTQ",
-                        }).format(
-                          selectedRecord.montoTotalConInteres -
-                            selectedRecord.totalPagado
+                    {/* Testigos compactos */}
+                    <Card>
+                      <CardHeader className="p-3 pb-2 bg-muted/20">
+                        <CardTitle className="text-sm font-semibold flex items-center">
+                          <User className="mr-2 h-4 w-4" /> Testigos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 text-sm space-y-2">
+                        {selectedRecord.testigos
+                          .filter((t) => t.nombre)
+                          .map((testigo, index) => (
+                            <div
+                              key={index}
+                              className="text-xs border-l-2 pl-2 border-primary/20"
+                            >
+                              <p className="font-medium">{testigo.nombre}</p>
+                              <span className="text-muted-foreground">
+                                {testigo.telefono}
+                              </span>
+                            </div>
+                          ))}
+                        {selectedRecord.testigos.length === 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Sin testigos
+                          </p>
                         )}
-                      </span>
-                    </p>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                    <p>
-                      <strong>Interés Aplicado:</strong>{" "}
-                      {selectedRecord.interes}%
-                    </p>
-                    <p>
-                      <strong>Garantía (Meses):</strong>{" "}
-                      {selectedRecord.garantiaMeses}
-                    </p>
-                    <p>
-                      <strong>Fecha de registro:</strong>{" "}
-                      {FormatearFecha(selectedRecord.fechaInicio)}
-                    </p>
-                    <p>
-                      <strong>Status:</strong>
+                  {/* COLUMNA 2: CRÉDITO (La información más densa) */}
+                  <div className="space-y-3">
+                    <Card className="h-full">
+                      <CardHeader className="p-3 pb-2 bg-muted/20">
+                        <CardTitle className="text-sm font-semibold flex items-center">
+                          <CreditCard className="mr-2 h-4 w-4" /> Estado
+                          Financiero
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 text-sm">
+                        {/* Grid interno para alinear montos a la derecha */}
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs sm:text-sm">
+                          <span className="text-muted-foreground">
+                            Venta Total:
+                          </span>
+                          <span className="text-right font-medium">
+                            {formatearMoneda(selectedRecord.totalVenta)}
+                          </span>
 
-                      <span
-                        className={
-                          selectedRecord.estado === "COMPLETADA"
-                            ? "text-green-500 font-semibold"
-                            : "text-red-500 font-semibold"
-                        }
-                      >
-                        {" "}
-                        {selectedRecord.estado}
-                      </span>
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Package className="mr-2 h-5 w-5" /> Productos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="list-disc pl-5 space-y-2">
-                      {selectedRecord.productos.map((producto) => (
-                        <li key={producto.id} className="text-sm">
-                          <div>
-                            <strong>Producto:</strong>{" "}
-                            {producto.producto.nombre}
+                          <span className="text-muted-foreground">
+                            Enganche:
+                          </span>
+                          <span className="text-right font-medium">
+                            {formatearMoneda(selectedRecord.cuotaInicial)}
+                          </span>
+
+                          <span className="text-muted-foreground">
+                            Cuotas (Total/Pag):
+                          </span>
+                          <span className="text-right">
+                            {selectedRecord.cuotasTotales} /{" "}
+                            {selectedRecord.cuotas.length}
+                          </span>
+
+                          <span className="text-muted-foreground">
+                            Valor Cuota:
+                          </span>
+                          <span className="text-right font-medium">
+                            {formatearMoneda(calcularCuotas().pagoPorCuota)}
+                          </span>
+
+                          <span className="text-muted-foreground">
+                            Interés:
+                          </span>
+                          <span className="text-right">
+                            {selectedRecord.interes}%
+                          </span>
+
+                          <div className="col-span-2 border-t my-1"></div>
+
+                          <span className="font-semibold">
+                            Total con Interés:
+                          </span>
+                          <span className="text-right font-bold text-green-600">
+                            {formatearMoneda(
+                              calcularCuotas().montoTotalConInteres
+                            )}
+                          </span>
+
+                          <span className="font-semibold">Pagado:</span>
+                          <span
+                            className={`text-right font-bold ${
+                              selectedRecord.totalPagado <
+                              calcularCuotas().montoTotalConInteres
+                                ? "text-blue-600"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {formatearMoneda(selectedRecord.totalPagado)}
+                          </span>
+
+                          <span className="font-semibold mt-1">
+                            Saldo Pendiente:
+                          </span>
+                          <span className="text-right font-bold text-red-500 text-base mt-1">
+                            {formatearMoneda(
+                              selectedRecord.montoTotalConInteres -
+                                selectedRecord.totalPagado
+                            )}
+                          </span>
+
+                          <div className="col-span-2 mt-2 pt-2 border-t flex justify-between items-center">
+                            <span className="text-muted-foreground text-xs">
+                              Estado:
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full ${
+                                selectedRecord.estado === "COMPLETADA"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {selectedRecord.estado}
+                            </span>
                           </div>
-                          <div>
-                            <strong>Código:</strong>{" "}
-                            {producto.producto.codigoProducto}
-                          </div>
-                          <div>
-                            <strong>Precio:</strong>{" "}
-                            {new Intl.NumberFormat("es-GT", {
-                              style: "currency",
-                              currency: "GTQ",
-                            }).format(producto.precioVenta)}
-                          </div>
-                          <div>
-                            <strong>Cantidad:</strong> {producto.cantidad}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <User className="mr-2 h-5 w-5" /> Testigos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {selectedRecord &&
-                      selectedRecord.testigos
-                        .filter(
-                          (testigo) =>
-                            testigo.direccion &&
-                            testigo.nombre &&
-                            testigo.telefono
-                        )
-                        .map((testigo, index) => (
-                          <div key={index} className="mb-2">
-                            <p>
-                              <strong>Nombre:</strong> {testigo.nombre}
-                            </p>
-                            <p>
-                              <strong>Teléfono:</strong> {testigo.telefono}
-                            </p>
-                            <p>
-                              <strong>Dirección:</strong> {testigo.direccion}
-                            </p>
-                          </div>
-                        ))}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <Building2 className="mr-2 h-5 w-5" /> Sucursal
-                      Información
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>
-                      <strong>Nombre:</strong> {selectedRecord.sucursal.nombre}
-                    </p>
-                    <p>
-                      <strong>Dirección:</strong>{" "}
-                      {selectedRecord.sucursal.direccion}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center">
-                      <User className="mr-2 h-5 w-5" /> Usuario
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>
-                      <strong>Nombre:</strong> {selectedRecord.usuario.nombre}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              <CuotasCard cuotas={selectedRecord.cuotas} />
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <MessageSquareText className="mr-2 h-5 w-5" /> Comentario
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>
-                    {selectedRecord.comentario ? (
-                      selectedRecord.comentario
-                    ) : (
-                      <p className="text-center">
-                        No hay comentarios disponibles
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* COLUMNA 3: PRODUCTOS Y ADMIN */}
+                  <div className="space-y-3">
+                    <Card>
+                      <CardHeader className="p-3 pb-2 bg-muted/20">
+                        <CardTitle className="text-sm font-semibold flex items-center">
+                          <Package className="mr-2 h-4 w-4" /> Productos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        {/* Lista compacta tipo tabla */}
+                        <div className="max-h-[200px] overflow-y-auto">
+                          <table className="w-full text-xs text-left">
+                            <thead className="bg-muted/50 text-muted-foreground">
+                              <tr>
+                                <th className="p-2 font-medium">Prod</th>
+                                <th className="p-2 font-medium">Cant</th>
+                                <th className="p-2 font-medium text-right">
+                                  Precio
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedRecord.productos.map((p) => (
+                                <tr
+                                  key={p.id}
+                                  className="border-b last:border-0"
+                                >
+                                  <td className="p-2">
+                                    <div className="font-medium">
+                                      {p.producto.nombre}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      {p.producto.codigoProducto}
+                                    </div>
+                                  </td>
+                                  <td className="p-2">{p.cantidad}</td>
+                                  <td className="p-2 text-right">
+                                    {formatearMoneda(p.precioVenta)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Info Admin Fusionada */}
+                    <Card>
+                      <CardHeader className="p-3 pb-2 bg-muted/20">
+                        <CardTitle className="text-sm font-semibold flex items-center">
+                          <Building2 className="mr-2 h-4 w-4" /> Datos Internos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 text-xs space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Sucursal:
+                          </span>
+                          <span className="font-medium">
+                            {selectedRecord.sucursal.nombre}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Vendedor:
+                          </span>
+                          <span className="font-medium">
+                            {selectedRecord.usuario.nombre}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Fecha:</span>
+                          <span>
+                            {FormatearFecha(selectedRecord.fechaInicio)}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* ZONA INFERIOR: COMENTARIOS Y TABLA DE CUOTAS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Card>
+                    <CardHeader className="p-3 pb-2 bg-muted/20">
+                      <CardTitle className="text-sm font-semibold flex items-center">
+                        <MessageSquareText className="mr-2 h-4 w-4" />{" "}
+                        Comentarios
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 text-sm min-h-[80px]">
+                      <p className="text-muted-foreground italic text-xs">
+                        {selectedRecord.comentario ||
+                          "Sin comentarios registrados."}
                       </p>
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+
+                  {/* Asumiendo que CuotasCard puede renderizarse aquí o lo pones full width abajo */}
+                  <div className="border rounded-md p-2">
+                    {/* Envuelto en un div simple para que no ocupe tanto padding si el componente trae Card interno */}
+                    <CuotasCard cuotas={selectedRecord.cuotas} />
+                  </div>
+                </div>
+              </div>
             </ScrollArea>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={setOpenCloseCredito} open={openCloseCredito}>
+        <DialogContent /* ... */>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-center justify-center">
+              <AlertTriangle className="h-6 w-6" />
+              {/** título dinámico */}
+              {records.find((r) => r.id === selectedID)?.estado === "ACTIVA"
+                ? "Finalización de crédito"
+                : "Activación de crédito"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <DialogDescription className=" text-center">
+              {records.find((r) => r.id === selectedID)?.estado === "ACTIVA"
+                ? "¿Estás seguro de que deseas cerrar este registro?"
+                : "¿Estás seguro de que deseas activar este registro?"}
+            </DialogDescription>
+          </div>
+
+          <DialogFooter /* ... */>
+            <Button
+              variant="destructive"
+              onClick={handleCloseCredito} // sigue usando el mismo handler
+            >
+              <Trash2 className="h-4 w-4" />
+              {records.find((r) => r.id === selectedID)?.estado === "ACTIVA"
+                ? "Sí, cerrar registro"
+                : "Sí, activar registro"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

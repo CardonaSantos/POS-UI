@@ -640,7 +640,7 @@ export default function ClientesTable() {
                         stiffness: 120,
                         damping: 22,
                       }}
-                      className="bg-white hover:bg-gray-50 dark:bg.transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
+                      className=" hover:bg-gray-50 dark:bg.transparent dark:hover:bg-gray-900/20 dark:text-gray-100"
                     >
                       <td className="px-3 py-2 font-medium text-center">
                         {row.original.id}

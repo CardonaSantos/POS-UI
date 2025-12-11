@@ -52,6 +52,9 @@ const TicketItem = ({
     textColor: string;
   };
 }) => {
+  const isAsignado = !!ticket.assignee
+    ? "bg-green-600 text-white font-semibold"
+    : "bg-rose-500 text-white font-semibold";
   return (
     <motion.div
       key={ticket.id}
@@ -90,7 +93,7 @@ const TicketItem = ({
             {ticket.description}
           </p>
         </div>
-        <div className="mt-2 shrink-0">
+        <div className="mt-2 space-x-1 shrink-0">
           <Badge
             variant="outline"
             className={`${getBadgeProps(ticket.status).bgColor} ${
@@ -99,6 +102,12 @@ const TicketItem = ({
           >
             <span className="text-[10px]">
               {getBadgeProps(ticket.status).text}
+            </span>
+          </Badge>
+
+          <Badge variant="outline" className={`${isAsignado}`}>
+            <span className="text-[10px]">
+              {ticket?.assignee?.name ?? "N/A"}
             </span>
           </Badge>
         </div>
