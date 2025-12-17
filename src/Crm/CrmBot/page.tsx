@@ -23,15 +23,15 @@ import {
   useCreateKnowledge,
   useUpdateKnowledge,
   useDeleteKnowledge,
-} from "../CrmHooks/hooks/bot/useBot";
+} from "../CrmHooks/hooks/bot-server/bot/useBot";
 
-import { initialBotState } from "../features/bot/initialState";
+import { initialBotState } from "../features/bot-server/initialState";
 import {
   KnowledgeDocument,
   KnowledgeDocumentType,
   KnowledgeDocumentUpdate,
   initialKnowledgeDocumentState,
-} from "../features/bot/knowledge/knowledge";
+} from "../features/bot-server/knowledge/knowledge";
 
 import { botSchemaZ, BotType } from "./_components/form/schema";
 

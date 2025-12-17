@@ -1,11 +1,11 @@
 import { useBotMutation, useBotQuery } from "@/hooks/hookBot/useBotHook";
 import { BotQkeys, KnowledgeQkeys } from "./Qk";
-import { BotApi, BotUpdateDto } from "@/Crm/features/bot/bot.interfaces";
+import { BotApi, BotUpdateDto } from "@/Crm/features/bot-server/bot.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   KnowledgeDocument,
   KnowledgeDocumentUpdate,
-} from "@/Crm/features/bot/knowledge/knowledge";
+} from "@/Crm/features/bot-server/knowledge/knowledge";
 import { KnowledgeCreateType } from "@/Crm/CrmBot/_components/knowledge/schema-knowledge";
 
 // BOT

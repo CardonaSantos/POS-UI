@@ -1,4 +1,4 @@
-import { KnowledgeDocument } from "@/Crm/features/bot/knowledge/knowledge";
+import { KnowledgeDocument } from "@/Crm/features/bot-server/knowledge/knowledge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

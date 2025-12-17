@@ -18,7 +18,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { KnowledgeDocumentType } from "@/Crm/features/bot/knowledge/knowledge";
+import { KnowledgeDocumentType } from "@/Crm/features/bot-server/knowledge/knowledge";
 import type { KnowledgeCreateType } from "./schema-knowledge";
 
 interface PropsFormKnowledge {

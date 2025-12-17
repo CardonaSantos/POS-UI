@@ -24,8 +24,11 @@ import DialogDelete from "./DialogDelete";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { useAuthStoreCRM } from "../CrmAuthRoutes/AuthStateCRM";
 
 function CrmUsers() {
+  const userRol = useAuthStoreCRM((state) => state.userRol);
+  const isDisable = userRol != "SUPER_ADMIN" ? true : false;
   const [openEdit, setOpenEdit] = useState<boolean>(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
   const [openDelete, setOpenDelete] = useState<boolean>(false);
@@ -190,6 +193,7 @@ function CrmUsers() {
                         <UserCog className="w-4 h-4" />
                       </Button>
                       <Button
+                        disabled={isDisable}
                         variant="outline"
                         size="icon"
                         className="text-red-500 hover:text-red-600 hover:bg-red-50"

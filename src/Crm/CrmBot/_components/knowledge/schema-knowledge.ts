@@ -1,5 +1,5 @@
 import z from "zod";
-import { KnowledgeDocumentType } from "@/Crm/features/bot/knowledge/knowledge";
+import { KnowledgeDocumentType } from "@/Crm/features/bot-server/knowledge/knowledge";
 
 export const knowledgeCreateSchemaZ = z.object({
   id: z

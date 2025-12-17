@@ -101,6 +101,8 @@ import BotMainPage from "./Crm/CrmBot/page";
 import { MainDashboardPage } from "./Crm/CrmNewDashboard/page";
 import TecDashboard from "./Crm/CrmNewDashboard/tec-dashboard";
 import TicketAsignadoDetails from "./Crm/CrmNewDashboard/_components/tec-ticket/ticket-details";
+import WhatsappChats from "./Crm/CrmWhatsapp/page";
+import ChatPage from "./Crm/CrmWhatsapp/_components/chat/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -860,15 +862,6 @@ function App() {
             />
 
             <Route
-              path="/crm/new-dashboard"
-              element={
-                <ProtectRouteCrmUser>
-                  <MainDashboardPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
               path="/crm/tec-dashboard"
               element={
                 <ProtectRouteCrmUser>
@@ -882,6 +875,24 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <TicketAsignadoDetails />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/bot/whatsapp"
+              element={
+                <ProtectRouteCrmUser>
+                  <WhatsappChats />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/bot/cliente-whatsapp/:id"
+              element={
+                <ProtectRouteCrmUser>
+                  <ChatPage />
                 </ProtectRouteCrmUser>
               }
             />

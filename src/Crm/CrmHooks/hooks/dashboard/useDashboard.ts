@@ -130,7 +130,6 @@ export function useGetTicketsAsignados(tecId: number) {
     undefined,
     {
       staleTime: 0,
-      gcTime: 1000 * 60,
       refetchOnWindowFocus: "always",
       refetchOnMount: "always",
       refetchOnReconnect: "always",
