@@ -9,6 +9,9 @@ import { ChatFilters } from "./chat-filters";
 import { ChatContainer } from "./chat-container";
 import { ChatPagination } from "./chat-pagination";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
+import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
+import { clienteHistorialWhatsappQkeys } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/Qk";
 
 export default function ChatPage() {
   const params = useParams();
@@ -17,7 +20,8 @@ export default function ChatPage() {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<FindClientHistoryQuery>({});
-  const limit = 250;
+  const limit = 50;
+  const invalidateQk = useInvalidateQk();
 
   // helpers
   const toggleFilters = () => setShowFilters(!showFilters);
@@ -46,6 +50,13 @@ export default function ChatPage() {
     nombre: "Cargando...",
     telefono: "...",
   };
+
+  useSocketEvent("nuvia:new-message", (payload) => {
+    console.log("El WAMID:", payload.wamid);
+    console.log("El WAMID:", payload.status);
+
+    invalidateQk(clienteHistorialWhatsappQkeys.chats(filters));
+  });
 
   if (isError) {
     return (

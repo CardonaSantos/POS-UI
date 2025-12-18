@@ -10,6 +10,11 @@ export type WsEventMap = {
   "ruta-cobro:change-status": { rutaId: number };
 
   "facturacion:change-event": {};
+
+  "nuvia:new-message": {
+    wamid: string;
+    status: string;
+  };
 };
 
 export type WsEventName = keyof WsEventMap;
