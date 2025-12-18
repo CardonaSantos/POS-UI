@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner"; // O tu librería de notificaciones
 import axios from "axios"; // Asegúrate de importar tu instancia configurada de axios
 
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+const VITE_BOT_API_URL = import.meta.env.VITE_BOT_API_URL;
 
 interface SendMessagePayload {
   clienteId: number;
@@ -26,7 +26,7 @@ export function useSendAgentMessage() {
       // Nota: No establezcas 'Content-Type': 'multipart/form-data' manualmente.
       // Axios y el navegador lo hacen automáticamente para incluir el "boundary".
       const { data } = await axios.post(
-        `${VITE_CRM_API_URL}/agent/chat/send`,
+        `${VITE_BOT_API_URL}/agent/chat/send`,
         formData
       );
       return data;
