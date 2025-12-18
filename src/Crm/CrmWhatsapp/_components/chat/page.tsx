@@ -5,7 +5,7 @@ import {
   useGetClienteHistorialChatsWz,
   useToggleBotCliente,
 } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/useGetClienteWhatsapp";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ChatHeader } from "./chat-header";
 import { ChatFilters } from "./chat-filters";
@@ -18,10 +18,12 @@ import { clienteHistorialWhatsappQkeys } from "@/Crm/CrmHooks/hooks/bot-server/u
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
+import { useMarkAsReadMessages } from "@/Crm/CrmHooks/hooks/bot-server/use-mark-message/useMarkMessages";
 
 export default function ChatPage() {
   const params = useParams();
   const clienteId = params.id ? Number(params.id) : 0;
+  const markAsRead = useMarkAsReadMessages(clienteId);
 
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +70,7 @@ export default function ChatPage() {
   // Socket Event
   useSocketEvent("nuvia:new-message", () => {
     invalidateQk(clienteHistorialWhatsappQkeys.chats(filters));
+    markAsRead.mutateAsync();
   });
 
   // TOGGLE LOGIC
@@ -116,6 +119,12 @@ export default function ChatPage() {
   const dialogConfirmLabel = clientInfo.botActivo
     ? "Sí, silenciar bot"
     : "Sí, activar bot";
+
+  useEffect(() => {
+    if (clienteId) {
+      markAsRead.mutateAsync();
+    }
+  }, [clienteId]);
 
   if (isError) {
     return (
