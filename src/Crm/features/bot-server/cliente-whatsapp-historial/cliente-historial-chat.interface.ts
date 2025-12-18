@@ -36,6 +36,7 @@ export interface Cliente {
   telefono: string;
   uuid: string | null;
   creadoEn: string; // ISO Date String
+  botActivo: boolean;
 }
 
 export interface WhatsappMessage {

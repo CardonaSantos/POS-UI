@@ -10,6 +10,8 @@ export interface ClienteWhatsappServerListItem {
   telefono: string;
   uuid: string | null;
   creadoEn: string; // ISO date string
+  mensajesSinVer: number;
+  botActivo: boolean;
 }
 
 export interface PaginationMeta {

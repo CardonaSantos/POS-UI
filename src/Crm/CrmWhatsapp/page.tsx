@@ -55,6 +55,7 @@ export default function WhatsappChats() {
 
     setSearchParams(nextParams);
   };
+  console.log("clientes: ", rows);
 
   return (
     <PageTransitionCrm

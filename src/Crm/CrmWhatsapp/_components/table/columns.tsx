@@ -5,6 +5,7 @@ import type { ClienteWhatsappServerListItem } from "@/Crm/features/bot-server/cl
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 export const clientesColumns: ColumnDef<ClienteWhatsappServerListItem>[] = [
   {
@@ -15,19 +16,36 @@ export const clientesColumns: ColumnDef<ClienteWhatsappServerListItem>[] = [
   {
     accessorKey: "nombre",
     header: "Nombre",
-    cell: ({ row }) => (
-      <div className="min-w-0">
-        <Link to={`/crm/bot/cliente-whatsapp/${row.original.id}`}>
-          <div className="text-sm font-medium truncate">
-            {row.original.nombre || "Sin nombre"}
-          </div>
-        </Link>
+    cell: ({ row }) => {
+      const unreadCount = row.original.mensajesSinVer; // Extraemos el valor para limpiar el código
 
-        <div className="text-xs text-muted-foreground truncate">
-          {row.original.telefono}
+      return (
+        <div className="min-w-0 flex flex-col">
+          <Link to={`/crm/bot/cliente-whatsapp/${row.original.id}`}>
+            {/* Usamos flex para poner Nombre + Badge en la misma linea */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium truncate">
+                {row.original.nombre || "Sin nombre"}
+              </span>
+
+              {/* Condicional: Solo renderiza si hay mensajes sin ver */}
+              {unreadCount > 0 && (
+                <Badge
+                  variant="destructive" // Rojo (shadcn standard) para denotar urgencia
+                  className="h-5 min-w-[1.25rem] px-1 text-[10px] flex items-center justify-center rounded-full"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </div>
+          </Link>
+
+          <div className="text-xs text-muted-foreground truncate">
+            {row.original.telefono}
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     accessorKey: "telefono",

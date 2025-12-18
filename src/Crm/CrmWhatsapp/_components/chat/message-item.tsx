@@ -8,7 +8,19 @@ import {
   WazStatus,
   WhatsappMessage,
 } from "@/Crm/features/bot-server/cliente-whatsapp-historial/cliente-historial-chat.interface";
-import { formattFechaWithMinutes } from "@/utils/formattFechas";
+import dayjs from "dayjs";
+import "dayjs/locale/es";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.locale("es");
 
 interface MessageItemProps {
   message: WhatsappMessage;
@@ -87,7 +99,13 @@ export function MessageItem({ message }: MessageItemProps) {
   };
 
   const formatTime = () => {
-    return formattFechaWithMinutes(message.timestamp);
+    const timestampNormalizado = Number(message.timestamp);
+
+    const fechaLegible = dayjs
+      .unix(timestampNormalizado)
+      .format("DD/MM/YYYY h:mm A");
+
+    return fechaLegible;
   };
 
   return (

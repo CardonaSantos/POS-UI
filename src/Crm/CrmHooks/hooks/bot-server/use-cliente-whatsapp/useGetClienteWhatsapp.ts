@@ -1,5 +1,5 @@
 import { FindClientHistoryQuery } from "./query-cliente-whatsapp.query";
-import { useBotQuery } from "@/hooks/hookBot/useBotHook";
+import { useBotMutation, useBotQuery } from "@/hooks/hookBot/useBotHook";
 import { clienteHistorialWhatsappQkeys } from "./Qk";
 import { ClientHistoryResponse } from "@/Crm/features/bot-server/cliente-whatsapp-historial/cliente-historial-chat.interface";
 
@@ -22,19 +22,17 @@ export function useGetClienteHistorialChatsWz(
     }
   );
 }
-// export const getClienteHistorial = async (
-//   clienteId: number,
-//   page: number = 1
-// ): Promise<ClientHistoryResponse> => {
-//   const response = await axios.get<ClientHistoryResponse>(
-//     `/api/chat/cliente-historial/${clienteId}`,
-//     {
-//       params: {
-//         page,
-//         limit: 20,
-//       },
-//     }
-//   );
 
-//   return response.data;
-// };
+/**
+ * TOGGEAR EL BOT
+ * @param id
+ * @returns
+ */
+
+export function useToggleBotCliente() {
+  // Nota: Usamos POST porque así lo definiste en el controlador NestJS (@Post('toggle-bot'))
+  return useBotMutation<
+    { ok: boolean },
+    { clienteId: number; active: boolean }
+  >("post", `agent/chat/toggle-bot`);
+}

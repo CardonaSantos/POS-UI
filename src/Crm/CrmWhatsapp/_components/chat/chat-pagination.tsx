@@ -1,33 +1,46 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ChatPaginationProps {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-export function ChatPagination({ currentPage, totalPages, onPageChange }: ChatPaginationProps) {
+export function ChatPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: ChatPaginationProps) {
   return (
-    <div className="border-t bg-background p-3 flex items-center justify-between">
-      <div className="text-xs text-muted-foreground">
-        Página {currentPage} de {totalPages}
+    <div className="h-9 border-t bg-background px-2 flex items-center justify-between shrink-0 select-none">
+      <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+        Pág {currentPage} / {totalPages}
       </div>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+
+      <div className="flex items-center gap-1">
         <Button
-          variant="outline"
-          size="sm"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6" // Botones de 24px
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-3 w-3" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3 w-3" />
         </Button>
       </div>
     </div>
-  )
+  );
 }
