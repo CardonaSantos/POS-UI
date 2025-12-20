@@ -1,9 +1,7 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,55 +13,68 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AtSign, Lock } from "lucide-react";
+import { AtSign, Lock, Eye, EyeOff } from "lucide-react"; // Importamos los iconos de ojo
 import { toast } from "sonner";
-
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
+import { useLogin } from "../CrmHooks/hooks/use-auth/useAuth";
 
 export default function CrmLogin() {
+  // Estado del formulario
   const [formData, setFormData] = useState({
     correo: "",
     contrasena: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Estado para la visibilidad de la contraseña
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Instanciamos el hook.
+  // Nota: Pasamos formData, pero lo importante es lo que enviemos en la función .mutate()
+  const { mutate, isPending } = useLogin(formData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
-    try {
-      // Replace with your actual login API endpoint
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/auth/login-user`,
-        formData
-      );
+    // 1. SANITIZACIÓN: Limpiamos el correo antes de enviarlo
+    const cleanData = {
+      correo: formData.correo.toLowerCase().trim(),
+      contrasena: formData.contrasena,
+    };
 
-      console.log("Login successful:", response.data);
-
-      if (response.status === 201) {
+    // 2. EJECUTAMOS LA MUTACIÓN
+    // Usamos el objeto cleanData en lugar del state directo para asegurar que vaya limpio
+    mutate(cleanData, {
+      onSuccess: (data: any) => {
+        console.log("Login exitoso:", data);
         toast.success("Inicio de sesión exitoso");
-        localStorage.setItem("tokenAuthCRM", response.data.access_token);
-        window.location.href = "/crm";
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
-      toast.error("Credenciales incorrectas");
-    } finally {
-      setLoading(false);
-    }
+
+        // Guardamos token y redireccionamos
+        if (data?.access_token) {
+          localStorage.setItem("tokenAuthCRM", data.access_token);
+          // Usamos window.location para asegurar un refresh limpio de los estados de la app
+          window.location.href = "/crm";
+        }
+      },
+      onError: (error: any) => {
+        console.error("Error en login:", error);
+        // El mensaje de error vendrá de tu hook o axios
+        const mensaje =
+          error.response?.data?.message || "Credenciales incorrectas";
+        toast.error(mensaje);
+      },
+    });
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full">
+    <div className="flex items-center justify-center min-h-screen w-full bg-gray-50">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
@@ -75,6 +86,7 @@ export default function CrmLogin() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* INPUT CORREO */}
             <div className="space-y-2">
               <Label htmlFor="correo">Correo electrónico</Label>
               <div className="relative">
@@ -88,10 +100,12 @@ export default function CrmLogin() {
                   value={formData.correo}
                   onChange={handleChange}
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
 
+            {/* INPUT CONTRASEÑA CON TOGGLE */}
             <div className="space-y-2">
               <Label htmlFor="contrasena">Contraseña</Label>
               <div className="relative">
@@ -99,22 +113,37 @@ export default function CrmLogin() {
                 <Input
                   id="contrasena"
                   name="contrasena"
-                  type="password"
+                  // Cambiamos el tipo dinámicamente
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10"
+                  className="pl-10 pr-10" // Padding extra a la derecha para el botón
                   value={formData.contrasena}
                   onChange={handleChange}
                   required
+                  autoComplete="current-password"
                 />
+                {/* Botón para ver/ocultar */}
+                <button
+                  type="button" // IMPORTANTE: type="button" para no enviar el form
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  tabIndex={-1} // Para que no moleste en el tabulado normal si no se desea
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {error && (
-              <div className="text-sm text-red-500 text-center">{error}</div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending} // Usamos isPending del hook
+            >
+              {isPending ? "Verificando..." : "Iniciar sesión"}
             </Button>
           </form>
         </CardContent>

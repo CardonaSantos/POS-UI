@@ -1,9 +1,7 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,30 +20,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AtSign, Lock, User } from "lucide-react";
+import { AtSign, Lock, User, Eye, EyeOff } from "lucide-react"; // Añadimos Eye/EyeOff
 import { toast } from "sonner";
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-console.log("El api crm es: ", VITE_CRM_API_URL);
-
-enum RolUsuario {
-  TECNICO = "TECNICO",
-  OFICINA = "OFICINA",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-}
+import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile"; // Asegúrate de importar el Enum correcto
+import { useRegister } from "../CrmHooks/hooks/use-auth/useAuth";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 
 export default function CrmRegist() {
+  // 1. ESTADO DEL FORMULARIO
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
     contrasena: "",
     rol: RolUsuario.TECNICO,
-    empresaId: 1,
+    empresaId: 1, // Valor por defecto según tu lógica
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // 2. ESTADO VISUAL (Contraseña)
+  const [showPassword, setShowPassword] = useState(false);
 
+  // 3. HOOK DE MUTACIÓN
+  // Inicializamos el hook. La data real la pasaremos en el .mutate()
+  const { mutate, isPending } = useRegister(formData);
+
+  // HANDLERS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -55,45 +53,55 @@ export default function CrmRegist() {
     setFormData((prev) => ({ ...prev, rol: value as RolUsuario }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      // Replace with your actual API endpoint
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/auth/regist-user`,
-        formData
-      );
-      console.log("Login successful:", response.data);
-      if (response.status === 201 || response.status === 200) {
-        toast.success("Usuario Registrado");
-        localStorage.setItem("tokenAuthCRM", response.data.access_token);
-        window.location.href = "/crm";
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
-    } finally {
-      setLoading(false);
-    }
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
-  console.log("El error es: ", error);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 4. SANITIZACIÓN DE DATOS (CRÍTICO PARA DB LIMPIA)
+    const cleanData = {
+      ...formData,
+      nombre: formData.nombre.trim(), // Quitamos espacios accidentales al inicio/final
+      correo: formData.correo.toLowerCase().trim(), // Normalizamos el correo
+    };
+
+    // 5. EJECUCIÓN CON HOOK
+    mutate(cleanData, {
+      onSuccess: (response: any) => {
+        console.log("Registro exitoso:", response);
+        toast.success("Usuario Registrado Correctamente");
+
+        // Manejo de sesión automática tras registro (si tu backend lo devuelve)
+        if (response?.access_token) {
+          localStorage.setItem("tokenAuthCRM", response.access_token);
+          window.location.href = "/crm";
+        } else {
+          // Si el backend no loguea automáticamente, redirigir al login
+          window.location.href = "/auth/login";
+        }
+      },
+      onError: (error: any) => {
+        toast.error(getApiErrorMessageAxios(error));
+      },
+    });
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full">
+    <div className="flex items-center justify-center min-h-screen w-full bg-gray-50">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Acceso al CRM
+            Registro CRM
           </CardTitle>
           <CardDescription className="text-center">
-            Ingrese sus credenciales para acceder al sistema
+            Cree una nueva cuenta para acceder al sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* NOMBRE */}
             <div className="space-y-2">
               <Label htmlFor="nombre">Nombre</Label>
               <div className="relative">
@@ -110,6 +118,7 @@ export default function CrmRegist() {
               </div>
             </div>
 
+            {/* CORREO */}
             <div className="space-y-2">
               <Label htmlFor="correo">Correo electrónico</Label>
               <div className="relative">
@@ -127,6 +136,7 @@ export default function CrmRegist() {
               </div>
             </div>
 
+            {/* CONTRASEÑA CON TOGGLE */}
             <div className="space-y-2">
               <Label htmlFor="contrasena">Contraseña</Label>
               <div className="relative">
@@ -134,16 +144,29 @@ export default function CrmRegist() {
                 <Input
                   id="contrasena"
                   name="contrasena"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   value={formData.contrasena}
                   onChange={handleChange}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
+            {/* ROL */}
             <div className="space-y-2">
               <Label htmlFor="rol">Rol</Label>
               <Select value={formData.rol} onValueChange={handleRolChange}>
@@ -163,8 +186,9 @@ export default function CrmRegist() {
               </Select>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            {/* BOTÓN SUBMIT */}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Registrando..." : "Registrar Usuario"}
             </Button>
           </form>
         </CardContent>
