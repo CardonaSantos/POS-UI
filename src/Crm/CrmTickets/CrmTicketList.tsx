@@ -1,375 +1,423 @@
 "use client";
 
-enum EstadoTicketSoporte {
-  NUEVO = "NUEVO",
-  ABIERTA = "ABIERTA",
-  EN_PROCESO = "EN_PROCESO",
-  PENDIENTE = "PENDIENTE",
-  PENDIENTE_CLIENTE = "PENDIENTE_CLIENTE",
-  PENDIENTE_TECNICO = "PENDIENTE_TECNICO",
-  RESUELTA = "RESUELTA",
-  CANCELADA = "CANCELADA",
-  ARCHIVADA = "ARCHIVADA",
-}
-
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import type { Ticket } from "./ticketTypes";
-// import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Terminal, User, Pin } from "lucide-react"; // Iconos extra para estado
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-// import { Button } from "@/components/ui/button";
-// import CrmCreateTicket from "./CreateTickets/CrmCreateTicket";
+import type { Ticket } from "./ticketTypes";
 
 interface TicketListProps {
-  tickets: Ticket[]; // Lista de tickets
-  selectedTicketId: number | null; // ID del ticket seleccionado (debería ser un número, no un objeto Ticket)
-  onSelectTicket: (ticket: Ticket) => void; // Función para seleccionar un ticket
-  onSelectTicketDown: (ticket: Ticket) => void; // Función para seleccionar un ticket al hacer scroll
+  tickets: Ticket[];
+  selectedTicketId: number | null;
+  onSelectTicket: (ticket: Ticket) => void;
 }
-//==================>
-// Componente para mostrar un ticket individual
+
+// --- CONFIGURACIÓN DE COLORES Y ESTILOS ---
+
+// 1. Mapa de Estilos para ESTADOS (Soporta Light y Dark mode)
+const getStatusStyles = (status: string) => {
+  const styles: Record<string, string> = {
+    NUEVO:
+      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30",
+    ABIERTA:
+      "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30",
+    EN_PROCESO:
+      "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30",
+    PENDIENTE:
+      "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/30",
+    PENDIENTE_CLIENTE:
+      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30",
+    PENDIENTE_TECNICO:
+      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30",
+    RESUELTA:
+      "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30",
+    CANCELADA:
+      "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30",
+    ARCHIVADA:
+      "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
+  };
+  return (
+    styles[status] ||
+    "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400"
+  );
+};
+
+// 2. Mapa de Estilos para PRIORIDAD
+const getPriorityStyles = (priority: string) => {
+  const styles: Record<string, string> = {
+    BAJA: "text-slate-500 bg-slate-50 border-slate-100 dark:text-slate-400 dark:bg-slate-500/10 dark:border-slate-500/20",
+    MEDIA:
+      "text-blue-600 bg-blue-50 border-blue-100 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/20",
+    ALTA: "text-orange-600 bg-orange-50 border-orange-100 dark:text-orange-400 dark:bg-orange-500/10 dark:border-orange-500/20",
+    URGENTE:
+      "text-red-600 bg-red-50 border-red-100 font-bold dark:text-red-400 dark:bg-red-500/10 dark:border-red-500/20",
+  };
+  return styles[priority] || "text-gray-500 bg-gray-50 border-gray-100";
+};
+
+// --- COMPONENT: Ticket Item ---
 const TicketItem = ({
   ticket,
   isSelected,
   onSelect,
   avatarColor,
-  getBadgeProps,
 }: {
   ticket: Ticket;
   isSelected: boolean;
   onSelect: (ticket: Ticket) => void;
   avatarColor: string;
-  getBadgeProps: (status: EstadoTicketSoporte) => {
-    text: string;
-    bgColor: string;
-    textColor: string;
-  };
 }) => {
-  const isAsignado = !!ticket.assignee
-    ? "bg-green-600 text-white font-semibold"
-    : "bg-rose-500 text-white font-semibold";
+  const isAssigned = !!ticket.assignee;
+  const dateFormatted = format(new Date(ticket.date), "d MMM", { locale: es });
+
   return (
     <motion.div
-      key={ticket.id}
+      layout
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`border-b p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-        isSelected ? "bg-gray-100 dark:bg-gray-900" : ""
-      }`}
       onClick={() => onSelect(ticket)}
+      className={`
+        group relative flex gap-3 p-3 border-b cursor-pointer transition-all duration-200
+        hover:bg-muted/50
+        ${
+          isSelected
+            ? "bg-muted/60 border-l-[3px] border-l-primary"
+            : "bg-card border-l-[3px] border-l-transparent hover:border-l-primary/20"
+        }
+      `}
     >
-      <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8 shrink-0">
+      {/* 1. Avatar Compacto */}
+      <div className="shrink-0 pt-1">
+        <Avatar className="h-9 w-9 border shadow-sm">
           <AvatarFallback
-            className={`${avatarColor} text-gray-800 font-semibold`}
+            className={`${avatarColor} text-white font-bold text-[11px]`}
           >
             {ticket.customer
               ? ticket.customer.name.slice(0, 2).toUpperCase()
               : "NA"}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-[13px] font-medium">
-              #{ticket.id} ·{" "}
-              {ticket.customer ? ticket.customer.name : "No asignado"}
-            </div>
-            <div className="text-xs text-gray-500">
-              {format(new Date(ticket.date), "d MMM yyyy", {
-                locale: es,
-              })}
-            </div>
+      </div>
+
+      {/* 2. Contenido Principal */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        {/* Fila Superior: Cliente + Icono Fijo + Fecha */}
+        <div className="flex items-center justify-between leading-none">
+          <div className="flex items-center gap-1.5 max-w-[70%]">
+            {ticket.fixed && (
+              <Pin className="w-3 h-3 text-orange-500 fill-orange-500/20 rotate-45 shrink-0" />
+            )}
+            <span className="text-[12px] font-semibold text-foreground/90 truncate">
+              {ticket.customer?.name || "Sin Cliente"}
+            </span>
           </div>
-          <h3 className="font-normal text-base truncate">{ticket.title}</h3>
-          <p className="text-[12px] text-gray-600 dark:text-gray-400 line-clamp-2">
-            {ticket.description}
-          </p>
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
+            {dateFormatted}
+          </span>
         </div>
-        <div className="mt-2 space-x-1 shrink-0">
-          <Badge
-            variant="outline"
-            className={`${getBadgeProps(ticket.status).bgColor} ${
-              getBadgeProps(ticket.status).textColor
+
+        {/* Fila Título: ID + Título */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1 rounded-[3px] shrink-0 border border-border/50">
+            #{ticket.id}
+          </span>
+          <h4
+            className={`text-[13px] font-medium truncate leading-snug ${
+              isSelected ? "text-primary dark:text-white" : "text-foreground"
             }`}
           >
-            <span className="text-[10px]">
-              {getBadgeProps(ticket.status).text}
-            </span>
-          </Badge>
+            {ticket.title}
+          </h4>
+        </div>
 
-          <Badge variant="outline" className={`${isAsignado}`}>
-            <span className="text-[10px]">
-              {ticket?.assignee?.name ?? "N/A"}
-            </span>
-          </Badge>
+        {/* Fila Inferior: Tags + Estado/Prioridad */}
+        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/40">
+          {/* AREA DE TAGS / ASIGNADO */}
+          <div className="flex items-center gap-2 overflow-hidden">
+            {/* Asignado mini */}
+            <div
+              className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0"
+              title="Técnico asignado"
+            >
+              <User
+                className={`w-3 h-3 ${
+                  isAssigned
+                    ? "text-green-600 dark:text-indigo-600"
+                    : "text-muted-foreground/40"
+                }`}
+              />
+              <span
+                className={`max-w-[80px] text-green-600 dark:text-indigo-600 font-semibold truncate ${
+                  !isAssigned && "italic opacity-50"
+                }`}
+              >
+                {isAssigned
+                  ? ticket.assignee?.name.split(" ")[0]
+                  : "Sin asignar"}
+              </span>
+            </div>
+
+            {/* Separador sutil */}
+            {ticket.tags && ticket.tags.length > 0 && (
+              <div className="h-3 w-[1px] bg-border/60 mx-1"></div>
+            )}
+
+            {/* Tags (Solo muestra 1 o 2 para no saturar) */}
+            <div className="flex gap-1 overflow-hidden mask-linear-fade">
+              {ticket.tags?.slice(0, 2).map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="text-[9px] px-1.5 py-0.5 bg-secondary rounded-sm text-secondary-foreground truncate max-w-[60px]"
+                >
+                  {tag.label}
+                </span>
+              ))}
+              {ticket.tags && ticket.tags.length > 2 && (
+                <span className="text-[9px] text-muted-foreground">+</span>
+              )}
+            </div>
+          </div>
+
+          {/* BADGES DE ESTADO Y PRIORIDAD */}
+          <div className="flex items-center gap-1.5 pl-2 shrink-0">
+            {/* Priority Badge */}
+            <div
+              className={`px-2 py-[2px] rounded-md text-[9px] font-semibold border tracking-wide uppercase ${getPriorityStyles(
+                ticket.priority
+              )}`}
+            >
+              {ticket.priority}
+            </div>
+
+            {/* Status Badge */}
+            <div
+              className={`px-2 py-[2px] rounded-md text-[9px] font-bold border tracking-wide flex items-center gap-1 ${getStatusStyles(
+                ticket.status
+              )}`}
+            >
+              {/* Opcional: Pequeño dot para indicar estado vivo */}
+              {["NUEVO", "ABIERTA", "EN_PROCESO", "URGENTE"].includes(
+                ticket.status
+              ) && (
+                <span className="w-1 h-1 rounded-full bg-current opacity-70 animate-pulse" />
+              )}
+              {ticket.status.replace("_", " ")}
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
   );
 };
 
-// Componente para mostrar una lista de tickets con un mensaje cuando está vacía
-const TicketsList = ({
+// --- COMPONENT: Ticket List Container ---
+const TicketsListContainer = ({
   tickets,
   selectedTicketId,
   onSelectTicket,
   colorMap,
-  getBadgeProps,
   emptyMessage,
 }: {
   tickets: Ticket[];
   selectedTicketId: number | null;
   onSelectTicket: (ticket: Ticket) => void;
   colorMap: Record<string, string>;
-  getBadgeProps: (status: EstadoTicketSoporte) => {
-    text: string;
-    bgColor: string;
-    textColor: string;
-  };
   emptyMessage: { title: string; description: string };
 }) => {
   return (
-    <ScrollArea className="h-[calc(100vh-280px)] w-full">
-      <AnimatePresence>
-        {tickets.length === 0 ? (
-          <div className="py-6 mx-2">
-            <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>{emptyMessage.title}</AlertTitle>
-              <AlertDescription>{emptyMessage.description}</AlertDescription>
-            </Alert>
-          </div>
-        ) : (
-          tickets.map((ticket) => (
-            <TicketItem
-              key={ticket.id}
-              ticket={ticket}
-              isSelected={Number(selectedTicketId) === Number(ticket.id)}
-              onSelect={onSelectTicket}
-              avatarColor={colorMap[ticket.id] || "bg-gray-300"}
-              getBadgeProps={getBadgeProps}
-            />
-          ))
-        )}
-      </AnimatePresence>
+    <ScrollArea className="h-[calc(100vh-220px)] w-full pr-3">
+      <div className="flex flex-col pb-4">
+        <AnimatePresence mode="popLayout">
+          {tickets.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-8 px-4"
+            >
+              <Alert className="bg-muted/50 border-dashed flex flex-col items-center text-center p-6 gap-2">
+                <div className="p-3 rounded-full bg-background border shadow-sm">
+                  <Terminal className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <AlertTitle className="mb-1">{emptyMessage.title}</AlertTitle>
+                  <AlertDescription className="text-muted-foreground text-xs">
+                    {emptyMessage.description}
+                  </AlertDescription>
+                </div>
+              </Alert>
+            </motion.div>
+          ) : (
+            tickets
+              .sort((a, b) => Number(b.fixed) - Number(a.fixed))
+              .map((ticket) => (
+                <TicketItem
+                  key={ticket.id}
+                  ticket={ticket}
+                  isSelected={Number(selectedTicketId) === Number(ticket.id)}
+                  onSelect={onSelectTicket}
+                  avatarColor={colorMap[ticket.id] || "bg-gray-200"}
+                />
+              ))
+          )}
+        </AnimatePresence>
+      </div>
     </ScrollArea>
   );
 };
+
+// --- MAIN EXPORT ---
 export default function TicketList({
   tickets,
   selectedTicketId,
   onSelectTicket,
-}: // onSelectTicketDown,
-TicketListProps) {
-  console.log("El id que me están pasando a la list es: ", selectedTicketId);
-
-  const getBadgeProps = (status: EstadoTicketSoporte) => {
-    switch (status) {
-      case EstadoTicketSoporte.NUEVO:
-        return {
-          text: "Nuevo",
-          bgColor: "bg-blue-50",
-          textColor: "text-blue-600",
-        };
-      case EstadoTicketSoporte.ABIERTA:
-        return {
-          text: "Abierto",
-          bgColor: "bg-yellow-50",
-          textColor: "text-yellow-600",
-        };
-      case EstadoTicketSoporte.EN_PROCESO:
-        return {
-          text: "En Proceso",
-          bgColor: "bg-green-50",
-          textColor: "text-green-600",
-        };
-      case EstadoTicketSoporte.PENDIENTE:
-        return {
-          text: "Pendiente",
-          bgColor: "bg-gray-50",
-          textColor: "text-gray-600",
-        };
-      case EstadoTicketSoporte.PENDIENTE_CLIENTE:
-        return {
-          text: "Pendiente Cliente",
-          bgColor: "bg-pink-50",
-          textColor: "text-pink-600",
-        };
-      case EstadoTicketSoporte.PENDIENTE_TECNICO:
-        return {
-          text: "Pendiente Técnico",
-          bgColor: "bg-teal-50",
-          textColor: "text-teal-600",
-        };
-      case EstadoTicketSoporte.RESUELTA:
-        return {
-          text: "Resuelta",
-          bgColor: "bg-green-50",
-          textColor: "text-green-600",
-        };
-      case EstadoTicketSoporte.CANCELADA:
-        return {
-          text: "Cancelada",
-          bgColor: "bg-red-50",
-          textColor: "text-red-600",
-        };
-      case EstadoTicketSoporte.ARCHIVADA:
-        return {
-          text: "Archivada",
-          bgColor: "bg-gray-200",
-          textColor: "text-gray-600",
-        };
-      default:
-        return {
-          text: "Desconocido",
-          bgColor: "bg-gray-100",
-          textColor: "text-gray-500",
-        };
-    }
-  };
-
-  console.log("La list de tickets es: ", tickets);
-
-  const avatarColorsPastelStronger = [
-    "bg-pink-300", // Rosa pastel más fuerte
-    "bg-blue-300", // Azul pastel más fuerte
-    "bg-green-300", // Verde pastel más fuerte
-    "bg-yellow-300", // Amarillo pastel más fuerte
-    "bg-indigo-300", // Índigo pastel más fuerte
-    "bg-purple-300", // Morado pastel más fuerte
-    "bg-teal-300", // Verde azulado pastel más fuerte
-    "bg-lime-300", // Lima pastel más fuerte
-  ];
-
+}: TicketListProps) {
   const [colorMap, setColorMap] = useState<Record<string, string>>({});
 
-  const getRandomColor = () => {
-    const randomIndex = Math.floor(
-      Math.random() * avatarColorsPastelStronger.length
-    );
-    return avatarColorsPastelStronger[randomIndex];
-  };
-
-  // Efecto para inicializar los colores cuando los tickets cambian
   useEffect(() => {
-    const newColorMap: Record<string, string> = { ...colorMap }; // Hacer una copia del colorMap actual
+    // Paleta "Vibrant Pastel" personalizada
+    const avatarColors = [
+      // Rosa Fuerte
+      "bg-[#FF85A1] dark:bg-[#831843]",
+      // Azul Cielo Intenso
+      "bg-[#60A5FA] dark:bg-[#1E3A8A]",
+      // Verde Menta Vibrante
+      "bg-[#4ADE80] dark:bg-[#14532D]",
+      // Naranja Coral
+      "bg-[#FB923C] dark:bg-[#7C2D12]",
+      // Violeta Profundo
+      "bg-[#A78BFA] dark:bg-[#4C1D95]",
+      // Turquesa
+      "bg-[#2DD4BF] dark:bg-[#134E4A]",
+      // Amarillo Ocre (para que se lea bien el texto)
+      "bg-[#FACC15] dark:bg-[#713F12]",
+      // Índigo Suave
+      "bg-[#818CF8] dark:bg-[#312E81]",
+    ];
 
-    tickets.forEach((ticket) => {
-      if (!newColorMap[ticket.id]) {
-        newColorMap[ticket.id] = getRandomColor();
-      }
+    setColorMap((prev) => {
+      const newMap = { ...prev };
+      let hasChanges = false;
+      tickets.forEach((t) => {
+        if (!newMap[t.id]) {
+          newMap[t.id] =
+            avatarColors[Math.floor(Math.random() * avatarColors.length)];
+          hasChanges = true;
+        }
+      });
+      return hasChanges ? newMap : prev;
     });
+  }, [tickets]);
 
-    setColorMap(newColorMap); // Actualiza el colorMap
-  }, [tickets]); // El efecto se ejecuta cuando la lista de tickets cambia
+  // Filtros
+  const filterTickets = (statusFilter: (t: Ticket) => boolean) =>
+    tickets.filter(statusFilter);
 
-  // Filtros para cada pestaña
-  const allActiveTickets = tickets.filter(
-    (ticket) => ticket.status !== "RESUELTA" && ticket.status !== "ARCHIVADA"
+  const allActive = filterTickets(
+    (t) =>
+      t.status !== "RESUELTA" &&
+      t.status !== "ARCHIVADA" &&
+      t.status !== "CANCELADA"
   );
-  const inProgressTickets = tickets.filter(
-    (ticket) => ticket.status === "EN_PROCESO"
+  const inProgress = filterTickets(
+    (t) => t.status === "EN_PROCESO" || t.status === "PENDIENTE_TECNICO"
   );
-  const resolvedTickets = tickets.filter(
-    (ticket) => ticket.status === "RESUELTA"
+  const resolved = filterTickets((t) => t.status === "RESUELTA");
+  const archived = filterTickets(
+    (t) => t.status === "ARCHIVADA" || t.status === "CANCELADA"
   );
-  const archivedTickets = tickets.filter(
-    (ticket) => ticket.status === "ARCHIVADA"
-  );
-
-  // Mensajes para cuando no hay tickets
-  const emptyMessages = {
-    todos: {
-      title: "Tickets Soporte",
-      description: "Actualmente no hay tickets en línea",
-    },
-    enProceso: {
-      title: "EN PROCESO",
-      description: "Actualmente no hay tickets en proceso",
-    },
-    resueltos: {
-      title: "Resueltos",
-      description: "Actualmente no hay tickets resueltos",
-    },
-    archivados: {
-      title: "Archivados",
-      description: "Actualmente no hay tickets archivados",
-    },
-  };
 
   return (
-    <div className="flex flex-col h-full">
-      <Tabs defaultValue="inbox" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-10 mb-2 md:mb-3">
-          <TabsTrigger value="inbox" className="text-xs md:text-sm">
-            TODOS
-          </TabsTrigger>
-          <TabsTrigger value="enProceso" className="text-xs md:text-sm">
-            EN PROCESO
-          </TabsTrigger>
-          <TabsTrigger value="lista" className="text-xs md:text-sm">
-            RESUELTOS
-          </TabsTrigger>
-          <TabsTrigger value="archivados" className="text-xs md:text-sm">
-            ARCHIVADOS
-          </TabsTrigger>
-        </TabsList>
+    <div className="flex flex-col h-full bg-background/50 rounded-lg border shadow-sm overflow-hidden">
+      <Tabs defaultValue="inbox" className="w-full h-full flex flex-col">
+        <div className="px-3 py-2 border-b bg-background/95 backdrop-blur z-10">
+          <TabsList className="grid w-full grid-cols-4 h-9 bg-muted/50 p-1">
+            <TabsTrigger
+              value="inbox"
+              className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              TODOS ({allActive.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="enProceso"
+              className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              PROCESO ({inProgress.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="lista"
+              className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              LISTOS ({resolved.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="archivados"
+              className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              HISTORIAL
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* TODOS tab */}
-        <TabsContent value="inbox" className="m-0 my-1">
-          <TicketsList
-            tickets={allActiveTickets}
-            selectedTicketId={selectedTicketId}
-            onSelectTicket={onSelectTicket}
-            colorMap={colorMap}
-            getBadgeProps={getBadgeProps}
-            emptyMessage={emptyMessages.todos}
-          />
-        </TabsContent>
+        <div className="flex-1 bg-background">
+          <TabsContent value="inbox" className="m-0 h-full">
+            <TicketsListContainer
+              tickets={allActive}
+              selectedTicketId={selectedTicketId}
+              onSelectTicket={onSelectTicket}
+              colorMap={colorMap}
+              emptyMessage={{
+                title: "Todo al día",
+                description:
+                  "No tienes tickets pendientes en tu bandeja de entrada.",
+              }}
+            />
+          </TabsContent>
 
-        {/* EN PROCESO tab */}
-        <TabsContent value="enProceso" className="m-0 my-1">
-          <TicketsList
-            tickets={inProgressTickets}
-            selectedTicketId={selectedTicketId}
-            onSelectTicket={onSelectTicket}
-            colorMap={colorMap}
-            getBadgeProps={getBadgeProps}
-            emptyMessage={emptyMessages.enProceso}
-          />
-        </TabsContent>
+          <TabsContent value="enProceso" className="m-0 h-full">
+            <TicketsListContainer
+              tickets={inProgress}
+              selectedTicketId={selectedTicketId}
+              onSelectTicket={onSelectTicket}
+              colorMap={colorMap}
+              emptyMessage={{
+                title: "Sin actividad",
+                description: "No hay tickets en proceso técnico actualmente.",
+              }}
+            />
+          </TabsContent>
 
-        {/* RESUELTOS tab */}
-        <TabsContent value="lista" className="m-0 my-1">
-          <TicketsList
-            tickets={resolvedTickets}
-            selectedTicketId={selectedTicketId}
-            onSelectTicket={onSelectTicket}
-            colorMap={colorMap}
-            getBadgeProps={getBadgeProps}
-            emptyMessage={emptyMessages.resueltos}
-          />
-        </TabsContent>
+          <TabsContent value="lista" className="m-0 h-full">
+            <TicketsListContainer
+              tickets={resolved}
+              selectedTicketId={selectedTicketId}
+              onSelectTicket={onSelectTicket}
+              colorMap={colorMap}
+              emptyMessage={{
+                title: "Sin resueltos",
+                description: "Aún no has resuelto tickets hoy.",
+              }}
+            />
+          </TabsContent>
 
-        {/* ARCHIVADOS tab */}
-        <TabsContent value="archivados" className="m-0 my-1">
-          <TicketsList
-            tickets={archivedTickets}
-            selectedTicketId={selectedTicketId}
-            onSelectTicket={onSelectTicket}
-            colorMap={colorMap}
-            getBadgeProps={getBadgeProps}
-            emptyMessage={emptyMessages.archivados}
-          />
-        </TabsContent>
+          <TabsContent value="archivados" className="m-0 h-full">
+            <TicketsListContainer
+              tickets={archived}
+              selectedTicketId={selectedTicketId}
+              onSelectTicket={onSelectTicket}
+              colorMap={colorMap}
+              emptyMessage={{
+                title: "Archivo limpio",
+                description: "El historial de tickets está vacío.",
+              }}
+            />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

@@ -53,16 +53,17 @@ interface Tags {
 export interface Ticket {
   id: number;
   title: string;
-  description: string;
+  description: string | null;
+  fixed: boolean;
   status: EstadoTicketSoporte;
   priority: PrioridadTicketSoporte;
-  assignee: User;
+  assignee: User | null;
   companios: Companion[];
-  creator: User;
+  creator: User | null;
   date: string;
   closedAt: string;
   unread?: boolean;
   tags?: Tags[];
   comments?: Comment[];
-  customer: Customer;
+  customer: Customer | null;
 }

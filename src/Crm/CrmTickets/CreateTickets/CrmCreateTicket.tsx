@@ -124,13 +124,7 @@ function CrmCreateTicket({
   };
 
   // Datos simulados
-  const [clientes, setClientes] = useState<Cliente[]>([
-    { id: 1, nombre: "Juan Pérez" },
-    { id: 2, nombre: "María López" },
-    { id: 3, nombre: "Carlos Rodríguez" },
-    { id: 4, nombre: "Ana Martínez" },
-    { id: 5, nombre: "Roberto Gómez" },
-  ]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
 
   const [tecnicos, setTecnicos] = useState<Usuario[]>([
     { id: 1, nombre: "Técnico 1" },
@@ -291,7 +285,7 @@ function CrmCreateTicket({
     <Dialog open={openCreatT} onOpenChange={setOpenCreateT}>
       <DialogContent className="sm:max-w-[900px] lg:max-w-[1000px] max-h-[98vh]  flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Ticket className="h-5 w-5 text-primary" />
             Crear Nuevo Ticket de Soporte
           </DialogTitle>
@@ -614,12 +608,7 @@ function CrmCreateTicket({
             <Button
               onClick={handleSubmit}
               className="flex-1 sm:flex-initial"
-              disabled={
-                isSubmitting ||
-                !formData.clienteId ||
-                !formData.empresaId ||
-                !formData.titulo
-              }
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
