@@ -1,45 +1,27 @@
 "use client";
-
-import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import React, { useEffect,  useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
-  Ellipsis,
-  FileText,
-  RotateCcw,
+  Loader2,
   Send,
-  Sticker,
-  TicketSlash,
-  X,
 } from "lucide-react";
-
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import axios from "axios";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   Select,
   SelectContent,
@@ -51,15 +33,31 @@ import SelectComponent, { MultiValue, SingleValue } from "react-select";
 import { RolUsuario } from "../CrmProfile/interfacesProfile";
 import { Ticket } from "./ticketTypes";
 import { Switch } from "@/components/ui/switch";
+import { TicketHeader } from "./TicketDetail/TicketHeader";
+import { TicketTimeline } from "./TicketDetail/TicketTimeline";
+import { SolucionTicketItem } from "../features/ticket-soluciones/ticket-soluciones.interface";
+import { useCreateTicketResumen } from "../CrmHooks/hooks/use-ticket-resumen/useTicketResumen";
+import { useForm } from "react-hook-form";
+import { ticketResumenSchema, TicketResumenSchemaType } from "./CrmCloseTickets/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription
+} from "@/components/ui/form";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.locale("es");
 
-const formatearFecha = (fecha: string) => {
-  return dayjs(fecha).format("DD MMMM YYYY hh:mm A");
-};
+
 
 interface OptionSelectedReactComponent {
   value: string;
@@ -73,6 +71,7 @@ interface TicketDetailProps {
   optionsLabels: OptionSelectedReactComponent[];
   optionsTecs: OptionSelectedReactComponent[];
   optionsCustomers: OptionSelectedReactComponent[];
+  soluciones: SolucionTicketItem[]
 }
 
 interface SeguimientoData {
@@ -100,13 +99,10 @@ export default function TicketDetail({
   optionsTecs,
   setSelectedTicketId,
   optionsCustomers,
+  soluciones,
 }: TicketDetailProps) {
-  const comentaryRef = useRef<HTMLTextAreaElement>(null);
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
-
   const [openUpdateTicket, setOpenUpdateTicket] = useState(false);
-
-  // Inicialización segura del estado
   const [ticketToEdit, setTicketToEdit] = useState<Ticket>(ticket);
 
   const [formDataComent, setFormDataComent] = useState<SeguimientoData>({
@@ -118,6 +114,52 @@ export default function TicketDetail({
   const [openCloseTicket, setOpenCloseTicket] = useState(false);
   const [ticketDeleteId, setTicketDeleteId] = useState<number | null>(null);
   const [openDelete, setOpenDelete] = useState(false);
+  const createTicketResumen = useCreateTicketResumen();
+
+  const formCloseTicket = useForm<TicketResumenSchemaType>({
+     resolver: zodResolver(ticketResumenSchema),
+     defaultValues: {
+       ticketId: ticket.id,
+       solucionId: 1, 
+       resueltoComo: "",
+       notasInternas: "",
+     }
+  });
+
+    const onSubmitClose = (data: TicketResumenSchemaType) => {
+      const payload = {
+          ...data, 
+          ticketId: ticket.id, 
+          resueltoComo: data.resueltoComo || null, 
+          notasInternas: data.notasInternas || null,
+          reabierto: false, 
+          intentos: 1,
+      };
+
+      toast.promise(
+        createTicketResumen.mutateAsync(payload), 
+        {
+          loading: "Cerrando ticket...",
+          success: () => {
+              setOpenCloseTicket(false); 
+              getTickets(); 
+              formCloseTicket.reset({
+                notasInternas: "",
+                resueltoComo: "",
+                solucionId: null,
+                ticketId: ticket.id
+              })
+              return "Ticket cerrado y resumen creado";
+          },
+          error:(error)=> getApiErrorMessageAxios(error)
+        }
+      );
+    }
+
+  const optionsSoluciones:Array<OptionSelectedReactComponent> = soluciones.map((s)=>({
+    label: s.solucion,
+    value: s.id.toString(),
+  }))
 
   // Sincronizar estado cuando cambia el prop ticket
   useEffect(() => {
@@ -168,8 +210,6 @@ export default function TicketDetail({
         customer: {
           id: Number(selectedOption.value),
           name: selectedOption.label,
-          // Si tu tipo 'Customer' requiere más campos obligatorios,
-          // rellénalos aquí con valores dummy o ajusta tu interfaz Ticket
         } as any,
       }));
     } else {
@@ -227,9 +267,7 @@ export default function TicketDetail({
     setTicketToEdit((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Manejo de etiquetas
   const handleChangeLabels = (selectedOptions: MultiValue<TagOption>) => {
-    // TypeScript safe mapping
     const tags = selectedOptions.map((opt) => ({
       value: opt.value,
       label: opt.label,
@@ -240,7 +278,6 @@ export default function TicketDetail({
     }));
   };
 
-  // Manejo seguro del técnico asignado (permite nulos)
   const handleChangeTecSelect = (
     selectedOption: SingleValue<{ value: string; label: string }>
   ) => {
@@ -254,12 +291,11 @@ export default function TicketDetail({
             .split(" ")
             .map((word) => word[0])
             .join(""),
-          rol: "TECNICO", // Asumimos rol técnico o lo extraes de optionsTecs si tienes esa data
+          rol: "TECNICO", 
           avatar: "",
         },
       }));
     } else {
-      // Si se limpia, asignamos null
       setTicketToEdit((prev) => ({
         ...prev,
         assignee: null,
@@ -286,7 +322,6 @@ export default function TicketDetail({
     e.preventDefault();
     try {
       // PREPARAMOS EL PAYLOAD CORRECTO PARA EL BACKEND
-      // El backend espera IDs (clienteId, tecnicoId), no objetos completos.
       const payload = {
         title: ticketToEdit.title,
         description: ticketToEdit.description,
@@ -334,219 +369,63 @@ export default function TicketDetail({
     }
   };
 
-  const handleCloseTicket = async () => {
-    try {
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/tickets-soporte/close-ticket-soporte/${ticketToEdit.id}`,
-        {
-          comentario: formDataComent.descripcion,
-          ticketId: formDataComent.ticketId,
-          usuarioId: formDataComent.usuarioId,
-          ...ticketToEdit,
-        }
-      );
-
-      if (response.status === 200) {
-        toast.success("Ticket cerrado correctamente");
-        getTickets();
-        setOpenCloseTicket(false);
-        setSelectedTicketId(null);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("No se pudo cerrar el ticket");
-    }
-  };
-
   const handleClose = () => {
     setSelectedTicketId(null);
   };
 
-  // Convertir compañeros a formato React Select de forma segura
   const companionOptions =
     ticketToEdit?.companios?.map((c) => ({
       value: c.id.toString(),
       label: c.name,
     })) || [];
 
+    const metricas = ticket.metrics
+
   return (
-    <div className="flex flex-col h-full p-2 rounded-sm">
-      <div className="px-0 border-b">
-        <div className="flex items-center justify-between p-2 rounded-sm bg-muted sm:bg-transparent">
-          <div className="flex items-center gap-2">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="font-bold text-[11px] bg-green-400 text-white">
-                {/* SAFE CHECK: Cliente puede ser null */}
-                {ticket.customer?.name
-                  ? ticket.customer.name.slice(0, 2).toUpperCase()
-                  : "NA"}
-              </AvatarFallback>
-            </Avatar>
+    <div className="flex flex-col h-full rounded-sm overflow-hidden shadow-sm border ">
+    <div className="flex-none z-20 shadow-sm"> 
+      <TicketHeader 
+        ticket={ticket}
+        badgeProps={{ bgColor, text, textColor }}
+        onCloseView={handleClose}
+        onEdit={() => { setTicketToEdit(ticket); setOpenUpdateTicket(true); }}
+        onDelete={() => { setTicketDeleteId(ticket.id); setOpenDelete(true); }}
+        onCloseTicket={() => { setTicketToEdit(ticket); setOpenCloseTicket(true); }}
+      />
+    </div>
 
-            <div>
-              <div className="text-[12px] text-blue-600 font-semibold">
-                {/* SAFE CHECK: Renderizado condicional del Link */}
-                {ticket.customer ? (
-                  <Link to={`/crm/cliente/${ticket.customer.id}`}>
-                    {ticket.customer.name}
-                  </Link>
-                ) : (
-                  <span className="text-gray-500 italic">
-                    Sin cliente asignado
-                  </span>
-                )}
+    {/* 2. TIMELINE (Scrollable) */}
+    <TicketTimeline 
+      metricas={metricas}
+      comments={ticket.comments}
+      creator={ticket.creator}
+      closedAt={ticket.closedAt}
+    />
 
-                <span className="text-gray-500 mx-1">·</span>
-                <span className="text-gray-500 font-normal">
-                  {ticket.assignee
-                    ? `Tec: ${ticket.assignee.name}`
-                    : "Sin técnico"}
-                </span>
-                <div className="text-xs text-gray-400 font-light mt-0.5">
-                  {formatearFecha(new Date(ticket.date).toISOString())}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={`${bgColor} ${text} ${textColor}`}
-            >
-              {ticket.priority}
-            </Badge>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-8 h-8">
-                  <Ellipsis />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuCheckboxItem
-                  onClick={() => {
-                    setTicketDeleteId(ticket.id);
-                    setOpenDelete(true);
-                  }}
-                >
-                  Eliminar Ticket <TicketSlash className="w-5 h-5 mx-2" />
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem
-                  onClick={() => {
-                    setOpenUpdateTicket(true);
-                    setTicketToEdit(ticket);
-                  }}
-                >
-                  Actualizar Ticket <RotateCcw className="w-5 h-5 mx-2" />
-                </DropdownMenuCheckboxItem>
-
-                <Link to={`/crm-boleta-ticket-soporte/${ticket.id}`}>
-                  <DropdownMenuCheckboxItem>
-                    Imprimir Boleta Ticket <FileText className="w-5 h-5 mx-2" />
-                  </DropdownMenuCheckboxItem>
-                </Link>
-
-                <DropdownMenuCheckboxItem
-                  onClick={() => {
-                    setOpenCloseTicket(true);
-                    setTicketToEdit(ticket);
-                  }}
-                >
-                  Cerrar Ticket <Sticker className="w-5 h-5 mx-2" />
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <button
-              onClick={handleClose}
-              className="p-2 rounded-full hover:bg-gray-100"
-              aria-label="Close details"
-            >
-              <X className="w-4 h-4 font-bold text-red-500" />
-            </button>
-          </div>
-        </div>
-
-        <h2 className="mt-2 text-base font-semibold">{ticket.title}</h2>
-        {/* SAFE CHECK: Descripción puede ser null */}
-        <p className="mb-1 text-sm font-thin">
-          {ticket.description || "Sin descripción"}
-        </p>
-      </div>
-
-      <div className="flex-1 p-4 overflow-y-auto">
-        {/* SAFE CHECK: Comments puede ser undefined/null */}
-        {ticket.comments && ticket.comments.length > 0 ? (
-          ticket.comments.map((comment, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                {/* SAFE CHECK: Comment User fallback */}
-                <span className="text-sm font-medium">
-                  {comment.user?.name || "Usuario Eliminado"}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {formatearFecha(new Date(comment.date).toISOString())}
-                </span>
-              </div>
-              <p className="text-[12px]">{comment.text}</p>
-            </motion.div>
-          ))
-        ) : (
-          <div className="text-center text-sm text-gray-400 mt-4">
-            No hay comentarios aún.
-          </div>
-        )}
-
-        {ticket.closedAt ? (
-          <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900">
-            <p className="text-xs font-semibold text-gray-500 dark:text-white">
-              Cerrado el {formatearFecha(ticket.closedAt)}
-            </p>
-          </div>
-        ) : null}
-
-        {ticket.creator ? (
-          <div className="px-3 py-2 mb-2 bg-gray-100 rounded-lg dark:bg-slate-900">
-            <p className="text-xs font-semibold text-gray-500 dark:text-white">
-              Creado por: {ticket.creator.name} |{" "}
-              {ticket.creator.rol || "SISTEMA"}
-            </p>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="p-4 border-t">
-        <form onSubmit={submitNewComentaryFollowUp}>
-          <div className="relative flex items-center gap-3">
-            <Textarea
-              placeholder="Escriba un comentario"
-              className="min-h-[50px] resize-none pr-12 flex-1"
-              value={formDataComent.descripcion}
-              onChange={(e) =>
-                setFormDataComent((prev) => ({
-                  ...prev,
-                  descripcion: e.target.value,
-                }))
-              }
-            />
-            <button
-              type="submit"
-              className="bg-[#27bd65] hover:bg-[#3cc575] text-white flex items-center justify-center p-2 rounded-lg transition-colors duration-300"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              ENVIAR
-            </button>
-          </div>
-        </form>
-      </div>
+    {/* 3. INPUT AREA (Fijo abajo) */}
+    <div className="flex-none p-3 ">
+      <form onSubmit={submitNewComentaryFollowUp} className="relative flex items-end gap-2">
+          <Textarea
+            placeholder="Escribe un seguimiento..."
+            className=""
+            value={formDataComent.descripcion}
+            onChange={(e) => setFormDataComent(prev => ({ ...prev, descripcion: e.target.value }))}
+            onKeyDown={(e) => {
+               if(e.key === 'Enter' && !e.shiftKey) {
+                 e.preventDefault();
+                 submitNewComentaryFollowUp(e);
+               }
+            }}
+          />
+          <Button 
+            type="submit" 
+            size="icon"
+            className="h-10 w-10 bg-emerald-600 hover:bg-emerald-700 shrink-0 rounded-lg shadow-sm"
+          >
+            <Send className="w-4 h-4 text-white" />
+          </Button>
+      </form>
+    </div>
 
       {/* DIALOG PARA LA EDICION DEL TICKET */}
       <Dialog open={openUpdateTicket} onOpenChange={setOpenUpdateTicket}>
@@ -782,7 +661,6 @@ export default function TicketDetail({
         </DialogContent>
       </Dialog>
 
-      {/* ... (El resto de Dialogs de Delete y Close se mantienen igual, solo asegurando los values de los inputs) ... */}
       <Dialog open={openDelete} onOpenChange={setOpenDelete}>
         {/* ... contenido delete ... */}
         <DialogContent className="sm:max-w-[425px]">
@@ -798,56 +676,111 @@ export default function TicketDetail({
         </DialogContent>
       </Dialog>
 
+    
       <Dialog open={openCloseTicket} onOpenChange={setOpenCloseTicket}>
-        <DialogContent
-          onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            comentaryRef.current?.focus();
-          }}
-          className="sm:max-w-[500px]"
-        >
+        <DialogContent className="">
           <DialogHeader>
-            <DialogTitle className="text-center">Cerrar Ticket</DialogTitle>
-            <DialogDescription className="text-center">
-              Nota final antes de cerrar.
-            </DialogDescription>
+            <DialogTitle>Cerrar Ticket #{ticket.id}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Label>Título</Label>
-            <Input
-              value={ticketToEdit.title || ""}
-              onChange={(e) =>
-                setTicketToEdit((prev) => ({ ...prev, title: e.target.value }))
-              }
+
+          <Form {...formCloseTicket}>
+            <form onSubmit={formCloseTicket.handleSubmit(onSubmitClose)} className="space-y-4 py-2">
+              
+              <input type="hidden" {...formCloseTicket.register("ticketId", { valueAsNumber: true })} />
+              
+          <FormField
+            control={formCloseTicket.control}
+            name="solucionId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Solución</FormLabel>
+                <FormControl>
+                  <SelectComponent
+                    placeholder="Selecciona una solución..."
+                    options={optionsSoluciones}
+                    isClearable
+                    value={
+                      field.value 
+                      ? optionsSoluciones.find(opt => Number(opt.value) === field.value) 
+                      : null
+                    }
+                    onChange={(option: SingleValue<{ label: string, value: string }>) => {
+                      field.onChange(option ? Number(option.value) : null);
+                    }}
+                    className="text-sm text-black"
+                    menuPlacement="auto"
+                  />
+                  </FormControl>
+                  
+                  {/* Mensaje de error automático de Zod (ej: "Seleccione una solución") */}
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <Label>Descripción</Label>
-            <Textarea
-              value={ticketToEdit.description || ""}
-              onChange={(e) =>
-                setTicketToEdit((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-            />
-            <Textarea
-              ref={comentaryRef}
-              placeholder="Comentario de cierre..."
-              value={formDataComent.descripcion}
-              onChange={(e) =>
-                setFormDataComent((prev) => ({
-                  ...prev,
-                  descripcion: e.target.value,
-                }))
-              }
-            />
-          </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setOpenCloseTicket(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCloseTicket}>Cerrar Ticket</Button>
-          </DialogFooter>
+              
+              <FormField
+                control={formCloseTicket.control}
+                name="resueltoComo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Resumen de Solución (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Ej: Se reinició el router y se validó la IP..." 
+                        className="resize-none min-h-[80px]"
+                        {...field} 
+                        value={field.value || ""} // Manejo seguro de null
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Información visible para el reporte final.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={formCloseTicket.control}
+                name="notasInternas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notas Internas (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Detalles técnicos solo para el equipo..." 
+                        className="resize-none min-h-[60px]"
+                        {...field} 
+                        value={field.value || ""} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="mt-4 gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setOpenCloseTicket(false)}
+                  disabled={createTicketResumen.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  disabled={createTicketResumen.isPending}
+                >
+                  {createTicketResumen.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Confirmar Cierre
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,293 +1,214 @@
 "use client";
+import { useRef, useState, useMemo } from "react";
+import { MultiValue } from "react-select";
 
-import { useEffect, useRef, useState } from "react";
+// Components
 import TicketList from "./CrmTicketList";
 import TicketDetail from "./CrmTicketDetails";
 import TicketFilters from "./CrmTicketFilter";
-import type { Ticket } from "./ticketTypes";
-// import { mockTickets } from "./mock-data";
-import { toast } from "sonner";
-import axios from "axios";
-// import { set } from "date-fns";
-import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
-import { MultiValue } from "react-select";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
+
+// Hooks & Queries
+import { useGetTicketSoluciones } from "../CrmHooks/hooks/use-ticket-soluciones/useTicketSoluciones";
+import { useGetTicketsSoporte } from "../CrmHooks/hooks/use-tickets/useTicketsSoporte";
+import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
+import { useGetCustomerToSelect } from "../CrmHooks/hooks/Client/useGetClient";
+import { useGetTagsTicket } from "../CrmHooks/hooks/tags-ticket/useTagsTickets";
+
+// Types & Utils
+import type { Ticket } from "./ticketTypes";
 import { EstadoTicketSoporte } from "../DashboardCRM/types";
 
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-
-// Tipos para las fechas
 type DateRange = {
   startDate: Date | undefined;
   endDate: Date | undefined;
 };
-interface Etiqueta {
-  id: number;
-  nombre: string;
-}
-
-interface Usuario {
-  id: number;
-  nombre: string;
-}
-
-interface Cliente {
-  id: number;
-  nombre: string;
-}
 
 export default function TicketDashboard() {
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [openCreateTicket, setOpenCreateTicket] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  const [filterText, setFilterText] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
+  const [selectedCreator, setSelectedCreator] = useState<string | null>(null);
+  const [tecnicoSelected, setTecnicoSelected] = useState<string | null>(null);
+  const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: undefined,
     endDate: undefined,
   });
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null); // Solo ID
-  const [filterText, setFilterText] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
-  const [selectedCreator, setSelectedCreator] = useState<string | null>(null);
-  const [openCreateTicket, setOpenCreateTicket] = useState(false);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  // ----------------------------------------------------------------------
+  // 5. DATA FETCHING (API HOOKS)
+  // ----------------------------------------------------------------------
+  const { data: rawTickets, refetch: getTickets } = useGetTicketsSoporte();
+  const { data: rawSolutions } = useGetTicketSoluciones();
+  const { data: rawCustomers } = useGetCustomerToSelect();
+  const { data: rawTags } = useGetTagsTicket();
+  const { data: rawTecs } = useGetUsersToSelect();
 
-  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
-  const [tecnicos, setTecnicos] = useState<Usuario[]>([]);
+  // Data normalization (Safe access)
+  const ticketsSoporte = useMemo(() => rawTickets ?? [], [rawTickets]);
+  const soluciones = useMemo(() => rawSolutions ?? [], [rawSolutions]);
+  const clientes = useMemo(() => rawCustomers ?? [], [rawCustomers]);
+  const etiquetas = useMemo(() => rawTags ?? [], [rawTags]);
+  const tecnicos = useMemo(() => rawTecs ?? [], [rawTecs]);
 
-  const filterTickets = (tickets: Ticket[]) => {
-    return tickets.filter((ticket) => {
-      // 1. Preparamos strings seguros (si es null, usamos string vacío)
-      const customerName = ticket.customer?.name || "";
-      const description = ticket.description || ""; // Por si descripción también es null
-      const term = filterText.toLowerCase();
-
-      // 2. Comparación segura
-      const matchesText =
-        ticket.title.toLowerCase().includes(term) ||
-        customerName.toLowerCase().includes(term) || // Ahora es seguro
-        description.toLowerCase().includes(term) ||
-        ticket.id.toString().includes(filterText);
-
-      const matchesStatus = selectedStatus
-        ? String(ticket.status) === selectedStatus
-        : true;
-
-      // 3. Uso de Optional Chaining (?.) para objetos anidados
-      const matchesAssignee = selectedAssignee
-        ? ticket.assignee?.id.toString() === selectedAssignee
-        : true;
-
-      const matchesCreator = selectedCreator
-        ? ticket.creator?.id.toString() === selectedCreator
-        : true;
-
-      const matchesTecnico = tecnicoSelected
-        ? ticket.assignee?.id.toString() === tecnicoSelected
-        : true;
-
-      const matchesEtiquetas =
-        labelsSelecteds && labelsSelecteds.length > 0
-          ? ticket.tags?.some(
-              (tag) => tag.value.toString() === labelsSelecteds.toString()
-            )
-          : true;
-
-      const matchesDate = () => {
-        if (!dateRange.startDate && !dateRange.endDate) return true;
-        const ticketDate = new Date(ticket.date);
-
-        // Validación extra: si la fecha del ticket fuera inválida
-        if (isNaN(ticketDate.getTime())) return false;
-
-        const start = dateRange.startDate
-          ? new Date(dateRange.startDate)
-          : new Date(0);
-        start.setHours(0, 0, 0, 0);
-
-        const end = dateRange.endDate
-          ? new Date(dateRange.endDate)
-          : new Date();
-        end.setHours(23, 59, 59, 999);
-
-        return ticketDate >= start && ticketDate <= end;
-      };
-
-      return (
-        matchesText &&
-        matchesStatus &&
-        matchesAssignee &&
-        matchesCreator &&
-        matchesTecnico &&
-        matchesEtiquetas &&
-        matchesDate()
-      );
-    });
-  };
-
-  const getTickets = async () => {
-    try {
-      const response = await axios.get(`${VITE_CRM_API_URL}/tickets-soporte`);
-      if (response.status === 200) {
-        setTickets(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Error al conseguir tickets");
-    }
-  };
-
-  const getClientes = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customers-to-ticket`
-      );
-      if (response.status === 200) {
-        setClientes(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir los clientes");
-    }
-  };
-
-  useEffect(() => {
-    getTickets();
-  }, []);
-
-  const optionsLabels = etiquetas.map((label) => ({
+  // ----------------------------------------------------------------------
+  // 6. DERIVED DATA (MEMOIZED OPTIONS & STATS)
+  // ----------------------------------------------------------------------
+  
+  // Opciones para Selects
+  const optionsLabels = useMemo(() => etiquetas.map((label) => ({
     value: label.id.toString(),
     label: label.nombre,
-  }));
+  })), [etiquetas]);
 
-  const optionsTecs = tecnicos.map((tec) => ({
+  const optionsTecs = useMemo(() => tecnicos.map((tec) => ({
     value: tec.id.toString(),
     label: tec.nombre,
-  }));
+  })), [tecnicos]);
 
-  const getEtiquetas = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/tags-ticket/get-tags-to-ticket`
-      );
-      if (response.status === 200) {
-        setEtiquetas(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir tags");
-    }
-  };
-
-  const getTecs = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/user/get-users-to-create-tickets`
-      );
-      if (response.status === 200) {
-        setTecnicos(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir los clientes");
-    }
-  };
-
-  useEffect(() => {
-    getEtiquetas();
-    getTecs();
-    getClientes();
-  }, []);
-
-  const optionsCustomers = clientes.map((c) => ({
+  const optionsCustomers = useMemo(() => clientes.map((c) => ({
     value: c.id.toString(),
-    label: c.nombre, // Ajusta según venga tu objeto cliente
-  }));
+    label: c.nombre,
+  })), [clientes]);
 
-  const selectedTicket = tickets.find(
-    (ticket) => ticket.id === selectedTicketId
-  );
+  // Ticket seleccionado actualmente
+  const selectedTicket = useMemo(() => 
+    ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
+  [ticketsSoporte, selectedTicketId]);
 
-  const [tecnicoSelected, setTecnicoSelected] = useState<string | null>(null);
+  const stats = useMemo(() => ({
+    abiertos: ticketsSoporte.filter((t) => t.status === EstadoTicketSoporte.ABIERTA).length,
+    proceso: ticketsSoporte.filter((t) => t.status === EstadoTicketSoporte.EN_PROCESO).length,
+    resueltos: ticketsSoporte.filter((t) => t.status === EstadoTicketSoporte.RESUELTA).length,
+  }), [ticketsSoporte]);
+
+  const filteredTickets = useMemo(() => {
+    return ticketsSoporte.filter((ticket) => {
+      const term = filterText.toLowerCase();
+      const matchesText =
+        ticket.title.toLowerCase().includes(term) ||
+        (ticket.customer?.name || "").toLowerCase().includes(term) ||
+        (ticket.description || "").toLowerCase().includes(term) ||
+        ticket.id.toString().includes(filterText);
+
+      if (!matchesText) return false;
+
+      if (selectedStatus && String(ticket.status) !== selectedStatus) return false;
+
+      if (selectedAssignee && ticket.assignee?.id.toString() !== selectedAssignee) return false;
+      if (selectedCreator && ticket.creator?.id.toString() !== selectedCreator) return false;
+      if (tecnicoSelected && ticket.assignee?.id.toString() !== tecnicoSelected) return false;
+
+      if (labelsSelecteds.length > 0) {
+       
+        const originalMatchLogic = ticket.tags?.some(tag => labelsSelecteds.includes(Number(tag.value)));
+        if (!originalMatchLogic) return false;
+      }
+
+      if (dateRange.startDate || dateRange.endDate) {
+        const ticketDate = new Date(ticket.date);
+        if (isNaN(ticketDate.getTime())) return false;
+
+        const start = dateRange.startDate ? new Date(dateRange.startDate) : new Date(0);
+        start.setHours(0, 0, 0, 0);
+
+        const end = dateRange.endDate ? new Date(dateRange.endDate) : new Date();
+        end.setHours(23, 59, 59, 999);
+
+        if (ticketDate < start || ticketDate > end) return false;
+      }
+
+      return true;
+    });
+  }, [
+    ticketsSoporte, filterText, selectedStatus, selectedAssignee, 
+    selectedCreator, tecnicoSelected, labelsSelecteds, dateRange
+  ]);
 
   const handleSelectedTecnico = (optionSelect: OptionSelected | null) => {
     setTecnicoSelected(optionSelect ? optionSelect.value : null);
   };
 
-  const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
-  const handleChangeLabels = (
-    selectedOptions: MultiValue<{ value: string; label: string }>
-  ) => {
+  const handleChangeLabels = (selectedOptions: MultiValue<{ value: string; label: string }>) => {
     const selectedIds = selectedOptions.map((option) => parseInt(option.value));
     setLabelsSelecteds(selectedIds);
   };
 
-  const detailRef = useRef<HTMLDivElement>(null);
-
-  function handleSelectTicket(ticket: Ticket) {
+  const handleSelectTicket = (ticket: Ticket) => {
     setSelectedTicketId(ticket.id);
     setTimeout(() => {
       detailRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
-  }
-  const abiertos = tickets.filter(
-    (t) => t.status === EstadoTicketSoporte.ABIERTA
-  ).length;
-  const proceso = tickets.filter(
-    (t) => t.status === EstadoTicketSoporte.EN_PROCESO
-  ).length;
-  const resueltos = tickets.filter(
-    (t) => t.status === EstadoTicketSoporte.RESUELTA
-  ).length;
+  };
+console.log('Los tickets llegando son: ', filteredTickets);
 
   return (
     <PageTransitionCrm
       titleHeader="Tickets Soporte"
-      subtitle={`${abiertos} abiertos · ${proceso} en proceso · ${resueltos} cerrados hoy`}
+      subtitle={`${stats.abiertos} abiertos · ${stats.proceso} en proceso · ${stats.resueltos} cerrados hoy`}
       variant="fade-pure"
     >
-      <div className="">
+      <div>
+        
+        {/* FILTERS AREA */}
         <TicketFilters
-          tickets={filterTickets(tickets)}
+          tickets={filteredTickets} // Pasamos los ya filtrados o los totales según necesite el componente para conteos
           onFilterChange={setFilterText}
           onStatusChange={setSelectedStatus}
+          
+          // Create Modal Props
           openCreatT={openCreateTicket}
           setOpenCreateT={setOpenCreateTicket}
           getTickets={getTickets}
+          
+          // Filter Setters
           setSelectedAssignee={setSelectedAssignee}
           setSelectedCreator={setSelectedCreator}
-          //tecnicos para filtrado
+          
+          // Technical Filters
           tecnicos={tecnicos}
           tecnicoSelected={tecnicoSelected}
           handleSelectedTecnico={handleSelectedTecnico}
-          //etiquetas filtrado
+          
+          // Label Filters
           etiquetas={etiquetas}
           etiquetasSelecteds={labelsSelecteds}
           handleChangeLabels={handleChangeLabels}
-          //rango de fechas creadas
+          
+          // Date Filters
           dateRange={dateRange}
           setDateRange={setDateRange}
         />
+
+        {/* CONTENT AREA */}
         <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-220px)]">
+          
+          {/* LEFT COLUMN: LIST */}
           <div className="flex flex-col h-full">
             <TicketList
-              // FUNCION PARA ATRAER AL TICKET
-              onSelectTicket={handleSelectTicket}
-              tickets={filterTickets(tickets)}
+              tickets={filteredTickets}
               selectedTicketId={selectedTicketId}
-              // onSelectTicketDown={(ticket) => setSelectedTicketId(ticket.id)}
+              onSelectTicket={handleSelectTicket}
             />
           </div>
 
-          {/* ── RIGHT COLUMN: ticket detail */}
+          {/* RIGHT COLUMN: DETAIL */}
           {selectedTicket && (
             <TicketDetail
-              optionsCustomers={optionsCustomers}
-              // setSelectedTicketId={setSelectedTicketId}
               ticket={selectedTicket}
+              setSelectedTicketId={setSelectedTicketId}
               getTickets={getTickets}
+              
+              soluciones={soluciones}
+              optionsCustomers={optionsCustomers}
               optionsLabels={optionsLabels}
               optionsTecs={optionsTecs}
-              setSelectedTicketId={setSelectedTicketId}
             />
           )}
         </div>

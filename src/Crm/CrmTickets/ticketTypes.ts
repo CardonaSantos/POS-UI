@@ -66,4 +66,18 @@ export interface Ticket {
   tags?: Tags[];
   comments?: Comment[];
   customer: Customer | null;
+  metrics:MetricsTicket
+}
+
+
+export interface MetricsTicket {
+  timeSpentMinutes: number, // Tiempo total (Vivo o Cerrado)
+            logsCount:number,  // Cuantas veces se trabajó
+        resolution:Solucion            
+}
+interface Solucion {
+  solutionName: string
+  solutionDesc: string,
+  resolutionNote: string,
+  internalNote: string,
 }

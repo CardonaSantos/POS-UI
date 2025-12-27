@@ -335,7 +335,7 @@ export default function TicketList({
   return (
     <div className="flex flex-col h-full bg-background/50 rounded-lg border shadow-sm overflow-hidden">
       <Tabs defaultValue="inbox" className="w-full h-full flex flex-col">
-        <div className="px-3 py-2 border-b bg-background/95 backdrop-blur z-10">
+        <div className="px-3 py-2 border-b bg-background/95 backdrop-blur">
           <TabsList className="grid w-full grid-cols-4 h-9 bg-muted/50 p-1">
             <TabsTrigger
               value="inbox"

@@ -12,6 +12,7 @@ import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import logoNova from "@/assets/logoNovaSinFondo.png";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -173,7 +174,8 @@ function BoletaTicket() {
   }
 
   return (
-    <div className="p-6">
+        <PageTransitionCrm titleHeader="Boleta de Soporte" variant="fade-pure">
+   <div className="p-6">
       <div
         ref={boletaRef}
         className={`${
@@ -366,6 +368,9 @@ function BoletaTicket() {
         </div>
       )}
     </div>
+        </PageTransitionCrm>
+    
+ 
   );
 }
 
