@@ -15,50 +15,6 @@ export function useGetClientes(params: FindClientesQuery) {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-      // si tu wrapper usa react-query: evita flicker paginando
-      // keepPreviousData: true,
     }
   );
 }
-// export function useUpdateKnowledge(kId: number) {
-//   const queryClient = useQueryClient();
-//   return useBotMutation<void, KnowledgeDocumentUpdate>(
-//     "patch",
-//     `knowledge/${kId}`,
-//     undefined,
-//     {
-//       onSuccess: () => {
-//         queryClient.invalidateQueries({
-//           queryKey: KnowledgeQkeys.all,
-//         });
-//       },
-//     }
-//   );
-// }
-
-// export function useCreateKnowledge() {
-//   const queryClient = useQueryClient();
-//   return useBotMutation<void, KnowledgeCreateType>(
-//     "post",
-//     `knowledge`,
-//     undefined,
-//     {
-//       onSuccess: () => {
-//         queryClient.invalidateQueries({
-//           queryKey: KnowledgeQkeys.all,
-//         });
-//       },
-//     }
-//   );
-// }
-
-// export function useDeleteKnowledge(kId: number) {
-//   const queryClient = useQueryClient();
-//   return useBotMutation<void, void>("delete", `knowledge/${kId}`, undefined, {
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({
-//         queryKey: KnowledgeQkeys.all,
-//       });
-//     },
-//   });
-// }

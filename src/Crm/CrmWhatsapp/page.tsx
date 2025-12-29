@@ -10,11 +10,10 @@ export default function WhatsappChats() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Number(searchParams.get("page")) || 1;
-  const take = Number(searchParams.get("limit")) || 10;
+  const take = Number(searchParams.get("limit")) || 15;
   const nombre = searchParams.get("q") || "";
 
   // Calcular 'skip' derivado de la página actual
-  // Si estamos en pag 1: (1-1)*10 = 0. Si pag 2: (2-1)*10 = 10.
   const skip = (page - 1) * take;
 
   // params para el Query (Memoizado)

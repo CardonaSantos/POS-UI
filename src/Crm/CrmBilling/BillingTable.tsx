@@ -29,7 +29,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
@@ -455,15 +455,36 @@ export default function BilingTable() {
     >
       <Card className="max-w-full text-xs border border-gray-300 shadow-lg">
         <CardContent>
-          <Input
-            ref={inputRef}
-            style={{ boxShadow: "none" }}
-            type="text"
-            placeholder="Buscar por nombre, telefono o ip"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-2 py-1 mb-3 mt-2 text-xs border-2"
-          />
+          <div className="relative mb-3">
+            {filter && (
+              <button
+                onClick={() => {
+                  setFilter("");
+                  inputRef.current?.focus();
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-sm transition-colors z-10"
+                type="button"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            <Input
+              ref={inputRef}
+              style={{ boxShadow: "none" }}
+              type="text"
+              placeholder="Buscar por Nombre, Teléfono, Dirección, DPI o IP..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              // Si hay filtro (botón visible), empujamos el texto a la derecha (pl-8)
+              // Si no, mantenemos el padding normal (px-2)
+              className={`py-1 text-xs border-2 transition-all ${
+                filter
+                  ? "pl-8 pr-2 mt-2 text-xs border-2"
+                  : "px-2 py-1 mb-3 mt-2 text-xs border-2"
+              }`}
+            />
+          </div>
 
           {/* **Selector de Cantidad de Filas** */}
           <div>

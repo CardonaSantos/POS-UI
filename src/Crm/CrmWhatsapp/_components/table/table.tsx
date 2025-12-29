@@ -64,8 +64,8 @@ export function ClientesTableWhatsapp({
       pagination,
     },
     pageCount: meta.totalPages,
-    manualPagination: true, // ✅ server-side
-    manualFiltering: true, // ✅ server-side
+    manualPagination: true,
+    manualFiltering: true,
     getCoreRowModel: getCoreRowModel(),
     onPaginationChange: (updater) => {
       const next =
