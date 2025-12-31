@@ -128,7 +128,6 @@ function NewDashboard() {
         );
       }
 
-      // 3) notificación del navegador + sonido
       showTicketBrowserNotification({
         ticketId: payload.ticketId,
         nuevoEstado: payload.nuevoEstado,
@@ -156,7 +155,6 @@ function NewDashboard() {
       {...fadeElegant}
       className="w-full flex flex-col gap-3 pb-4 py-2 px-2"
     >
-      {/* FILA SUPERIOR: 3 COLUMNAS */}
       <div className="flex flex-col lg:flex-row gap-3">
         <DashboardRoutesSidebar
           rutaActiva={rutasActivas}

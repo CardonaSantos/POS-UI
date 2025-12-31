@@ -8,10 +8,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Bell, Trash2 } from "lucide-react";
 import NotificationList from "./NotificationList";
-import { UiNotificacionDTO } from "@/Crm/WEB/realtime/notifications/notifications";
+import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
+import React from "react";
+import { ReusableTabs } from "@/Crm/Utils/Components/tabs/reusable-tabs";
 
 interface Props {
-  notifications: UiNotificacionDTO[];
+  icon?: React.ReactNode;
+
+  notifications: UiNotificacion[];
   isLoading?: boolean;
   onDelete?: (id: number) => void | Promise<void>;
   countBadge?: number;
@@ -26,15 +30,18 @@ export default function NotificationsSheet({
   onDelete,
   countBadge,
   setOpenDeleteAllNoti,
+  icon,
 }: Props) {
   const hasNotis = (countBadge ?? 0) > 0;
+
+  ReusableTabs;
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <div className="relative">
           <Button variant="outline" size="icon">
-            <Bell className="h-6 w-6" />
+            {icon ? icon : <Bell className="h-6 w-6" />}
           </Button>
           {(countBadge ?? 0) > 0 && (
             <span

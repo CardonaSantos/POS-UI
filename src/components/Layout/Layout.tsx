@@ -1,8 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { useState, useEffect } from "react";
-import { User, LogOut, AtSign } from "lucide-react";
-
+import { User, LogOut, AtSign, Bell } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { ModeToggle } from "../mode-toggle";
 import logo from "@/assets/LogoCrmPng.png";
@@ -28,7 +27,11 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import NotificationsSheet from "./NotificationsComponents/NotificationsSheet";
 import { useCrmQuery } from "@/Crm/hooks/crmApiHooks";
-import { UiNotificacionDTO } from "@/Crm/WEB/realtime/notifications/notifications";
+import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
+import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
+import { useGetNotification } from "@/Crm/CrmHooks/hooks/use-notifications/useNotification";
+import { notificationsSystemQkeys } from "@/Crm/CrmHooks/hooks/use-notifications/Qk";
+import { Robot } from "@/Crm/Icons/Robot";
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.locale("es");
@@ -69,6 +72,8 @@ export default function Layout2({ children }: LayoutProps) {
   const nombreCrm = useStoreCrm((state) => state.nombre);
   const correoCrm = useStoreCrm((state) => state.correo);
 
+  const invalidateQk = useInvalidateQk();
+
   // -----------------------------
   // USER DISPLAY SEGÚN RUTA
   // -----------------------------
@@ -81,10 +86,13 @@ export default function Layout2({ children }: LayoutProps) {
   const [openDeleteAllNoti, setOpenDeleteAllNoti] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
 
+  const { data: notifications } = useGetNotification();
+  const secureNotifications = notifications ? notifications : [];
+
+  // const botNotifications = secureNotifications.filter((n)=> n. === '')
+
   // Por ahora no pegamos al servidor: lista vacía
-  const notifications: UiNotificacionDTO[] = [];
   const isLoadingNotis = false;
-  const secureNotifications = notifications;
 
   const deleteNoti = async (_id: number) => {
     toast.info("El módulo de notificaciones aún no está listo en el servidor.");
@@ -190,7 +198,14 @@ export default function Layout2({ children }: LayoutProps) {
     }
     window.location.reload();
   };
-  console.log("la data del empresa info es: ", empresaInfo);
+
+  useSocketEvent(
+    "notifications:system",
+    () => {
+      invalidateQk(notificationsSystemQkeys.all);
+    },
+    [invalidateQk]
+  );
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -233,6 +248,18 @@ export default function Layout2({ children }: LayoutProps) {
                 </Button>
 
                 <NotificationsSheet
+                  icon={<Robot size={24} />}
+                  notifications={secureNotifications}
+                  isLoading={isLoadingNotis}
+                  onDelete={deleteNoti}
+                  countBadge={secureNotifications.length}
+                  deleteAllNotis={deleteAllNotis}
+                  openDeleteAllNoti={openDeleteAllNoti}
+                  setOpenDeleteAllNoti={setOpenDeleteAllNoti}
+                />
+
+                <NotificationsSheet
+                  icon={<Bell size={20} />}
                   notifications={secureNotifications}
                   isLoading={isLoadingNotis}
                   onDelete={deleteNoti}

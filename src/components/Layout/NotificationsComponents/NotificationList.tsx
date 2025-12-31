@@ -5,13 +5,13 @@ import "dayjs/locale/es";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Inbox } from "lucide-react";
 import MapNotifications from "./MapNotifications";
-import { UiNotificacionDTO } from "@/Crm/WEB/realtime/notifications/notifications";
+import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
 
 interface Props {
-  notifications: UiNotificacionDTO[];
+  notifications: UiNotificacion[];
   isLoading?: boolean;
   onDelete?: (id: number) => void | Promise<void>;
 }

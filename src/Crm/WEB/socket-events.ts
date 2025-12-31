@@ -15,6 +15,8 @@ export type WsEventMap = {
     wamid: string;
     status: string;
   };
+
+  "notifications:system": {};
 };
 
 export type WsEventName = keyof WsEventMap;

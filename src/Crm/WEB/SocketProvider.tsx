@@ -80,6 +80,5 @@ export function useSocketEvent<E extends WsEventName>(
     return () => {
       socket.off(event as string, h);
     };
-    // importante incluir handler si cambia; o usa un ref estable si prefieres
   }, [socket, event, handler, ...deps]);
 }

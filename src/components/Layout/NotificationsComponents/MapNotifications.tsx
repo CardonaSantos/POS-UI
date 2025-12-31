@@ -6,19 +6,20 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, User } from "lucide-react";
+import { X, User, ExternalLink } from "lucide-react";
+import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type"; // Ajusta ruta
 import {
-  getSeverityStyles,
   getCategoryMeta,
-  extractMeta,
+  getSeverityStyles,
+  getActionFor,
 } from "./notification-style";
-import { UiNotificacionDTO } from "@/Crm/WEB/realtime/notifications/notifications";
+import { Link } from "react-router-dom";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
 
 interface Props {
-  notification: UiNotificacionDTO;
+  notification: UiNotificacion;
   onDelete?: (id: number) => void | Promise<void>;
 }
 
@@ -27,12 +28,16 @@ function MapNotificationCompact({ notification, onDelete }: Props) {
     () => getSeverityStyles(notification.severidad),
     [notification.severidad]
   );
+
   const cat = useMemo(
     () => getCategoryMeta(notification.categoria),
     [notification.categoria]
   );
-  const meta = useMemo(() => extractMeta(notification), [notification]);
+
+  const action = useMemo(() => getActionFor(notification), [notification]);
   const recibido = dayjs(notification.recibidoEn).fromNow();
+
+  const mensaje = notification.mensaje.slice(0, 100) + "...";
 
   return (
     <motion.li
@@ -47,23 +52,20 @@ function MapNotificationCompact({ notification, onDelete }: Props) {
           "relative rounded-xl border shadow-sm ring-1 p-3 md:p-3.5",
           "grid grid-cols-[auto,1fr,auto] gap-3 md:gap-4 items-start",
           sev.cardBg,
-          sev.ring, // <- ahora sí son clases reales
+          sev.ring,
         ].join(" ")}
         style={{ wordBreak: "break-word" }}
       >
-        {/* barra de acento (sin before:) */}
         <span
           className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl ${sev.accent}`}
           aria-hidden
         />
 
-        {/* ícono severidad (chico) */}
         <div className={`mt-0.5 rounded-md p-1.5 ${sev.accent} text-white`}>
           <sev.Icon className="h-3 w-3" />
         </div>
 
-        {/* contenido */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <cat.Icon className="h-4 w-4 opacity-80 shrink-0" />
             <h3
@@ -73,42 +75,50 @@ function MapNotificationCompact({ notification, onDelete }: Props) {
             </h3>
           </div>
 
-          <p className={`mt-1 text-[13px] leading-5 ${sev.body}`}>
-            {notification.mensaje}
-          </p>
+          <p className={`text-[13px] leading-5 ${sev.body}`}>{mensaje}</p>
 
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {meta.producto && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                {meta.producto}
-              </Badge>
-            )}
-
-            {meta.solicitante && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {notification.remitente && (
               <Badge
                 variant="secondary"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1"
+                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/30 text-current border-0"
               >
-                <User className="h-3 w-3" /> {meta.solicitante}
+                <User className="h-3 w-3" />
+                {notification.remitente.nombre}
               </Badge>
             )}
-            {meta.precio && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
-                {meta.precio}
-              </Badge>
+
+            <Badge
+              variant="outline"
+              className={`text-[10px] px-1.5 py-0.5 border-0 ${cat.badgeClass}`}
+            >
+              {cat.label}
+            </Badge>
+
+            {action.label && action.to !== "#" && (
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[11px] px-2 ml-auto hover:bg-white/40 dark:hover:bg-white/10"
+              >
+                <Link to={action.to}>
+                  {action.label}
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
             )}
           </div>
         </div>
 
-        {/* tiempo + eliminar (alineado arriba a la derecha) */}
         <div className="flex flex-col items-end gap-2">
-          <span className="text-[11px] font-semibold leading-6 text-black dark:text-white">
+          <span className="text-[10px] font-medium opacity-70 whitespace-nowrap leading-6 text-black dark:text-white">
             {recibido}
           </span>
           <Button
-            variant="destructive"
+            variant="ghost"
             size="icon"
-            className="h-7 w-7 md:h-8 md:w-8"
+            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100/50 dark:hover:bg-red-900/30"
             onClick={() => onDelete?.(notification.id)}
             title="Eliminar notificación"
           >

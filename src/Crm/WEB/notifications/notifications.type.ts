@@ -1,54 +1,64 @@
-// notification.types.ts
-export enum NotiCategory {
-  VENTAS = "VENTAS", // Ventas / precios / POS
-  INVENTARIO = "INVENTARIO", // Stock, vencimiento, transferencias
-  CREDITO = "CREDITO", // Cuentas por cobrar (CxC)
-  CUENTAS_POR_PAGAR = "CUENTAS_POR_PAGAR", // CxP
-  GARANTIA = "GARANTIA",
-  REPARACIONES = "REPARACIONES",
-  COMPRAS = "COMPRAS",
-  LOGISTICA = "LOGISTICA",
+export enum CategoriaNotificacion {
   SISTEMA = "SISTEMA",
-  SEGURIDAD = "SEGURIDAD",
   FACTURACION = "FACTURACION",
+  COBRANZA = "COBRANZA",
+  SOPORTE = "SOPORTE",
+  RUTA_COBRO = "RUTA_COBRO",
+  CLIENTE = "CLIENTE",
+  BOT = "BOT",
   OTROS = "OTROS",
 }
 
-export enum NotiSeverity {
-  INFORMACION = "INFORMACION",
+export enum SeveridadNotificacion {
+  INFO = "INFO",
   EXITO = "EXITO",
-  ALERTA = "ALERTA", // o "ADVERTENCIA"
+  ALERTA = "ALERTA",
   ERROR = "ERROR",
-  CRITICO = "CRITICO",
+  CRITICA = "CRITICA",
 }
 
-export enum NotiAudience {
-  USUARIOS = "USUARIOS", // notificaciones dirigidas a usuarios específicos
-  ROL = "ROL", // intención a un rol
-  SUCURSAL = "SUCURSAL", // intención a una sucursal
-  GLOBAL = "GLOBAL", // intención global/sistema
+export enum AudienciaNotificacion {
+  USUARIOS = "USUARIOS",
+  ROL = "ROL",
+  EMPRESA = "EMPRESA",
+  GLOBAL = "GLOBAL",
 }
 
-export type UiNotificacionDTO = {
+export interface UiNotificacion {
   id: number;
+  notificacionId: number;
+
+  // --- Contenido ---
   titulo: string | null;
   mensaje: string;
-  categoria: NotiCategory;
+  categoria: CategoriaNotificacion;
   subtipo: string | null;
-  severidad: NotiSeverity;
+  severidad: SeveridadNotificacion;
+  audiencia: AudienciaNotificacion;
+
+  // --- Navegación / Acción ---
   route: string | null;
+  url: string | null;
   actionLabel: string | null;
-  meta?: Record<string, any> | null;
-  referencia?: { tipo: string | null; id: number | null } | null;
-  sucursalId: number | null;
 
-  // estado por usuario
+  // --- Contexto de Negocio (Agrupado para limpieza) ---
+  referencia: {
+    tipo: string | null; // 'TicketSoporte', 'FacturaInternet', etc.
+    id: number | null;
+  } | null;
+
+  empresaId: number | null;
+
+  // --- Estado Personal (Del usuario logueado) ---
   leido: boolean;
+  leidoEn: string | null; // string (ISO Date) es mejor para transferir JSON al front
   eliminado: boolean;
-  recibidoEn: string; // ISO
-  leidoEn: string | null;
-  dismissedAt: string | null;
+  recibidoEn: string; // string (ISO Date)
+  fijadoHasta: string | null; // string (ISO Date)
 
-  // emisor minimal
-  remitente?: { id: number; nombre: string | null } | null;
-};
+  // --- Emisor (Opcional) ---
+  remitente?: {
+    id: number;
+    nombre: string | null;
+  } | null;
+}
