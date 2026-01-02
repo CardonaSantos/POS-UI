@@ -15,7 +15,6 @@ export function Robot({ size = 16, className, ...props }: MikroTikIconProps) {
       className={className}
       {...props}
     >
-      <title>Robot SVG Icon</title>
       <g fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M14.706 4.313H9.294a4.981 4.981 0 0 0-4.982 4.981v5.412a4.982 4.982 0 0 0 4.982 4.982h5.412a4.982 4.982 0 0 0 4.982-4.982V9.294a4.982 4.982 0 0 0-4.982-4.982Z"></path>
         <path d="M19.606 15.588h1.619a1.025 1.025 0 0 0 1.025-1.025V9.438a1.025 1.025 0 0 0-1.025-1.025h-1.62m-15.21 7.175h-1.62a1.025 1.025 0 0 1-1.025-1.025V9.438a1.025 1.025 0 0 1 1.025-1.025h1.62"></path>

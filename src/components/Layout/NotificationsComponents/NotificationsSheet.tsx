@@ -11,9 +11,15 @@ import NotificationList from "./NotificationList";
 import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
 import React from "react";
 import { ReusableTabs } from "@/Crm/Utils/Components/tabs/reusable-tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   icon?: React.ReactNode;
+  tooltipText?: string;
 
   notifications: UiNotificacion[];
   isLoading?: boolean;
@@ -31,6 +37,7 @@ export default function NotificationsSheet({
   countBadge,
   setOpenDeleteAllNoti,
   icon,
+  tooltipText,
 }: Props) {
   const hasNotis = (countBadge ?? 0) > 0;
 
@@ -41,7 +48,12 @@ export default function NotificationsSheet({
       <SheetTrigger asChild>
         <div className="relative">
           <Button variant="outline" size="icon">
-            {icon ? icon : <Bell className="h-6 w-6" />}
+            <Tooltip delayDuration={1100}>
+              <TooltipTrigger>
+                {icon ? icon : <Bell className="h-6 w-6" />}
+              </TooltipTrigger>
+              <TooltipContent>{tooltipText ?? ""}</TooltipContent>
+            </Tooltip>
           </Button>
           {(countBadge ?? 0) > 0 && (
             <span

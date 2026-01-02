@@ -1,7 +1,14 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { useState, useEffect } from "react";
-import { User, LogOut, AtSign, Bell } from "lucide-react";
+import {
+  User,
+  LogOut,
+  AtSign,
+  Bell,
+  LayoutDashboard,
+  Monitor,
+} from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { ModeToggle } from "../mode-toggle";
 import logo from "@/assets/LogoCrmPng.png";
@@ -43,11 +50,15 @@ interface LayoutProps {
 export default function Layout2({ children }: LayoutProps) {
   const location = useLocation();
   const isCrmLocation = location.pathname.startsWith("/crm");
+  const erpLink = import.meta.env.VITE_ERP_LINK;
+  const crmLink = import.meta.env.VITE_CRM_LINK;
+
   useRequestNotificationPermission();
 
   // -----------------------------
   // POS STORE
   // -----------------------------
+
   const setUserNombre = useStore((state) => state.setUserNombre);
   const setUserCorreo = useStore((state) => state.setUserCorreo);
   const setUserId = useStore((state) => state.setUserId);
@@ -240,14 +251,25 @@ export default function Layout2({ children }: LayoutProps) {
                   asChild
                   size="sm"
                   variant="outline"
-                  className="hidden sm:inline-flex"
+                  className="hidden sm:inline-flex items-center gap-2  transition-colors"
                 >
-                  <Link to={isCrmLocation ? "/" : "/crm"}>
-                    {isCrmLocation ? "Ir a POS" : "Ir a CRM"}
+                  <Link to={isCrmLocation ? erpLink : crmLink}>
+                    {isCrmLocation ? (
+                      <>
+                        <Monitor className="h-4 w-4" />
+                        <span>POS</span>
+                      </>
+                    ) : (
+                      <>
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>CRM</span>
+                      </>
+                    )}
                   </Link>
                 </Button>
 
                 <NotificationsSheet
+                  tooltipText="Notificaciones Bot"
                   icon={<Robot size={24} />}
                   notifications={secureNotifications}
                   isLoading={isLoadingNotis}
@@ -259,6 +281,7 @@ export default function Layout2({ children }: LayoutProps) {
                 />
 
                 <NotificationsSheet
+                  tooltipText="Notificaciones Sistema"
                   icon={<Bell size={20} />}
                   notifications={secureNotifications}
                   isLoading={isLoadingNotis}
