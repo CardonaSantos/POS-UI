@@ -7,23 +7,26 @@ import "dayjs/locale/es";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, User, ExternalLink } from "lucide-react";
-import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type"; // Ajusta ruta
+import type { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
 import {
   getCategoryMeta,
   getSeverityStyles,
   getActionFor,
 } from "./notification-style";
 import { Link } from "react-router-dom";
+import { formattFechaWithMinutes } from "@/utils/formattFechas";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
 
 interface Props {
   notification: UiNotificacion;
+  selectNoti: (noti: UiNotificacion) => void;
+
   onDelete?: (id: number) => void | Promise<void>;
 }
 
-function MapNotificationCompact({ notification, onDelete }: Props) {
+function MapNotificationCompact({ notification, onDelete, selectNoti }: Props) {
   const sev = useMemo(
     () => getSeverityStyles(notification.severidad),
     [notification.severidad]
@@ -35,9 +38,9 @@ function MapNotificationCompact({ notification, onDelete }: Props) {
   );
 
   const action = useMemo(() => getActionFor(notification), [notification]);
-  const recibido = dayjs(notification.recibidoEn).fromNow();
+  const recibido = formattFechaWithMinutes(notification.recibidoEn);
 
-  const mensaje = notification.mensaje.slice(0, 100) + "...";
+  const mensaje = notification.mensaje.slice(0, 80) + "...";
 
   return (
     <motion.li
@@ -49,81 +52,89 @@ function MapNotificationCompact({ notification, onDelete }: Props) {
     >
       <div
         className={[
-          "relative rounded-xl border shadow-sm ring-1 p-3 md:p-3.5",
-          "grid grid-cols-[auto,1fr,auto] gap-3 md:gap-4 items-start",
-          sev.cardBg,
-          sev.ring,
+          "relative rounded-xl border-l-4 bg-white hover:cursor-pointer dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow p-3",
+          "flex items-start gap-3",
+          sev.accent.replace("bg-", "border-l-"),
         ].join(" ")}
         style={{ wordBreak: "break-word" }}
+        onClick={() => selectNoti(notification)}
       >
-        <span
-          className={`absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl ${sev.accent}`}
-          aria-hidden
-        />
-
-        <div className={`mt-0.5 rounded-md p-1.5 ${sev.accent} text-white`}>
-          <sev.Icon className="h-3 w-3" />
+        <div
+          className={`rounded-full p-2 ${sev.accent
+            .replace("bg-", "bg-")
+            .replace("500", "100")
+            .replace("600", "100")} ${sev.accent.replace(
+            "bg-",
+            "text-"
+          )} shrink-0`}
+        >
+          <sev.Icon className="h-4 w-4" />
         </div>
 
-        <div className="min-w-0 flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <cat.Icon className="h-4 w-4 opacity-80 shrink-0" />
-            <h3
-              className={`text-[13px] font-semibold leading-5 ${sev.title} truncate`}
-            >
-              {notification.titulo ?? "Notificación"}
-            </h3>
-          </div>
-
-          <p className={`text-[13px] leading-5 ${sev.body}`}>{mensaje}</p>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {notification.remitente && (
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                {notification.titulo ?? "Notificación"}
+              </h3>
               <Badge
                 variant="secondary"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/30 text-current border-0"
+                className="text-[10px] px-1.5 py-0.5 h-auto shrink-0 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-0 font-medium"
               >
-                <User className="h-3 w-3" />
-                {notification.remitente.nombre}
+                <cat.Icon className="h-2.5 w-2.5 mr-1" />
+                {cat.label}
               </Badge>
-            )}
+            </div>
 
-            <Badge
-              variant="outline"
-              className={`text-[10px] px-1.5 py-0.5 border-0 ${cat.badgeClass}`}
-            >
-              {cat.label}
-            </Badge>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                {recibido}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 -mr-1"
+                onClick={() => onDelete?.(notification.id)}
+                title="Eliminar notificación"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-2">
+            {mensaje}
+          </p>
+
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <div className="flex items-center gap-2">
+              {notification.remitente && (
+                <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                  <User className="h-3 w-3" />
+                  <span className="font-medium">
+                    {notification.remitente.nombre}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {action.label && action.to !== "#" && (
               <Button
                 asChild
                 variant="ghost"
                 size="sm"
-                className="h-6 text-[11px] px-2 ml-auto hover:bg-white/40 dark:hover:bg-white/10"
+                className={`h-6 text-[11px] px-2 font-medium ${sev.accent.replace(
+                  "bg-",
+                  "text-"
+                )} hover:bg-zinc-100 dark:hover:bg-zinc-800`}
               >
-                <Link to={action.to}>
+                <Link to={action.to} className="flex items-center gap-1">
                   {action.label}
-                  <ExternalLink className="ml-1 h-3 w-3" />
+                  <ExternalLink className="h-3 w-3" />
                 </Link>
               </Button>
             )}
           </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-[10px] font-medium opacity-70 whitespace-nowrap leading-6 text-black dark:text-white">
-            {recibido}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-100/50 dark:hover:bg-red-900/30"
-            onClick={() => onDelete?.(notification.id)}
-            title="Eliminar notificación"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </motion.li>

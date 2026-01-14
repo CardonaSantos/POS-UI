@@ -39,6 +39,8 @@ import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
 import { useGetNotification } from "@/Crm/CrmHooks/hooks/use-notifications/useNotification";
 import { notificationsSystemQkeys } from "@/Crm/CrmHooks/hooks/use-notifications/Qk";
 import { Robot } from "@/Crm/Icons/Robot";
+import NotificationDetailModal from "./NotificationsComponents/NotificationDetailModal";
+import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.locale("es");
@@ -97,8 +99,14 @@ export default function Layout2({ children }: LayoutProps) {
   const [openDeleteAllNoti, setOpenDeleteAllNoti] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
 
+  const [openNotiDetails, setOpenNotiDetails] = useState<boolean>(false);
+  const [notiSelected, setNotiSelected] = useState<UiNotificacion | null>(null);
+
   const { data: notifications } = useGetNotification();
-  const secureNotifications = notifications ? notifications : [];
+  const secureNotifications = notifications ? notifications.notifications : [];
+  const secureNotificationsBot = notifications
+    ? notifications.botsNotifications
+    : [];
 
   // const botNotifications = secureNotifications.filter((n)=> n. === '')
 
@@ -218,6 +226,12 @@ export default function Layout2({ children }: LayoutProps) {
     [invalidateQk]
   );
 
+  // handlers
+  const selectNoti = (noti: UiNotificacion) => {
+    setNotiSelected(noti);
+    setOpenNotiDetails(true);
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <SidebarProvider>
@@ -268,12 +282,13 @@ export default function Layout2({ children }: LayoutProps) {
                 </Button>
 
                 <NotificationsSheet
+                  selectNoti={selectNoti}
                   tooltipText="Notificaciones Bot"
                   icon={<Robot size={24} />}
-                  notifications={secureNotifications}
+                  notifications={secureNotificationsBot}
                   isLoading={isLoadingNotis}
                   onDelete={deleteNoti}
-                  countBadge={secureNotifications.length}
+                  countBadge={secureNotificationsBot.length}
                   deleteAllNotis={deleteAllNotis}
                   openDeleteAllNoti={openDeleteAllNoti}
                   setOpenDeleteAllNoti={setOpenDeleteAllNoti}
@@ -289,6 +304,7 @@ export default function Layout2({ children }: LayoutProps) {
                   deleteAllNotis={deleteAllNotis}
                   openDeleteAllNoti={openDeleteAllNoti}
                   setOpenDeleteAllNoti={setOpenDeleteAllNoti}
+                  selectNoti={selectNoti}
                 />
 
                 <DropdownMenu>
@@ -360,6 +376,12 @@ export default function Layout2({ children }: LayoutProps) {
           disabled: isDeletingAll,
           onClick: () => setOpenDeleteAllNoti(false),
         }}
+      />
+
+      <NotificationDetailModal
+        notification={notiSelected}
+        open={openNotiDetails}
+        onOpenChange={setOpenNotiDetails}
       />
     </div>
   );

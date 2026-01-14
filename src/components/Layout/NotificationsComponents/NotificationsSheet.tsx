@@ -28,6 +28,7 @@ interface Props {
   deleteAllNotis: () => Promise<void>;
   setOpenDeleteAllNoti: React.Dispatch<React.SetStateAction<boolean>>;
   openDeleteAllNoti: boolean;
+  selectNoti: (noti: UiNotificacion) => void;
 }
 
 export default function NotificationsSheet({
@@ -38,6 +39,7 @@ export default function NotificationsSheet({
   setOpenDeleteAllNoti,
   icon,
   tooltipText,
+  selectNoti,
 }: Props) {
   const hasNotis = (countBadge ?? 0) > 0;
 
@@ -74,7 +76,7 @@ export default function NotificationsSheet({
         <div className="flex h-full flex-col">
           <div className="px-6 py-4 border-b">
             <div className="flex items-center justify-between gap-3">
-              <SheetTitle className="text-2xl font-bold">
+              <SheetTitle className="text-lg font-bold">
                 Notificaciones
               </SheetTitle>
 
@@ -100,6 +102,7 @@ export default function NotificationsSheet({
 
           <div className="flex-1 overflow-y-auto px-4 py-3">
             <NotificationList
+              selectNoti={selectNoti}
               notifications={notifications}
               isLoading={isLoading}
               onDelete={onDelete}

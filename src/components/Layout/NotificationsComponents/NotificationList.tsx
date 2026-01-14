@@ -14,9 +14,15 @@ interface Props {
   notifications: UiNotificacion[];
   isLoading?: boolean;
   onDelete?: (id: number) => void | Promise<void>;
+  selectNoti: (noti: UiNotificacion) => void;
 }
 
-function NotificationList({ notifications, isLoading, onDelete }: Props) {
+function NotificationList({
+  notifications,
+  isLoading,
+  onDelete,
+  selectNoti,
+}: Props) {
   const ordered = (Array.isArray(notifications) ? notifications : [])
     .slice()
     .sort(
@@ -50,7 +56,12 @@ function NotificationList({ notifications, isLoading, onDelete }: Props) {
     <motion.ul layout className="space-y-2 pr-1">
       <AnimatePresence initial={false}>
         {ordered.map((n) => (
-          <MapNotifications key={n.id} notification={n} onDelete={onDelete} />
+          <MapNotifications
+            selectNoti={selectNoti}
+            key={n.id}
+            notification={n}
+            onDelete={onDelete}
+          />
         ))}
       </AnimatePresence>
     </motion.ul>

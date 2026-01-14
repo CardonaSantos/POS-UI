@@ -229,39 +229,6 @@ function CrmCreateTicket({
     setFormData((prev) => ({ ...prev, clienteId: newCustomerId }));
   };
 
-  // const handleChangeTecSelect = (
-  //   optionSelected: OptionSelectedReactComponent | null
-  // ) => {
-  //   const newTecId = optionSelected ? parseInt(optionSelected.value, 10) : null;
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     tecnicoId: newTecId,
-  //   }));
-  // };
-
-  // const handleChangeTecSelectMulti = (
-  //   selectedOptions: MultiValue<{ value: string; label: string }>
-  // ) => {
-  //   const selectedIds = selectedOptions.map((option) =>
-  //     parseInt(option.value, 10)
-  //   );
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     tecnicosAdicionales: selectedIds,
-  //   }));
-  // };
-
-  // const handleChangeLabels = (
-  //   selectedOptions: MultiValue<{ value: string; label: string }>
-  // ) => {
-  //   const selectedIds = selectedOptions.map((option) => parseInt(option.value));
-  //   setLabelsSelecteds(selectedIds);
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     etiquetas: selectedIds,
-  //   }));
-  // };
-
   const optionsCustomers = clientes.map((cliente) => ({
     value: cliente.id.toString(),
     label: cliente.nombre,
