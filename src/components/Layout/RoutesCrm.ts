@@ -24,6 +24,8 @@ import {
   Cable,
   Bot,
   BotMessageSquare,
+  Landmark,
+  PiggyBank,
 } from "lucide-react";
 
 export interface Route {
@@ -158,6 +160,18 @@ export const routesCrm_SuperAdmin = [
     ],
   },
 
+  {
+    icon: MapIcon,
+    label: "Créditos",
+    submenu: [
+      {
+        icon: MapPin,
+        label: "Registrar Crédito",
+        href: "/crm/credito",
+      },
+    ],
+  },
+
   { icon: Sheet, label: "Reports", href: "/crm/reports" },
 
   { icon: Bot, label: "Bot", href: "/crm/bot" },
@@ -275,6 +289,18 @@ export const routesCrm_Admin = [
         icon: Router,
         label: "Routers Mk",
         href: "crm/routers?tab=mk",
+      },
+    ],
+  },
+
+  {
+    icon: Landmark,
+    label: "Créditos",
+    submenu: [
+      {
+        icon: PiggyBank,
+        label: "Registrar Crédito",
+        href: "/crm/credito",
       },
     ],
   },

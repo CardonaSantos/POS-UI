@@ -54,6 +54,7 @@ export interface UiNotificacion {
   leidoEn: string | null; // string (ISO Date) es mejor para transferir JSON al front
   eliminado: boolean;
   recibidoEn: string; // string (ISO Date)
+  fechaCreacion: string;
   fijadoHasta: string | null; // string (ISO Date)
 
   // --- Emisor (Opcional) ---
