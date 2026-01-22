@@ -2,13 +2,14 @@
 import { useMemo } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, DollarSignIcon, ListIcon } from "lucide-react";
+import { CalendarIcon, Coins, ListIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   FrecuenciaPago,
   InteresTipo,
 } from "@/Crm/features/credito/credito-interfaces";
 import { CreditoFormValues } from "./schema.zod";
+import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 
 interface CuotasPreviewProps {
   formValues: Partial<CreditoFormValues>;
@@ -84,10 +85,7 @@ function calcularCuotasAutomaticas(
 }
 
 function formatMoney(amount: number): string {
-  return new Intl.NumberFormat("es-MX", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return formattMonedaGT(amount);
 }
 
 export function CuotasPreview({ formValues }: CuotasPreviewProps) {
@@ -194,15 +192,15 @@ export function CuotasPreview({ formValues }: CuotasPreviewProps) {
       <div className="grid grid-cols-3 gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs">
         <div className="text-center">
           <p className="text-muted-foreground">Capital</p>
-          <p className="font-medium">${formatMoney(totales.capital)}</p>
+          <p className="font-medium">{formatMoney(totales.capital)}</p>
         </div>
         <div className="text-center">
           <p className="text-muted-foreground">Interés</p>
-          <p className="font-medium">${formatMoney(totales.interes)}</p>
+          <p className="font-medium">{formatMoney(totales.interes)}</p>
         </div>
         <div className="text-center">
           <p className="text-muted-foreground">Total</p>
-          <p className="font-semibold">${formatMoney(totales.total)}</p>
+          <p className="font-semibold">{formatMoney(totales.total)}</p>
         </div>
       </div>
 
@@ -210,12 +208,12 @@ export function CuotasPreview({ formValues }: CuotasPreviewProps) {
       {engancheMonto > 0 && (
         <div className="flex items-center justify-between rounded-md border border-border bg-green-50 p-2 text-xs dark:bg-green-950/30">
           <div className="flex items-center gap-1.5">
-            <DollarSignIcon className="size-3.5 text-green-600" />
+            <Coins className="size-3.5 text-green-600" />
             <span>Enganche</span>
           </div>
           <div className="text-right">
             <span className="font-medium text-green-700 dark:text-green-400">
-              ${formatMoney(engancheMonto)}
+              {formatMoney(engancheMonto)}
             </span>
             {formValues.engancheFecha && (
               <span className="ml-1 text-muted-foreground">
@@ -251,9 +249,9 @@ export function CuotasPreview({ formValues }: CuotasPreviewProps) {
               </div>
             </div>
             <div className="text-right">
-              <p className="font-medium">${formatMoney(cuota.montoTotal)}</p>
+              <p className="font-medium">{formatMoney(cuota.montoTotal)}</p>
               <p className="text-[10px] text-muted-foreground">
-                C: ${formatMoney(cuota.montoCapital)} / I: $
+                C: {formatMoney(cuota.montoCapital)} / I:
                 {formatMoney(cuota.montoInteres)}
               </p>
             </div>

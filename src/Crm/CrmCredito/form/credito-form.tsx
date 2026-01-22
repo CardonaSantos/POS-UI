@@ -1,20 +1,16 @@
 "use client";
-
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray, UseFormReturn } from "react-hook-form";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import {
   CalendarIcon,
   PlusIcon,
   TrashIcon,
-  DollarSignIcon,
   PercentIcon,
   HashIcon,
   ClockIcon,
   UserIcon,
   FileTextIcon,
-  CreditCardIcon,
+  Coins,
 } from "lucide-react";
 
 import {
@@ -35,28 +31,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { creditoFormSchema, CreditoFormValues } from "./schema.zod";
+import { CreditoFormValues } from "./schema.zod";
 import {
   FrecuenciaPago,
-  InteresTipo,
   OrigenCreditoArray,
 } from "@/Crm/features/credito/credito-interfaces";
 import { CuotasPreview } from "./cuotas-preview";
 import ReactSelectComponent from "react-select";
+import { useEffect } from "react";
 
 interface CreditoFormProps {
   onSubmit: (data: CreditoFormValues) => void;
-  // clientes?: { id: number; nombre: string }[];
-  // usuarios?: { id: number; nombre: string }[];
   defaultValues?: Partial<CreditoFormValues>;
-
+  form: UseFormReturn<CreditoFormValues>;
   clientes: {
     value: number;
     label: string;
@@ -70,32 +57,10 @@ interface CreditoFormProps {
 
 export function CreditoForm({
   onSubmit,
-  defaultValues,
   clientes,
   usuarios,
+  form,
 }: CreditoFormProps) {
-  const form = useForm<CreditoFormValues>({
-    resolver: zodResolver(creditoFormSchema),
-    defaultValues: {
-      clienteId: undefined,
-      creadoPorId: undefined,
-      montoCapital: "",
-      interesPorcentaje: "",
-      tipoGeneracionCuotas: "AUTOMATICA",
-      interesTipo: InteresTipo.FIJO,
-      frecuencia: FrecuenciaPago.MENSUAL,
-      intervaloDias: 30,
-      plazoCuotas: 12,
-      fechaInicio: new Date(),
-      engancheMonto: "",
-      engancheFecha: undefined,
-      origenCredito: undefined,
-      observaciones: "",
-      cuotasCustom: [],
-      ...defaultValues,
-    },
-  });
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "cuotasCustom",
@@ -104,10 +69,16 @@ export function CreditoForm({
   const tipoGeneracion = form.watch("tipoGeneracionCuotas");
   const engancheMonto = form.watch("engancheMonto");
 
-  // Watch values for cuotas preview
-  const watchedValues = form.watch();
+  const tipoGeneracionCuotas = form.watch("tipoGeneracionCuotas");
 
+  const watchedValues = form.watch();
   const handleSubmit = form.handleSubmit(onSubmit);
+
+  useEffect(() => {
+    if (tipoGeneracionCuotas === "AUTOMATICA") {
+      form.setValue("cuotasCustom", []);
+    }
+  }, []);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -200,7 +171,7 @@ export function CreditoForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5 text-sm">
-                    <DollarSignIcon className="size-3.5" />
+                    <Coins className="size-3.5" />
                     Capital
                   </FormLabel>
                   <FormControl>
@@ -225,7 +196,31 @@ export function CreditoForm({
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5 text-sm">
                     <PercentIcon className="size-3.5" />
-                    Interés %
+                    Interés
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="shadow-none"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="interesMoraPorcentaje"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5 text-sm">
+                    <PercentIcon className="size-3.5" />
+                    Interés mora
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -417,7 +412,7 @@ export function CreditoForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5 text-sm">
-                    <DollarSignIcon className="size-3.5" />
+                    <Coins className="size-3.5" />
                     Enganche
                   </FormLabel>
                   <FormControl>
@@ -531,14 +526,15 @@ export function CreditoForm({
 
           {/* Cuotas Custom */}
           {tipoGeneracion === "CUSTOM" && (
-            <div className="space-y-3 rounded-md border border-border bg-muted/30 p-3">
+            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-3">
+              {/* Encabezado y Botón Agregar */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Cuotas manuales</span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost" // Ghost es menos invasivo visualmente
                   size="sm"
-                  className="shadow-none bg-transparent"
+                  className="h-7 px-2"
                   onClick={() =>
                     append({
                       numeroCuota: fields.length + 1,
@@ -548,145 +544,131 @@ export function CreditoForm({
                     })
                   }
                 >
-                  <PlusIcon className="size-3.5" />
+                  <PlusIcon className="mr-1 size-3.5" />
                   Agregar
                 </Button>
               </div>
 
+              {/* Mensaje vacío */}
               {fields.length === 0 && (
-                <p className="text-sm text-muted-foreground">
+                <div className="text-center py-4 text-xs text-muted-foreground border-dashed border rounded-md">
                   No hay cuotas definidas
-                </p>
+                </div>
               )}
 
-              <div className="space-y-2">
-                {fields.map((cuotaField, index) => (
-                  <div
-                    key={cuotaField.id}
-                    className="grid grid-cols-2 gap-2 rounded border border-border bg-background p-2 sm:grid-cols-5"
-                  >
-                    <FormField
-                      control={form.control}
-                      name={`cuotasCustom.${index}.numeroCuota`}
-                      render={({ field }) => (
-                        <FormItem className="col-span-1">
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value ?? ""}
-                              type="number"
-                              placeholder="#"
-                              className="h-8 text-sm shadow-none"
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value
-                                    ? Number(e.target.value)
-                                    : undefined,
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`cuotasCustom.${index}.fechaVencimiento`}
-                      render={({ field }) => (
-                        <FormItem className="col-span-1 sm:col-span-1">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className={cn(
-                                    "h-8 w-full justify-start text-xs shadow-none bg-transparent",
-                                    !field.value && "text-muted-foreground",
-                                  )}
-                                >
-                                  {field.value
-                                    ? format(field.value, "dd/MM/yy")
-                                    : "Fecha"}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`cuotasCustom.${index}.montoCapital`}
-                      render={({ field }) => (
-                        <FormItem className="col-span-1">
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value ?? ""}
-                              type="number"
-                              step="0.01"
-                              placeholder="Capital"
-                              className="h-8 text-sm shadow-none"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`cuotasCustom.${index}.montoInteres`}
-                      render={({ field }) => (
-                        <FormItem className="col-span-1">
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value ?? ""}
-                              type="number"
-                              step="0.01"
-                              placeholder="Interés"
-                              className="h-8 text-sm shadow-none"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="col-span-2 flex items-center justify-end sm:col-span-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => remove(index)}
-                      >
-                        <TrashIcon className="size-3.5" />
-                      </Button>
-                    </div>
+              {/* Lista de campos */}
+              {fields.length > 0 && (
+                <div className="space-y-1">
+                  {/* Fila de Encabezados (Para no repetir labels) */}
+                  <div className="grid grid-cols-12 gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <div className="col-span-2 text-center">No.</div>
+                    <div className="col-span-4">Vencimiento</div>
+                    <div className="col-span-5">Capital</div>
+                    <div className="col-span-1"></div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Filas */}
+                  {fields.map((cuotaField, index) => (
+                    <div
+                      key={cuotaField.id}
+                      className="grid grid-cols-12 gap-2 items-start"
+                    >
+                      {/* Campo: Número */}
+                      <FormField
+                        control={form.control}
+                        name={`cuotasCustom.${index}.numeroCuota`}
+                        render={({ field }) => (
+                          <div className="col-span-2">
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  type="number"
+                                  className="h-8 text-center text-xs shadow-none px-1"
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value
+                                        ? Number(e.target.value)
+                                        : undefined,
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                            </FormItem>
+                          </div>
+                        )}
+                      />
+
+                      {/* Campo: Fecha */}
+                      <FormField
+                        control={form.control}
+                        name={`cuotasCustom.${index}.fechaVencimiento`}
+                        render={({ field }) => (
+                          <div className="col-span-4">
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  className="h-8 text-xs shadow-none px-2 block w-full"
+                                  value={
+                                    field.value
+                                      ? typeof field.value === "string"
+                                        ? field.value
+                                        : field.value.toISOString().slice(0, 10)
+                                      : ""
+                                  }
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
+                                />
+                              </FormControl>
+                            </FormItem>
+                          </div>
+                        )}
+                      />
+
+                      {/* Campo: Monto Capital */}
+                      <FormField
+                        control={form.control}
+                        name={`cuotasCustom.${index}.montoCapital`}
+                        render={({ field }) => (
+                          <div className="col-span-5">
+                            <FormItem className="space-y-0">
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  className="h-8 text-xs shadow-none text-right"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          </div>
+                        )}
+                      />
+
+                      {/* Botón: Eliminar */}
+                      <div className="col-span-1 flex justify-center pt-0.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => remove(index)}
+                        >
+                          <TrashIcon className="size-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {form.formState.errors.cuotasCustom?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive mt-2">
                   {form.formState.errors.cuotasCustom.message}
                 </p>
               )}

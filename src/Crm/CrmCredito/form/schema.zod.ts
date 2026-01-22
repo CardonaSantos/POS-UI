@@ -37,16 +37,16 @@ export const creditoFormSchema = z
 
     montoCapital: z
       .string()
-      .min(1, "Monto requerido")
       .refine(
         (v) => !isNaN(Number(v)) && Number(v) > 0,
         "Monto debe ser mayor a 0",
       ),
 
-    interesPorcentaje: z
-      .string()
-      .min(1, "Interés requerido")
-      .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, "Interés inválido"),
+    interesPorcentaje: z.string().optional(),
+    // .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, "Interés inválido"),
+
+    interesMoraPorcentaje: z.string().optional(),
+    // .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, "Interés inválido"),
 
     interesTipo: z.nativeEnum(InteresTipo, {
       error: () => ({ message: "Tipo de interés requerido" }),

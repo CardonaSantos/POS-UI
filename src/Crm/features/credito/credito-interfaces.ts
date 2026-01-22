@@ -17,9 +17,11 @@ export enum OrigenCredito {
   REFERIDO = "REFERIDO",
   USUARIO = "USUARIO",
 }
+
 export const OrigenCreditoArray = [
-  "VENTA",
-  "PRESTAMO",
-  "REFINANCIAMIENTO",
-  "OTRO",
+  "TIENDA",
+  "CAMPO",
+  "ONLINE",
+  "REFERIDO",
+  "USUARIO",
 ] as const;
