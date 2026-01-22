@@ -49,19 +49,30 @@ import {
   OrigenCreditoArray,
 } from "@/Crm/features/credito/credito-interfaces";
 import { CuotasPreview } from "./cuotas-preview";
+import ReactSelectComponent from "react-select";
 
 interface CreditoFormProps {
   onSubmit: (data: CreditoFormValues) => void;
-  clientes?: { id: number; nombre: string }[];
-  usuarios?: { id: number; nombre: string }[];
+  // clientes?: { id: number; nombre: string }[];
+  // usuarios?: { id: number; nombre: string }[];
   defaultValues?: Partial<CreditoFormValues>;
+
+  clientes: {
+    value: number;
+    label: string;
+  }[];
+
+  usuarios: {
+    value: number;
+    label: string;
+  }[];
 }
 
 export function CreditoForm({
   onSubmit,
-  clientes = [],
-  usuarios = [],
   defaultValues,
+  clientes,
+  usuarios,
 }: CreditoFormProps) {
   const form = useForm<CreditoFormValues>({
     resolver: zodResolver(creditoFormSchema),
@@ -113,23 +124,31 @@ export function CreditoForm({
                     <UserIcon className="size-3.5" />
                     Cliente
                   </FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(Number(v))}
-                    value={field.value?.toString() ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full shadow-none">
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clientes.map((c) => (
-                        <SelectItem key={c.id} value={c.id.toString()}>
-                          {c.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ReactSelectComponent
+                      options={clientes}
+                      // Buscamos el objeto completo basado en el ID actual del form para mostrarlo seleccionado
+                      value={clientes.find((c) => c.value === field.value)}
+                      // Al cambiar, extraemos solo el ID (value) o undefined si se limpia
+                      onChange={(option) => field.onChange(option?.value)}
+                      placeholder="Buscar cliente..."
+                      isClearable
+                      isSearchable
+                      className="text-sm text-black"
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          borderColor: "hsl(var(--input))",
+                          borderRadius: "calc(var(--radius) - 2px)",
+                          minHeight: "38px", // Similar al input de Shadcn
+                          boxShadow: "none",
+                          ":hover": {
+                            borderColor: "hsl(var(--ring))",
+                          },
+                        }),
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -144,23 +163,29 @@ export function CreditoForm({
                     <UserIcon className="size-3.5" />
                     Creado por
                   </FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(Number(v))}
-                    value={field.value?.toString() ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full shadow-none">
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {usuarios.map((u) => (
-                        <SelectItem key={u.id} value={u.id.toString()}>
-                          {u.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ReactSelectComponent
+                      options={usuarios}
+                      value={usuarios.find((u) => u.value === field.value)}
+                      onChange={(option) => field.onChange(option?.value)}
+                      placeholder="Seleccionar usuario..."
+                      isClearable
+                      isSearchable
+                      className="text-sm text-black"
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          borderColor: "hsl(var(--input))",
+                          borderRadius: "calc(var(--radius) - 2px)",
+                          minHeight: "38px",
+                          boxShadow: "none",
+                          ":hover": {
+                            borderColor: "hsl(var(--ring))",
+                          },
+                        }),
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -212,36 +237,6 @@ export function CreditoForm({
                       className="shadow-none"
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="interesTipo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1.5 text-sm">
-                    <CreditCardIcon className="size-3.5" />
-                    Tipo
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full shadow-none">
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={InteresTipo.FIJO}>Fijo</SelectItem>
-                      <SelectItem value={InteresTipo.VARIABLE}>
-                        VARIABLE
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -356,32 +351,30 @@ export function CreditoForm({
                     <CalendarIcon className="size-3.5" />
                     Fecha inicio
                   </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start font-normal shadow-none bg-transparent",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          <CalendarIcon className="size-3.5" />
-                          {field.value
-                            ? format(field.value, "dd/MM/yyyy", { locale: es })
-                            : "Seleccionar"}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      // 1. El input date nativo REQUIERE el formato yyyy-MM-dd
+                      value={
+                        field.value ? format(field.value, "yyyy-MM-dd") : ""
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          field.onChange(undefined);
+                          return;
+                        }
+                        // 2. TRUCO IMPORTANTE:
+                        // Al agregar "T00:00:00", forzamos a JS a crear la fecha en tu ZONA HORARIA LOCAL.
+                        // Si usas new Date("2024-01-20"), JS asume UTC y al convertirlo a tu hora local
+                        // podría marcar el día anterior (ej: 19 de Enero a las 18:00).
+                        const fechaLocal = new Date(`${val}T00:00:00`);
+                        field.onChange(fechaLocal);
+                      }}
+                      className="shadow-none block w-full"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -451,33 +444,28 @@ export function CreditoForm({
                     <CalendarIcon className="size-3.5" />
                     Fecha enganche
                   </FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          disabled={!engancheMonto}
-                          className={cn(
-                            "w-full justify-start font-normal shadow-none bg-transparent",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          <CalendarIcon className="size-3.5" />
-                          {field.value
-                            ? format(field.value, "dd/MM/yyyy", { locale: es })
-                            : "Seleccionar"}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="date"
+                      // Mantenemos la lógica: si no hay monto, no deja poner fecha
+                      disabled={!engancheMonto}
+                      // Formatear Date -> String (yyyy-MM-dd) para el input
+                      value={
+                        field.value ? format(field.value, "yyyy-MM-dd") : ""
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          field.onChange(undefined);
+                          return;
+                        }
+                        const fechaLocal = new Date(`${val}T00:00:00`);
+                        field.onChange(fechaLocal);
+                      }}
+                      className="shadow-none w-full"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -1,34 +1,49 @@
+import { useGetUsuarios } from "@/Crm/CrmHooks/useGetUsuarios/useUsuarios";
 import { CreditoForm } from "./form/credito-form";
 import { CreditoFormValues } from "./form/schema.zod";
-
-// Mock data para demo
-const mockClientes = [
-  { id: 1, nombre: "Juan Pérez" },
-  { id: 2, nombre: "María García" },
-  { id: 3, nombre: "Carlos López" },
-  { id: 4, nombre: "Ana Martínez" },
-];
-
-const mockUsuarios = [
-  { id: 1, nombre: "Admin Sistema" },
-  { id: 2, nombre: "Vendedor 1" },
-  { id: 3, nombre: "Gerente" },
-];
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { useGetCustomerToSelect } from "@/Crm/CrmHooks/hooks/Client/useGetClient";
+import { useGetUsersToSelect } from "@/Crm/CrmHooks/hooks/useUsuarios/use-usuers";
 
 function CrmCreditoMainPage() {
+  const { data: clientes } = useGetCustomerToSelect();
+  const { data: users } = useGetUsersToSelect();
+
+  const clientesSecure = clientes ? clientes : [];
+
+  const usersSecure = users ? users : [];
+
+  console.log("clientes son: ", clientesSecure);
+
   const handleSubmit = (data: CreditoFormValues) => {
     console.log("Crédito creado:", data);
     alert("Crédito creado exitosamente. Ver consola para detalles.");
   };
 
+  const clienteOptions = clientesSecure.map((c) => ({
+    value: c.id,
+    label: c.nombre,
+  }));
+
+  const usuarioOptions = usersSecure.map((u) => ({
+    value: u.id,
+    label: u.nombre,
+  }));
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <CreditoForm
-        onSubmit={handleSubmit}
-        clientes={mockClientes}
-        usuarios={mockUsuarios}
-      />
-    </div>
+    <PageTransitionCrm
+      titleHeader="Créditos - Registro"
+      subtitle={`Créditos registrados 10`}
+      variant="fade-pure"
+    >
+      <div className="">
+        <CreditoForm
+          onSubmit={handleSubmit}
+          clientes={clienteOptions}
+          usuarios={usuarioOptions}
+        />
+      </div>
+    </PageTransitionCrm>
   );
 }
 
