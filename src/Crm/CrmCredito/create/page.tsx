@@ -1,9 +1,9 @@
-import { CreditoForm } from "./form/credito-form";
-import { creditoFormSchema, CreditoFormValues } from "./form/schema.zod";
+import { CreditoForm } from "../form/credito-form";
+import { creditoFormSchema, CreditoFormValues } from "../form/schema.zod";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useGetCustomerToSelect } from "@/Crm/CrmHooks/hooks/Client/useGetClient";
 import { useGetUsersToSelect } from "@/Crm/CrmHooks/hooks/useUsuarios/use-usuers";
-import { useCreateCredito } from "../CrmHooks/hooks/use-credito/use-credito";
+import { useCreateCredito } from "../../CrmHooks/hooks/use-credito/use-credito";
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import {
   FrecuenciaPago,
   InteresTipo,
-} from "../features/credito/credito-interfaces";
+} from "../../features/credito/credito-interfaces";
 
 function CrmCreditoMainPage() {
   const { data: clientes } = useGetCustomerToSelect();

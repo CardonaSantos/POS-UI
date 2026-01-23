@@ -26,6 +26,7 @@ import {
   BotMessageSquare,
   Landmark,
   PiggyBank,
+  NotebookPen,
 } from "lucide-react";
 
 export interface Route {
@@ -169,6 +170,12 @@ export const routesCrm_SuperAdmin = [
         label: "Registrar Crédito",
         href: "/crm/credito",
       },
+
+      {
+        icon: MapPin,
+        label: "Crédito",
+        href: "/crm/credito-registros",
+      },
     ],
   },
 
@@ -298,9 +305,15 @@ export const routesCrm_Admin = [
     label: "Créditos",
     submenu: [
       {
-        icon: PiggyBank,
+        icon: NotebookPen,
         label: "Registrar Crédito",
         href: "/crm/credito",
+      },
+
+      {
+        icon: FileText,
+        label: "Créditos",
+        href: "/crm/credito-registros",
       },
     ],
   },

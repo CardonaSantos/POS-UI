@@ -103,7 +103,8 @@ import TecDashboard from "./Crm/CrmNewDashboard/tec-dashboard";
 import TicketAsignadoDetails from "./Crm/CrmNewDashboard/_components/tec-ticket/ticket-details";
 import WhatsappChats from "./Crm/CrmWhatsapp/page";
 import ChatPage from "./Crm/CrmWhatsapp/_components/chat/page";
-import CrmCreditoMainPage from "./Crm/CrmCredito/page";
+import CrmCreditoMainPage from "./Crm/CrmCredito/create/page";
+import { CreditosMainPage } from "@/Crm/CrmCredito/main/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -903,6 +904,24 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <CrmCreditoMainPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/credito-registros"
+              element={
+                <ProtectRouteCrmUser>
+                  <CreditosMainPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/creditos/:id"
+              element={
+                <ProtectRouteCrmUser>
+                  <CreditosMainPage />
                 </ProtectRouteCrmUser>
               }
             />
