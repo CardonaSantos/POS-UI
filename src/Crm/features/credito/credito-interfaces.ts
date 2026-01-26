@@ -43,7 +43,45 @@ export interface CreditoCuotaResponse {
   montoInteres: string;
   montoTotal: string;
   montoPagado: string;
-  estado: string; // puedes luego tiparlo como enum EstadoCuota
+  estado: EstadoCuota;
+}
+
+export enum EstadoCuota {
+  PENDIENTE = "PENDIENTE",
+  PARCIAL = "PARCIAL",
+  PAGADA = "PAGADA",
+  VENCIDA = "VENCIDA",
+}
+export interface CuotaResponse {
+  id: number;
+  creditoId: number;
+  numeroCuota: number;
+  fechaVenc: string;
+  montoCapital: string;
+  montoInteres: string;
+  montoTotal: string;
+  estado: EstadoCuota;
+  montoPagado: string;
+}
+
+export interface PagoCuotaResponse {
+  id: number;
+  cuotaId: number;
+  pagoCreditoId: number;
+  monto: string;
+  creadoEn: string;
+}
+
+export interface PagoCreditoResponse {
+  id: number;
+  creditoId: number;
+  montoTotal: string;
+  fechaPago: string;
+  metodoPago?: string;
+  referencia?: string;
+  observacion?: string;
+  creadoEn: string;
+  aplicaciones: PagoCuotaResponse[];
 }
 
 export interface CreditoResponse {
@@ -73,7 +111,7 @@ export interface CreditoResponse {
   montoCuota: string;
 
   cuotas: CreditoCuotaResponse[];
-  pagos: unknown[]; // puedes tiparlo luego si lo usas
+  pagos: PagoCreditoResponse[];
 
   clienteNombre: string;
   usuarioNombre: string;
@@ -88,3 +126,46 @@ export interface GetCreditosResponse {
   data: CreditoResponse[];
   meta: PaginationMeta;
 }
+
+// INITIAL STATES
+export const initialCredito: CreditoResponse = {
+  id: 0,
+  clienteId: 0,
+
+  montoCapital: "0",
+  interesPorcentaje: "0",
+  interesMoraPorcentaje: "0",
+  engancheMonto: "0",
+
+  interesTipo: InteresTipo.FIJO,
+  plazoCuotas: 0,
+  frecuencia: FrecuenciaPago.MENSUAL,
+  intervaloDias: 30,
+
+  fechaInicio: "",
+  fechaFinEstimada: "",
+
+  origenCredito: OrigenCredito.USUARIO,
+  observaciones: null,
+
+  creadoPorId: 0,
+  estado: EstadoCredito.ACTIVO,
+
+  montoTotal: "0",
+  montoCuota: "0",
+
+  cuotas: [],
+  pagos: [],
+
+  clienteNombre: "",
+  usuarioNombre: "",
+};
+
+export const initialCreditoResponse: GetCreditosResponse = {
+  data: [],
+  meta: {
+    total: 0,
+    page: 1,
+    lastPage: 1,
+  },
+};

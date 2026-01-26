@@ -176,7 +176,7 @@ export const creditosColumns: ColumnDef<CreditoResponse>[] = [
     header: "",
     cell: ({ row }) => (
       <Button variant="ghost" size="sm" asChild className="size-7">
-        <Link to={`/creditos/${row.original.id}`}>
+        <Link to={`/crm/credito/${row.original.id}`}>
           <Eye className="size-3.5" />
           <span className="sr-only">Ver crédito</span>
         </Link>

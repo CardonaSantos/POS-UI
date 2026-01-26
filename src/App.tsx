@@ -105,6 +105,7 @@ import WhatsappChats from "./Crm/CrmWhatsapp/page";
 import ChatPage from "./Crm/CrmWhatsapp/_components/chat/page";
 import CrmCreditoMainPage from "./Crm/CrmCredito/create/page";
 import { CreditosMainPage } from "@/Crm/CrmCredito/main/page";
+import CreditoDetails from "./Crm/CrmCredito/credito/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -918,10 +919,10 @@ function App() {
             />
 
             <Route
-              path="/crm/creditos/:id"
+              path="/crm/credito/:creditoId"
               element={
                 <ProtectRouteCrmUser>
-                  <CreditosMainPage />
+                  <CreditoDetails />
                 </ProtectRouteCrmUser>
               }
             />

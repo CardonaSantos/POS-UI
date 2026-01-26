@@ -13,7 +13,6 @@ export function CreditosMainPage() {
     limit: 10,
   });
 
-  // Descomenta y usa tu hook real:
   const { data: creditosRaw, isLoading } = useGetCreditos(filters);
   const creditos = creditosRaw?.data ?? [];
   const meta = creditosRaw?.meta ?? { total: 0, page: 1, lastPage: 1 };

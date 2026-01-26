@@ -40,3 +40,19 @@ export function useGetCreditos(params?: GetCreditosQueryDto) {
     },
   );
 }
+
+/**
+ * FETECHEAR UN CREDITO
+ * @param creditoId
+ * @returns
+ */
+export function useGetCredito(creditoId?: number) {
+  return useCrmQuery<CreditoResponse>(
+    creditoId ? creditoQkeys.specific(creditoId) : creditoQkeys.all,
+    `credito/${creditoId}`,
+    undefined,
+    {
+      enabled: !!creditoId,
+    },
+  );
+}
