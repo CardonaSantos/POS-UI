@@ -52,6 +52,7 @@ export enum EstadoCuota {
   PAGADA = "PAGADA",
   VENCIDA = "VENCIDA",
 }
+
 export interface CuotaResponse {
   id: number;
   creditoId: number;

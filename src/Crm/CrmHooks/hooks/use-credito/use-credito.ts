@@ -8,6 +8,22 @@ import {
   GetCreditosResponse,
 } from "@/Crm/features/credito/credito-interfaces";
 
+export interface CreateCuotaPagoDto {
+  cuotaId: string;
+  monto: string;
+  creditoId: string;
+
+  fechaPago: string;
+  metodoPago: string;
+  referencia: string;
+  observacion: string;
+}
+
+export interface DeletePagoDto {
+  pagoCuotaId: number;
+  userId: number;
+}
+
 export function useCreateCredito() {
   const query = useQueryClient();
   return useCrmMutation<void, CreditoFormValues>("post", `credito`, undefined, {
@@ -53,6 +69,43 @@ export function useGetCredito(creditoId?: number) {
     undefined,
     {
       enabled: !!creditoId,
+    },
+  );
+}
+
+/**
+ * Enviar un pago de cuota
+ * @returns
+ */
+export function useCreatePagoCuota() {
+  const query = useQueryClient();
+  return useCrmMutation<void, CreateCuotaPagoDto>(
+    "post",
+    `cuotas-pago/create-pago`,
+    undefined,
+    {
+      onSuccess: () => {
+        query.invalidateQueries({
+          queryKey: creditoQkeys.all,
+        });
+      },
+    },
+  );
+}
+
+export function useDeletePayment() {
+  const query = useQueryClient();
+
+  return useCrmMutation<void, DeletePagoDto>(
+    "post",
+    `cuotas-pago/delete-pago`,
+    undefined,
+    {
+      onSuccess: () => {
+        query.invalidateQueries({
+          queryKey: creditoQkeys.all,
+        });
+      },
     },
   );
 }

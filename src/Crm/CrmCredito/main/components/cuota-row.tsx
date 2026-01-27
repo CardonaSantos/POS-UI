@@ -1,4 +1,5 @@
 import {
+  CreditoCuotaResponse,
   CuotaResponse,
   EstadoCuota,
 } from "@/Crm/features/credito/credito-interfaces";
@@ -39,7 +40,17 @@ const estadoCuotaConfig: Record<
   },
 };
 
-export function CuotaRow({ cuota }: { cuota: CuotaResponse }) {
+interface Props {
+  cuota: CuotaResponse;
+  handleSelectCuota: (cuota: CreditoCuotaResponse) => void;
+  handleDesSelectCuota: () => void;
+}
+
+export function CuotaRow({
+  cuota,
+  // handleDesSelectCuota,
+  handleSelectCuota,
+}: Props) {
   const config = estadoCuotaConfig[cuota.estado];
   const StatusIcon = config.icon;
   const montoPendiente =
@@ -47,7 +58,10 @@ export function CuotaRow({ cuota }: { cuota: CuotaResponse }) {
 
   formattShortFecha;
   return (
-    <div className="grid grid-cols-[auto_1fr_auto_auto_auto] md:grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-2 md:gap-4 py-2.5 px-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+    <div
+      className="grid grid-cols-[auto_1fr_auto_auto_auto] md:grid-cols-[auto_1fr_auto_auto_auto_auto] items-center gap-2 md:gap-4 py-2.5 px-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
+      onClick={() => handleSelectCuota(cuota)}
+    >
       <span className="text-xs font-medium text-muted-foreground w-6">
         #{cuota.numeroCuota}
       </span>

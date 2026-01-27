@@ -9,10 +9,12 @@ import {
   FileText,
   Hash,
   Percent,
+  Trash2,
   User,
   Wallet,
 } from "lucide-react";
 import {
+  CreditoCuotaResponse,
   CreditoResponse,
   EstadoCredito,
   FrecuenciaPago,
@@ -21,9 +23,27 @@ import { formattShortFecha } from "@/utils/formattFechas";
 import { CuotaRow } from "./cuota-row";
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 import { InfoItem } from "./info-icon";
+import React, { Dispatch, SetStateAction, useState } from "react";
+import CuotaCreditoDetail from "./cuota-credito-detail";
+import PagoCuotaDialog from "./regist-cuota-credito-payment";
+import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
+import {
+  CreateCuotaPagoDto,
+  DeletePagoDto,
+  useCreatePagoCuota,
+  useDeletePayment,
+} from "@/Crm/CrmHooks/hooks/use-credito/use-credito";
+import { toast } from "sonner";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+import { Button } from "@/components/ui/button";
 
 interface CreditoDetailsProps {
   credito: CreditoResponse;
+  creditoCuota: CreditoCuotaResponse | null;
+  openCuota: boolean;
+  setOpenCuota: Dispatch<SetStateAction<boolean>>;
+  setCreditoCuota: Dispatch<SetStateAction<CreditoCuotaResponse | null>>;
 }
 
 const frecuenciaLabels: Record<FrecuenciaPago, string> = {
@@ -46,7 +66,24 @@ const estadoCreditoConfig: Record<
   },
 };
 
-export function CreditoDetails({ credito }: CreditoDetailsProps) {
+const initialObject = {
+  cuotaId: "",
+  monto: "",
+  creditoId: "",
+  fechaPago: "",
+  metodoPago: "",
+  referencia: "",
+  observacion: "",
+};
+
+export function CreditoDetails({
+  credito,
+  creditoCuota,
+  openCuota,
+  setCreditoCuota,
+  setOpenCuota,
+}: CreditoDetailsProps) {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const estadoConfig = estadoCreditoConfig[credito.estado];
   const totalPagado = credito.cuotas.reduce(
     (sum, c) => sum + Number.parseFloat(c.montoPagado),
@@ -62,13 +99,116 @@ export function CreditoDetails({ credito }: CreditoDetailsProps) {
     (c) => c.estado === "VENCIDA",
   ).length;
 
+  //   helpers
+  const handleSelectCuota = (cuota: CreditoCuotaResponse) => {
+    if (!cuota) {
+      return;
+    }
+
+    if (cuota.id === creditoCuota?.id) {
+      setCreditoCuota(null);
+      setOpenCuota(false);
+      return;
+    }
+    setCreditoCuota(cuota);
+    setOpenCuota(true);
+    setPayload((previa) => ({
+      ...previa,
+      monto: cuota.montoTotal,
+      creditoId: credito.id.toString(),
+      cuotaId: cuota.id.toString(),
+    }));
+  };
+
+  const handleDesSelectCuota = () => {};
+
+  const [openPayment, setOpenPayment] = useState<boolean>(false);
+  const [confirmPayment, setOpenConfirmPayment] = useState<boolean>(false);
+
+  const handleOpenPayment = () => setOpenPayment(!openPayment);
+  const handleConfirmPayment = () => setOpenConfirmPayment(!confirmPayment);
+
+  const submitPayment = useCreatePagoCuota();
+  const submitDeletePayment = useDeletePayment();
+  const [payload, setPayload] = useState<CreateCuotaPagoDto>(initialObject);
+  const [confirmDeletePayment, setOpenConfirmDeletePayment] =
+    useState<boolean>(false);
+
+  const [deletePayload, setDeletePayload] = useState<DeletePagoDto | null>(
+    null,
+  );
+
+  const handleSelectPaymentToDelete = (pagoId: number) => {
+    setDeletePayload({
+      pagoCuotaId: pagoId,
+      userId: userId,
+    });
+    setOpenConfirmDeletePayment(true);
+  };
+
+  const handleSubmitDeletPayment = () => {
+    if (!deletePayload?.pagoCuotaId) return;
+
+    try {
+      toast.promise(submitDeletePayment.mutateAsync(deletePayload), {
+        loading: "Eliminando registro de pago...",
+        success: () => {
+          setOpenConfirmDeletePayment(false);
+          return "Registro eliminado correctamente";
+        },
+        error: (error) => getApiErrorMessageAxios(error),
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  type PayloadKeys = keyof CreateCuotaPagoDto;
+
+  const handleChangeProperty = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setPayload((prev) => ({
+      ...prev,
+      [name as PayloadKeys]: value,
+    }));
+  };
+
+  console.log("EL payload es: ", payload);
+
+  const clearData = () => {
+    setOpenConfirmPayment(false);
+    setOpenCuota(false);
+    setCreditoCuota(null);
+    setPayload(initialObject);
+  };
+
+  const handleSubmitPayment = () => {
+    try {
+      toast.promise(submitPayment.mutateAsync(payload), {
+        success: () => {
+          clearData();
+          return "Pago registrado";
+        },
+        error: (error) => getApiErrorMessageAxios(error),
+        loading: "Registrando...",
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      clearData();
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <CreditCard className="h-5 w-5 text-primary" />
+            <CreditCard className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -216,13 +356,26 @@ export function CreditoDetails({ credito }: CreditoDetailsProps) {
           </div>
 
           {/* Rows */}
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-64 overflow-y-auto hover:cursor-pointer">
             {credito.cuotas.map((cuota) => (
-              <CuotaRow key={cuota.id} cuota={cuota} />
+              <CuotaRow
+                handleDesSelectCuota={handleDesSelectCuota}
+                handleSelectCuota={handleSelectCuota}
+                key={cuota.id}
+                cuota={cuota}
+              />
             ))}
           </div>
         </div>
       </div>
+
+      {openCuota ? (
+        <CuotaCreditoDetail
+          handleSubmitDeletPayment={handleSubmitDeletPayment}
+          handleOpenPayment={handleOpenPayment}
+          cuota={creditoCuota}
+        />
+      ) : null}
 
       {/* Pagos Section */}
       <div>
@@ -239,7 +392,7 @@ export function CreditoDetails({ credito }: CreditoDetailsProps) {
             {credito.pagos.map((pago) => (
               <div
                 key={pago.id}
-                className="flex items-center justify-between py-2.5 px-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
+                className="group flex items-center justify-between py-2.5 px-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -255,18 +408,84 @@ export function CreditoDetails({ credito }: CreditoDetailsProps) {
                     </p>
                   </div>
                 </div>
-                {pago.referencia && (
-                  <span className="text-xs text-muted-foreground">
-                    Ref: {pago.referencia}
-                  </span>
-                )}
+
+                <div className="flex items-center gap-4">
+                  {pago.referencia && (
+                    <span className="text-xs text-muted-foreground">
+                      Ref: {pago.referencia}
+                    </span>
+                  )}
+
+                  {/* Botón de Eliminar */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-red-50 transition-all"
+                    onClick={() => handleSelectPaymentToDelete(pago.id)}
+                    disabled={submitDeletePayment.isPending}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Eliminar pago</span>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <PagoCuotaDialog
+        payload={payload}
+        handleChangeProperty={handleChangeProperty}
+        handleConfirmPayment={handleConfirmPayment}
+        cuota={creditoCuota}
+        onConfirmPayment={() => console.log()}
+        onOpenChange={handleOpenPayment}
+        open={openPayment}
+      />
+      <AdvancedDialogCRM
+        open={confirmPayment}
+        onOpenChange={setOpenConfirmPayment}
+        title={`Confirmar pago de cuota`}
+        description={`Se procederá a pagar la siguiente cuota: #${creditoCuota?.id}`}
+        type="confirmation"
+        cancelButton={{
+          label: "Cancelar",
+          disabled: submitPayment.isPending,
+          onClick: () => clearData(),
+          variant: "destructive",
+        }}
+        confirmButton={{
+          label: "Confirmar pago",
+          disabled: submitPayment.isPending,
+          onClick: handleSubmitPayment,
+          loading: submitPayment.isPending,
+          loadingText: "Registrando pago...",
+        }}
+      />
+
+      <AdvancedDialogCRM
+        open={confirmDeletePayment}
+        onOpenChange={setOpenConfirmDeletePayment}
+        title="Eliminar Pago"
+        description="¿Estás seguro de que deseas eliminar este registro de pago? Esta acción revertirá el saldo de la cuota y no se puede deshacer."
+        type="destructive"
+        cancelButton={{
+          label: "Cancelar",
+          disabled: submitDeletePayment.isPending,
+          onClick: () => setOpenConfirmDeletePayment(false),
+          variant: "outline",
+        }}
+        confirmButton={{
+          label: "Sí, eliminar pago",
+          disabled: submitDeletePayment.isPending,
+          onClick: handleSubmitDeletPayment,
+          loading: submitDeletePayment.isPending,
+          loadingText: "Eliminando...",
+          variant: "destructive",
+        }}
+      />
     </div>
   );
 }
-
 export default CreditoDetails;
