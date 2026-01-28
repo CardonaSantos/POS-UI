@@ -10,6 +10,7 @@ import {
 
 export interface CreateCuotaPagoDto {
   cuotaId: string;
+  userId: string;
   monto: string;
   creditoId: string;
 

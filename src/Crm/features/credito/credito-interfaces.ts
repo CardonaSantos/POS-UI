@@ -83,6 +83,14 @@ export interface PagoCreditoResponse {
   observacion?: string;
   creadoEn: string;
   aplicaciones: PagoCuotaResponse[];
+  registradoPor: PagoCreditoRegistradoPor;
+}
+
+export interface PagoCreditoRegistradoPor {
+  id: number;
+  nombre: string;
+  correo: string;
+  rol: string;
 }
 
 export interface CreditoResponse {

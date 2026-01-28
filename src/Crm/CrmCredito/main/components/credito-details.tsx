@@ -4,12 +4,10 @@ import {
   AlertCircle,
   Banknote,
   Calendar,
-  CheckCircle2,
   CreditCard,
   FileText,
   Hash,
   Percent,
-  Trash2,
   User,
   Wallet,
 } from "lucide-react";
@@ -36,7 +34,7 @@ import {
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { Button } from "@/components/ui/button";
+import PagoHistorialItem from "./pago-historial-item";
 
 interface CreditoDetailsProps {
   credito: CreditoResponse;
@@ -66,20 +64,10 @@ const estadoCreditoConfig: Record<
   },
 };
 
-const initialObject = {
-  cuotaId: "",
-  monto: "",
-  creditoId: "",
-  fechaPago: "",
-  metodoPago: "",
-  referencia: "",
-  observacion: "",
-};
-
 export function CreditoDetails({
   credito,
-  creditoCuota,
   openCuota,
+  creditoCuota,
   setCreditoCuota,
   setOpenCuota,
 }: CreditoDetailsProps) {
@@ -99,22 +87,30 @@ export function CreditoDetails({
     (c) => c.estado === "VENCIDA",
   ).length;
 
+  const initialObject: CreateCuotaPagoDto = {
+    cuotaId: "",
+    monto: "",
+    creditoId: "",
+    fechaPago: "",
+    metodoPago: "",
+    referencia: "",
+    observacion: "",
+    userId: userId.toString(),
+  };
+  const montoPendiente = creditoCuota
+    ? parseFloat(creditoCuota.montoTotal) - parseFloat(creditoCuota.montoPagado)
+    : 0;
+
   //   helpers
   const handleSelectCuota = (cuota: CreditoCuotaResponse) => {
-    if (!cuota) {
-      return;
-    }
+    if (!cuota) return;
 
-    if (cuota.id === creditoCuota?.id) {
-      setCreditoCuota(null);
-      setOpenCuota(false);
-      return;
-    }
     setCreditoCuota(cuota);
     setOpenCuota(true);
-    setPayload((previa) => ({
-      ...previa,
-      monto: cuota.montoTotal,
+
+    setPayload((prev) => ({
+      ...prev,
+      monto: montoPendiente.toString(),
       creditoId: credito.id.toString(),
       cuotaId: cuota.id.toString(),
     }));
@@ -137,6 +133,8 @@ export function CreditoDetails({
   const [deletePayload, setDeletePayload] = useState<DeletePagoDto | null>(
     null,
   );
+
+  const pagos = credito.pagos;
 
   const handleSelectPaymentToDelete = (pagoId: number) => {
     setDeletePayload({
@@ -175,8 +173,6 @@ export function CreditoDetails({
       [name as PayloadKeys]: value,
     }));
   };
-
-  console.log("EL payload es: ", payload);
 
   const clearData = () => {
     setOpenConfirmPayment(false);
@@ -261,6 +257,13 @@ export function CreditoDetails({
           label="Capital"
           value={formattMonedaGT(credito.montoCapital)}
         />
+
+        <InfoItem
+          icon={Banknote}
+          label="Restante"
+          value={formattMonedaGT(totalPendiente)}
+        />
+
         <InfoItem
           icon={Percent}
           label="Interés"
@@ -378,9 +381,8 @@ export function CreditoDetails({
       ) : null}
 
       {/* Pagos Section */}
-      <div>
-        <h2 className="text-sm font-semibold mb-2">Historial de Pagos</h2>
-        {credito.pagos.length === 0 ? (
+      <div className="border border-border rounded-lg overflow-hidden">
+        {pagos.length === 0 ? (
           <div className="border border-dashed border-border rounded-lg p-6 text-center">
             <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
@@ -388,49 +390,14 @@ export function CreditoDetails({
             </p>
           </div>
         ) : (
-          <div className="border border-border rounded-lg overflow-hidden">
-            {credito.pagos.map((pago) => (
-              <div
-                key={pago.id}
-                className="group flex items-center justify-between py-2.5 px-3 border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {formattMonedaGT(pago.montoTotal)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formattShortFecha(pago.fechaPago)}
-                      {pago.metodoPago && ` • ${pago.metodoPago}`}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {pago.referencia && (
-                    <span className="text-xs text-muted-foreground">
-                      Ref: {pago.referencia}
-                    </span>
-                  )}
-
-                  {/* Botón de Eliminar */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-red-600 hover:bg-red-50 transition-all"
-                    onClick={() => handleSelectPaymentToDelete(pago.id)}
-                    disabled={submitDeletePayment.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Eliminar pago</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          pagos.map((pago) => (
+            <PagoHistorialItem
+              key={pago.id}
+              pago={pago}
+              onDelete={handleSelectPaymentToDelete}
+              isDeleting={submitDeletePayment.isPending}
+            />
+          ))
         )}
       </div>
 
@@ -443,6 +410,7 @@ export function CreditoDetails({
         onOpenChange={handleOpenPayment}
         open={openPayment}
       />
+
       <AdvancedDialogCRM
         open={confirmPayment}
         onOpenChange={setOpenConfirmPayment}

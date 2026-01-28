@@ -20,6 +20,7 @@ export default function Page() {
   const { data = initialCredito } = useGetCredito(id);
 
   //   helpers ====>
+  console.log("El credito find es: ", data);
 
   return (
     <PageTransitionCrm

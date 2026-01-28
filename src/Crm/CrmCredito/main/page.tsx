@@ -1,5 +1,5 @@
 "use client";
-
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { CreditosDataTable } from "@/Crm/CrmCredito/main/components/creditos-data-table";
 import { CreditosFilters } from "@/Crm/CrmCredito/main/components/creditos-filters";
 import { CreditosSummary } from "@/Crm/CrmCredito/main/components/creditos-summary";
@@ -26,34 +26,28 @@ export function CreditosMainPage() {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Header con título */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Créditos</h1>
-          <p className="text-xs text-muted-foreground">
-            Gestión y seguimiento de créditos registrados
-          </p>
-        </div>
+    <PageTransitionCrm
+      titleHeader="Créditos"
+      subtitle={`Créditos registrados ${creditos.length}`}
+      variant="fade-pure"
+    >
+      <div className="">
+        {/* Resumen de estadísticas */}
+        <CreditosSummary creditos={creditos} />
+        {/* Filtros de búsqueda */}
+        <CreditosFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
+        {/* Tabla de créditos */}
+        <CreditosDataTable
+          data={creditos}
+          meta={meta}
+          currentPage={filters.page ?? 1}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
+        />
       </div>
-
-      {/* Resumen de estadísticas */}
-      <CreditosSummary creditos={creditos} />
-
-      {/* Filtros de búsqueda */}
-      <CreditosFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-      />
-
-      {/* Tabla de créditos */}
-      <CreditosDataTable
-        data={creditos}
-        meta={meta}
-        currentPage={filters.page ?? 1}
-        onPageChange={handlePageChange}
-        isLoading={isLoading}
-      />
-    </div>
+    </PageTransitionCrm>
   );
 }
