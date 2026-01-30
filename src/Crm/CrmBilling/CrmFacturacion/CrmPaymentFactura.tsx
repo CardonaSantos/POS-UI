@@ -65,7 +65,7 @@ const getTotalPagado = (factura: FacturaInternetToPay): number => {
   const pagos = factura.pagos ?? [];
   return pagos.reduce(
     (sum: number, pago: { montoPagado: number }) => sum + pago.montoPagado,
-    0
+    0,
   );
 };
 
@@ -191,7 +191,15 @@ const CrmPaymentFactura: React.FC = () => {
   };
 
   const handleFechaPagoChange = (value: string) => {
-    const fechaGt = dayjs.tz(value, "America/Guatemala").toDate();
+    const now = dayjs().tz("America/Guatemala");
+
+    const fechaGt = dayjs
+      .tz(value, "America/Guatemala")
+      .hour(now.hour())
+      .minute(now.minute())
+      .second(now.second())
+      .toDate();
+
     setNuevoPago((prev) => ({
       ...prev,
       fechaPago: fechaGt,
@@ -289,6 +297,8 @@ const CrmPaymentFactura: React.FC = () => {
       console.error("Error al eliminar factura: ", err);
     }
   };
+
+  console.log("nuevo pago", nuevoPago);
 
   return (
     <PageTransitionCrm titleHeader="Factura" subtitle={``} variant="fade-pure">

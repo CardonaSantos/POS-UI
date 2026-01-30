@@ -39,11 +39,14 @@ import {
 import { CuotasPreview } from "./cuotas-preview";
 import ReactSelectComponent from "react-select";
 import { useEffect } from "react";
+import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 
 interface CreditoFormProps {
   onSubmit: (data: CreditoFormValues) => void;
   defaultValues?: Partial<CreditoFormValues>;
   form: UseFormReturn<CreditoFormValues>;
+  handleSubmitVerifyCustomer: () => void;
+  isButtonAvaliable: boolean;
   clientes: {
     value: number;
     label: string;
@@ -58,8 +61,10 @@ interface CreditoFormProps {
 export function CreditoForm({
   onSubmit,
   clientes,
-  usuarios,
+  // usuarios,
   form,
+  handleSubmitVerifyCustomer,
+  isButtonAvaliable,
 }: CreditoFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -112,43 +117,6 @@ export function CreditoForm({
                           borderColor: "hsl(var(--input))",
                           borderRadius: "calc(var(--radius) - 2px)",
                           minHeight: "38px", // Similar al input de Shadcn
-                          boxShadow: "none",
-                          ":hover": {
-                            borderColor: "hsl(var(--ring))",
-                          },
-                        }),
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="creadoPorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1.5 text-sm">
-                    <UserIcon className="size-3.5" />
-                    Creado por
-                  </FormLabel>
-                  <FormControl>
-                    <ReactSelectComponent
-                      options={usuarios}
-                      value={usuarios.find((u) => u.value === field.value)}
-                      onChange={(option) => field.onChange(option?.value)}
-                      placeholder="Seleccionar usuario..."
-                      isClearable
-                      isSearchable
-                      className="text-sm text-black"
-                      styles={{
-                        control: (base) => ({
-                          ...base,
-                          borderColor: "hsl(var(--input))",
-                          borderRadius: "calc(var(--radius) - 2px)",
-                          minHeight: "38px",
                           boxShadow: "none",
                           ":hover": {
                             borderColor: "hsl(var(--ring))",
@@ -676,10 +644,18 @@ export function CreditoForm({
           )}
 
           {/* Submit */}
-          <div className="flex justify-end pt-2">
-            <Button type="submit" className="shadow-none">
-              Crear crédito
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              disabled={isButtonAvaliable}
+              onClick={handleSubmitVerifyCustomer}
+              type="button"
+              className="shadow-none"
+            >
+              Verificar Cliente
             </Button>
+
+            <Button type="submit">Crear crédito</Button>
           </div>
         </form>
       </Form>

@@ -178,3 +178,30 @@ export const initialCreditoResponse: GetCreditosResponse = {
     lastPage: 1,
   },
 };
+
+// VERIFICACION DE CLIENTE
+export interface HistorialPagoUI {
+  facturaId: number;
+  pagadaATiempo: boolean;
+  diferencia: number; // días (+ antes, - atraso)
+  fechaVencimiento: string; // DD/MM/YYYY
+  fechaPagada: string; // DD/MM/YYYY
+}
+export type ClasificacionCliente =
+  | "CONFIABLE"
+  | "RIESGO_MEDIO"
+  | "RIESGO_ALTO"
+  | "NO_APROBABLE";
+
+export interface ResumenCreditoUI {
+  puntualidadPct: number; // 0–100
+  promedioAtraso: number; // días
+  medianaAtraso: number; // días
+  rachaActual: number; // facturas consecutivas / recientes
+  score: number; // 0–100
+  clasificacion: ClasificacionCliente;
+}
+export interface VerifyCustomerResponseUI {
+  historial: HistorialPagoUI[];
+  resumen: ResumenCreditoUI;
+}

@@ -6,6 +6,7 @@ import { GetCreditosQueryDto } from "@/Crm/CrmHooks/hooks/use-credito/query";
 import {
   CreditoResponse,
   GetCreditosResponse,
+  VerifyCustomerResponseUI,
 } from "@/Crm/features/credito/credito-interfaces";
 
 export interface CreateCuotaPagoDto {
@@ -25,6 +26,14 @@ export interface DeletePagoDto {
   userId: number;
 }
 
+export interface verifyCustomerDto {
+  id: number;
+}
+
+/**
+ * CREAR UN CREDITO
+ * @returns
+ */
 export function useCreateCredito() {
   const query = useQueryClient();
   return useCrmMutation<void, CreditoFormValues>("post", `credito`, undefined, {
@@ -94,9 +103,12 @@ export function useCreatePagoCuota() {
   );
 }
 
+/**
+ * ELIMINAR UN PAYMENT
+ * @returns
+ */
 export function useDeletePayment() {
   const query = useQueryClient();
-
   return useCrmMutation<void, DeletePagoDto>(
     "post",
     `cuotas-pago/delete-pago`,
@@ -107,6 +119,22 @@ export function useDeletePayment() {
           queryKey: creditoQkeys.all,
         });
       },
+    },
+  );
+}
+
+/**
+ * Verificar la disponibilidad del cliente
+ * @returns
+ */
+export function useVerifyCustomer(clienteId?: number) {
+  return useCrmQuery<VerifyCustomerResponseUI>(
+    ["verify-customer", clienteId],
+    `verify-customer/${clienteId}`,
+    undefined,
+    {
+      enabled: !!clienteId,
+      staleTime: 0,
     },
   );
 }
