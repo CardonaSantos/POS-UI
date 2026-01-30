@@ -8,7 +8,7 @@ import {
   type InfoFinanciera,
   type ReferenciaDto,
   type ArchivoItem,
-  TipoArchivoCliente,
+  // TipoArchivoCliente,
   initialInfoFinanciera,
 } from "./expedientes-types";
 import ImagesCropper from "@/Crm/Helpers/CutterImages/ImageCropper";
@@ -21,6 +21,7 @@ import {
 } from "@/Crm/CrmHooks/hooks/use-credito/use-credito";
 import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { TipoArchivoCliente } from "@/Crm/features/credito/credito-interfaces";
 
 interface Props {
   clienteId: number;

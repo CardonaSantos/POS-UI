@@ -29,10 +29,10 @@ function RouterMainPage() {
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [isToUpdate, setIsToUpdate] = useState<boolean>(false);
   const [mkToEdit, setMkToEdit] = useState<MikrotikRoutersResponse | null>(
-    null
+    null,
   );
   const [mktoDelete, setMkToDelete] = useState<MikrotikRoutersResponse | null>(
-    null
+    null,
   );
   const [openDelete, setOpenDelete] = useState<boolean>(false);
 

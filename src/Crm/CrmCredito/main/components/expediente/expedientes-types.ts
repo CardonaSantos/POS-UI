@@ -1,10 +1,4 @@
-export enum TipoArchivoCliente {
-  DPI = "DPI",
-  CASA = "CASA",
-  NEGOCIO = "NEGOCIO",
-  RECIBO_LUZ = "RECIBO_LUZ",
-  OTRO = "OTRO",
-}
+import { TipoArchivoCliente } from "@/Crm/features/credito/credito-interfaces";
 
 export const TipoArchivoClienteArray = Object.values(TipoArchivoCliente);
 

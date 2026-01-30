@@ -1,13 +1,14 @@
 import { CreditoFormValues } from "@/Crm/CrmCredito/form/schema.zod";
 import { useCrmMutation, useCrmQuery } from "@/Crm/hooks/crmApiHooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { creditoQkeys } from "./Qk";
+import { creditoQkeys, expedienteQkeys } from "./Qk";
 import { GetCreditosQueryDto } from "@/Crm/CrmHooks/hooks/use-credito/query";
 import {
   CreditoResponse,
   GetCreditosResponse,
   VerifyCustomerResponseUI,
 } from "@/Crm/features/credito/credito-interfaces";
+import { ClienteExpedienteDto } from "@/Crm/features/expediente-cliente/expediente.interface";
 
 export interface CreateCuotaPagoDto {
   cuotaId: string;
@@ -53,6 +54,22 @@ export interface CrearExpedientePayload {
   referencias?: ReferenciaPayload[];
   archivos: ArchivoPayload[];
 }
+
+// OBJETOS INICIALES STATES
+export const initialClienteExpediente: ClienteExpedienteDto = {
+  id: 0,
+  clienteId: 0,
+
+  fuenteIngresos: null,
+  tieneDeudas: null,
+  detalleDeudas: null,
+
+  creadoEn: "",
+  actualizadoEn: "",
+
+  archivos: [],
+  referencias: [],
+};
 
 /**
  * CREAR UN CREDITO
@@ -171,6 +188,37 @@ export function useCrearExpedienteCliente(clienteId: number) {
     `credito-cliente-expediente/${clienteId}/archivos`,
     {
       headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
+}
+
+export function useGetClienteExpedientes(creditoId: number) {
+  return useCrmQuery<Array<ClienteExpedienteDto>>(
+    expedienteQkeys.all,
+    `credito-cliente-expediente/${creditoId}/expediente`,
+    undefined,
+    {},
+  );
+}
+
+/**
+ * Eliminacion de un expediente
+ * @param expedienteId
+ * @returns
+ */
+export function useDeleteExpediente(expedienteId: number | null) {
+  const query = useQueryClient();
+
+  return useCrmMutation<void, void>(
+    "delete",
+    `credito-cliente-expediente/${expedienteId}`,
+    undefined,
+    {
+      onSuccess: () => {
+        query.invalidateQueries({
+          queryKey: expedienteQkeys.all,
+        });
+      },
     },
   );
 }
