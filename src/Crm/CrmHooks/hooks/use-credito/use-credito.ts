@@ -30,6 +30,30 @@ export interface verifyCustomerDto {
   id: number;
 }
 
+// EXPEDIENTE PAYLOAD INTERFACES
+export interface ReferenciaPayload {
+  nombre: string;
+  telefono: string;
+  relacion: string;
+}
+
+export interface ArchivoPayload {
+  file: File;
+  tipo: string;
+  descripcion?: string;
+}
+
+export interface CrearExpedientePayload {
+  clienteId: number;
+
+  fuenteIngresos?: string;
+  tieneDeudas: boolean;
+  detalleDeudas?: string;
+
+  referencias?: ReferenciaPayload[];
+  archivos: ArchivoPayload[];
+}
+
 /**
  * CREAR UN CREDITO
  * @returns
@@ -135,6 +159,18 @@ export function useVerifyCustomer(clienteId?: number) {
     {
       enabled: !!clienteId,
       staleTime: 0,
+    },
+  );
+}
+
+// CREAR EXPEDIENTE
+
+export function useCrearExpedienteCliente(clienteId: number) {
+  return useCrmMutation<void, FormData>(
+    "post",
+    `credito-cliente-expediente/${clienteId}/archivos`,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
     },
   );
 }

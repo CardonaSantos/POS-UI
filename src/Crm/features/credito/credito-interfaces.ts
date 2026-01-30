@@ -3,6 +3,16 @@ export enum InteresTipo {
   VARIABLE = "VARIABLE",
 }
 
+export enum TipoArchivoCliente {
+  DPI = "DPI",
+  CASA = "CASA",
+  NEGOCIO = "NEGOCIO",
+  RECIBO_LUZ = "RECIBO_LUZ",
+  OTRO = "OTRO",
+}
+
+export const TipoArchivoClienteArray = Object.values(TipoArchivoCliente);
+
 export enum FrecuenciaPago {
   MENSUAL = "MENSUAL",
   QUINCENAL = "QUINCENAL",

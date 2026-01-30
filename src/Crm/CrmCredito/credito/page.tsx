@@ -12,9 +12,9 @@ import {
   ReusableTabs,
   TabItem,
 } from "@/Crm/Utils/Components/tabs/reusable-tabs";
-import { MikroTikIcon } from "@/Crm/Icons/MikroTikIcon";
-import { DiamondPlus } from "lucide-react";
+import { CreditCard, ImagePlus } from "lucide-react";
 import { useTabChangeWithUrl } from "@/Crm/Utils/Components/handleTabChangeWithParamURL";
+import LoadArchivoCredito from "../main/components/expediente/load-archivo-credito";
 
 export default function Page() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,7 +23,7 @@ export default function Page() {
   const [creditoCuota, setCreditoCuota] = useState<CreditoCuotaResponse | null>(
     null,
   );
-  const defaultTab = (searchParams.get("tab") as string) || "mk";
+  const defaultTab = (searchParams.get("tab") as string) || "credito";
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const { creditoId } = useParams<{ creditoId: string }>();
   const id = creditoId ? parseInt(creditoId) : 0;
@@ -35,38 +35,30 @@ export default function Page() {
     setSearchParams,
   });
   //   helpers ====>
-  console.log("El credito find es: ", data);
 
-  // const tabs: Array<TabItem> = [
-  //   {
-  //     label: "MikroTiks",
-  //     value: "mk",
-  //     icon: <MikroTikIcon size={16} />,
-  //     content: (
-  //      <CreditoDetails
-  //     creditoCuota={creditoCuota}
-  //     openCuota={openCuota}
-  //     setCreditoCuota={setCreditoCuota}
-  //     setOpenCuota={setOpenCuota}
-  //     credito={data}
-  //   />
-  //     ),
-  //   },
+  const tabs: Array<TabItem> = [
+    {
+      label: "Crédito",
+      value: "credito",
+      icon: <CreditCard size={16} />,
+      content: (
+        <CreditoDetails
+          creditoCuota={creditoCuota}
+          openCuota={openCuota}
+          setCreditoCuota={setCreditoCuota}
+          setOpenCuota={setOpenCuota}
+          credito={data}
+        />
+      ),
+    },
 
-  //   {
-  //     label: "Añadir",
-  //     value: "anadir",
-  //     icon: <DiamondPlus size={16} />,
-  //     content: (
-  //       <FormCreateRouter
-  //         handleOpen={handleOpen}
-  //         handleCancelEdit={handleCancelEdit}
-  //         isToEdit={isToUpdate}
-  //         form={formRouterMk}
-  //       />
-  //     ),
-  //   },
-  // ];
+    {
+      label: "Archivos",
+      value: "anadir",
+      icon: <ImagePlus size={16} />,
+      content: <LoadArchivoCredito clienteId={data.clienteId} />,
+    },
+  ];
 
   return (
     <PageTransitionCrm
@@ -75,13 +67,13 @@ export default function Page() {
       variant="fade-pure"
     >
       <h2></h2>
-      {/* <ReusableTabs
-
-      
-      >
-
-
-      </ReusableTabs> */}
+      <ReusableTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        handleTabChange={handleChangeTabs}
+        variant="compact"
+      />
     </PageTransitionCrm>
   );
 }
