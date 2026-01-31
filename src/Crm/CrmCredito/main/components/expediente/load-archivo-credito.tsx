@@ -84,7 +84,6 @@ export default function ExpedientePage({ clienteId }: Props) {
     setOpenCropper(true);
   };
 
-  // Cuando el cropper termina, convertimos a ArchivoItem[]
   const handleCropDone = (croppedFiles: File[]) => {
     const newItems: ArchivoItem[] = croppedFiles.map((file) => ({
       uid: crypto.randomUUID(),
@@ -96,7 +95,6 @@ export default function ExpedientePage({ clienteId }: Props) {
     setRawFiles([]);
   };
 
-  // Limpiar todo el formulario
   const handleReset = () => {
     setInfoFinanciera(initialInfoFinanciera);
     setReferencias([]);
@@ -104,10 +102,8 @@ export default function ExpedientePage({ clienteId }: Props) {
     setRawFiles([]);
   };
 
-  // Validación básica
   const canSubmit = archivos.length > 0;
 
-  // Construir y enviar el FormData
   const { mutateAsync: crearExpediente, isPending } =
     useCrearExpedienteCliente(clienteId);
 
@@ -130,7 +126,8 @@ export default function ExpedientePage({ clienteId }: Props) {
         loading: "Registrando...",
       });
 
-      // handleReset();
+      handleReset();
+      setOpenConfirm(false);
     } catch (e: any) {
       toast.error(e.message ?? "Error al enviar expediente");
     }

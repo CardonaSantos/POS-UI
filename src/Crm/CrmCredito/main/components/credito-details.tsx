@@ -97,20 +97,21 @@ export function CreditoDetails({
     observacion: "",
     userId: userId.toString(),
   };
-  const montoPendiente = creditoCuota
-    ? parseFloat(creditoCuota.montoTotal) - parseFloat(creditoCuota.montoPagado)
-    : 0;
 
   //   helpers
   const handleSelectCuota = (cuota: CreditoCuotaResponse) => {
     if (!cuota) return;
+
+    const pendienteAlMomento =
+      (parseFloat(cuota.montoTotal) || 0) -
+      (parseFloat(cuota.montoPagado) || 0);
 
     setCreditoCuota(cuota);
     setOpenCuota(true);
 
     setPayload((prev) => ({
       ...prev,
-      monto: montoPendiente.toString(),
+      monto: pendienteAlMomento.toFixed(2),
       creditoId: credito.id.toString(),
       cuotaId: cuota.id.toString(),
     }));
@@ -181,22 +182,21 @@ export function CreditoDetails({
     setPayload(initialObject);
   };
 
-  const handleSubmitPayment = () => {
+  const handleSubmitPayment = async () => {
     try {
-      toast.promise(submitPayment.mutateAsync(payload), {
-        success: () => {
-          clearData();
-          return "Pago registrado";
-        },
-        error: (error) => getApiErrorMessageAxios(error),
+      await toast.promise(submitPayment.mutateAsync(payload), {
         loading: "Registrando...",
+        success: "Pago registrado",
+        error: (error) => getApiErrorMessageAxios(error),
       });
-    } catch (error) {
-      console.log(error);
-    } finally {
+
       clearData();
+    } catch (error) {
+      console.error("Error al procesar pago:", error);
     }
   };
+
+  console.log("credito cuota es: ", creditoCuota);
 
   return (
     <div className="space-y-4">
