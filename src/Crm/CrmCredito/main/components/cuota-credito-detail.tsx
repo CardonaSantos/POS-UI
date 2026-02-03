@@ -21,6 +21,7 @@ import {
 import {
   CuotaResponse,
   EstadoCuota,
+  EstadoMora,
 } from "@/Crm/features/credito/credito-interfaces";
 
 interface Props {
@@ -77,13 +78,22 @@ export function CuotaCreditoDetail({
     );
   }
 
-  const estado = estadoConfig[cuota.estado];
+  const moraTotal = Array.isArray(cuota.moras)
+    ? cuota.moras.reduce((acc, mora) => acc + (Number(mora.interes) || 0), 0)
+    : 0;
+
+  const total = Number(cuota.montoTotal) || 0;
+  const pagado = Number(cuota.montoPagado) || 0;
+
+  const montoPendiente = total - pagado + moraTotal;
+
+  const porcentajePagado = total > 0 ? (pagado / total) * 100 : 0;
+
+  const isPagada =
+    cuota.estado === "PAGADA" &&
+    cuota.moras?.every((c) => c.estado === EstadoMora.PAGADA);
+  const estado = estadoConfig[cuota.estado] || {};
   const EstadoIcon = estado.icon;
-  const montoPendiente =
-    parseFloat(cuota.montoTotal) - parseFloat(cuota.montoPagado);
-  const porcentajePagado =
-    (parseFloat(cuota.montoPagado) / parseFloat(cuota.montoTotal)) * 100;
-  const isPagada = cuota.estado === "PAGADA";
 
   return (
     <div className="rounded-md border border-border bg-card p-4">

@@ -18,8 +18,8 @@ import {
 } from "../../features/credito/credito-interfaces";
 import { CustomerCreditScore } from "../main/components/customer-credit-score";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { useState } from "react";
+import { toDecimal } from "@/Crm/_Utils/toDecimal";
 
 export const initialVerifyCustomerResponse: VerifyCustomerResponseUI = {
   historial: [],
@@ -39,10 +39,10 @@ function CrmCreditoMainPage() {
   const { data: users } = useGetUsersToSelect();
   const submitCredito = useCreateCredito();
 
+  const [openConfirSubmit, setOpenConfirSubmit] = useState<boolean>(false);
+
   const clientesSecure = clientes ? clientes : [];
   const usersSecure = users ? users : [];
-
-  const [] = useState<boolean>(false);
 
   const form = useForm<CreditoFormValues>({
     resolver: zodResolver(creditoFormSchema),
@@ -66,11 +66,50 @@ function CrmCreditoMainPage() {
     },
   });
 
+  const handleOpenSubmit = () => setOpenConfirSubmit(!openConfirSubmit);
+
   const clienteId = form.watch("clienteId");
   const { data, refetch } = useVerifyCustomer(clienteId);
 
   const handleSubmit = (data: CreditoFormValues) => {
     try {
+      const camposAValidar = [
+        {
+          nombre: "Interés Mora",
+          valor: data.interesMoraPorcentaje,
+          key: "interesMoraPorcentaje",
+        },
+        {
+          nombre: "Interés Mensual",
+          valor: data.interesPorcentaje,
+          key: "interesPorcentaje",
+        },
+        {
+          nombre: "Monto Capital",
+          valor: data.montoCapital,
+          key: "montoCapital",
+        },
+        { nombre: "Enganche", valor: data.engancheMonto, key: "engancheMonto" },
+      ];
+
+      for (const campo of camposAValidar) {
+        const valor = toDecimal(campo.valor);
+
+        if (valor < 0) {
+          form.setError(campo.key as any, {
+            message: `El campo ${campo.nombre} no puede ser negativo`,
+          });
+          return;
+        }
+
+        if (campo.key === "montoCapital" && valor <= 0) {
+          form.setError("montoCapital", {
+            message: "El capital no puede ser negativo",
+          });
+          return;
+        }
+      }
+
       toast.promise(submitCredito.mutateAsync(data), {
         success: () => {
           form.reset();
@@ -79,6 +118,26 @@ function CrmCreditoMainPage() {
         loading: "Registrando crédito...",
         error: (error) => getApiErrorMessageAxios(error),
       });
+
+      form.reset({
+        clienteId: undefined,
+        creadoPorId: userId,
+        montoCapital: "",
+        interesPorcentaje: "",
+        interesMoraPorcentaje: "",
+        tipoGeneracionCuotas: "AUTOMATICA",
+        interesTipo: InteresTipo.FIJO,
+        frecuencia: FrecuenciaPago.MENSUAL,
+        intervaloDias: 30,
+        plazoCuotas: 12,
+        fechaInicio: new Date(),
+        engancheMonto: "",
+        engancheFecha: undefined,
+        origenCredito: undefined,
+        observaciones: "",
+        cuotasCustom: [],
+      });
+      setOpenConfirSubmit(false);
     } catch (error) {
       console.log(error);
     }
@@ -126,6 +185,10 @@ function CrmCreditoMainPage() {
     >
       <div className="">
         <CreditoForm
+          submitCreditoIsPending={submitCredito.isPending}
+          setOpenConfirSubmit={setOpenConfirSubmit}
+          openConfirSubmit={openConfirSubmit}
+          handleOpenSubmit={handleOpenSubmit}
           isButtonAvaliable={isVerifyDisabled}
           handleSubmitVerifyCustomer={handleSubmitVerifyCustomer}
           onSubmit={handleSubmit}
@@ -137,13 +200,6 @@ function CrmCreditoMainPage() {
       <div className="mt-4">
         <CustomerCreditScore data={secureSummaryCustomerVerified} />
       </div>
-
-      {/* <AdvancedDialogCRM
-        title="Creacion de credito"
-        description="registro de credito"
-        open
-      
-      /> */}
     </PageTransitionCrm>
   );
 }

@@ -38,7 +38,7 @@ import {
 } from "@/Crm/features/credito/credito-interfaces";
 import { CuotasPreview } from "./cuotas-preview";
 import ReactSelectComponent from "react-select";
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 
 interface CreditoFormProps {
@@ -46,6 +46,11 @@ interface CreditoFormProps {
   defaultValues?: Partial<CreditoFormValues>;
   form: UseFormReturn<CreditoFormValues>;
   handleSubmitVerifyCustomer: () => void;
+  handleOpenSubmit: () => void;
+  submitCreditoIsPending: boolean;
+  setOpenConfirSubmit: Dispatch<SetStateAction<boolean>>;
+  openConfirSubmit: boolean;
+
   isButtonAvaliable: boolean;
   clientes: {
     value: number;
@@ -65,6 +70,10 @@ export function CreditoForm({
   form,
   handleSubmitVerifyCustomer,
   isButtonAvaliable,
+  handleOpenSubmit,
+  setOpenConfirSubmit,
+  openConfirSubmit,
+  submitCreditoIsPending,
 }: CreditoFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -655,7 +664,9 @@ export function CreditoForm({
               Verificar Cliente
             </Button>
 
-            <Button type="submit">Crear crédito</Button>
+            <Button onClick={handleOpenSubmit} type="button">
+              Crear crédito
+            </Button>
           </div>
         </form>
       </Form>
@@ -664,6 +675,25 @@ export function CreditoForm({
       <div className="lg:col-span-1">
         <CuotasPreview formValues={watchedValues} />
       </div>
+
+      <AdvancedDialogCRM
+        type="confirmation"
+        title="Confirmar creación de crédito"
+        description="¿Estás seguro de crear este registro? Una vez procesado, no podrás deshacer esta acción."
+        open={openConfirSubmit}
+        onOpenChange={setOpenConfirSubmit}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: submitCreditoIsPending,
+          onClick: handleOpenSubmit,
+          variant: "destructive",
+        }}
+        confirmButton={{
+          label: "Confirmar crédito",
+          disabled: submitCreditoIsPending,
+          onClick: handleSubmit,
+        }}
+      />
     </div>
   );
 }

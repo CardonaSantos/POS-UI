@@ -113,7 +113,6 @@ export default function Page() {
       subtitle={`Créditos registrados 10`}
       variant="fade-pure"
     >
-      <h2></h2>
       <ReusableTabs
         tabs={tabs}
         activeTab={activeTab}

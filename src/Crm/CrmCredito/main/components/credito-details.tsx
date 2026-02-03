@@ -63,6 +63,8 @@ const estadoCreditoConfig: Record<
     className: "bg-neutral-100 text-neutral-700",
   },
 };
+export const CUOTA_GRID =
+  "grid-cols-[36px_120px_110px_110px_110px_120px_120px]";
 
 export function CreditoDetails({
   credito,
@@ -71,6 +73,8 @@ export function CreditoDetails({
   setCreditoCuota,
   setOpenCuota,
 }: CreditoDetailsProps) {
+  console.log("credito cuota es en credito: ", creditoCuota);
+
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const estadoConfig = estadoCreditoConfig[credito.estado];
   const totalPagado = credito.cuotas.reduce(
@@ -349,13 +353,19 @@ export function CreditoDetails({
 
         <div className="border border-border rounded-lg overflow-hidden">
           {/* Header */}
-          <div className="grid grid-cols-[auto_1fr_auto_auto_auto] md:grid-cols-[auto_1fr_auto_auto_auto_auto] gap-2 md:gap-4 py-2 px-3 bg-muted/50 text-xs text-muted-foreground font-medium">
-            <span className="w-6">#</span>
+          <div
+            className={cn(
+              "grid items-center px-3 py-2 bg-muted/40 text-[11px] font-medium text-muted-foreground",
+              CUOTA_GRID,
+            )}
+          >
+            <span>#</span>
             <span>Vencimiento</span>
             <span className="text-right">Total</span>
-            <span className="text-right hidden md:block">Pagado</span>
+            <span className="text-right">Pagado</span>
             <span className="text-right">Pendiente</span>
-            <span>Estado</span>
+            <span className="text-right">Mora</span>
+            <span className="text-center">Estado</span>
           </div>
 
           {/* Rows */}

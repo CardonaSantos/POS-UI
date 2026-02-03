@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,30 +23,40 @@ import {
   CircleDashed,
   CreditCard,
   X,
+  Banknote,
 } from "lucide-react";
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 import { formattShortFecha } from "@/utils/formattFechas";
-import { CreateCuotaPagoDto } from "@/Crm/CrmHooks/hooks/use-credito/use-credito";
+import {
+  CreateCuotaPagoDto,
+  PayMoraCuotaDto,
+  usePayMoraCuota,
+} from "@/Crm/CrmHooks/hooks/use-credito/use-credito";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  CreditoCuotaResponse,
+  EstadoMora,
+  MoraCuota,
+} from "@/Crm/features/credito/credito-interfaces";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
+import { toast } from "sonner";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { useQueryClient } from "@tanstack/react-query";
+import { creditoQkeys } from "@/Crm/CrmHooks/hooks/use-credito/Qk";
 
 type EstadoCuota = "PENDIENTE" | "PARCIAL" | "PAGADA" | "VENCIDA";
-
-interface CuotaResponse {
-  id: number;
-  creditoId: number;
-  numeroCuota: number;
-  fechaVenc: string;
-  montoCapital: string;
-  montoInteres: string;
-  montoTotal: string;
-  estado: EstadoCuota;
-  montoPagado: string;
-}
 
 interface PagoCuotaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  cuota: CuotaResponse | null;
+  cuota: CreditoCuotaResponse | null;
   onConfirmPayment: (cuotaId: number, monto: number) => void;
   handleConfirmPayment: () => void;
   handleChangeProperty: (
@@ -90,18 +100,37 @@ export function PagoCuotaDialog({
   handleChangeProperty,
   payload,
 }: PagoCuotaDialogProps) {
+  const query = useQueryClient();
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const montoPendiente = cuota
     ? parseFloat(cuota.montoTotal) - parseFloat(cuota.montoPagado)
     : 0;
+
+  const [moraSeleccionada, setMoraSeleccionada] = useState<MoraCuota | null>(
+    null,
+  );
+  const [openPagarMora, setOpenPagarMora] = useState(false);
+  const id = cuota?.creditoId ? cuota.creditoId : 0;
+  const submitPayMoraCuota = usePayMoraCuota(id);
 
   if (!cuota) return null;
 
   const estado = estadoConfig[cuota.estado];
   const EstadoIcon = estado.icon;
-  const porcentajePagado =
-    (parseFloat(cuota.montoPagado) / parseFloat(cuota.montoTotal)) * 100;
+
+  const total = parseFloat(cuota.montoTotal);
+  const pagado = parseFloat(cuota.montoPagado);
+
+  // const montoPendiente = total - pagado + moraTotal;
 
   const handlePayFullAmount = () => {};
+
+  const moraTotal = Array.isArray(cuota.moras)
+    ? cuota.moras.reduce((acc, mora) => acc + (Number(mora.interes) || 0), 0)
+    : 0;
+
+  const porcentajePagado =
+    total > 0 ? Math.min((pagado / total) * 100, 100) : 0;
 
   const handleConfirm = () => {
     handleConfirmPayment();
@@ -111,6 +140,44 @@ export function PagoCuotaDialog({
   const handleCancel = () => {
     onOpenChange(false);
   };
+
+  const handleOpenPagarMora = () => setOpenPagarMora(!openPagarMora);
+
+  const handlePayMoraCuota = () => {
+    if (!moraSeleccionada) {
+      toast.warning("Debe seleccionar una mora cuota");
+      return;
+    }
+
+    try {
+      const dto: PayMoraCuotaDto = {
+        moraId: moraSeleccionada.id,
+        userId: userId,
+      };
+
+      toast.promise(submitPayMoraCuota.mutateAsync(dto), {
+        success: "Mora registrada correctamente",
+        error: (error) => getApiErrorMessageAxios(error),
+        loading: "Registrando pago de mora....",
+      });
+
+      setOpenPagarMora(false);
+      setMoraSeleccionada(null);
+      // submitPayMoraCuota.ion
+      query.invalidateQueries({
+        queryKey: creditoQkeys.all,
+      });
+
+      query.invalidateQueries({
+        queryKey: creditoQkeys.specific(cuota.creditoId),
+      });
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  console.log("La cuota seleccionada es: ", cuota);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,13 +278,62 @@ export function PagoCuotaDialog({
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-background px-2 py-1 rounded border">
-                  <Percent className="h-3 w-3 text-muted-foreground" />
-                  <span>
-                    Interés:{" "}
-                    <span className="font-medium text-foreground">
-                      {formattMonedaGT(cuota.montoInteres)}
-                    </span>
-                  </span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5"
+                      >
+                        <Percent className="h-3 w-3 text-muted-foreground" />
+                        <span>
+                          Interés:{" "}
+                          <span className="font-medium text-foreground">
+                            {formattMonedaGT(moraTotal)}
+                          </span>
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+
+                    <PopoverContent className="w-56 p-2 space-y-1">
+                      {cuota.moras?.length ? (
+                        cuota.moras.map((mora) => {
+                          const isPagada = mora.estado === EstadoMora.PAGADA;
+                          return (
+                            <div
+                              key={mora.id}
+                              className="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 hover:bg-muted/50"
+                            >
+                              <div className="flex flex-col text-[11px] leading-tight">
+                                <span className="font-medium text-foreground">
+                                  {formattMonedaGT(mora.interes)}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  Día {mora.diasMora}
+                                </span>
+                              </div>
+
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                onClick={() => {
+                                  setMoraSeleccionada(mora);
+                                  setOpenPagarMora(true);
+                                }}
+                                disabled={isPagada}
+                              >
+                                <Banknote size={16} />
+                              </Button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="py-2 text-[11px] text-muted-foreground text-center">
+                          No hay moras
+                        </p>
+                      )}
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
@@ -336,6 +452,26 @@ export function PagoCuotaDialog({
           </div>
         </DialogFooter>
       </DialogContent>
+
+      <AdvancedDialogCRM
+        open={openPagarMora}
+        onOpenChange={setOpenPagarMora}
+        title="¿Estás seguro de registrar el pago de esta mora?"
+        description="Esta acción no se puede deshacer"
+        confirmButton={{
+          label: "Confirmar pago",
+          disabled: submitPayMoraCuota.isPending,
+          onClick: handlePayMoraCuota,
+          loading: submitPayMoraCuota.isPending,
+          loadingText: "Registrando pago...",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: submitPayMoraCuota.isPending,
+          onClick: handleOpenPagarMora,
+          variant: "destructive",
+        }}
+      />
     </Dialog>
   );
 }

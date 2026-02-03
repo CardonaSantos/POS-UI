@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ClienteExpedienteDto } from "@/Crm/features/expediente-cliente/expediente.interface";
@@ -190,12 +189,9 @@ export function ExpedienteItem({
           </button>
 
           {/* Imagen Ajustada */}
-          {/* Quitamos el div wrapper complejo y controlamos la img directamente */}
           <img
             src={selectedImage || "/placeholder.svg"}
             alt="Vista ampliada"
-            // max-w-full y max-h-[90vh] aseguran que nunca se salga de la pantalla
-            // w-auto h-auto mantienen el aspect ratio original
             className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />

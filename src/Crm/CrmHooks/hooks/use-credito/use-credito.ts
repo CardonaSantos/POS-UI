@@ -55,6 +55,12 @@ export interface CrearExpedientePayload {
   archivos: ArchivoPayload[];
 }
 
+export interface PayMoraCuotaDto {
+  moraId: number;
+
+  userId: number;
+}
+
 // OBJETOS INICIALES STATES
 export const initialClienteExpediente: ClienteExpedienteDto = {
   id: 0,
@@ -116,6 +122,7 @@ export function useGetCreditos(params?: GetCreditosQueryDto) {
 export function useGetCredito(creditoId?: number) {
   return useCrmQuery<CreditoResponse>(
     creditoId ? creditoQkeys.specific(creditoId) : creditoQkeys.all,
+    // creditoQkeys.all,
     `credito/${creditoId}`,
     undefined,
     {
@@ -218,6 +225,35 @@ export function useDeleteExpediente(expedienteId: number | null) {
         query.invalidateQueries({
           queryKey: expedienteQkeys.all,
         });
+      },
+    },
+  );
+}
+
+/**
+ * Funcion para pagar una mora de una cuota
+ * @param moraId
+ * @returns
+ */
+export function usePayMoraCuota(creditoId: number) {
+  // Recibimos el ID aquí
+  const queryClient = useQueryClient();
+
+  return useCrmMutation<void, PayMoraCuotaDto>(
+    "post",
+    `cuotas-pago/pay-mora-cuota`,
+    undefined,
+    {
+      onSuccess: () => {
+        if (creditoId) {
+          // Invalidamos solo el crédito específico
+          queryClient.invalidateQueries({
+            queryKey: creditoQkeys.specific(creditoId),
+          });
+        } else {
+          // Fallback por si no hay ID
+          queryClient.invalidateQueries({ queryKey: creditoQkeys.all });
+        }
       },
     },
   );

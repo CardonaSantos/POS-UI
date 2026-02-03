@@ -54,6 +54,7 @@ export interface CreditoCuotaResponse {
   montoTotal: string;
   montoPagado: string;
   estado: EstadoCuota;
+  moras: MoraCuota[];
 }
 
 export enum EstadoCuota {
@@ -73,6 +74,7 @@ export interface CuotaResponse {
   montoTotal: string;
   estado: EstadoCuota;
   montoPagado: string;
+  moras?: MoraCuota[];
 }
 
 export interface PagoCuotaResponse {
@@ -179,6 +181,19 @@ export const initialCredito: CreditoResponse = {
   clienteNombre: "",
   usuarioNombre: "",
 };
+
+export interface MoraCuota {
+  id: number;
+  diasMora: number;
+  interes: string;
+  calculadoEn: string;
+  estado: EstadoMora;
+}
+
+export enum EstadoMora {
+  PENDIENTE = "PENDIENTE",
+  PAGADA = "PAGADA",
+}
 
 export const initialCreditoResponse: GetCreditosResponse = {
   data: [],
