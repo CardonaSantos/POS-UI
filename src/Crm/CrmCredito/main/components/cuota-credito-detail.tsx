@@ -23,6 +23,24 @@ import {
   EstadoCuota,
   EstadoMora,
 } from "@/Crm/features/credito/credito-interfaces";
+import { formattShortFecha } from "@/utils/formattFechas";
+import { cn } from "@/lib/utils";
+import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
+
+const moraEstadoMap: Record<string, { label: string; className: string }> = {
+  PENDIENTE: {
+    label: "Pendiente",
+    className: "bg-amber-100 text-amber-700",
+  },
+  PAGADA: {
+    label: "Pagada",
+    className: "bg-emerald-100 text-emerald-700",
+  },
+  ANULADA: {
+    label: "Anulada",
+    className: "bg-muted text-muted-foreground",
+  },
+};
 
 interface Props {
   cuota: CuotaResponse | null;
@@ -58,13 +76,6 @@ const estadoConfig: Record<
   },
 };
 
-function formatCurrency(value: string | number) {
-  return `Q ${parseFloat(String(value)).toLocaleString("es-GT", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 export function CuotaCreditoDetail({
   cuota,
   onEliminar,
@@ -95,6 +106,8 @@ export function CuotaCreditoDetail({
   const estado = estadoConfig[cuota.estado] || {};
   const EstadoIcon = estado.icon;
 
+  const moras = cuota.moras ?? [];
+  const totalInteres = moras.reduce((acc, m) => acc + parseFloat(m.interes), 0);
   return (
     <div className="rounded-md border border-border bg-card p-4">
       {/* Header */}
@@ -144,7 +157,7 @@ export function CuotaCreditoDetail({
           <div>
             <p className="text-xs text-muted-foreground">Capital</p>
             <p className="text-sm font-medium">
-              {formatCurrency(cuota.montoCapital)}
+              {formattMonedaGT(cuota.montoCapital)}
             </p>
           </div>
         </div>
@@ -154,7 +167,7 @@ export function CuotaCreditoDetail({
           <div>
             <p className="text-xs text-muted-foreground">Interes</p>
             <p className="text-sm font-medium">
-              {formatCurrency(cuota.montoInteres)}
+              {formattMonedaGT(totalInteres)}
             </p>
           </div>
         </div>
@@ -164,7 +177,7 @@ export function CuotaCreditoDetail({
           <div>
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-sm font-medium">
-              {formatCurrency(cuota.montoTotal)}
+              {formattMonedaGT(cuota.montoTotal)}
             </p>
           </div>
         </div>
@@ -174,7 +187,7 @@ export function CuotaCreditoDetail({
           <div>
             <p className="text-xs text-muted-foreground">Pagado</p>
             <p className="text-sm font-medium text-emerald-600">
-              {formatCurrency(cuota.montoPagado)}
+              {formattMonedaGT(cuota.montoPagado)}
             </p>
           </div>
         </div>
@@ -184,11 +197,62 @@ export function CuotaCreditoDetail({
           <div>
             <p className="text-xs text-muted-foreground">Pendiente</p>
             <p className="text-sm font-medium text-amber-600">
-              {formatCurrency(montoPendiente)}
+              {formattMonedaGT(montoPendiente)}
             </p>
           </div>
         </div>
       </div>
+
+      {moras.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            Moras generadas
+          </p>
+
+          {moras.map((m) => {
+            const estadoMora =
+              moraEstadoMap[m.estado] ?? moraEstadoMap.PENDIENTE;
+
+            return (
+              <div
+                key={m.id}
+                className="rounded-md border bg-muted/40 px-3 py-2"
+              >
+                <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                  <div>
+                    <p className="text-muted-foreground">Fecha</p>
+                    <p className="font-medium">
+                      {formattShortFecha(m.calculadoEn)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Estado</p>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 font-medium",
+                        estadoMora.className,
+                      )}
+                    >
+                      {estadoMora.label}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Interés</p>
+                    <p className="font-medium">{formattMonedaGT(m.interes)}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">ID</p>
+                    <p className="font-medium">#{m.id}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-2">

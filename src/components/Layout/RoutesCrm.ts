@@ -27,6 +27,7 @@ import {
   Landmark,
   PiggyBank,
   NotebookPen,
+  FileType,
 } from "lucide-react";
 
 export interface Route {
@@ -314,6 +315,12 @@ export const routesCrm_Admin = [
         icon: FileText,
         label: "Créditos",
         href: "/crm/credito-registros",
+      },
+
+      {
+        icon: FileType,
+        label: "Contrato",
+        href: "/crm/contrato",
       },
     ],
   },

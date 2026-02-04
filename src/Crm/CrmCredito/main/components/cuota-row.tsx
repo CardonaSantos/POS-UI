@@ -1,6 +1,7 @@
 import {
   CreditoCuotaResponse,
   EstadoCuota,
+  EstadoMora,
 } from "@/Crm/features/credito/credito-interfaces";
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,10 @@ export function CuotaRow({ cuota, handleSelectCuota }: Props) {
   const moraTotal =
     cuota.moras?.reduce((sum, m) => sum + Number(m.interes), 0) ?? 0;
 
+  const isAllMoraPagada = cuota.moras.every(
+    (m) => m.estado === EstadoMora.PAGADA,
+  );
+
   return (
     <div
       onClick={() => handleSelectCuota(cuota)}
@@ -93,9 +98,17 @@ export function CuotaRow({ cuota, handleSelectCuota }: Props) {
 
       {/* Mora */}
       <div className="text-right leading-tight">
-        <span className={cn(moraTotal > 0 && "text-red-600 font-medium")}>
+        <span
+          className={cn(
+            moraTotal > 0
+              ? "text-red-600 font-medium"
+              : "text-muted-foreground",
+            isAllMoraPagada && "text-green-600",
+          )}
+        >
           {moraTotal > 0 ? formattMonedaGT(moraTotal) : "—"}
         </span>
+
         {moraDias > 0 && (
           <span className="block text-[10px] text-muted-foreground">
             {moraDias} días

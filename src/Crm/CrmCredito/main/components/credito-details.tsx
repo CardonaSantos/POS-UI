@@ -35,6 +35,14 @@ import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import PagoHistorialItem from "./pago-historial-item";
+import { useGetHtmls } from "@/Crm/CrmHooks/hooks/use-contrato/use-contrato";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface CreditoDetailsProps {
   credito: CreditoResponse;
@@ -128,6 +136,9 @@ export function CreditoDetails({
 
   const handleOpenPayment = () => setOpenPayment(!openPayment);
   const handleConfirmPayment = () => setOpenConfirmPayment(!confirmPayment);
+
+  const { data: htmls } = useGetHtmls();
+  const secureHtmls = htmls ? htmls : [];
 
   const submitPayment = useCreatePagoCuota();
   const submitDeletePayment = useDeletePayment();
@@ -227,13 +238,29 @@ export function CreditoDetails({
             </p>
           </div>
         </div>
-
         <div className="text-right">
           <p className="text-2xl font-bold">
             {formattMonedaGT(credito.montoTotal)}
           </p>
           <p className="text-xs text-muted-foreground">Monto total</p>
         </div>
+        secureHtmls
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">PRINT</Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <div className="">
+              {secureHtmls.map((html) => {
+                return (
+                  <Link to={`/crm/contrato/${credito.id}/${html.plantillaId}`}>
+                    <span>Plantilla: {html.plantillaId}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Progress Bar */}
