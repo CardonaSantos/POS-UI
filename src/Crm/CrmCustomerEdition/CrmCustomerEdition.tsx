@@ -19,13 +19,20 @@ import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { useDeleteCustomer } from "../CrmHooks/hooks/useDeleteCustomer/useDeleteCustomer";
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
-import { CustomerEditFormCard } from "./CustomerEditFormCard";
 import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
 import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
 import { useGetMikroTiks } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
+import { CustomerEditFormCard } from "../CrmNewCustomerEdition";
+import {
+  UpdateCustomerIpAndNetworkDto,
+  useMakeAutorization,
+  useUpdateNetworkCustomer,
+} from "../CrmHooks/hooks/newtwork-update/use-network-settings";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { Input } from "@/components/ui/input";
 
 interface FormData {
   // Datos básicos
@@ -66,13 +73,20 @@ interface ContratoID {
 function EditCustomers() {
   const { customerId } = useParams();
   const id = customerId ? parseInt(customerId) : 0;
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const navigate = useNavigate();
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [password, setPassword] = useState<string>("");
+
+  const [openUpdateNetwork, setOpenUpdateNetwork] = useState<boolean>(false);
+
+  const [openAuthorization, setOpenAuthorization] = useState<boolean>(false);
+
   const [fechaInstalacion, setFechaInstalacion] = useState<Date | null>(
-    new Date()
+    new Date(),
   );
   const [activeTab, setActiveTab] = useState<string>("general");
 
@@ -82,13 +96,12 @@ function EditCustomers() {
   const [mkSelected, setMkSelected] = useState<number | null>(null);
 
   const [serviceWifiSelected, setServiceWifiSelected] = useState<number | null>(
-    null
+    null,
   );
   const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
     number | null
   >(null);
   const [sectorSelected, setSectorSelected] = useState<number | null>(null);
-  // Estados para los campos del formulario
   const [formData, setFormData] = useState<FormData>({
     // Datos básicos
     nombre: "",
@@ -142,7 +155,6 @@ function EditCustomers() {
   const { data: municipios } = useGetMunicipios(depaSelected);
   const updateCustomer = useUpdateCustomer(id);
   const deleteCustomer = useDeleteCustomer(id);
-
   //datos seguros
   const secureSectores = sectores ? sectores : [];
   const secureDepartamentos = departamentos ? departamentos : [];
@@ -151,6 +163,15 @@ function EditCustomers() {
   const secureMikroTiks = mikrotiksResponse ? mikrotiksResponse : [];
   const secureServiciosWifi = serviciosWifi ? serviciosWifi : [];
   const secureZonasFacturacion = zonasFacturacion ? zonasFacturacion : [];
+
+  const isInstalation = customer?.estado === EstadoCliente.EN_INSTALACION;
+
+  const setOpenUpdNet = () => setOpenUpdateNetwork(!openUpdateNetwork);
+
+  const setOpenAuth = () => setOpenAuthorization(!openAuthorization);
+
+  const changePassword = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setPassword(e.target.value);
 
   const secureImages: CustomerImage[] = Array.isArray(customer?.imagenes)
     ? customer!.imagenes.map((img) => ({
@@ -174,7 +195,7 @@ function EditCustomers() {
     (depa) => ({
       value: depa.id,
       label: depa.nombre,
-    })
+    }),
   );
 
   const optionsMunis: OptionSelected[] = secureMunicipios.map((muni) => ({
@@ -191,14 +212,14 @@ function EditCustomers() {
     (service) => ({
       value: service.id,
       label: service.nombre,
-    })
+    }),
   );
 
   const optionsZonasFacturacion: OptionSelected[] = secureZonasFacturacion.map(
     (zona) => ({
       value: zona.id,
       label: `${zona.nombre} Clientes: (${zona.clientesCount}) Facturas:(${zona.facturasCount})`,
-    })
+    }),
   );
 
   const optionsSectores: OptionSelected[] = secureSectores.map((sector) => ({
@@ -222,10 +243,12 @@ function EditCustomers() {
   };
 
   const handleSelectService = (
-    selectedOption: MultiValue<OptionSelected> | null
+    selectedOption: MultiValue<OptionSelected> | null,
   ) => {
     setServiceSelected(
-      selectedOption ? selectedOption.map((option) => Number(option.value)) : []
+      selectedOption
+        ? selectedOption.map((option) => Number(option.value))
+        : [],
     );
   };
 
@@ -235,7 +258,7 @@ function EditCustomers() {
 
   const handleSelectServiceWifi = (selectedOption: OptionSelected | null) => {
     setServiceWifiSelected(
-      selectedOption ? Number(selectedOption.value) : null
+      selectedOption ? Number(selectedOption.value) : null,
     );
   };
 
@@ -244,22 +267,22 @@ function EditCustomers() {
   };
 
   const handleSelectZonaFacturacion = (
-    selectedOption: OptionSelected | null
+    selectedOption: OptionSelected | null,
   ) => {
     setZonasFacturacionSelected(
-      selectedOption ? Number(selectedOption.value) : null
+      selectedOption ? Number(selectedOption.value) : null,
     );
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleChangeDataContrato = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormDataContrato((prevData) => ({
@@ -341,7 +364,7 @@ function EditCustomers() {
             ...prev,
             estado: value,
           }
-        : prev
+        : prev,
     );
   };
 
@@ -407,6 +430,9 @@ function EditCustomers() {
       label: "General",
       content: (
         <CustomerEditFormCard
+          isInstalation={isInstalation}
+          setOpenAuth={setOpenAuth}
+          setOpenUpdNet={setOpenUpdNet}
           mkSelected={mkSelected}
           handleSelectMk={handleSelectMk}
           optionsMikrotiks={optionsMikrotiks}
@@ -461,6 +487,53 @@ function EditCustomers() {
       ),
     },
   ];
+
+  const updateNetworkConfig = useUpdateNetworkCustomer();
+  const authorize = useMakeAutorization(id);
+
+  const onSubmitAuthorization = () => {
+    try {
+      if (!formData.ip) {
+        toast.warning("IP no válida");
+        return;
+      }
+
+      toast.promise(authorize.mutateAsync(), {
+        success: () => {
+          setOpenAuthorization(false);
+          return "IP Autorizada";
+        },
+        loading: "Autorizando...",
+        error: (error) => getApiErrorMessageAxios(error),
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const dto: UpdateCustomerIpAndNetworkDto = {
+    clienteId: id,
+    direccionIp: formData.ip,
+    gateway: formData.gateway,
+    mascara: formData.mascara,
+    userId: userId,
+    password: password,
+    // id: formData.ip,
+  };
+  const onSubmitUpdateConfigNetwork = () => {
+    try {
+      toast.promise(updateNetworkConfig.mutateAsync(dto), {
+        success: () => {
+          setPassword("");
+          return "Actualizado";
+        },
+        error: (error) => getApiErrorMessageAxios(error),
+        loading: "Actualizando...",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <PageTransitionCrm
@@ -517,6 +590,64 @@ function EditCustomers() {
           disabled: deleteCustomer.isPending,
           onClick: () => setOpenDelete(false),
         }}
+      />
+
+      <AdvancedDialogCRM
+        open={openUpdateNetwork}
+        onOpenChange={setOpenUpdateNetwork}
+        title="Actualización de configuración de red"
+        description="Los cambios propuestos modificarán la red del usuario"
+        confirmButton={{
+          label: "Confirmar",
+          onClick: onSubmitUpdateConfigNetwork,
+          disabled: updateNetworkConfig.isPending,
+          loading: updateNetworkConfig.isPending,
+          loadingText: "Actualizando...",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: updateNetworkConfig.isPending,
+          onClick: setOpenUpdNet,
+        }}
+        children={
+          <div>
+            <Input
+              placeholder="Ingrese su contraseña"
+              type="password"
+              value={password}
+              onChange={changePassword}
+            />
+          </div>
+        }
+      />
+
+      <AdvancedDialogCRM
+        open={openAuthorization}
+        onOpenChange={setOpenAuthorization}
+        title="Autorización"
+        description={`Se procederá a autorizar al siguiente IP ${formData?.ip ?? "N/A"}`}
+        confirmButton={{
+          label: "Confirmar",
+          onClick: onSubmitAuthorization,
+          disabled: authorize.isPending,
+          loading: authorize.isPending,
+          loadingText: "Autorizando...",
+        }}
+        cancelButton={{
+          label: "Cancelar",
+          disabled: authorize.isPending,
+          onClick: setOpenAuth,
+        }}
+        children={
+          <div>
+            <Input
+              placeholder="Ingrese su contraseña"
+              type="password"
+              value={password}
+              onChange={changePassword}
+            />
+          </div>
+        }
       />
     </PageTransitionCrm>
   );

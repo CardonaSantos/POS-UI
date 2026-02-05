@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import {
   Card,
@@ -38,10 +37,8 @@ import {
   FileText,
 } from "lucide-react";
 import ReactSelectComponent from "react-select";
-
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
 import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
-
 import type { MultiValue } from "react-select";
 import {
   Departamentos,
@@ -55,7 +52,6 @@ import {
 import DatePicker from "react-datepicker";
 import { Switch } from "@/components/ui/switch";
 import { MikrotikRoutersResponse } from "../features/mikro-tiks/mikrotiks.interfaces";
-
 // ========= Tipos que ya tienes en el padre ========= USAR UNO SOLO
 interface FormData {
   nombre: string;
@@ -95,7 +91,6 @@ export interface CustomerEditFormCardProps {
   formData: FormData;
   formDataContrato: ContratoID;
   fechaInstalacion: Date | null;
-
   // selects actuales
   depaSelected: number | null;
   muniSelected: number | null;
@@ -116,7 +111,6 @@ export interface CustomerEditFormCardProps {
   secureSectores: Sector[];
   secureServiciosWifi: ServiciosInternet[];
   secureZonasFacturacion: FacturacionZona[];
-
   mikrotiks: MikrotikRoutersResponse[];
   optionsMikrotiks: OptionSelected[];
   // handlers de inputs
@@ -136,7 +130,6 @@ export interface CustomerEditFormCardProps {
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
   handleEnviarRecordatorioChange: (checked: boolean) => void;
   handleSelectMk: (selectedOption: OptionSelected | null) => void;
-
   //hanlerss
   handleChangeDataContrato: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

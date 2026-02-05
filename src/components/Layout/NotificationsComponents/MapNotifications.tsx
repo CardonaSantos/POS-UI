@@ -14,7 +14,6 @@ import {
   getActionFor,
 } from "./notification-style";
 import { Link } from "react-router-dom";
-import { formattFechaWithMinutes } from "@/utils/formattFechas";
 
 dayjs.extend(relativeTime);
 dayjs.locale("es");
@@ -38,7 +37,7 @@ function MapNotificationCompact({ notification, onDelete, selectNoti }: Props) {
   );
 
   const action = useMemo(() => getActionFor(notification), [notification]);
-  const recibido = formattFechaWithMinutes(notification.recibidoEn);
+  const recibido = dayjs(notification.fechaCreacion).fromNow();
 
   const mensaje = notification.mensaje.slice(0, 80) + "...";
 

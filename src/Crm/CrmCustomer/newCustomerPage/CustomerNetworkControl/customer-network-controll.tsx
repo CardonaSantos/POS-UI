@@ -28,35 +28,51 @@ interface CustomerNetworkControlProps {
 }
 
 function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
-  console.log("cliente es: ", cliente);
-  const hasMikrotik = !!cliente.mikrotik;
-  const hasIp = !!cliente.IP.direccion;
-
-  const isServiceActive = hasMikrotik && cliente.servicioEstado;
-
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [password, setPassword] = useState<string>("");
   const [openConfirm, setOpenConfirm] = useState(false);
   const suspendCustomer = useMikrotikSuspend(cliente.id);
   const activateCustomer = useMikrotikActivar(cliente.id);
+  // DERIVADOS
+  const estadoMk = cliente.estadoServicioMikrotik;
+  const hasMikrotik = !!cliente.mikrotik;
+  const hasIp = !!cliente.IP?.direccion;
+  const isActivo = estadoMk === "ACTIVO";
+  const isSuspendido = estadoMk === "SUSPENDIDO";
+  const isPendiente = estadoMk === "PENDIENTE_APLICAR";
+  const isError = estadoMk === "ERROR";
+  const isSinMk = estadoMk === "SIN_MIKROTIK";
 
-  const handleSuspender = async () => {
-    const esSuspension = isServiceActive;
+  const getNextAction = (): NextAction => {
+    if (isActivo) return "SUSPENDER";
+    if (isSuspendido) return "ACTIVAR";
+    return null;
+  };
+
+  const nextAction = getNextAction();
+
+  const handleConfirmAction = async () => {
+    if (!nextAction) return;
+
     const dto: suspendCustomerDto = {
       clienteId: cliente.id,
       password,
       userId,
     };
 
-    const action = esSuspension ? suspendCustomer : activateCustomer;
-    const successMessage = esSuspension
-      ? "Cliente suspendido exitosamente"
-      : "Cliente activado exitosamente";
+    const action =
+      nextAction === "SUSPENDER" ? suspendCustomer : activateCustomer;
+
+    const successMessage =
+      nextAction === "SUSPENDER"
+        ? "Cliente suspendido exitosamente"
+        : "Cliente activado exitosamente";
 
     await toast.promise(action.mutateAsync(dto), {
-      loading: esSuspension
-        ? "Suspendiendo servicio..."
-        : "Activando servicio...",
+      loading:
+        nextAction === "SUSPENDER"
+          ? "Suspendiendo servicio..."
+          : "Activando servicio...",
       success: () => {
         setPassword("");
         setOpenConfirm(false);
@@ -67,6 +83,10 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
   };
 
   const handleToggleRequest = () => {
+    if (!nextAction) {
+      toast.error("El estado actual no permite esta acción");
+      return;
+    }
     setOpenConfirm(true);
   };
 
@@ -75,20 +95,46 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
     setPassword("");
   };
 
-  const isSuspension = isServiceActive;
-  const dialogTitle = isSuspension
-    ? "Suspensión de servicio"
-    : "Activación de servicio";
+  const statusLabel = isSinMk
+    ? "Sin Mikrotik asignado"
+    : isPendiente
+      ? "Aplicando cambios"
+      : isError
+        ? "Error de sincronización"
+        : isActivo
+          ? "Servicio activo"
+          : "Servicio suspendido";
 
-  const dialogDescription = isSuspension
-    ? "¿Está seguro de suspender el servicio de este cliente? "
-    : "¿Está seguro de activar el servicio de este cliente?";
+  type NextAction = "SUSPENDER" | "ACTIVAR" | null;
 
-  const switchDisabled =
-    !hasMikrotik ||
-    !hasIp ||
-    suspendCustomer.isPending ||
-    activateCustomer.isPending;
+  const dialogTitle =
+    nextAction === "SUSPENDER"
+      ? "Suspensión de servicio"
+      : nextAction === "ACTIVAR"
+        ? "Activación de servicio"
+        : "";
+  const dialogDescription =
+    nextAction === "SUSPENDER"
+      ? "¿Está seguro de suspender el servicio de este cliente?"
+      : nextAction === "ACTIVAR"
+        ? "¿Está seguro de activar el servicio de este cliente?"
+        : "";
+  const loadingText =
+    nextAction === "SUSPENDER"
+      ? "Suspendiendo servicio..."
+      : "Activando servicio...";
+
+  const statusIcon = !hasMikrotik ? (
+    <Router className="h-4 w-4 text-muted-foreground" />
+  ) : isPendiente ? (
+    <Power className="h-4 w-4 text-muted-foreground animate-pulse" />
+  ) : isError ? (
+    <PowerOff className="h-4 w-4 text-orange-500" />
+  ) : isActivo ? (
+    <Power className="h-4 w-4 text-emerald-500" />
+  ) : (
+    <PowerOff className="h-4 w-4 text-destructive" />
+  );
 
   return (
     <div className="space-y-4">
@@ -100,34 +146,20 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
             <div className="flex items-center justify-between gap-2">
               <div className="space-y-1">
                 <Label className="flex items-center gap-2 text-sm font-medium">
-                  {!hasMikrotik
-                    ? "Sin Mikrotik asignado"
-                    : isServiceActive
-                    ? "Servicio activo"
-                    : "Servicio suspendido"}
-
-                  {!hasMikrotik ? (
-                    <Router className="h-4 w-4 text-muted-foreground" />
-                  ) : isServiceActive ? (
-                    <Power className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    <PowerOff className="h-4 w-4 text-destructive" />
-                  )}
+                  {statusIcon}
+                  {statusLabel}
                 </Label>
-
-                <p className="text-xs text-muted-foreground">
-                  {!hasMikrotik
-                    ? "Asigne un Mikrotik para controlar el servicio."
-                    : !hasIp
-                    ? "Asigne una IP al cliente para poder suspender/activar."
-                    : isServiceActive
-                    ? "Suspender el servicio"
-                    : "Activar el servicio"}
-                </p>
               </div>
               <Switch
-                disabled={switchDisabled}
-                checked={isServiceActive} // SOLO servidor
+                disabled={
+                  !hasMikrotik ||
+                  !hasIp ||
+                  isPendiente ||
+                  isError ||
+                  suspendCustomer.isPending ||
+                  activateCustomer.isPending
+                }
+                checked={isActivo}
                 onCheckedChange={handleToggleRequest}
               />
             </div>
@@ -193,13 +225,12 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
         description={dialogDescription}
         confirmButton={{
           label: "Sí, continuar",
-          onClick: handleSuspender,
-          loadingText: isSuspension ? "Suspendiendo..." : "Activando...",
+          onClick: handleConfirmAction,
+          loadingText,
         }}
         cancelButton={{
           label: "Cancelar",
           onClick: handleCancel,
-          loadingText: isSuspension ? "Suspendiendo..." : "Activando...",
         }}
       >
         <div className="space-y-2">

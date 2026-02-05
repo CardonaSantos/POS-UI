@@ -1,28 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-// import {
-//   Carousel,
-//   CarouselContent,
-//   CarouselItem,
-//   CarouselNext,
-//   CarouselPrevious,
-// } from "@/components/ui/carousel";
+
 import {
   Map,
   AdvancedMarker,
   useMap,
   InfoWindow,
 } from "@vis.gl/react-google-maps";
-import {
-  // Home,
-  // ImageIcon,
-  MapPin,
-  Phone,
-  // User,
-  // UserIcon,
-  UserRound,
-} from "lucide-react";
+import { MapPin, Phone, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Ubicacion {
@@ -108,7 +94,7 @@ const Maps = ({ clientes }: PropsClientes) => {
         } else {
           console.error("Error en DirectionsService:", status);
         }
-      }
+      },
     );
 
     return () => renderer.setMap(null);
@@ -116,7 +102,7 @@ const Maps = ({ clientes }: PropsClientes) => {
 
   const CustomMarker = ({ cliente }: { cliente: Cliente }) => {
     const todasPagadas = cliente.facturas.every(
-      (factura) => factura.estadoFactura === "PAGADA"
+      (factura) => factura.estadoFactura === "PAGADA",
     );
 
     return (

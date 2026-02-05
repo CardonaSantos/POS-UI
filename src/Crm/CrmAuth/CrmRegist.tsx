@@ -27,23 +27,18 @@ import { useRegister } from "../CrmHooks/hooks/use-auth/useAuth";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 
 export default function CrmRegist() {
-  // 1. ESTADO DEL FORMULARIO
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
     contrasena: "",
     rol: RolUsuario.TECNICO,
-    empresaId: 1, // Valor por defecto según tu lógica
+    empresaId: 1,
   });
 
-  // 2. ESTADO VISUAL (Contraseña)
   const [showPassword, setShowPassword] = useState(false);
 
-  // 3. HOOK DE MUTACIÓN
-  // Inicializamos el hook. La data real la pasaremos en el .mutate()
   const { mutate, isPending } = useRegister(formData);
 
-  // HANDLERS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -60,25 +55,21 @@ export default function CrmRegist() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 4. SANITIZACIÓN DE DATOS (CRÍTICO PARA DB LIMPIA)
     const cleanData = {
       ...formData,
-      nombre: formData.nombre.trim(), // Quitamos espacios accidentales al inicio/final
-      correo: formData.correo.toLowerCase().trim(), // Normalizamos el correo
+      nombre: formData.nombre.trim(),
+      correo: formData.correo.toLowerCase().trim(),
     };
 
-    // 5. EJECUCIÓN CON HOOK
     mutate(cleanData, {
       onSuccess: (response: any) => {
         console.log("Registro exitoso:", response);
         toast.success("Usuario Registrado Correctamente");
 
-        // Manejo de sesión automática tras registro (si tu backend lo devuelve)
         if (response?.access_token) {
           localStorage.setItem("tokenAuthCRM", response.access_token);
           window.location.href = "/crm";
         } else {
-          // Si el backend no loguea automáticamente, redirigir al login
           window.location.href = "/auth/login";
         }
       },
