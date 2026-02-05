@@ -4,10 +4,12 @@ import {
   AlertCircle,
   Banknote,
   Calendar,
+  ChevronDown,
   CreditCard,
   FileText,
   Hash,
   Percent,
+  Printer,
   User,
   Wallet,
 } from "lucide-react";
@@ -211,8 +213,6 @@ export function CreditoDetails({
     }
   };
 
-  console.log("credito cuota es: ", creditoCuota);
-
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -244,20 +244,50 @@ export function CreditoDetails({
           </p>
           <p className="text-xs text-muted-foreground">Monto total</p>
         </div>
-        secureHtmls
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline">PRINT</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 shadow-sm hover:bg-primary/5"
+            >
+              <FileText className="h-4 w-4 " />
+              <span>Documentos</span>
+              <ChevronDown className="h-3 w-3 opacity-50" />
+            </Button>
           </PopoverTrigger>
-          <PopoverContent>
-            <div className="">
-              {secureHtmls.map((html) => {
-                return (
-                  <Link to={`/crm/contrato/${credito.id}/${html.plantillaId}`}>
-                    <span>Plantilla: {html.plantillaId}</span>
+
+          <PopoverContent align="end" className="w-56 p-1">
+            <div className="flex flex-col">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Seleccionar Plantilla
+              </div>
+
+              {Array.isArray(secureHtmls) && secureHtmls.length > 0 ? (
+                secureHtmls.map((html) => (
+                  <Link
+                    key={html.id}
+                    to={`/crm/contrato/${credito.id}/${html.id}`}
+                    className="flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors group"
+                  >
+                    <div className="h-7 w-7 rounded border bg-muted flex items-center justify-center group-hover:bg-background">
+                      <Printer className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium leading-none">
+                        {html.nombre}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground mt-1">
+                        Versión {html.version || "1.0"}
+                      </span>
+                    </div>
                   </Link>
-                );
-              })}
+                ))
+              ) : (
+                <div className="p-4 text-center text-xs text-muted-foreground italic">
+                  No hay plantillas disponibles
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>

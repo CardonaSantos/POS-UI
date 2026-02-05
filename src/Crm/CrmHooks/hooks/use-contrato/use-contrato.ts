@@ -17,6 +17,17 @@ export interface HtmlContent {
   html: string;
 }
 
+export interface PlantillaesLegales {
+  id: number;
+  tipo: TipoPlantillaLegal;
+  nombre: string;
+  contenido: string;
+  version: string;
+  activa: boolean;
+  creatoEn: string;
+  actualizadoEn: string;
+}
+
 export function useCreatePlantillaLegal() {
   const queryClient = useQueryClient();
 
@@ -51,10 +62,10 @@ export function useGetContratos() {
   );
 }
 
-export function useGetHtml() {
+export function useGetHtml(plantillaId: number, creditoId: number) {
   return useCrmQuery<HtmlContent>(
     PlantillaQkeys.all,
-    `plantillas-legales/creditoId/:plantillaId`,
+    `plantillas-legales/${creditoId}/${plantillaId}`,
     undefined,
     {
       refetchOnMount: "always",
@@ -65,7 +76,7 @@ export function useGetHtml() {
 }
 
 export function useGetHtmls() {
-  return useCrmQuery<Array<HtmlContent>>(
+  return useCrmQuery<Array<PlantillaesLegales>>(
     PlantillaQkeys.all,
     `plantillas-legales`,
     undefined,

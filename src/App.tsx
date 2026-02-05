@@ -107,6 +107,7 @@ import CrmCreditoMainPage from "./Crm/CrmCredito/create/page";
 import { CreditosMainPage } from "@/Crm/CrmCredito/main/page";
 import CreditoDetails from "./Crm/CrmCredito/credito/page";
 import ContratoBuilder from "./Crm/CrmCredito/contrato/page";
+import PrinteablePlantilla from "./Crm/CrmCredito/contrato/printeable";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -924,6 +925,15 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <CreditoDetails />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/contrato/:creditoId/:plantillaId"
+              element={
+                <ProtectRouteCrmUser>
+                  <PrinteablePlantilla />
                 </ProtectRouteCrmUser>
               }
             />

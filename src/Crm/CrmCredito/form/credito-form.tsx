@@ -50,7 +50,7 @@ interface CreditoFormProps {
   submitCreditoIsPending: boolean;
   setOpenConfirSubmit: Dispatch<SetStateAction<boolean>>;
   openConfirSubmit: boolean;
-
+  handleClienteChange: (nuevoId: number | undefined) => void;
   isButtonAvaliable: boolean;
   clientes: {
     value: number;
@@ -74,6 +74,7 @@ export function CreditoForm({
   setOpenConfirSubmit,
   openConfirSubmit,
   submitCreditoIsPending,
+  handleClienteChange,
 }: CreditoFormProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -112,26 +113,13 @@ export function CreditoForm({
                   <FormControl>
                     <ReactSelectComponent
                       options={clientes}
-                      // Buscamos el objeto completo basado en el ID actual del form para mostrarlo seleccionado
+                      className="text-black text-sm"
+                      // Buscamos el objeto completo para mostrarlo seleccionado
                       value={clientes.find((c) => c.value === field.value)}
-                      // Al cambiar, extraemos solo el ID (value) o undefined si se limpia
-                      onChange={(option) => field.onChange(option?.value)}
+                      onChange={(option) => handleClienteChange(option?.value)}
                       placeholder="Buscar cliente..."
                       isClearable
                       isSearchable
-                      className="text-sm text-black"
-                      styles={{
-                        control: (base) => ({
-                          ...base,
-                          borderColor: "hsl(var(--input))",
-                          borderRadius: "calc(var(--radius) - 2px)",
-                          minHeight: "38px", // Similar al input de Shadcn
-                          boxShadow: "none",
-                          ":hover": {
-                            borderColor: "hsl(var(--ring))",
-                          },
-                        }),
-                      }}
                     />
                   </FormControl>
                   <FormMessage />

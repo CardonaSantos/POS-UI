@@ -11,6 +11,7 @@ import {
   Wifi,
   Package,
   Tag,
+  CreditCard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,6 +25,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 // Define la interfaz completa para los datos del cliente
 
@@ -47,10 +50,22 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
         {/* Información Personal & Contacto de Referencia */}
         <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-              <User className="h-4 w-4 mr-2 text-primary dark:text-white" />
-              Información Personal & Contacto de Referencia
-            </CardTitle>
+            {/* Usamos flex justify-between para separar título y botón */}
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
+                <User className="h-4 w-4 mr-2 text-primary dark:text-white" />
+                Información Personal
+              </CardTitle>
+
+              {/* BOTÓN DE VERIFICACIÓN */}
+              <Link to={`/crm/credito?clienteId=${cliente.id}`}>
+                <Button size="sm" variant="outline" className="h-8 gap-2 ">
+                  <CreditCard className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Verificar Crédito</span>
+                  <span className="sm:hidden">Verificar</span>
+                </Button>
+              </Link>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div className="grid gap-2">
@@ -168,10 +183,6 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
                 </dd>
               </div>
               <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Building className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Empresa:
-                </dt>
                 <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
                   {cliente.empresa?.nombre || "No especificada"}
                 </dd>

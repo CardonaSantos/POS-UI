@@ -21,6 +21,9 @@ import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { useState } from "react";
 import { toDecimal } from "@/Crm/_Utils/toDecimal";
 
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+
 export const initialVerifyCustomerResponse: VerifyCustomerResponseUI = {
   historial: [],
   resumen: {
@@ -34,6 +37,10 @@ export const initialVerifyCustomerResponse: VerifyCustomerResponseUI = {
 };
 
 function CrmCreditoMainPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const clienteIdFromUrl = searchParams.get("clienteId");
+
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const { data: clientes } = useGetCustomerToSelect();
   const { data: users } = useGetUsersToSelect();
@@ -47,7 +54,7 @@ function CrmCreditoMainPage() {
   const form = useForm<CreditoFormValues>({
     resolver: zodResolver(creditoFormSchema),
     defaultValues: {
-      clienteId: undefined,
+      clienteId: clienteIdFromUrl ? parseInt(clienteIdFromUrl) : 0,
       creadoPorId: userId,
       montoCapital: "",
       interesPorcentaje: "",
@@ -68,8 +75,18 @@ function CrmCreditoMainPage() {
 
   const handleOpenSubmit = () => setOpenConfirSubmit(!openConfirSubmit);
 
-  const clienteId = form.watch("clienteId");
-  const { data, refetch } = useVerifyCustomer(clienteId);
+  const clienteIdForm = form.watch("clienteId");
+
+  useEffect(() => {
+    if (clienteIdFromUrl) {
+      const idNumerico = Number(clienteIdFromUrl);
+      if (form.getValues("clienteId") !== idNumerico) {
+        form.setValue("clienteId", idNumerico);
+      }
+    }
+  }, [clienteIdFromUrl, form]);
+
+  const { data, refetch } = useVerifyCustomer(clienteIdForm);
 
   const handleSubmit = (data: CreditoFormValues) => {
     try {
@@ -175,6 +192,29 @@ function CrmCreditoMainPage() {
     ? data
     : initialVerifyCustomerResponse;
 
+  const handleClienteChange = (nuevoId: number | undefined) => {
+    const idSeguro = nuevoId ?? 0;
+    form.setValue("clienteId", idSeguro, { shouldValidate: true });
+
+    setSearchParams((prevParams) => {
+      const newParams = new URLSearchParams(prevParams);
+
+      if (nuevoId) {
+        newParams.set("clienteId", String(nuevoId));
+      } else {
+        newParams.delete("clienteId");
+      }
+
+      return newParams;
+    });
+  };
+
+  useEffect(() => {
+    if (clienteIdForm) {
+      handleSubmitVerifyCustomer();
+    }
+  }, [clienteIdForm]);
+
   console.log(form.getValues());
 
   return (
@@ -185,6 +225,7 @@ function CrmCreditoMainPage() {
     >
       <div className="">
         <CreditoForm
+          handleClienteChange={handleClienteChange}
           submitCreditoIsPending={submitCredito.isPending}
           setOpenConfirSubmit={setOpenConfirSubmit}
           openConfirSubmit={openConfirSubmit}

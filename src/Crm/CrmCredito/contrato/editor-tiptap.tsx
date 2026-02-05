@@ -41,6 +41,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 
 interface TiptapEditorProps {
   content?: string;
@@ -49,6 +50,7 @@ interface TiptapEditorProps {
   placeholder?: string;
   className?: string;
   editable?: boolean;
+  isPending: boolean;
 }
 
 export function TiptapEditor({
@@ -58,8 +60,13 @@ export function TiptapEditor({
   placeholder = "Escribe algo...",
   className,
   editable = true,
+  isPending,
 }: TiptapEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
+
+  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+
+  const handleClose = () => setOpenConfirm(!openConfirm);
 
   const editor = useEditor({
     extensions: [
@@ -123,10 +130,12 @@ export function TiptapEditor({
     setLinkUrl("");
   }, [editor, linkUrl]);
 
-  const handleSave = () => {
-    if (editor && onSave) {
-      onSave(editor.getHTML());
-    }
+  const handleSave = async () => {
+    if (!editor || !onSave) return;
+    await onSave(editor.getHTML());
+    editor.commands.setContent("<p></p>");
+
+    handleClose();
   };
 
   if (!editor) {
@@ -379,7 +388,7 @@ export function TiptapEditor({
         {onSave && (
           <>
             <Separator orientation="vertical" className="h-6" />
-            <Button onClick={handleSave} size="sm" variant="default">
+            <Button onClick={handleClose} size="sm" variant="default">
               Guardar
             </Button>
           </>
@@ -388,6 +397,27 @@ export function TiptapEditor({
 
       {/* Editor Content */}
       <EditorContent editor={editor} className="min-h-[200px]" />
+
+      <AdvancedDialogCRM
+        open={openConfirm}
+        onOpenChange={setOpenConfirm}
+        title="Confirmar nueva plantilla legal"
+        description="Asegúrate de que el nombre, la versión y las variables sean correctos. Esta acción no se puede deshacer.
+        "
+        confirmButton={{
+          label: "Registrar plantilla",
+          disabled: isPending,
+          loading: isPending,
+          loadingText: "Guardando...",
+          onClick: handleSave,
+        }}
+        cancelButton={{
+          onClick: handleClose,
+          label: "Revisar de nuevo",
+          disabled: isPending,
+          variant: "outline",
+        }}
+      />
     </div>
   );
 }
