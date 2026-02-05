@@ -20,7 +20,7 @@ export function LocationTab({ cliente }: LocationTabProps) {
     if (cliente.ubicacion) {
       window.open(
         `https://www.google.com/maps/search/?api=1&query=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`,
-        "_blank"
+        "_blank",
       );
     }
   };
@@ -29,7 +29,7 @@ export function LocationTab({ cliente }: LocationTabProps) {
     if (cliente.ubicacion) {
       window.open(
         `https://www.google.com/maps/dir/?api=1&destination=${cliente.ubicacion.latitud},${cliente.ubicacion.longitud}`,
-        "_blank"
+        "_blank",
       );
     }
   };
@@ -60,7 +60,7 @@ export function LocationTab({ cliente }: LocationTabProps) {
               overflow-hidden
               rounded-md
               border border-gray-200 dark:border-gray-700
-              h-[220px] sm:h-[260px]    /* 👈 ALTURA AJUSTADA */
+              h-[220px] sm:h-[260px]   
             "
             >
               <iframe

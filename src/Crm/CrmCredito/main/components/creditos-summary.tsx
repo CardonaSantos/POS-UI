@@ -75,12 +75,7 @@ export function CreditosSummary({ creditos }: CreditosSummaryProps) {
   const montoPendiente = montoTotal - montoPagado;
 
   const cuotasPendientes = creditos.reduce((acc, c) => {
-    return (
-      acc +
-      c.cuotas.filter(
-        (cuota) => cuota.estado !== "PAGADA" && cuota.estado !== "CANCELADA",
-      ).length
-    );
+    return acc + c.cuotas.filter((cuota) => cuota.estado !== "PAGADA").length;
   }, 0);
 
   const cuotasPagadas = creditos.reduce((acc, c) => {

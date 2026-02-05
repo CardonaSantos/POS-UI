@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare, Smartphone } from "lucide-react";
+import { CalendarIcon, MessageSquare, Smartphone } from "lucide-react";
 import ReactSelectComponent from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -29,117 +29,123 @@ export function StatusBillingSection({
   onSelectZonaFacturacion,
   onChangeFechaInstalacion,
 }: StatusBillingSectionProps) {
+  const compactSelectStyles = {
+    control: (base: any) => ({
+      ...base,
+      minHeight: "32px",
+      fontSize: "12px",
+      borderRadius: "var(--radius)",
+      borderColor: "hsl(var(--input))",
+      boxShadow: "none",
+      "&:hover": { borderColor: "hsl(var(--ring))" },
+    }),
+    valueContainer: (base: any) => ({ ...base, padding: "0 8px" }),
+    input: (base: any) => ({ ...base, margin: 0, padding: 0 }),
+    indicatorsContainer: (base: any) => ({ ...base, height: "30px" }),
+  };
+
   return (
-    <section
-      aria-labelledby="section-estado-notificaciones"
-      className="space-y-4"
-    >
+    <section aria-labelledby="section-estado" className="space-y-4">
+      {/* HEADER */}
       <h3
-        id="section-estado-notificaciones"
-        className="font-medium flex items-center gap-2 text-sm"
+        id="section-estado"
+        className="font-medium flex items-center gap-2 text-sm border-b pb-2"
       >
-        <MessageSquare className="h-4 w-4 text-primary dark:text-white" />
-        Estado, notificaciones y facturación
+        <MessageSquare className="h-4 w-4 " />
+        Estado, Notificaciones y Facturación
       </h3>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-sm">
-        {/* Estado + WhatsApp */}
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="estadoCliente" className="font-medium">
-              Estado del cliente
-            </Label>
-            <Select
-              value={formData.estado}
-              onValueChange={(val) =>
-                onSelectEstadoCliente(val as EstadoCliente)
-              }
-            >
-              <SelectTrigger id="estadoCliente" className="w-full">
-                <SelectValue placeholder="Selecciona un estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Estados disponibles</SelectLabel>
-                  <SelectItem value={EstadoCliente.ACTIVO}>ACTIVO</SelectItem>
-                  <SelectItem value={EstadoCliente.ATRASADO}>
-                    ATRASADO
+      {/* GRID PRINCIPAL */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* 1. Estado del Cliente */}
+        <div className="space-y-1">
+          <Label htmlFor="estadoCliente" className="text-xs">
+            Estado del cliente
+          </Label>
+          <Select
+            value={formData.estado}
+            onValueChange={(val) => onSelectEstadoCliente(val as EstadoCliente)}
+          >
+            <SelectTrigger id="estadoCliente" className="w-full h-8 text-xs">
+              <SelectValue placeholder="Seleccionar..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel className="text-xs">Estados</SelectLabel>
+                {Object.values(EstadoCliente).map((estado) => (
+                  <SelectItem key={estado} value={estado} className="text-xs">
+                    {estado.replace(/_/g, " ")}
                   </SelectItem>
-                  <SelectItem value={EstadoCliente.DESINSTALADO}>
-                    DESINSTALADO
-                  </SelectItem>
-                  <SelectItem value={EstadoCliente.EN_INSTALACION}>
-                    EN INSTALACIÓN
-                  </SelectItem>
-                  <SelectItem value={EstadoCliente.MOROSO}>MOROSO</SelectItem>
-                  <SelectItem value={EstadoCliente.PAGO_PENDIENTE}>
-                    PAGO PENDIENTE
-                  </SelectItem>
-                  <SelectItem value={EstadoCliente.PENDIENTE_ACTIVO}>
-                    PENDIENTE ACTIVO
-                  </SelectItem>
-                  <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                    SUSPENDIDO
-                  </SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Toggle WhatsApp */}
-          <div className="flex items-center justify-between rounded-md border px-3 py-2">
-            <Label
-              htmlFor="whatsapp"
-              className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm"
-            >
-              Notificar cobro por WhatsApp
-              <Smartphone className="w-4 h-4" />
-            </Label>
-            <Switch
-              id="whatsapp"
-              checked={formData.enviarRecordatorio}
-              onCheckedChange={onEnviarRecordatorioChange}
-            />
-          </div>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Zona facturación */}
-        <div className="space-y-2">
-          <Label htmlFor="zonasFacturacion-all">
-            Zonas de Facturación <span className="text-destructive">*</span>
+        {/* 2. Zona de Facturación */}
+        <div className="space-y-1">
+          <Label htmlFor="zonasFacturacion-all" className="text-xs">
+            Zona de Facturación <span className="text-destructive">*</span>
           </Label>
           <ReactSelectComponent
             options={optionsZonasFacturacion}
             onChange={onSelectZonaFacturacion}
             value={
-              zonasFacturacionSelected !== null
+              zonasFacturacionSelected
                 ? {
                     value: zonasFacturacionSelected,
                     label:
                       secureZonasFacturacion.find(
-                        (s) => s.id === zonasFacturacionSelected
+                        (s) => s.id === zonasFacturacionSelected,
                       )?.nombre || "",
                   }
                 : null
             }
-            className="text-sm text-black"
+            className="text-xs"
+            placeholder="Seleccionar zona..."
+            styles={compactSelectStyles}
           />
         </div>
 
-        {/* Fecha instalación */}
-        <div className="space-y-2">
-          <Label htmlFor="fechaInstalacion-all" className="font-medium">
+        {/* 3. Fecha Instalación */}
+        <div className="space-y-1">
+          <Label
+            htmlFor="fechaInstalacion-all"
+            className="text-xs flex items-center gap-1"
+          >
             Fecha Instalación
           </Label>
-          <DatePicker
-            className="w-full p-2 rounded-md border border-input bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            selected={fechaInstalacion}
-            onChange={(date) => onChangeFechaInstalacion(date)}
-            showTimeSelect
-            dateFormat="Pp"
-            aria-label="Fecha de instalación"
-            id="fechaInstalacion-all"
-          />
+          <div className="relative">
+            <DatePicker
+              id="fechaInstalacion-all"
+              selected={fechaInstalacion}
+              onChange={(date) => onChangeFechaInstalacion(date)}
+              showTimeSelect
+              dateFormat="Pp"
+              className="w-full h-8 px-3 py-1 rounded-md border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              wrapperClassName="w-full"
+            />
+            <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 opacity-50 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* 4. Toggle WhatsApp (Con diseño de tarjeta compacta) */}
+        <div className="flex items-end">
+          <div className="w-full h-8 flex items-center justify-between rounded-md border px-3 bg-card">
+            <Label
+              htmlFor="whatsapp"
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              Notificar por WhatsApp
+            </Label>
+            <Switch
+              id="whatsapp"
+              checked={formData.enviarRecordatorio}
+              onCheckedChange={onEnviarRecordatorioChange}
+              className="scale-75 origin-right" // Hacemos el switch un poco más pequeño para que quepa bien en h-8
+            />
+          </div>
         </div>
       </div>
     </section>

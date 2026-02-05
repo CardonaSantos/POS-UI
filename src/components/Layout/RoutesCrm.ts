@@ -25,7 +25,6 @@ import {
   Bot,
   BotMessageSquare,
   Landmark,
-  PiggyBank,
   NotebookPen,
   FileType,
 } from "lucide-react";

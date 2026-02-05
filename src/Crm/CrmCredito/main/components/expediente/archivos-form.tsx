@@ -14,11 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  type ArchivoItem,
-  TipoArchivoCliente,
-  TipoArchivoClienteArray,
-} from "./expedientes-types";
+import { type ArchivoItem, TipoArchivoClienteArray } from "./expedientes-types";
+import { TipoArchivoCliente } from "@/Crm/features/credito/credito-interfaces";
 
 interface ArchivosFormProps {
   archivos: ArchivoItem[];
