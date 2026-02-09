@@ -1,5 +1,3 @@
-// ======================================================
-// ROOT: ClienteDetailsDto
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
 import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
 import { MikrotikRoutersResponse } from "../mikro-tiks/mikrotiks.interfaces";
