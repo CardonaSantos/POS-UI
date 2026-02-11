@@ -41,7 +41,7 @@ const CustomersTable = ({ table }: Props) => {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="px-3 py-2.5 text-sm text-gray-700"
+                    className="px-2 py-1 text-sm text-gray-700 border-b border-gray-100"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

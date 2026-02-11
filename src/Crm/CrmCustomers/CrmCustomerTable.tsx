@@ -1,6 +1,6 @@
 "use client";
 import { useDebounce } from "use-debounce";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -18,14 +18,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import {
+  Archive,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Option,
+  Search,
+  Settings2,
+  Sheet,
+  Trash2,
+  X,
+} from "lucide-react";
 import { ClienteTableDto } from "./CustomerTable";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import ReactSelectComponent from "react-select";
-import { Label } from "@/components/ui/label";
 import { useWindowScrollPosition } from "../Utils/useWindow";
 import { ClientTableSkeleton } from "./SkeletonTable";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
@@ -40,6 +50,14 @@ import {
 import CustomersTable from "./components/map-table";
 import { ColumnToggle } from "./components/column-toggle";
 import { clienteTableColumns } from "./components/columns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -243,6 +261,7 @@ export default function ClientesTable() {
       sorting,
       columnVisibility,
     },
+    getRowId: (row) => row.id.toString(),
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -250,7 +269,36 @@ export default function ClientesTable() {
     onColumnVisibilityChange: setColumnVisibility,
   });
 
-  console.log("Los clientes son: ", clientes);
+  const compactSelectStyles = {
+    control: (base: any) => ({
+      ...base,
+      minHeight: "32px", // Altura reducida
+      height: "32px",
+      fontSize: "0.75rem", // text-xs
+    }),
+    valueContainer: (base: any) => ({
+      ...base,
+      padding: "0 8px",
+      height: "30px",
+    }),
+    input: (base: any) => ({
+      ...base,
+      margin: 0,
+      padding: 0,
+    }),
+    indicatorsContainer: (base: any) => ({
+      ...base,
+      height: "30px",
+    }),
+  };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const selectedIds = Object.keys(table.getState().rowSelection);
+
+  console.log("Los ids de los clientes seleccionados son: ", selectedIds);
 
   return (
     <PageTransitionCrm
@@ -261,186 +309,153 @@ export default function ClientesTable() {
       <Card className="border border-gray-200">
         <CardContent className="p-4">
           {/* Campo de Búsqueda */}
-          <div className="relative mb-3">
+          <div className="relative w-full max-w-sm pb-1">
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Search className="h-3.5 w-3.5 text-gray-400" />
+            </div>
+            <Input
+              ref={inputRef}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              type="text"
+              placeholder="Buscar (Nombre, Tel, DPI, IP)..."
+              className="h-6 w-full pl-8 pr-8 text-xs  "
+            />
+            {/* 2. Botón Limpiar (A la derecha, solo si hay texto) */}
             {search && (
               <button
                 onClick={() => {
                   setSearch("");
                   inputRef.current?.focus();
                 }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                 type="button"
-                aria-label="Limpiar búsqueda"
+                aria-label="Limpiar"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3" />
               </button>
             )}
-
-            <Input
-              ref={inputRef}
-              type="text"
-              placeholder="Buscar por Nombre, Teléfono, Dirección, DPI o IP..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`text-xs border-gray-200 transition-all ${
-                search ? "pl-8 pr-2" : "px-2"
-              }`}
-            />
           </div>
 
-          {/* Controles de filtrado */}
-          <div className="mb-3">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between p-2 rounded-lg border border-gray-100 ">
+            {/* Controles de filtrado */}
+            <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5 xl:w-auto xl:flex-1">
               {/* Departamento */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="departamentoId-all"
-                  className="text-xs text-gray-700 dark:text-white"
-                >
-                  Departamento
-                </Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un departamento"
-                  isClearable
-                  options={optionsDepartamentos}
-                  value={
-                    depaSelected
-                      ? {
-                          value: depaSelected,
-                          label:
-                            departamentos.find(
-                              (depa) => depa.id.toString() === depaSelected,
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  onChange={handleSelectDepartamento}
-                  className="text-xs text-black"
-                />
-              </div>
+              <ReactSelectComponent
+                placeholder="Departamento"
+                isClearable
+                options={optionsDepartamentos}
+                styles={compactSelectStyles} // Aplicamos estilo compacto
+                value={
+                  depaSelected
+                    ? {
+                        value: depaSelected,
+                        label:
+                          departamentos.find(
+                            (d) => d.id.toString() === depaSelected,
+                          )?.nombre || "",
+                      }
+                    : null
+                }
+                onChange={handleSelectDepartamento}
+                className="text-xs text-black min-w-[140px]"
+              />
 
               {/* Municipio */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="municipioId-all"
-                  className="text-xs text-gray-700 dark:text-white"
-                >
-                  Municipio
-                </Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un municipio"
-                  isClearable
-                  options={optionsMunicipios}
-                  onChange={handleSelectMunicipio}
-                  value={
-                    muniSelected
-                      ? {
-                          value: muniSelected,
-                          label:
-                            municipios.find(
-                              (muni) => muni.id.toString() === muniSelected,
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  className="text-xs text-black"
-                />
-              </div>
+              <ReactSelectComponent
+                placeholder="Municipio"
+                isClearable
+                options={optionsMunicipios}
+                styles={compactSelectStyles}
+                onChange={handleSelectMunicipio}
+                value={
+                  muniSelected
+                    ? {
+                        value: muniSelected,
+                        label:
+                          municipios.find(
+                            (m) => m.id.toString() === muniSelected,
+                          )?.nombre || "",
+                      }
+                    : null
+                }
+                className="text-xs text-black min-w-[140px]"
+              />
 
               {/* Sector */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="sectorId-all"
-                  className="text-xs text-gray-700 dark:text-white"
-                >
-                  Sector
-                </Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un sector"
-                  isClearable
-                  options={optionsSectores}
-                  onChange={handleSelectSector}
-                  value={
-                    sectorSelected
-                      ? {
-                          value: sectorSelected,
-                          label:
-                            sectores.find(
-                              (muni) => muni.id.toString() === sectorSelected,
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                  className="text-xs text-black"
-                />
-              </div>
+              <ReactSelectComponent
+                placeholder="Sector"
+                isClearable
+                options={optionsSectores}
+                styles={compactSelectStyles}
+                onChange={handleSelectSector}
+                value={
+                  sectorSelected
+                    ? {
+                        value: sectorSelected,
+                        label:
+                          sectores.find(
+                            (s) => s.id.toString() === sectorSelected,
+                          )?.nombre || "",
+                      }
+                    : null
+                }
+                className="text-xs text-black min-w-[140px]"
+              />
 
-              {/* Estado cliente */}
-              <div className="space-y-1">
-                <Label
-                  htmlFor="estadoId-all"
-                  className="text-xs text-gray-700 dark:text-white"
-                >
-                  Estado
-                </Label>
-                <ReactSelectComponent
-                  placeholder="Seleccione un estado"
-                  options={estadosConDescripcion}
-                  onChange={handleSelectEstado}
-                  value={
-                    estadosConDescripcion.find(
-                      (opt) => opt.value === estadoSelected,
-                    ) || null
-                  }
-                  isClearable
-                  className="text-xs text-black"
-                />
-              </div>
+              {/* Estado */}
+              <ReactSelectComponent
+                placeholder="Estado"
+                options={estadosConDescripcion}
+                styles={compactSelectStyles}
+                onChange={handleSelectEstado}
+                value={
+                  estadosConDescripcion.find(
+                    (opt) => opt.value === estadoSelected,
+                  ) || null
+                }
+                isClearable
+                className="text-xs text-black min-w-[120px]"
+              />
 
-              {/* Zona de Facturación */}
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-700 dark:text-white">
-                  Zona de Facturación
-                </Label>
-                <ReactSelectComponent
-                  isClearable
-                  placeholder="Zona de facturación"
-                  className="text-xs text-black"
-                  options={optionsZonasFacturacion}
-                  onChange={handleSelectZonaFacturacion}
-                  value={
-                    zonaFactSelected
-                      ? {
-                          value: zonaFactSelected,
-                          label:
-                            zonasFacturacion.find(
-                              (s) => s.id.toString() === zonaFactSelected,
-                            )?.nombre || "",
-                        }
-                      : null
-                  }
-                />
-              </div>
+              {/* Zona Facturación */}
+              <ReactSelectComponent
+                isClearable
+                placeholder="Zona Fact."
+                styles={compactSelectStyles}
+                className="text-xs text-black min-w-[120px]"
+                options={optionsZonasFacturacion}
+                onChange={handleSelectZonaFacturacion}
+                value={
+                  zonaFactSelected
+                    ? {
+                        value: zonaFactSelected,
+                        label:
+                          zonasFacturacion.find(
+                            (z) => z.id.toString() === zonaFactSelected,
+                          )?.nombre || "",
+                      }
+                    : null
+                }
+              />
+            </div>
 
-              {/* Ordenamiento */}
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-700 dark:text-white">
-                  Ordenar por
-                </Label>
+            {/* BLOQUE 2: Herramientas de Vista (Derecha) */}
+            <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
+              {/* Ordenar */}
+              <div className="w-full sm:w-[160px]">
                 <ReactSelectComponent
                   className="text-xs text-black"
+                  styles={compactSelectStyles}
                   options={sortOptions}
                   isClearable
                   onChange={handleSortChange}
-                  placeholder="Ordenar por..."
+                  placeholder="Ordenar..."
                 />
               </div>
 
-              {/* Items por página */}
-              <div className="space-y-1">
-                <Label className="text-xs text-gray-700 dark:text-white">
-                  Items por página
-                </Label>
+              {/* Items por página (Shadcn Select optimizado) */}
+              <div className="w-[80px]">
                 <Select
                   onValueChange={(value) =>
                     setPagination((prev) => ({
@@ -450,22 +465,26 @@ export default function ClientesTable() {
                   }
                   defaultValue={String(pagination.pageSize)}
                 >
-                  <SelectTrigger className="text-xs h-8">
+                  <SelectTrigger className="h-8 text-xs  border-gray-300">
                     <SelectValue placeholder="Items" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="5">5 filas</SelectItem>
+                    <SelectItem value="10">10 filas</SelectItem>
+                    <SelectItem value="20">20 filas</SelectItem>
+                    <SelectItem value="50">50 filas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Column Toggle */}
-              <div className="space-y-1 justify-center items-center">
+              {/* Column Toggle (Tu componente nuevo) */}
+              <div className="">
                 <ColumnToggle table={table} />
               </div>
+
+              {selectedIds.length > 0 ? (
+                <OptionsSelectedMenu selectedIds={selectedIds} />
+              ) : null}
             </div>
           </div>
 
@@ -522,3 +541,74 @@ export default function ClientesTable() {
     </PageTransitionCrm>
   );
 }
+interface PropsMenu {
+  selectedIds: Array<string>;
+}
+const OptionsSelectedMenu = ({ selectedIds }: PropsMenu) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline" className="ml-2 gap-2 bg-white">
+          <Option className="h-4 w-4" />
+          <span className="hidden sm:inline">
+            Acciones ({selectedIds.length})
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>
+          {selectedIds.length} seleccionados
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        {/* Acción 1 */}
+        <DropdownMenuItem
+          onClick={
+            () => {}
+            // handleExport(selectedIds)
+          }
+        >
+          <Sheet className="mr-2 h-4 w-4" />
+          Exportar historial de pagos
+        </DropdownMenuItem>
+
+        {/* Acción 1 */}
+        <DropdownMenuItem
+          onClick={
+            () => {}
+            // handleExport(selectedIds)
+          }
+        >
+          <Sheet className="mr-2 h-4 w-4" />
+          Exportar info.
+        </DropdownMenuItem>
+
+        {/* Acción 2 */}
+        <DropdownMenuItem
+          disabled
+          onClick={
+            () => {}
+            // handleArchive(selectedIds)
+          }
+        >
+          <Archive className="mr-2 h-4 w-4" />
+          Historial de tickets
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Acción Destructiva (Rojo) */}
+        <DropdownMenuItem
+          onClick={
+            () => {}
+            // handleDelete(selectedIds)
+          }
+          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Eliminar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
