@@ -22,10 +22,9 @@ import {
   Archive,
   ChevronDown,
   ChevronUp,
-  Download,
+  Loader2,
   Option,
   Search,
-  Settings2,
   Sheet,
   Trash2,
   X,
@@ -58,6 +57,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  downloadFile,
+  useGenerateHistorialPagos,
+  useGenerateInfoReport,
+} from "../CrmHooks/hooks/use-reports/use-reports";
+import { toast } from "sonner";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -543,70 +548,129 @@ export default function ClientesTable() {
 }
 interface PropsMenu {
   selectedIds: Array<string>;
+  onClearSelection?: () => void; // Opcional: para limpiar selección al terminar
 }
-const OptionsSelectedMenu = ({ selectedIds }: PropsMenu) => {
+
+const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
+  // 1. Inicializamos los Hooks
+  const exportInfoMutation = useGenerateInfoReport();
+  const exportPagosMutation = useGenerateHistorialPagos();
+
+  // Helper para procesar la descarga
+  const handleExportInfo = () => {
+    // Convertimos IDs de string a number para el DTO
+    const idsNumericos = selectedIds.map((id) => Number(id));
+
+    exportInfoMutation.mutateAsync(
+      { ids: idsNumericos },
+      {
+        onSuccess: (data: any) => {
+          // 'data' aquí es el Blob que retorna axios
+          downloadFile(data, `Reporte_Clientes_${Date.now()}.xlsx`);
+          toast.success("Reporte de información descargado");
+          onClearSelection?.();
+        },
+        onError: () => {
+          toast.error("Error al generar el reporte de información");
+        },
+      },
+    );
+  };
+
+  const handleExportPagos = () => {
+    const idsNumericos = selectedIds.map((id) => Number(id));
+
+    exportPagosMutation.mutateAsync(
+      { ids: idsNumericos },
+      {
+        onSuccess: (data: any) => {
+          downloadFile(data, `Historial_Pagos_${Date.now()}.xlsx`);
+          toast.success("Historial de pagos descargado");
+          onClearSelection?.();
+        },
+        onError: () => {
+          toast.error("Error al generar el historial");
+        },
+      },
+    );
+  };
+
+  // Verificar si algo está cargando para deshabilitar botones
+  const isLoading =
+    exportInfoMutation.isPending || exportPagosMutation.isPending;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" className="ml-2 gap-2 bg-white">
-          <Option className="h-4 w-4" />
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-2 gap-2 bg-white data-[state=open]:bg-gray-100"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Option className="h-4 w-4" />
+          )}
           <span className="hidden sm:inline">
             Acciones ({selectedIds.length})
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel>
           {selectedIds.length} seleccionados
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Acción 1 */}
+        {/* Acción 1: Historial Pagos */}
         <DropdownMenuItem
-          onClick={
-            () => {}
-            // handleExport(selectedIds)
-          }
+          onClick={handleExportPagos}
+          disabled={isLoading}
+          className="cursor-pointer"
         >
-          <Sheet className="mr-2 h-4 w-4" />
-          Exportar historial de pagos
+          {exportPagosMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Sheet className="mr-2 h-4 w-4 text-green-600" />
+          )}
+          Exportar historial pagos
         </DropdownMenuItem>
 
-        {/* Acción 1 */}
+        {/* Acción 2: Info Clientes */}
         <DropdownMenuItem
-          onClick={
-            () => {}
-            // handleExport(selectedIds)
-          }
+          onClick={handleExportInfo}
+          disabled={isLoading}
+          className="cursor-pointer"
         >
-          <Sheet className="mr-2 h-4 w-4" />
-          Exportar info.
+          {exportInfoMutation.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Sheet className="mr-2 h-4 w-4 text-blue-600" />
+          )}
+          Exportar info. completa
         </DropdownMenuItem>
 
-        {/* Acción 2 */}
-        <DropdownMenuItem
-          disabled
-          onClick={
-            () => {}
-            // handleArchive(selectedIds)
-          }
-        >
+        {/* Acción 3: Tickets (Deshabilitada) */}
+        <DropdownMenuItem disabled className="opacity-50">
           <Archive className="mr-2 h-4 w-4" />
           Historial de tickets
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        {/* Acción Destructiva (Rojo) */}
+        {/* Acción Destructiva */}
         <DropdownMenuItem
-          onClick={
-            () => {}
-            // handleDelete(selectedIds)
-          }
-          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+          onClick={() => {
+            // Tu lógica de eliminar
+            console.log("Eliminar", selectedIds);
+          }}
+          className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Eliminar
+          Eliminar seleccionados
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
