@@ -2,84 +2,92 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, X } from "lucide-react";
+import { Save } from "lucide-react";
 
-import { PersonalInfoSection } from "./personal-info-section";
-import { NetworkConfigSection } from "./network-config-section";
-import { ServiceInfoSection } from "./service-info-section";
-import { LocationSection } from "./location-section";
-import { StatusBillingSection } from "./status-billing-section";
-import { ContractSection } from "./contract-section";
-import { ObservationsSection } from "./observations-section";
-import type {
-  FormData,
-  ContratoID,
-  OptionSelected,
-  ServiciosInternet,
-  MikrotikRoutersResponse,
-  FormChangeHandler,
-  SelectHandler,
-  MultiSelectHandler,
-} from "./customer-form-types";
-import type { Dispatch, SetStateAction } from "react";
 import {
   EstadoCliente,
   Sector,
+  ServiciosInternet,
 } from "../features/cliente-interfaces/cliente-types";
-import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
-import { MikrotikSection } from "./mikrotik-section";
+import {
+  ContractSection,
+  FormChangeHandler,
+  FormData,
+  LocationSection,
+  MultiSelectHandler,
+  NetworkConfigSection,
+  ObservationsSection,
+  PersonalInfoSection,
+  SelectHandler,
+  ServiceInfoSection,
+  StatusBillingSection,
+} from "../CrmNewCustomerEdition";
+// import type { FormData } from "../CrmNewCustomerEdition/customer-form-types";
+import type { OptionSelected } from "../CrmNewCustomerEdition/customer-form-types";
+// import {
+//   Departamentos,
+//   Municipios,
+// } from "../features/locations-interfaces/municipios_departamentos.interfaces";
+// import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import {
   Departamentos,
   Municipios,
 } from "../features/locations-interfaces/municipios_departamentos.interfaces";
+import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+// import { NuevaFacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+interface contradoID {
+  clienteId: number;
+  idContrato: string; //UNIQUE EL CAMPO
+  fechaFirma: Date | null;
+  archivoContrato: string;
+  observaciones: string;
+}
 
-// ========= Props del componente principal =========
-export interface CustomerEditFormCardProps {
+interface CustomerCreateFormCardProps {
   formData: FormData;
-  formDataContrato: ContratoID;
+  formDataContrato: contradoID;
   fechaInstalacion: Date | null;
+
   depaSelected: number | null;
   muniSelected: number | null;
   sectorSelected: number | null;
   serviceSelected: number[];
   serviceWifiSelected: number | null;
   zonasFacturacionSelected: number | null;
-  mkSelected: number | null;
+
   optionsDepartamentos: OptionSelected[];
   optionsMunis: OptionSelected[];
   optionsServices: OptionSelected[];
   optionsServicesWifi: OptionSelected[];
   optionsZonasFacturacion: OptionSelected[];
   optionsSectores: OptionSelected[];
-  optionsMikrotiks: OptionSelected[];
-  secureDepartamentos: Departamentos[];
-  secureMunicipios: Municipios[];
-  secureSectores: Sector[];
-  secureServiciosWifi: ServiciosInternet[];
-  secureZonasFacturacion: FacturacionZona[];
-  mikrotiks: MikrotikRoutersResponse[];
+
   onChangeForm: FormChangeHandler;
   onChangeContrato: FormChangeHandler;
+
   onSelectDepartamento: SelectHandler<OptionSelected>;
   onSelectMunicipio: SelectHandler<OptionSelected>;
   onSelectSector: SelectHandler<OptionSelected>;
   onSelectService: MultiSelectHandler<OptionSelected>;
   onSelectServiceWifi: SelectHandler<OptionSelected>;
   onSelectZonaFacturacion: SelectHandler<OptionSelected>;
+
   onChangeFechaInstalacion: (date: Date | null) => void;
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
-  handleEnviarRecordatorioChange: (checked: boolean) => void;
-  handleSelectMk: SelectHandler<OptionSelected>;
-  handleChangeDataContrato: FormChangeHandler;
-  setFormDataContrato: Dispatch<SetStateAction<ContratoID>>;
-  onClickDelete: () => void;
-  onClickOpenConfirm: () => void;
-  setOpenUpdNet: () => void;
-  setOpenAuth: () => void;
-  isInstalation: boolean;
+
+  onSubmit: () => void;
+  isSubmitting: boolean;
+
+  secureDepartamentos: Departamentos[];
+  secureMunicipios: Municipios[];
+  secureSectores: Sector[];
+  secureServiciosWifi: ServiciosInternet[];
+  secureZonasFacturacion: FacturacionZona[];
+  mikrotiks: any[]; // O el tipo MikrotikRoutersResponse[]
+  optionsMikrotiks: OptionSelected[]; // Aunque vaya vacío
 }
 
-export function CustomerEditFormCard({
+export function CustomerCreateFormCard({
   formData,
   formDataContrato,
   fechaInstalacion,
@@ -89,21 +97,14 @@ export function CustomerEditFormCard({
   serviceSelected,
   serviceWifiSelected,
   zonasFacturacionSelected,
-  mkSelected,
   optionsDepartamentos,
   optionsMunis,
   optionsServices,
   optionsServicesWifi,
   optionsZonasFacturacion,
   optionsSectores,
-  optionsMikrotiks,
-  secureDepartamentos,
-  secureMunicipios,
-  secureSectores,
-  secureServiciosWifi,
-  secureZonasFacturacion,
-  mikrotiks,
   onChangeForm,
+  onChangeContrato,
   onSelectDepartamento,
   onSelectMunicipio,
   onSelectSector,
@@ -112,29 +113,23 @@ export function CustomerEditFormCard({
   onSelectZonaFacturacion,
   onChangeFechaInstalacion,
   onSelectEstadoCliente,
-  handleEnviarRecordatorioChange,
-  handleSelectMk,
-  handleChangeDataContrato,
-  setFormDataContrato,
-  onClickDelete,
-  onClickOpenConfirm,
-  setOpenUpdNet,
-  setOpenAuth,
-  isInstalation,
-}: CustomerEditFormCardProps) {
+  onSubmit,
+  isSubmitting,
+  //
+  secureDepartamentos,
+  secureMunicipios,
+  secureSectores,
+  secureServiciosWifi,
+  secureZonasFacturacion,
+  //   mikrotiks,
+  //   optionsMikrotiks,
+}: CustomerCreateFormCardProps) {
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="space-y-6">
-          {/* SECCIÓN 1: DATOS PRINCIPALES */}
-          <section
-            aria-labelledby="section-datos-principales"
-            className="space-y-4"
-          >
-            <div id="section-datos-principales" className="sr-only">
-              Datos personales, servicio y ubicación
-            </div>
-
+          {/* SECCIÓN 1 */}
+          <section className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <PersonalInfoSection
                 formData={formData}
@@ -147,6 +142,7 @@ export function CustomerEditFormCard({
                 serviceWifiSelected={serviceWifiSelected}
                 optionsServices={optionsServices}
                 optionsServicesWifi={optionsServicesWifi}
+                // CORRECCIÓN: Pasa la prop que recibes
                 secureServiciosWifi={secureServiciosWifi}
                 onChangeForm={onChangeForm}
                 onSelectService={onSelectService}
@@ -172,52 +168,43 @@ export function CustomerEditFormCard({
             </div>
           </section>
 
-          {/* SECCIÓN 2: ESTADO + WHATSAPP + FACTURACIÓN */}
+          {/* SECCIÓN 2 */}
           <StatusBillingSection
             formData={formData}
             fechaInstalacion={fechaInstalacion}
-            zonasFacturacionSelected={zonasFacturacionSelected}
+            zonasFacturacionSelected={
+              zonasFacturacionSelected ? Number(zonasFacturacionSelected) : null
+            }
             optionsZonasFacturacion={optionsZonasFacturacion}
-            secureZonasFacturacion={secureZonasFacturacion}
+            // secureZonasFacturacion={secureZonasFacturacion}
             onSelectEstadoCliente={onSelectEstadoCliente}
-            onEnviarRecordatorioChange={handleEnviarRecordatorioChange}
+            onEnviarRecordatorioChange={() => {}}
             onSelectZonaFacturacion={onSelectZonaFacturacion}
             onChangeFechaInstalacion={onChangeFechaInstalacion}
+            secureZonasFacturacion={secureZonasFacturacion}
           />
 
-          {/* SECCIÓN 3: CONFIGURACIÓN DE RED (IP + MK) - CRÍTICO */}
+          {/* SECCIÓN 3 */}
           <NetworkConfigSection
-            isInstalation={isInstalation}
-            setOpenAuth={setOpenAuth}
-            setOpenUpdNet={setOpenUpdNet}
+            isInstalation={false}
+            setOpenAuth={() => {}}
+            setOpenUpdNet={() => {}}
             formData={formData}
-            mkSelected={mkSelected}
-            mikrotiks={mikrotiks}
-            optionsMikrotiks={optionsMikrotiks}
+            mkSelected={null}
+            mikrotiks={[]}
+            optionsMikrotiks={[]}
             onChangeForm={onChangeForm}
-            onSelectMk={handleSelectMk}
+            onSelectMk={() => {}}
           />
 
-          <MikrotikSection
-            isInstalation={isInstalation}
-            setOpenAuth={setOpenAuth}
-            setOpenUpdNet={setOpenUpdNet}
-            formData={formData}
-            mkSelected={mkSelected}
-            mikrotiks={mikrotiks}
-            optionsMikrotiks={optionsMikrotiks}
-            onChangeForm={onChangeForm}
-            onSelectMk={handleSelectMk}
-          />
-
-          {/* SECCIÓN 4: CONTRATO */}
+          {/* SECCIÓN 4 */}
           <ContractSection
             formDataContrato={formDataContrato}
-            onChangeContrato={handleChangeDataContrato}
-            setFormDataContrato={setFormDataContrato}
+            onChangeContrato={onChangeContrato}
+            setFormDataContrato={() => {}}
           />
 
-          {/* SECCIÓN 5: OBSERVACIONES */}
+          {/* SECCIÓN 5 */}
           <ObservationsSection
             observaciones={formData.observaciones}
             onChangeForm={onChangeForm}
@@ -225,18 +212,15 @@ export function CustomerEditFormCard({
         </div>
       </CardContent>
 
-      <CardFooter className="flex justify-between">
-        <Button type="button" variant="destructive" onClick={onClickDelete}>
-          <X className="mr-2 h-4 w-4" />
-          Eliminar
-        </Button>
+      <CardFooter className="flex justify-end">
         <Button
           type="button"
-          onClick={onClickOpenConfirm}
+          onClick={onSubmit}
+          disabled={isSubmitting}
           className="bg-primary hover:bg-primary/90"
         >
           <Save className="mr-2 h-4 w-4" />
-          Guardar Cambios
+          {isSubmitting ? "Creando..." : "Crear Cliente"}
         </Button>
       </CardFooter>
     </Card>

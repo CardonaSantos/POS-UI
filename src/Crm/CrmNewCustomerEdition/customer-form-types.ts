@@ -48,17 +48,17 @@ export interface ContratoID {
 }
 
 // ========= Interfaces de datos seguros =========
-export interface Departamentos {
+interface Departamentos {
   id: number;
   nombre: string;
 }
 
-export interface Municipios {
+interface Municipios {
   id: number;
   nombre: string;
 }
 
-export interface Sector {
+interface Sector {
   id: number;
   nombre: string;
   descripcion: string | null;

@@ -3,7 +3,6 @@ import {
   Users,
   Ticket,
   FileText,
-  CreditCard,
   UserPlus,
   Waypoints,
   Cpu,
@@ -55,8 +54,6 @@ export const routesCrm_SuperAdmin = [
       },
     ],
   },
-
-  { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
 
   {
     icon: MonitorSmartphone,
@@ -207,8 +204,6 @@ export const routesCrm_Admin = [
     ],
   },
 
-  { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
-
   {
     icon: MonitorSmartphone,
     label: "Soporte",
@@ -223,7 +218,6 @@ export const routesCrm_Admin = [
       },
     ],
   },
-  // SERVICIOS Y GESTIÓN DE SERVICIOS
   {
     icon: Waypoints,
     label: "Servicios",
@@ -374,8 +368,6 @@ export const routesCrm_Oficina = [
     ],
   },
 
-  { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
-
   {
     icon: MonitorSmartphone,
     label: "Soporte",
@@ -444,7 +436,6 @@ export const routesCrm_Oficina = [
 
 export const routesCrm_Tecnico = [
   { icon: Home, label: "Dashboard", href: "/crm/tec-dashboard" },
-  { icon: CreditCard, label: "Facturación", href: "/crm/facturacion" },
   {
     icon: MonitorSmartphone,
     label: "Soporte",
@@ -455,7 +446,6 @@ export const routesCrm_Tecnico = [
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];
 
-//rutas para otro rol del
 export const routesCrm_Otro = [
   { icon: Home, label: "Inicio", href: "/crm" },
 
@@ -477,7 +467,6 @@ export const routesCrm_Otro = [
   },
 ];
 
-// --- CRM -------------------------------------------------
 export const CRM_ROUTES: Record<string, Route[]> = {
   ADMIN: routesCrm_Admin,
   TECNICO: routesCrm_Tecnico,

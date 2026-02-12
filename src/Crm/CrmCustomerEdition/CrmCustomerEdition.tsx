@@ -60,6 +60,7 @@ interface FormData {
   gateway: string;
   estado: EstadoCliente;
   enviarRecordatorio: boolean;
+  sectorId?: number | null;
 }
 
 interface ContratoID {
