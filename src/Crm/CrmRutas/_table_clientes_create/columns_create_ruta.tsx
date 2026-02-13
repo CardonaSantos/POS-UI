@@ -1,11 +1,11 @@
 // columnsClientesRutaCreate.tsx
 import { ColumnDef } from "@tanstack/react-table";
-import { ClienteInternetFromCreateRuta } from "../rutas-types";
 import { makeEsStringSort } from "@/utils/esStringSortCollatorTanstak";
 import { textIncludesTable } from "@/utils/textIncludesTableTanstak";
 import { numberInRangeTable } from "@/utils/numberInRangeTanstak";
 import { SortCaret } from "@/Crm/Utils/Components/SortCaret";
 import { formattMonedaGT } from "@/utils/formattMonedaGt";
+import { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
 
 const esStringSort = makeEsStringSort<ClienteInternetFromCreateRuta>();
 const includesFilter = textIncludesTable<ClienteInternetFromCreateRuta>();
@@ -163,7 +163,7 @@ export const columnsClientesRutaCreate: ColumnDef<ClienteInternetFromCreateRuta>
       header: ({ column }) => {
         const [min, max] = (column.getFilterValue() as [
           number | null,
-          number | null
+          number | null,
         ]) ?? [null, null];
         return (
           <div className={HDR.wrap}>

@@ -1,7 +1,7 @@
 // utils/getEstadoIconRutaList.tsx
+import { EstadoRuta } from "@/Crm/features/rutas/rutas.interfaces";
 import { CheckCircle, Clock, Check, XCircle } from "lucide-react";
 import type { JSX } from "react";
-import { EstadoRuta } from "../rutas-types";
 
 export function getEstadoIconRutaList(estado: EstadoRuta): JSX.Element | null {
   switch (estado) {

@@ -3,8 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Phone, FileText } from "lucide-react";
-import type { ClienteInternetFromCreateRuta } from "./rutas-types";
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import { ClienteInternetFromCreateRuta } from "../features/rutas/rutas.interfaces";
 
 interface ClienteCardProps {
   cliente: ClienteInternetFromCreateRuta;

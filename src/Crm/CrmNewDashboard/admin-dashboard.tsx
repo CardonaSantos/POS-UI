@@ -114,17 +114,14 @@ function NewDashboard() {
   useSocketEvent(
     "ticket-soporte:change-status",
     (payload) => {
-      // 1) invalidar queries
       invalidateQk(TicketsProcesoQkeys.all);
-
-      // 2) toast diferenciado por estado
       if (payload.nuevoEstado === "EN_PROCESO") {
         toast.success(`Ticket #${payload.ticketId} fue tomado en proceso`);
       } else if (payload.nuevoEstado === "PENDIENTE_REVISION") {
         toast.info(`Ticket #${payload.ticketId} quedó pendiente de revisión`);
       } else {
         toast.info(
-          `Ticket #${payload.ticketId} cambió a ${payload.nuevoEstado}`
+          `Ticket #${payload.ticketId} cambió a ${payload.nuevoEstado}`,
         );
       }
 
@@ -135,7 +132,7 @@ function NewDashboard() {
         tecnico: payload.tecnico,
       });
     },
-    [invalidateQk]
+    [invalidateQk],
   );
 
   useSocketEvent(
@@ -143,7 +140,7 @@ function NewDashboard() {
     () => {
       invalidateQk(DashboardQkeys.cobros);
     },
-    [invalidateQk]
+    [invalidateQk],
   );
 
   useSocketEvent("facturacion:change-event", () => {
@@ -166,7 +163,6 @@ function NewDashboard() {
         <DashboardSupportSidebar ticketsSoporte={tickets} />
       </div>
 
-      {/* FILA INFERIOR: CHARTS */}
       <DashboardChartsGrid
         instalacionesMes={instalacionesMes}
         usuariosEnCampo={usuariosEnCampo}
