@@ -1,140 +1,199 @@
 "use client";
 
-import { Map, AdvancedMarker, InfoWindow } from "@vis.gl/react-google-maps";
-import { MapPin, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
-
-interface Ubicacion {
-  lat: number;
-  lng: number;
-}
-
-interface PersonaCampo {
-  id: number;
-  nombreCompleto: string;
-  location: Ubicacion;
-}
+import { RealTimeLocationRaw } from "@/Crm/features/real-time-location/real-time-location";
+import {
+  Map,
+  AdvancedMarker,
+  InfoWindow,
+  useMap,
+} from "@vis.gl/react-google-maps";
+import { MapPin, ExternalLink } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 
 interface Props {
-  personas: PersonaCampo[]; // técnicos / cobradores
+  personas: RealTimeLocationRaw[];
   markerSize?: "sm" | "md" | "lg";
 }
-// 15.6856374,-91.7258307,9655
-// 15.693597981941389, -91.75146089854971
-const DEFAULT_CENTER: Ubicacion = {
-  lat: 15.680725671712013,
-  lng: -91.74167906942935,
 
-  // 15.686623347194244, -91.74914015069805
+const MarkerIcon = ({
+  sizeClass,
+  isHovered,
+  name,
+}: {
+  sizeClass: string;
+  isHovered: boolean;
+  name: string;
+}) => {
+  // Obtenemos la primera letra (o "?" si viniera vacío)
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
 
-  // 15.680725671712013, -91.74167906942935
-};
-
-const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
-  const [selected, setSelected] = useState<PersonaCampo | null>(null);
-
-  const isValidLocation = (location: Ubicacion) =>
-    location &&
-    typeof location.lat === "number" &&
-    typeof location.lng === "number" &&
-    !isNaN(location.lat) &&
-    !isNaN(location.lng) &&
-    Math.abs(location.lat) <= 90 &&
-    Math.abs(location.lng) <= 180;
-
-  const validPersonas = useMemo(
-    () => personas.filter((p) => isValidLocation(p.location)),
-    [personas]
-  );
-
-  // Centro inicial: primero válido o centro por defecto
-  const initialCenter: Ubicacion = DEFAULT_CENTER;
-
-  const markerSizeClass =
-    markerSize === "lg"
-      ? "w-9 h-9"
-      : markerSize === "sm"
-      ? "w-5 h-5"
-      : "w-7 h-7";
-
-  const CustomMarker = ({ persona }: { persona: PersonaCampo }) => (
-    <div className="relative group">
-      <div className="flex flex-col items-center">
-        <div
-          className={`flex items-center justify-center rounded-full bg-sky-500 text-white shadow-md ${markerSizeClass}`}
-        >
-          <UserRound className="w-3 h-3" />
-        </div>
-        <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-transparent border-t-sky-500 -mt-[1px]" />
-      </div>
-
-      {/* Tooltip con el nombre */}
-      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-50 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-        {persona.nombreCompleto}
-      </div>
-    </div>
-  );
-
-  const InfoContent = ({ persona }: { persona: PersonaCampo }) => (
-    <div className="bg-white text-slate-900 rounded-md shadow-md border border-slate-200 p-2 text-xs w-[220px]">
-      <p className="font-semibold text-sm mb-1">{persona.nombreCompleto}</p>
-
-      <div className="flex items-center gap-1 text-slate-600 mb-1">
-        <MapPin className="w-3 h-3" />
-        <span>
-          {persona.location.lat.toFixed(5)}, {persona.location.lng.toFixed(5)}
+  return (
+    <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110">
+      <div
+        className={`flex items-center justify-center rounded-full border-2 border-white shadow-lg ${sizeClass} ${
+          // CAMBIO: De sky a red
+          isHovered ? "bg-teal-700 z-50" : "bg-teal-600"
+        } text-white transition-colors overflow-hidden`}
+      >
+        {/* Aquí pondremos el Avatar/Image en el futuro. 
+            Por ahora mostramos la inicial */}
+        <span className="font-bold text-xs leading-none select-none">
+          {initial}
         </span>
       </div>
 
-      <a
-        href={`https://www.google.com/maps/dir/?api=1&destination=${persona.location.lat},${persona.location.lng}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-[11px] text-sky-600 hover:text-sky-700 underline"
-      >
-        Ver en Google Maps
-      </a>
+      {/* Triángulo del marcador (Punta) */}
+      <div
+        className={`w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-transparent -mt-[1px] ${
+          // CAMBIO: De sky a red para coincidir con el círculo
+          isHovered ? "border-t-red-600" : "border-t-red-500"
+        }`}
+      />
     </div>
   );
+};
 
-  return (
-    <Map
-      mapId="e209b83095802909"
-      defaultZoom={12}
-      defaultCenter={initialCenter}
-      className="w-full h-56 lg:h-full rounded-lg overflow-hidden"
-      // Interacción
-      gestureHandling="greedy" // permite mover y hacer zoom con scroll/pinch
-      scrollwheel={true}
-      // Controles de UI
-      disableDefaultUI={true} // apaga todos los controles por defecto
-      zoomControl={false} // sin botones +/-
-      streetViewControl={false} // sin hombrecito amarillo
-      mapTypeControl={false} // sin botón para cambiar tipo de mapa
-      fullscreenControl={true} // dejamos solo pantalla completa
-      // Tipo de mapa inicial: satélite
-      // mapTypeId="hybrid"
-      mapTypeId="hybrid"
+const PersonaInfoWindow = ({ location }: { location: RealTimeLocationRaw }) => (
+  <div className="px-1 py-1 max-w-[200px]">
+    <h3 className="font-bold text-slate-900 text-sm mb-1 leading-tight">
+      {location.usuario.nombre}
+    </h3>
+
+    <div className="flex items-center gap-1.5 text-slate-500 mb-2 text-xs">
+      <MapPin className="w-3 h-3 shrink-0" />
+      <span>
+        {location.latitud.toFixed(4)}, {location.longitud.toFixed(4)}
+      </span>
+    </div>
+
+    <a
+      href={`https://www.google.com/maps/search/?api=1&query=${location.latitud},${location.longitud}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-[11px] font-medium text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded transition-colors w-full justify-center"
     >
-      {validPersonas.map((persona) => (
-        <AdvancedMarker
-          key={persona.id}
-          position={persona.location}
-          onClick={() => setSelected(persona)}
-        >
-          <CustomMarker persona={persona} />
-        </AdvancedMarker>
-      ))}
+      <span>Abrir en Maps</span>
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  </div>
+);
 
-      {selected && (
-        <InfoWindow
-          position={selected.location}
-          onCloseClick={() => setSelected(null)}
-        >
-          <InfoContent persona={selected} />
-        </InfoWindow>
-      )}
-    </Map>
+// --- Componente Lógico para Auto-Zoom ---
+const MapBoundsHandler = ({
+  personas,
+}: {
+  personas: RealTimeLocationRaw[];
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || personas.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+
+    personas.forEach((p) => {
+      if (typeof p.latitud === "number" && typeof p.longitud === "number") {
+        bounds.extend({
+          lat: p.latitud,
+          lng: p.longitud,
+        });
+      }
+    });
+
+    map.fitBounds(bounds);
+
+    if (personas.length === 1) {
+      map.setZoom(14);
+    }
+  }, [map, personas]);
+
+  return null;
+};
+
+// --- Componente Principal ---
+const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
+  const [selected, setSelected] = useState<RealTimeLocationRaw | null>(null);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+
+  const validPersonas = useMemo(() => {
+    return personas.filter(
+      (p) =>
+        typeof p.latitud === "number" &&
+        typeof p.longitud === "number" &&
+        !isNaN(p.latitud) &&
+        !isNaN(p.longitud) &&
+        Math.abs(p.latitud) <= 90,
+    );
+  }, [personas]);
+
+  const markerSizeClass = useMemo(() => {
+    switch (markerSize) {
+      case "lg":
+        return "w-10 h-10";
+      case "sm":
+        return "w-6 h-6";
+      default:
+        return "w-8 h-8";
+    }
+  }, [markerSize]);
+
+  const defaultCenter = { lat: 15.679026415483003, lng: -91.74822125438106 };
+  return (
+    <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 relative bg-slate-100">
+      <Map
+        mapId="e209b83095802909"
+        defaultZoom={12}
+        defaultCenter={defaultCenter}
+        className="w-full h-full min-h-[250px]"
+        gestureHandling="greedy"
+        disableDefaultUI
+        fullscreenControl
+        mapTypeId="hybrid"
+      >
+        <MapBoundsHandler personas={validPersonas} />
+
+        {validPersonas.map((persona) => (
+          <AdvancedMarker
+            key={persona.usuarioId}
+            position={{
+              lat: persona.latitud,
+              lng: persona.longitud,
+            }}
+            onClick={() => setSelected(persona)}
+            zIndex={hoveredId === persona.usuarioId ? 50 : 1}
+          >
+            <div
+              onMouseEnter={() => setHoveredId(persona.usuarioId)}
+              onMouseLeave={() => setHoveredId(null)}
+              className="cursor-pointer group"
+            >
+              <MarkerIcon
+                name={persona.usuario.nombre}
+                sizeClass={markerSizeClass}
+                isHovered={
+                  hoveredId === persona.usuarioId ||
+                  selected?.usuarioId === persona.usuarioId
+                }
+              />
+            </div>
+          </AdvancedMarker>
+        ))}
+
+        {selected && (
+          <InfoWindow
+            position={{
+              lat: selected.latitud,
+              lng: selected.longitud,
+            }}
+            onCloseClick={() => setSelected(null)}
+            pixelOffset={[0, -35]}
+            maxWidth={250}
+          >
+            <PersonaInfoWindow location={selected} />
+          </InfoWindow>
+        )}
+      </Map>
+    </div>
   );
 };
 

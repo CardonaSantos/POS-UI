@@ -1,4 +1,5 @@
-//HELPER PARA DEFINIR EVENTOS
+import { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
+
 export type WsEventMap = {
   "ticket-soporte:change-status": {
     ticketId: number;
@@ -17,6 +18,7 @@ export type WsEventMap = {
   };
 
   "notifications:system": {};
+  "emit:location:real-time": RealTimeLocationRaw;
 };
 
 export type WsEventName = keyof WsEventMap;

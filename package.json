@@ -66,6 +66,7 @@
     "datatables.net-react": "^1.0.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.13",
+    "decimal.js": "^10.6.0",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.4.5",
     "handlebars": "^4.7.8",
