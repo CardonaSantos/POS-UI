@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,9 +17,6 @@ interface TicketListProps {
   onSelectTicket: (ticket: Ticket) => void;
 }
 
-// --- CONFIGURACIÓN DE COLORES Y ESTILOS ---
-
-// 1. Mapa de Estilos para ESTADOS (Soporta Light y Dark mode)
 const getStatusStyles = (status: string) => {
   const styles: Record<string, string> = {
     NUEVO:
@@ -74,13 +71,22 @@ const TicketItem = ({
 }) => {
   const isAssigned = !!ticket.assignee;
   const dateFormatted = format(new Date(ticket.date), "d MMM", { locale: es });
+  const itemVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1 },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.2 },
+    },
+  };
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      layout="position" // Cambiamos 'layout' a 'layout="position"' para que los saltos al reordenar sean menos bruscos
+      variants={itemVariants} // 2. Le pasamos las variantes
+      initial="hidden" // El padre disparará estos estados en cascada
+      animate="show"
+      exit="exit"
       onClick={() => onSelect(ticket)}
       className={`
         group relative flex gap-3 p-3 border-b cursor-pointer transition-all duration-200
@@ -189,7 +195,7 @@ const TicketItem = ({
             {/* Priority Badge */}
             <div
               className={`px-2 py-[2px] rounded-md text-[9px] font-semibold border tracking-wide uppercase ${getPriorityStyles(
-                ticket.priority
+                ticket.priority,
               )}`}
             >
               {ticket.priority}
@@ -198,12 +204,12 @@ const TicketItem = ({
             {/* Status Badge */}
             <div
               className={`px-2 py-[2px] rounded-md text-[9px] font-bold border tracking-wide flex items-center gap-1 ${getStatusStyles(
-                ticket.status
+                ticket.status,
               )}`}
             >
               {/* Opcional: Pequeño dot para indicar estado vivo */}
               {["NUEVO", "ABIERTA", "EN_PROCESO", "URGENTE"].includes(
-                ticket.status
+                ticket.status,
               ) && (
                 <span className="w-1 h-1 rounded-full bg-current opacity-70 animate-pulse" />
               )}
@@ -230,14 +236,26 @@ const TicketsListContainer = ({
   colorMap: Record<string, string>;
   emptyMessage: { title: string; description: string };
 }) => {
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.03, // Cascada súper rápida y suave (30ms)
+      },
+    },
+  };
+
   return (
-    <ScrollArea className="h-[calc(100vh-220px)] w-full pr-3">
+    <ScrollArea className="h-full w-full pr-3">
       <div className="flex flex-col pb-4">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence>
           {tickets.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
               className="mt-8 px-4"
             >
               <Alert className="bg-muted/50 border-dashed flex flex-col items-center text-center p-6 gap-2">
@@ -253,17 +271,24 @@ const TicketsListContainer = ({
               </Alert>
             </motion.div>
           ) : (
-            tickets
-              .sort((a, b) => Number(b.fixed) - Number(a.fixed))
-              .map((ticket) => (
-                <TicketItem
-                  key={ticket.id}
-                  ticket={ticket}
-                  isSelected={Number(selectedTicketId) === Number(ticket.id)}
-                  onSelect={onSelectTicket}
-                  avatarColor={colorMap[ticket.id] || "bg-gray-200"}
-                />
-              ))
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="flex flex-col"
+            >
+              {[...tickets]
+                .sort((a, b) => Number(!!b.fixed) - Number(!!a.fixed))
+                .map((ticket) => (
+                  <TicketItem
+                    key={ticket.id}
+                    ticket={ticket}
+                    isSelected={Number(selectedTicketId) === Number(ticket.id)}
+                    onSelect={onSelectTicket}
+                    avatarColor={colorMap[ticket.id] || "bg-gray-200"}
+                  />
+                ))}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -314,7 +339,6 @@ export default function TicketList({
     });
   }, [tickets]);
 
-  // Filtros
   const filterTickets = (statusFilter: (t: Ticket) => boolean) =>
     tickets.filter(statusFilter);
 
@@ -322,14 +346,14 @@ export default function TicketList({
     (t) =>
       t.status !== "RESUELTA" &&
       t.status !== "ARCHIVADA" &&
-      t.status !== "CANCELADA"
+      t.status !== "CANCELADA",
   );
   const inProgress = filterTickets(
-    (t) => t.status === "EN_PROCESO" || t.status === "PENDIENTE_TECNICO"
+    (t) => t.status === "EN_PROCESO" || t.status === "PENDIENTE_TECNICO",
   );
   const resolved = filterTickets((t) => t.status === "RESUELTA");
   const archived = filterTickets(
-    (t) => t.status === "ARCHIVADA" || t.status === "CANCELADA"
+    (t) => t.status === "ARCHIVADA" || t.status === "CANCELADA",
   );
 
   return (
@@ -364,8 +388,12 @@ export default function TicketList({
           </TabsList>
         </div>
 
-        <div className="flex-1 bg-background">
-          <TabsContent value="inbox" className="m-0 h-full">
+        {/* Contenedor central de los Tabs */}
+        <div className="flex-1 bg-background min-h-0 overflow-hidden">
+          <TabsContent
+            value="inbox"
+            className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
+          >
             <TicketsListContainer
               tickets={allActive}
               selectedTicketId={selectedTicketId}
@@ -379,7 +407,10 @@ export default function TicketList({
             />
           </TabsContent>
 
-          <TabsContent value="enProceso" className="m-0 h-full">
+          <TabsContent
+            value="enProceso"
+            className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
+          >
             <TicketsListContainer
               tickets={inProgress}
               selectedTicketId={selectedTicketId}
@@ -392,7 +423,10 @@ export default function TicketList({
             />
           </TabsContent>
 
-          <TabsContent value="lista" className="m-0 h-full">
+          <TabsContent
+            value="lista"
+            className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
+          >
             <TicketsListContainer
               tickets={resolved}
               selectedTicketId={selectedTicketId}
@@ -405,7 +439,10 @@ export default function TicketList({
             />
           </TabsContent>
 
-          <TabsContent value="archivados" className="m-0 h-full">
+          <TabsContent
+            value="archivados"
+            className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
+          >
             <TicketsListContainer
               tickets={archived}
               selectedTicketId={selectedTicketId}
