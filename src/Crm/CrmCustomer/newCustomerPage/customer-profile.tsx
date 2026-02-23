@@ -67,7 +67,7 @@ export default function CustomerProfile() {
   const [openDeleteFactura, setOpenDeleteFactura] = useState(false);
   const [openCreateContrato, setOpenCreateContrato] = useState(false);
   const [facturaAction, setFacturaAction] = useState<FacturaToDeleter | null>(
-    null
+    null,
   );
   const [motivo, setMotivo] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -83,18 +83,18 @@ export default function CustomerProfile() {
 
   const {
     data: cliente,
-    // isLoading: isClienteLoading,
     error: clienteError,
     refetch: refetchCliente,
   } = useClienteDetails(clienteId);
 
-  const {
-    data: plantillasData,
-    // isLoading: isPlantillasLoading,
-    error: plantillasError,
-  } = usePlantillasContrato();
+  const { data: plantillasData, error: plantillasError } =
+    usePlantillasContrato();
 
   const clienteSecure = cliente ? cliente : clienteInitialState;
+  console.log(
+    "En el main profile customer el cliente llegando es: ",
+    clienteSecure,
+  );
 
   useEffect(() => {
     if (plantillasData) {

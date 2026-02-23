@@ -20,8 +20,10 @@ import {
 import { useSearchParams } from "react-router-dom";
 import {
   Archive,
+  Calendar,
   ChevronDown,
   ChevronUp,
+  Download,
   Loader2,
   Option,
   Search,
@@ -59,10 +61,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   downloadFile,
+  FiltersProps,
   useGenerateHistorialPagos,
   useGenerateInfoReport,
+  useGenerateReportCobranza,
 } from "../CrmHooks/hooks/use-reports/use-reports";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import DatePicker from "react-datepicker";
+import { es } from "date-fns/locale";
+import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
+import { Label } from "@/components/ui/label";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -448,14 +466,14 @@ export default function ClientesTable() {
             {/* BLOQUE 2: Herramientas de Vista (Derecha) */}
             <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
               {/* Ordenar */}
-              <div className="w-full sm:w-[160px]">
+              <div className="w-full sm:w-[120px]">
                 <ReactSelectComponent
                   className="text-xs text-black"
                   styles={compactSelectStyles}
                   options={sortOptions}
                   isClearable
                   onChange={handleSortChange}
-                  placeholder="Ordenar..."
+                  placeholder="Ordenar"
                 />
               </div>
 
@@ -490,6 +508,8 @@ export default function ClientesTable() {
               {selectedIds.length > 0 ? (
                 <OptionsSelectedMenu selectedIds={selectedIds} />
               ) : null}
+
+              <OptionsReportsCobros />
             </div>
           </div>
 
@@ -605,15 +625,15 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
         <Button
           size="sm"
           variant="outline"
-          className="ml-2 gap-2 bg-white data-[state=open]:bg-gray-100"
+          className="ml-2 gap-1.5 px-2.5"
           disabled={isLoading}
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Option className="h-4 w-4" />
+            <Option className="h-3.5 w-3.5" />
           )}
-          <span className="hidden sm:inline">
+          <span className="hidden sm:inline text-xs">
             Acciones ({selectedIds.length})
           </span>
         </Button>
@@ -676,3 +696,166 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
     </DropdownMenu>
   );
 };
+
+interface OptionSelected {
+  label: string;
+  value: string;
+}
+
+export function OptionsReportsCobros() {
+  const { data: rawUsers } = useGetUsersToSelect();
+  const users = rawUsers || [];
+
+  const [filters, setFilters] = useState<FiltersProps>({
+    startDate: undefined,
+    endDate: null,
+    userId: null,
+  });
+
+  const createReportCobranza = useGenerateReportCobranza();
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Mapeo para react-select
+  const options: OptionSelected[] = users.map((u) => ({
+    label: u.nombre,
+    value: u.id.toString(),
+  }));
+
+  // Buscar la opción completa para pasársela al Select (react-select requiere el objeto)
+  const selectedUserOption = filters.userId
+    ? options.find((opt) => opt.value === filters.userId?.toString()) || null
+    : null;
+
+  const handleSelectUser = (option: OptionSelected | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      userId: option ? parseInt(option.value) : null,
+    }));
+  };
+
+  const handleChangeDates = (side: "start" | "end", date: Date | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [side === "start" ? "startDate" : "endDate"]: date,
+    }));
+  };
+
+  const handleClear = () => {
+    setFilters({ startDate: undefined, endDate: null, userId: null });
+  };
+
+  const handleGenerateReport = async () => {
+    setIsOpen(false);
+    toast.promise(createReportCobranza.mutateAsync({ query: filters }), {
+      loading: "Generando reporte...",
+      success: () => {},
+      error: (error) => getApiErrorMessageAxios(error),
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="ml-2 h-8 w-8 text-slate-700 dark:text-slate-300"
+          title="Filtros de Reporte"
+        >
+          <Sheet className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Reporte de Cobranzas</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
+            Filtra por fechas o por usuario para generar tu reporte.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Rango de Fechas
+            </Label>
+
+            <div className="flex items-center rounded-md border border-input bg-background h-9 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+              <div className="px-3 flex items-center justify-center border-r border-border h-full bg-muted/30">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <DatePicker
+                locale={es}
+                selected={filters.startDate}
+                onChange={(date) => handleChangeDates("start", date)}
+                selectsStart
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+                placeholderText="Desde"
+                className="w-full h-full border-none text-sm text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+
+              <span className="text-muted-foreground/50 text-sm px-1">-</span>
+
+              <DatePicker
+                locale={es}
+                selected={filters.endDate}
+                onChange={(date) => handleChangeDates("end", date)}
+                selectsEnd
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+                minDate={filters.startDate} // Corrección: No puede ser menor a la inicial
+                placeholderText="Hasta"
+                className="w-full h-full border-none text-sm text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Cobrador / Usuario (Opcional)
+            </Label>
+            <ReactSelectComponent
+              options={options}
+              onChange={handleSelectUser}
+              value={selectedUserOption} // Pasamos el objeto OptionSelected, no solo un string
+              placeholder="Seleccionar cobrador..."
+              isClearable // Ideal por si quieren limpiar el filtro
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-2">
+          <Button
+            variant="ghost"
+            onClick={handleClear}
+            className="text-xs h-8 text-muted-foreground"
+          >
+            Limpiar Filtros
+          </Button>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="w-full sm:w-auto h-8 text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGenerateReport}
+              className="w-full sm:w-auto h-8 text-xs gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Generar
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

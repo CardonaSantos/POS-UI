@@ -327,7 +327,7 @@ function CrmCreateTicket({
                         name="telefonoTemporal"
                         value={formData.telefonoTemporal}
                         onChange={handleChange}
-                        placeholder="40017273"
+                        placeholder="12345678"
                         required
                         type="tel"
                         className="text-sm"

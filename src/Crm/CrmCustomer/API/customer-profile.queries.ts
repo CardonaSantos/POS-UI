@@ -18,7 +18,7 @@ export function useClienteDetails(clienteId: number) {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -35,7 +35,7 @@ export function usePlantillasContrato() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 

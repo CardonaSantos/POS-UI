@@ -1,6 +1,7 @@
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
 import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
 import { MikrotikRoutersResponse } from "../mikro-tiks/mikrotiks.interfaces";
+import { NuevaFacturacionZona } from "../zonas-facturacion/FacturacionZonaTypes";
 export interface ClienteDetailsDto {
   id: number;
   nombre: string;
@@ -29,6 +30,7 @@ export interface ClienteDetailsDto {
   actualizadoEn: string;
   ticketSoporte: TicketSoporte[];
   facturaInternet: FacturaInternet[];
+  facturacionZona: NuevaFacturacionZona;
   clienteServicio: ClienteServicio[];
   contratoServicioInternet: ContratoServicioInternet | null;
   imagenes: CustomerImage[];

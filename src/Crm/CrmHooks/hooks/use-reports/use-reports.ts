@@ -1,5 +1,11 @@
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 
+export interface FiltersProps {
+  startDate?: Date | undefined;
+  endDate?: Date | null;
+  userId: number | null;
+}
+
 export function useGenerateHistorialPagos() {
   return useCrmMutation<Blob, { ids: number[] }>(
     "post",
@@ -14,6 +20,16 @@ export function useGenerateInfoReport() {
   return useCrmMutation<Blob, { ids: number[] }>(
     "post",
     "generate-reports/exportar-info",
+    {
+      responseType: "blob",
+    },
+  );
+}
+
+export function useGenerateReportCobranza() {
+  return useCrmMutation<Blob, { query: FiltersProps }>(
+    "post",
+    "generate-reports/cobranza",
     {
       responseType: "blob",
     },

@@ -60,6 +60,9 @@ export interface NuevaFacturacionZona {
   // Corte y suspensión
   diaCorte?: number | null;
   suspenderTrasFacturas?: number | null;
+  // timestamps
+  creadoEn: string;
+  actualizadoEn: string;
 
   // Notificaciones
   whatsapp?: boolean;

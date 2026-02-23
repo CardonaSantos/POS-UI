@@ -9,6 +9,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { MapPin, ExternalLink } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
+import { CustomMapControls } from "./custom-maps-control";
 
 interface Props {
   personas: RealTimeLocationRaw[];
@@ -146,12 +147,11 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
         defaultCenter={defaultCenter}
         className="w-full h-full min-h-[250px]"
         gestureHandling="greedy"
-        disableDefaultUI
-        fullscreenControl
+        disableDefaultUI={true}
         mapTypeId="hybrid"
       >
         <MapBoundsHandler personas={validPersonas} />
-
+        <CustomMapControls />
         {validPersonas.map((persona) => (
           <AdvancedMarker
             key={persona.usuarioId}
