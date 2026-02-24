@@ -1,16 +1,10 @@
 import { RolUsuario } from "../users/users-rol";
 
-export interface UsuarioRaw {
-  id: number;
-  empresaId: number;
+interface Usuario {
   nombre: string;
-  correo: string;
-  telefono: string | null;
   rol: RolUsuario;
-  activo: boolean;
-  contrasena?: string;
-  creadoEn: string;
-  actualizadoEn: string;
+  telefono: string;
+  avatarUrl?: string;
 }
 
 export interface RealTimeLocationRaw {
@@ -18,8 +12,12 @@ export interface RealTimeLocationRaw {
   latitud: number;
   longitud: number;
   precision: number;
-  velocidad: number;
-  bateria: number;
-  actualizadoEn: string;
-  usuario: UsuarioRaw;
+  bateria?: number;
+  velocidad?: number;
+  actualizadoEn: Date;
+  usuario: Usuario;
+  ticketsEnProceso: {
+    id: number;
+    titulo: string;
+  }[];
 }

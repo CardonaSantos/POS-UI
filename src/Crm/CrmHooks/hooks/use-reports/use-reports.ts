@@ -3,7 +3,12 @@ import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 export interface FiltersProps {
   startDate?: Date | undefined;
   endDate?: Date | null;
+
+  startDateG?: Date | undefined;
+  endDateG?: Date | null;
+
   userId: number | null;
+  estados: Array<string>;
 }
 
 export function useGenerateHistorialPagos() {
@@ -27,7 +32,7 @@ export function useGenerateInfoReport() {
 }
 
 export function useGenerateReportCobranza() {
-  return useCrmMutation<Blob, { query: FiltersProps }>(
+  return useCrmMutation<Blob, FiltersProps>(
     "post",
     "generate-reports/cobranza",
     {
@@ -35,7 +40,6 @@ export function useGenerateReportCobranza() {
     },
   );
 }
-
 export const downloadFile = (data: Blob, filename: string) => {
   const url = window.URL.createObjectURL(data);
   const link = document.createElement("a");

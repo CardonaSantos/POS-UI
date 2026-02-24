@@ -28,6 +28,8 @@ import {
   Sector,
 } from "../features/cliente-interfaces/cliente-types";
 import { ServiciosInternet } from "../CrmNewCustomerEdition/customer-form-types";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { useGetMikroTiks } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
 
 interface Servicios {
   id: number;
@@ -43,10 +45,12 @@ interface contradoID {
 }
 
 function CreateCustomers() {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [openConfirm, setOpenConfirm] = useState(false);
   const [departamentos, setDepartamentos] = useState<Departamentos[]>([]);
   const [municipios, setMunicipios] = useState<Municipios[]>([]);
   const [servicios, setServicios] = useState<Servicios[]>([]);
+
   const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
     [],
   );
@@ -65,6 +69,9 @@ function CreateCustomers() {
     number | null
   >(null);
   const [sectorSelected, setSectorSelected] = useState<number | null>(null);
+
+  const { data: mikrotiksResponse } = useGetMikroTiks();
+  const secureMikroTiks = mikrotiksResponse ? mikrotiksResponse : [];
 
   const getDepartamentos = async () => {
     try {
@@ -185,6 +192,11 @@ function CreateCustomers() {
     label: service.nombre,
   }));
 
+  const optionsMikrotiks: OptionSelected[] = secureMikroTiks.map((mk) => ({
+    value: mk.id,
+    label: mk.nombre,
+  }));
+
   const optionsServicesWifi: OptionSelected[] = serviciosWifi.map(
     (service) => ({
       value: service.id,
@@ -264,8 +276,20 @@ function CreateCustomers() {
     empresaId: "",
     estado: EstadoCliente.ACTIVO,
     enviarRecordatorio: true,
+    activateOnMk: false,
   });
 
+  const handleChangeSwitch = (value: boolean) => {
+    setFormData((previa) => ({
+      ...previa,
+      activateOnMk: value,
+    }));
+  };
+
+  const [mkSelected, setMkSelected] = useState<number | null>(null);
+  const handleSelectMk = (selectedOption: OptionSelected | null) => {
+    setMkSelected(selectedOption ? Number(selectedOption.value) : null);
+  };
   const [formDataContrado, setFormDataContrato] = useState<contradoID>({
     archivoContrato: "",
     clienteId: 0,
@@ -295,6 +319,7 @@ function CreateCustomers() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formDataToSend = {
+      userId,
       nombre: formData.nombre.trim(),
       apellidos: formData.apellidos.trim(),
       ip: formData.ip.trim(),
@@ -308,9 +333,9 @@ function CreateCustomers() {
       contrasenaWifi: formData.contrasenaWifi.trim(),
       ssidRouter: formData.ssidRouter.trim(),
       fechaInstalacion: fechaInstalacion,
-      municipioId: Number(muniSelected) || null, // Convertir a número
-      departamentoId: Number(depaSelected) || null, // Convertir a número
-      sectorId: Number(sectorSelected) || null, // Convertir a número
+      municipioId: Number(muniSelected) || null,
+      departamentoId: Number(depaSelected) || null,
+      sectorId: Number(sectorSelected) || null,
       empresaId: 1,
       coordenadas:
         formData.coordenadas && formData.coordenadas !== ""
@@ -325,6 +350,8 @@ function CreateCustomers() {
       fechaFirma: formDataContrado.fechaFirma,
       archivoContrato: formDataContrado.archivoContrato,
       observacionesContrato: formDataContrado.observaciones,
+      mkSelected: mkSelected,
+      activateOnMk: formData.activateOnMk,
     };
 
     // Validar si municipio y departamento están seleccionados
@@ -394,6 +421,7 @@ function CreateCustomers() {
       mascara: "",
       estado: EstadoCliente.ACTIVO,
       enviarRecordatorio: true,
+      activateOnMk: false,
     });
 
     // Resetear formDataContrato
@@ -459,13 +487,16 @@ function CreateCustomers() {
         onSelectEstadoCliente={handleSelectEstadoCliente}
         onSubmit={() => setOpenConfirm(true)}
         isSubmitting={isSubmitting}
-        optionsMikrotiks={[]}
+        optionsMikrotiks={optionsMikrotiks}
         secureDepartamentos={departamentos}
         secureMunicipios={municipios}
         secureSectores={sectores}
         secureServiciosWifi={serviciosWifi}
         secureZonasFacturacion={zonasFacturacion}
-        mikrotiks={[]}
+        mikrotiks={secureMikroTiks}
+        mkSelected={mkSelected}
+        handleSelectMk={handleSelectMk}
+        handleChangeSwitch={handleChangeSwitch}
       />
 
       {/* Confirmation Dialog */}

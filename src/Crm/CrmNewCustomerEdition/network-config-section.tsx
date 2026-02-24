@@ -15,6 +15,7 @@ export function NetworkConfigSection({
   setOpenUpdNet,
   setOpenAuth,
   isInstalation,
+  isCreation,
 }: NetworkConfigSectionProps) {
   return (
     <section aria-labelledby="section-network" className="space-y-4">
@@ -94,6 +95,7 @@ export function NetworkConfigSection({
           variant="outline"
           type="button"
           className="h-8 text-xs gap-2"
+          disabled={isCreation}
         >
           <RefreshCw className="h-3.5 w-3.5" />
           Actualizar Red

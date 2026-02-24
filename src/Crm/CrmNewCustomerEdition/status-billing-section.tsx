@@ -100,7 +100,7 @@ export function StatusBillingSection({
                   }
                 : null
             }
-            className="text-xs"
+            className="text-xs text-black"
             placeholder="Seleccionar zona..."
             styles={compactSelectStyles}
           />

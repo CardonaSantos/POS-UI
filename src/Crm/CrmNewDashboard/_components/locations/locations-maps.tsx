@@ -7,9 +7,11 @@ import {
   InfoWindow,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, Phone, Ticket, Cog } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { CustomMapControls } from "./custom-maps-control";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { handleCall, handleOpenWhatsapp } from "@/Crm/_Utils/helpersText";
 
 interface Props {
   personas: RealTimeLocationRaw[];
@@ -31,23 +33,24 @@ const MarkerIcon = ({
   return (
     <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110">
       <div
-        className={`flex items-center justify-center rounded-full border-2 border-white shadow-lg ${sizeClass} ${
-          // CAMBIO: De sky a red
-          isHovered ? "bg-teal-700 z-50" : "bg-teal-600"
+        className={`flex items-center justify-center rounded-full border-2 border-rose-600 shadow-lg ${sizeClass} ${
+          isHovered ? " z-50" : ""
         } text-white transition-colors overflow-hidden`}
       >
-        {/* Aquí pondremos el Avatar/Image en el futuro. 
-            Por ahora mostramos la inicial */}
-        <span className="font-bold text-xs leading-none select-none">
-          {initial}
-        </span>
+        <Avatar className="h-8 w-8">
+          <AvatarImage src="https://github.com/shadcn.png" />
+
+          <AvatarFallback className="bg-rose-600 text-white font-bold">
+            {initial || "X"}
+          </AvatarFallback>
+        </Avatar>
       </div>
 
       {/* Triángulo del marcador (Punta) */}
       <div
         className={`w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-transparent -mt-[1px] ${
           // CAMBIO: De sky a red para coincidir con el círculo
-          isHovered ? "border-t-red-600" : "border-t-red-500"
+          isHovered ? "border-t-rose-600" : "border-t-rose-600"
         }`}
       />
     </div>
@@ -65,6 +68,31 @@ const PersonaInfoWindow = ({ location }: { location: RealTimeLocationRaw }) => (
       <span>
         {location.latitud.toFixed(4)}, {location.longitud.toFixed(4)}
       </span>
+    </div>
+
+    <div className="flex items-center gap-1.5 text-slate-500 mb-2 text-xs">
+      <Phone className="w-3 h-3 shrink-0" />
+      <span>
+        {handleOpenWhatsapp(location.usuario?.telefono ?? "40017273")}
+      </span>
+    </div>
+
+    <div className="flex items-center gap-1.5 text-slate-500 mb-2 text-xs">
+      <Phone className="w-3 h-3 shrink-0" />
+      <span>{handleCall(location.usuario?.telefono ?? "40017273")}</span>
+    </div>
+
+    <div className="">
+      <Ticket />
+      <div className="">
+        {location.ticketsEnProceso.length &&
+          location.ticketsEnProceso.map((t) => (
+            <div className="">
+              <span className="text-xs text-black">{t.titulo}</span>
+              <Cog className="animate-spin text-black" />
+            </div>
+          ))}
+      </div>
     </div>
 
     <a
@@ -139,6 +167,8 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
   }, [markerSize]);
 
   const defaultCenter = { lat: 15.679026415483003, lng: -91.74822125438106 };
+  console.log("Los objetos validos son: ", validPersonas);
+
   return (
     <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 relative bg-slate-100">
       <Map

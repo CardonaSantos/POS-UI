@@ -70,7 +70,6 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -81,6 +80,7 @@ import { es } from "date-fns/locale";
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
 import { Label } from "@/components/ui/label";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -496,6 +496,8 @@ export default function ClientesTable() {
                     <SelectItem value="10">10 filas</SelectItem>
                     <SelectItem value="20">20 filas</SelectItem>
                     <SelectItem value="50">50 filas</SelectItem>
+                    <SelectItem value="100">100 filas</SelectItem>
+                    <SelectItem value="200">200 filas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -615,7 +617,6 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
     );
   };
 
-  // Verificar si algo está cargando para deshabilitar botones
   const isLoading =
     exportInfoMutation.isPending || exportPagosMutation.isPending;
 
@@ -697,11 +698,6 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
   );
 };
 
-interface OptionSelected {
-  label: string;
-  value: string;
-}
-
 export function OptionsReportsCobros() {
   const { data: rawUsers } = useGetUsersToSelect();
   const users = rawUsers || [];
@@ -709,20 +705,30 @@ export function OptionsReportsCobros() {
   const [filters, setFilters] = useState<FiltersProps>({
     startDate: undefined,
     endDate: null,
+
+    startDateG: undefined,
+    endDateG: null,
+
     userId: null,
+    estados: [],
   });
 
   const createReportCobranza = useGenerateReportCobranza();
 
   const [isOpen, setIsOpen] = useState(false);
 
-  // Mapeo para react-select
+  const handleSelectState = (val: Array<string>) => {
+    setFilters((previa) => ({
+      ...previa,
+      estados: val,
+    }));
+  };
+
   const options: OptionSelected[] = users.map((u) => ({
     label: u.nombre,
     value: u.id.toString(),
   }));
 
-  // Buscar la opción completa para pasársela al Select (react-select requiere el objeto)
   const selectedUserOption = filters.userId
     ? options.find((opt) => opt.value === filters.userId?.toString()) || null
     : null;
@@ -741,18 +747,38 @@ export function OptionsReportsCobros() {
     }));
   };
 
+  const handleChangeDatesG = (side: "start" | "end", date: Date | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [side === "start" ? "startDateG" : "endDateG"]: date,
+    }));
+  };
+
   const handleClear = () => {
-    setFilters({ startDate: undefined, endDate: null, userId: null });
+    setFilters({
+      startDate: undefined,
+      endDate: null,
+      userId: null,
+      endDateG: null,
+      startDateG: undefined,
+      estados: [],
+    });
   };
 
   const handleGenerateReport = async () => {
     setIsOpen(false);
-    toast.promise(createReportCobranza.mutateAsync({ query: filters }), {
+    toast.promise(createReportCobranza.mutateAsync(filters), {
       loading: "Generando reporte...",
-      success: () => {},
+      success: (data: any) => {
+        downloadFile(data, `Reporte_Pagos_${Date.now()}.xlsx`);
+        setIsOpen(false);
+        return "Reporte generado";
+      },
       error: (error) => getApiErrorMessageAxios(error),
     });
   };
+
+  console.log("Los estados seleccionados: ", filters);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -767,39 +793,36 @@ export function OptionsReportsCobros() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Reporte de Cobranzas</DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
-            Filtra por fechas o por usuario para generar tu reporte.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[425px] p-5">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg text-center">
+            Reporte de Cobranzas
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        {/* Contenedor principal con espaciado uniforme */}
+        <div className="space-y-4">
+          {/* RANGO DE PAGO */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">
-              Rango de Fechas
+              Rango de Fecha Pagada
             </Label>
-
-            <div className="flex items-center rounded-md border border-input bg-background h-9 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
-              <div className="px-3 flex items-center justify-center border-r border-border h-full bg-muted/30">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center rounded-md border border-input bg-background h-8 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+              <div className="px-2.5 flex items-center justify-center border-r border-border h-full bg-muted/30">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-
               <DatePicker
                 locale={es}
                 selected={filters.startDate}
-                onChange={(date) => handleChangeDates("start", date)}
+                onChange={(date) => handleChangeDates("start", date)} // Ojo aquí, lee la nota abajo
                 selectsStart
                 startDate={filters.startDate}
                 endDate={filters.endDate}
                 placeholderText="Desde"
-                className="w-full h-full border-none text-sm text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
                 dateFormat="dd/MM/yy"
               />
-
-              <span className="text-muted-foreground/50 text-sm px-1">-</span>
-
+              <span className="text-muted-foreground/50 text-xs px-1">-</span>
               <DatePicker
                 locale={es}
                 selected={filters.endDate}
@@ -807,29 +830,105 @@ export function OptionsReportsCobros() {
                 selectsEnd
                 startDate={filters.startDate}
                 endDate={filters.endDate}
-                minDate={filters.startDate} // Corrección: No puede ser menor a la inicial
+                minDate={filters.startDate}
                 placeholderText="Hasta"
-                className="w-full h-full border-none text-sm text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
                 dateFormat="dd/MM/yy"
               />
             </div>
           </div>
 
+          {/* RANGO DE GENERACIÓN */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">
-              Cobrador / Usuario (Opcional)
+              Rango de Fecha Generada
+            </Label>
+            <div className="flex items-center rounded-md border border-input bg-background h-8 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+              <div className="px-2.5 flex items-center justify-center border-r border-border h-full bg-muted/30">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <DatePicker
+                locale={es}
+                selected={filters.startDateG}
+                onChange={(date) => handleChangeDatesG("start", date)} // Asumo que creaste una función diferente para la fecha G
+                selectsStart
+                startDate={filters.startDateG}
+                endDate={filters.endDateG}
+                placeholderText="Desde"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+              <span className="text-muted-foreground/50 text-xs px-1">-</span>
+              <DatePicker
+                locale={es}
+                selected={filters.endDateG}
+                onChange={(date) => handleChangeDatesG("end", date)}
+                selectsEnd
+                startDate={filters.startDateG}
+                endDate={filters.endDateG}
+                minDate={filters.startDateG}
+                placeholderText="Hasta"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+            </div>
+          </div>
+
+          {/* ESTADO DE FACTURA */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Estado de la Factura
+            </Label>
+            <ToggleGroup
+              type="multiple"
+              value={filters.estados}
+              onValueChange={handleSelectState}
+              className="flex flex-wrap justify-start gap-1"
+            >
+              <ToggleGroupItem
+                value="PAGADA"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PAGADA
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="PENDIENTE"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PENDIENTE
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="PARCIAL"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PARCIAL
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="VENCIDA"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                VENCIDA
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          {/* COBRADOR */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Cobrador
             </Label>
             <ReactSelectComponent
+              className="text-black text-xs" // Ajustado a text-xs para mantener el estilo compacto
               options={options}
               onChange={handleSelectUser}
-              value={selectedUserOption} // Pasamos el objeto OptionSelected, no solo un string
+              value={selectedUserOption}
               placeholder="Seleccionar cobrador..."
-              isClearable // Ideal por si quieren limpiar el filtro
+              isClearable
             />
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-2">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-4 pt-4 border-t border-border">
           <Button
             variant="ghost"
             onClick={handleClear}

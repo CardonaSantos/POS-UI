@@ -12,7 +12,6 @@ import {
   MapIcon,
   MapPinned,
   MapPin,
-  MessagesSquare,
   User,
   LucideIcon,
   Target,
@@ -96,12 +95,6 @@ export const routesCrm_SuperAdmin = [
     icon: MapPin,
     label: "Sectores",
     href: "/crm-sectores",
-  },
-
-  {
-    icon: MessagesSquare,
-    label: "Mensajes Automaticos",
-    href: "/crm-mensajes-automaticos",
   },
 
   {
@@ -247,9 +240,16 @@ export const routesCrm_Admin = [
   },
 
   {
-    icon: MessagesSquare,
-    label: "Mensajes Automaticos",
-    href: "/crm-mensajes-automaticos",
+    icon: BotMessageSquare,
+    label: "Bot y Mensajería",
+    submenu: [
+      { icon: Bot, label: "Bot", href: "/crm/bot" },
+      {
+        icon: BotMessageSquare,
+        label: "Mensajería Whatsapp",
+        href: "/crm/bot/whatsapp?page=1",
+      },
+    ],
   },
 
   {
@@ -331,19 +331,6 @@ export const routesCrm_Admin = [
   },
 
   { icon: Sheet, label: "Reports", href: "/crm/reports" },
-
-  {
-    icon: MapIcon,
-    label: "Registros eliminados",
-    submenu: [
-      { icon: Bot, label: "Bot", href: "/crm/bot" },
-      {
-        icon: BotMessageSquare,
-        label: "Mensajería Whatsapp",
-        href: "/crm/bot/whatsapp?page=1",
-      },
-    ],
-  },
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];

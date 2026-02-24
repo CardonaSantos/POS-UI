@@ -139,13 +139,8 @@ function NewDashboard() {
       realTimeQkeys.all,
       (oldData: RealTimeLocationRaw[] | undefined) => {
         console.log("El payload entrante es: ", payload);
-
-        // CORRECCIÓN: El payload YA ES el dato que necesitas.
-        // No intentes acceder a .locationResponse
         const incoming = payload;
-
         if (!oldData) return [incoming];
-
         const exists = oldData.find((l) => l.usuarioId === incoming.usuarioId);
 
         if (exists) {

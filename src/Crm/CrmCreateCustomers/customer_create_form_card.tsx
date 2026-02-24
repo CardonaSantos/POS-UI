@@ -1,16 +1,13 @@
 "use client";
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
-
+import { Router, Save } from "lucide-react";
 import {
   EstadoCliente,
   Sector,
   ServiciosInternet,
 } from "../features/cliente-interfaces/cliente-types";
 import {
-  ContractSection,
   FormChangeHandler,
   FormData,
   LocationSection,
@@ -22,22 +19,18 @@ import {
   ServiceInfoSection,
   StatusBillingSection,
 } from "../CrmNewCustomerEdition";
-// import type { FormData } from "../CrmNewCustomerEdition/customer-form-types";
 import type { OptionSelected } from "../CrmNewCustomerEdition/customer-form-types";
-// import {
-//   Departamentos,
-//   Municipios,
-// } from "../features/locations-interfaces/municipios_departamentos.interfaces";
-// import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import {
   Departamentos,
   Municipios,
 } from "../features/locations-interfaces/municipios_departamentos.interfaces";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
-// import { NuevaFacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+import { MikrotikSection } from "../CrmNewCustomerEdition/mikrotik-section";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 interface contradoID {
   clienteId: number;
-  idContrato: string; //UNIQUE EL CAMPO
+  idContrato: string;
   fechaFirma: Date | null;
   archivoContrato: string;
   observaciones: string;
@@ -83,13 +76,16 @@ interface CustomerCreateFormCardProps {
   secureSectores: Sector[];
   secureServiciosWifi: ServiciosInternet[];
   secureZonasFacturacion: FacturacionZona[];
-  mikrotiks: any[]; // O el tipo MikrotikRoutersResponse[]
-  optionsMikrotiks: OptionSelected[]; // Aunque vaya vacío
+  mikrotiks: any[];
+  mkSelected: number | null;
+  handleSelectMk: (selectedOption: OptionSelected | null) => void;
+  optionsMikrotiks: OptionSelected[];
+
+  handleChangeSwitch: (value: boolean) => void;
 }
 
 export function CustomerCreateFormCard({
   formData,
-  formDataContrato,
   fechaInstalacion,
   depaSelected,
   muniSelected,
@@ -104,7 +100,6 @@ export function CustomerCreateFormCard({
   optionsZonasFacturacion,
   optionsSectores,
   onChangeForm,
-  onChangeContrato,
   onSelectDepartamento,
   onSelectMunicipio,
   onSelectSector,
@@ -115,14 +110,16 @@ export function CustomerCreateFormCard({
   onSelectEstadoCliente,
   onSubmit,
   isSubmitting,
-  //
   secureDepartamentos,
   secureMunicipios,
   secureSectores,
   secureServiciosWifi,
   secureZonasFacturacion,
-  //   mikrotiks,
-  //   optionsMikrotiks,
+  mikrotiks,
+  optionsMikrotiks,
+  mkSelected,
+  handleSelectMk,
+  handleChangeSwitch,
 }: CustomerCreateFormCardProps) {
   return (
     <Card>
@@ -167,7 +164,6 @@ export function CustomerCreateFormCard({
               />
             </div>
           </section>
-
           {/* SECCIÓN 2 */}
           <StatusBillingSection
             formData={formData}
@@ -176,14 +172,12 @@ export function CustomerCreateFormCard({
               zonasFacturacionSelected ? Number(zonasFacturacionSelected) : null
             }
             optionsZonasFacturacion={optionsZonasFacturacion}
-            // secureZonasFacturacion={secureZonasFacturacion}
             onSelectEstadoCliente={onSelectEstadoCliente}
             onEnviarRecordatorioChange={() => {}}
             onSelectZonaFacturacion={onSelectZonaFacturacion}
             onChangeFechaInstalacion={onChangeFechaInstalacion}
             secureZonasFacturacion={secureZonasFacturacion}
           />
-
           {/* SECCIÓN 3 */}
           <NetworkConfigSection
             isInstalation={false}
@@ -195,15 +189,37 @@ export function CustomerCreateFormCard({
             optionsMikrotiks={[]}
             onChangeForm={onChangeForm}
             onSelectMk={() => {}}
+            isCreation={true}
           />
+          <MikrotikSection
+            mikrotiks={mikrotiks}
+            optionsMikrotiks={optionsMikrotiks}
+            mkSelected={mkSelected}
+            onSelectMk={handleSelectMk}
+          />
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center gap-2">
+              <Router className="w-4 h-4 opacity-70" />
+              <Label
+                htmlFor="activate-mk"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Activar IP MikroTik
+              </Label>
+            </div>
 
+            <Switch
+              id="activate-mk"
+              checked={formData.activateOnMk}
+              onCheckedChange={handleChangeSwitch}
+            />
+          </div>
           {/* SECCIÓN 4 */}
-          <ContractSection
+          {/* <ContractSection
             formDataContrato={formDataContrato}
             onChangeContrato={onChangeContrato}
             setFormDataContrato={() => {}}
-          />
-
+          /> */}
           {/* SECCIÓN 5 */}
           <ObservationsSection
             observaciones={formData.observaciones}

@@ -23,12 +23,6 @@ function NotificationList({
   onDelete,
   selectNoti,
 }: Props) {
-  const ordered = (Array.isArray(notifications) ? notifications : [])
-    .slice()
-    .sort(
-      (a, b) => dayjs(b.recibidoEn).valueOf() - dayjs(a.recibidoEn).valueOf()
-    );
-
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -42,7 +36,7 @@ function NotificationList({
     );
   }
 
-  if (!ordered.length) {
+  if (!notifications.length) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
         <Inbox className="h-8 w-8 mb-2 opacity-70" />
@@ -55,7 +49,7 @@ function NotificationList({
   return (
     <motion.ul layout className="space-y-2 pr-1">
       <AnimatePresence initial={false}>
-        {ordered.map((n) => (
+        {notifications.map((n) => (
           <MapNotifications
             selectNoti={selectNoti}
             key={n.id}
