@@ -335,7 +335,7 @@ export const routesCrm_Admin = [
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];
 
-export const routesCrm_Oficina = [
+export const routesCrm_Cobrador = [
   { icon: Home, label: "Dashboard", href: "/crm" },
 
   {
@@ -360,48 +360,7 @@ export const routesCrm_Oficina = [
     label: "Soporte",
     submenu: [
       { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
-      { icon: Target, label: "Metas de Soporte", href: "/crm/metas-soporte" },
-
-      {
-        icon: Tags,
-        label: "Categorías de Soporte",
-        href: "/crm/tags",
-      },
     ],
-  },
-  // SERVICIOS Y GESTIÓN DE SERVICIOS
-  {
-    icon: Waypoints,
-    label: "Servicios",
-    submenu: [
-      {
-        icon: Cpu,
-        label: "Gestión de Servicios",
-        href: "/crm-servicios",
-      },
-      {
-        icon: Wifi,
-        label: "Servicios de Internet",
-        href: "/crm-servicios-internet",
-      },
-    ],
-  },
-
-  {
-    icon: MapPinned,
-    label: "Facturación por Zona",
-    href: "/crm-facturacion-zona",
-  },
-  {
-    icon: MapPin,
-    label: "Sectores",
-    href: "/crm-sectores",
-  },
-
-  {
-    icon: FileText,
-    label: "Plantillas contratos",
-    href: "/crm-contrato-plantilla",
   },
 
   {
@@ -410,14 +369,46 @@ export const routesCrm_Oficina = [
     submenu: [
       {
         icon: MapPin,
-        label: "Rutas Manage",
+        label: "Rutas",
         href: "/crm/ruta",
+      },
+
+      {
+        icon: ClipboardCheck,
+        label: "Mis rutas",
+        href: "/crm/rutas-asignadas",
       },
     ],
   },
 
-  { icon: Sheet, label: "Reports", href: "/crm/reports" },
+  {
+    icon: Landmark,
+    label: "Créditos",
+    submenu: [
+      {
+        icon: NotebookPen,
+        label: "Registrar Crédito",
+        href: "/crm/credito",
+      },
 
+      {
+        icon: FileText,
+        label: "Créditos",
+        href: "/crm/credito-registros",
+      },
+
+      {
+        icon: FileType,
+        label: "Contrato",
+        href: "/crm/contrato",
+      },
+    ],
+  },
+
+  { icon: User, label: "Perfil", href: "/crm/perfil" },
+];
+
+export const routesCrm_Oficina = [
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];
 
@@ -433,29 +424,11 @@ export const routesCrm_Tecnico = [
   { icon: User, label: "Perfil", href: "/crm/perfil" },
 ];
 
-export const routesCrm_Otro = [
-  { icon: Home, label: "Inicio", href: "/crm" },
-
-  {
-    icon: Users,
-    label: "Clientes",
-    submenu: [
-      {
-        icon: Users,
-        label: "Listado de Clientes",
-        href: "/crm-clientes",
-      },
-      {
-        icon: UserPlus,
-        label: "Nuevo Cliente",
-        href: "/crm/crear-cliente-crm",
-      },
-    ],
-  },
-];
+export const routesCrm_Otro = [{ icon: Home, label: "Inicio", href: "/crm" }];
 
 export const CRM_ROUTES: Record<string, Route[]> = {
   ADMIN: routesCrm_Admin,
+  COBRADOR: routesCrm_Cobrador,
   TECNICO: routesCrm_Tecnico,
   OFICINA: routesCrm_Oficina,
   SUPER_ADMIN: routesCrm_SuperAdmin,

@@ -59,7 +59,6 @@ import SucursalesSumary from "./Pages/Sumary/SucursalesSumary";
 import Metas from "./Pages/Metas/Metas";
 import MyGoals from "./Pages/Metas/MyGoals";
 import ReportesExcel from "./Pages/Reports/Ventas/ReportesExcel";
-import CrmDashboard from "./Crm/DashboardCRM/CrmDashboard";
 import TicketDashboard from "./Crm/CrmTickets/CrmTicketDashboard";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
@@ -563,15 +562,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <MainDashboardPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/perfil-config"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmDashboard />
                 </ProtectRouteCrmUser>
               }
             />
