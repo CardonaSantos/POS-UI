@@ -1,116 +1,93 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "./app-sidebar";
-import { useState, useEffect } from "react";
-import {
-  User,
-  LogOut,
-  AtSign,
-  Bell,
-  LayoutDashboard,
-  Monitor,
-} from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { ModeToggle } from "../mode-toggle";
-import logo from "@/assets/LogoCrmPng.png";
+import React, { useEffect, useState } from "react";
+import { Link, Outlet } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
+import { Bell, LogOut, UserCog } from "lucide-react";
+
+// Componentes UI (Shadcn & Layout)
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
-import { UserToken } from "@/Types/UserToken/UserToken";
-import { jwtDecode } from "jwt-decode";
-import { useStore } from "../Context/ContextSucursal";
-import { Sucursal } from "@/Types/Sucursal/Sucursal_Info";
-import { toast } from "sonner";
+} from "@/components/ui/dropdown-menu";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-import dayjs from "dayjs";
-import localizedFormat from "dayjs/plugin/localizedFormat";
-import customParseFormat from "dayjs/plugin/customParseFormat";
+// Hooks & Stores
+
+// Assets & Tipos
+import logo from "@/assets/logo.png"; // Ajusta tu import
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { UserCrmToken } from "@/Crm/CrmAuth/UserCRMToken";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
-import NotificationsSheet from "./NotificationsComponents/NotificationsSheet";
-import { useCrmQuery } from "@/Crm/hooks/crmApiHooks";
 import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
-import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
 import { useGetNotification } from "@/Crm/CrmHooks/hooks/use-notifications/useNotification";
-import { notificationsSystemQkeys } from "@/Crm/CrmHooks/hooks/use-notifications/Qk";
-import { Robot } from "@/Crm/Icons/Robot";
+import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
+import { useCrmQuery } from "@/Crm/hooks/crmApiHooks";
+import { AppSidebar } from "./app-sidebar";
+import { ModeToggle } from "../mode-toggle";
+import NotificationsSheet from "./NotificationsComponents/NotificationsSheet";
+import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import NotificationDetailModal from "./NotificationsComponents/NotificationDetailModal";
-import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
-dayjs.extend(localizedFormat);
-dayjs.extend(customParseFormat);
-dayjs.locale("es");
+import { Robot } from "@/Crm/Icons/Robot";
+import {
+  useGetMyUserProfile,
+  UserExtendedProfile,
+} from "@/Crm/CrmHooks/hooks/useUsuarios/use-usuers";
 
 interface LayoutProps {
   children?: React.ReactNode;
 }
 
-export default function Layout2({ children }: LayoutProps) {
-  const location = useLocation();
-  const isCrmLocation = location.pathname.startsWith("/crm");
-  const erpLink = import.meta.env.VITE_ERP_LINK;
-  const crmLink = import.meta.env.VITE_CRM_LINK;
+function useRequestNotificationPermission() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("Notification" in window)) return;
 
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+}
+
+export default function LayoutCrm({ children }: LayoutProps) {
   useRequestNotificationPermission();
-
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   // -----------------------------
-  // POS STORE
+  // 1. CRM STORE
   // -----------------------------
+  const setNombre = useStoreCrm((state) => state.setNombre);
+  const setCorreo = useStoreCrm((state) => state.setCorreo);
+  const setActivo = useStoreCrm((state) => state.setActivo);
+  const setRol = useStoreCrm((state) => state.setRol);
+  const setUserId = useStoreCrm((state) => state.setUserIdCrm);
+  const setEmpresaId = useStoreCrm((state) => state.setEmpresaId);
 
-  const setUserNombre = useStore((state) => state.setUserNombre);
-  const setUserCorreo = useStore((state) => state.setUserCorreo);
-  const setUserId = useStore((state) => state.setUserId);
-  const setActivo = useStore((state) => state.setActivo);
-  const setRol = useStore((state) => state.setRol);
-  const setSucursalId = useStore((state) => state.setSucursalId);
-
-  const posNombre = useStore((state) => state.userNombre);
-  const posCorreo = useStore((state) => state.userCorreo);
-
-  // -----------------------------
-  // CRM STORE
-  // -----------------------------
-  const setNombreCrm = useStoreCrm((state) => state.setNombre);
-  const setCorreoCrm = useStoreCrm((state) => state.setCorreo);
-  const setActivoCrm = useStoreCrm((state) => state.setActivo);
-  const setRolCrm = useStoreCrm((state) => state.setRol);
-  const setUserIdCrm = useStoreCrm((state) => state.setUserIdCrm);
-  const setEmpresaIdCrm = useStoreCrm((state) => state.setEmpresaId);
+  // Estados de lectura
+  const nombre = useStoreCrm((state) => state.nombre);
+  const correo = useStoreCrm((state) => state.correo);
   const empresaId = useStoreCrm((state) => state.empresaId);
 
-  const nombreCrm = useStoreCrm((state) => state.nombre);
-  const correoCrm = useStoreCrm((state) => state.correo);
+  // Opcional: Si tienes avatar en Zustand, extráelo aquí
+  // const avatarUrl = useStoreCrm((state) => state.avatarUrl);
 
   const invalidateQk = useInvalidateQk();
 
   // -----------------------------
-  // USER DISPLAY SEGÚN RUTA
-  // -----------------------------
-  const displayName = isCrmLocation ? nombreCrm : posNombre;
-  const displayEmail = isCrmLocation ? correoCrm : posCorreo;
-
-  // -----------------------------
-  // NOTIFICACIONES (solo UI, sin server)
+  // 2. NOTIFICACIONES
   // -----------------------------
   const [openDeleteAllNoti, setOpenDeleteAllNoti] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
-
   const [openNotiDetails, setOpenNotiDetails] = useState<boolean>(false);
-  const [notiSelected, setNotiSelected] = useState<UiNotificacion | null>(null);
+  const [notiSelected, setNotiSelected] = useState<any | null>(null);
 
   const { data: notifications } = useGetNotification();
-  const secureNotifications = notifications ? notifications.notifications : [];
-  const secureNotificationsBot = notifications
-    ? notifications.botsNotifications
-    : [];
+  const secureNotifications = notifications?.notifications || [];
+  const secureNotificationsBot = notifications?.botsNotifications || [];
 
-  // const botNotifications = secureNotifications.filter((n)=> n. === '')
-
-  // Por ahora no pegamos al servidor: lista vacía
   const isLoadingNotis = false;
 
   const deleteNoti = async (_id: number) => {
@@ -121,7 +98,7 @@ export default function Layout2({ children }: LayoutProps) {
     setIsDeletingAll(true);
     try {
       toast.info(
-        "El módulo de notificaciones aún no está listo en el servidor."
+        "El módulo de notificaciones aún no está listo en el servidor.",
       );
     } finally {
       setIsDeletingAll(false);
@@ -129,73 +106,59 @@ export default function Layout2({ children }: LayoutProps) {
     }
   };
 
-  // -----------------------------
-  // DECODE TOKENS POS
-  // -----------------------------
-  useEffect(() => {
-    const storedToken = localStorage.getItem("authTokenPos");
-    if (!storedToken) return;
-    try {
-      const decoded = jwtDecode<UserToken>(storedToken);
-      setUserNombre(decoded.nombre);
-      setUserCorreo(decoded.correo);
-      setActivo(decoded.activo);
-      setRol(decoded.rol);
-      setUserId(decoded.sub);
-      setSucursalId(decoded.sucursalId);
-    } catch (error) {
-      console.error("Error decoding authTokenPos:", error);
-    }
-  }, [
-    setUserNombre,
-    setUserCorreo,
-    setActivo,
-    setRol,
-    setUserId,
-    setSucursalId,
-  ]);
+  useSocketEvent(
+    "notifications:system",
+    () => {
+      // invalidateQk("notificationsSystemQkeys.all"), // Ajusta tu query key
+    },
+    [invalidateQk],
+  );
+
+  const selectNoti = (noti: any) => {
+    setNotiSelected(noti);
+    setOpenNotiDetails(true);
+  };
 
   // -----------------------------
-  // DECODE TOKENS CRM
+  // 3. DECODE TOKENS CRM
   // -----------------------------
   useEffect(() => {
     const storedTokenCRM = localStorage.getItem("tokenAuthCRM");
     if (!storedTokenCRM) return;
 
     try {
-      const decodedCrm = jwtDecode<UserCrmToken>(storedTokenCRM);
-      setNombreCrm(decodedCrm.nombre);
-      setCorreoCrm(decodedCrm.correo);
-      setActivoCrm(decodedCrm.activo);
-      setRolCrm(decodedCrm.rol);
-      setUserIdCrm(decodedCrm.id);
-      setEmpresaIdCrm(decodedCrm.empresaId);
+      const decodedCrm = jwtDecode<any>(storedTokenCRM); // Ajusta tipo a UserCrmToken
+      setNombre(decodedCrm.nombre);
+      setCorreo(decodedCrm.correo);
+      setActivo(decodedCrm.activo);
+      setRol(decodedCrm.rol);
+      setUserId(decodedCrm.id);
+      setEmpresaId(decodedCrm.empresaId);
     } catch (error) {
       console.error("Error decodificando tokenAuthCRM:", error);
     }
-  }, [
-    setNombreCrm,
-    setCorreoCrm,
-    setActivoCrm,
-    setRolCrm,
-    setUserIdCrm,
-    setEmpresaIdCrm,
-  ]);
+  }, [setNombre, setCorreo, setActivo, setRol, setUserId, setEmpresaId]);
 
   // -----------------------------
-  // INFO SUCURSAL (CRM API)
+  // 4. QUERIES (INFO EMPRESA)
   // -----------------------------
-  const { data: empresaInfo } = useCrmQuery<Sucursal>(
+  const { data: empresaInfo } = useCrmQuery<any>( // Ajusta a tipo Sucursal/Empresa
     ["empresa-info", empresaId],
     `empresa/${empresaId}/details`,
     undefined,
     {
-      enabled: !!empresaId, // solo cuando ya tengas el id
-    }
+      enabled: !!empresaId, // Se ejecuta solo cuando el ID está listo
+    },
   );
 
+  // Si esperas un objeto:
+  const { data: userData = {} as UserExtendedProfile } =
+    useGetMyUserProfile(userId);
+
+  // Si en otro caso esperaras un array (para poder hacer .map):
+  // const { data: users = [] } = useGetProfiles();
   // -----------------------------
-  // HELPERS
+  // 5. HELPERS
   // -----------------------------
   function getInitials(name?: string | null) {
     if (!name) return "??";
@@ -203,35 +166,18 @@ export default function Layout2({ children }: LayoutProps) {
     if (words.length === 0) return "??";
     const a = words[0]?.[0] ?? "";
     const b = words[1]?.[0] ?? words[0]?.[1] ?? "";
-    const initials = (a + b).toUpperCase();
-    return initials || "??";
+    return (a + b).toUpperCase() || "??";
   }
 
   const handleLogout = () => {
-    if (isCrmLocation) {
-      localStorage.removeItem("tokenAuthCRM");
-      toast.info("Sesión en CRM cerrada");
-    } else {
-      localStorage.removeItem("authTokenPos");
-      toast.info("Sesión en POS cerrada");
-    }
+    localStorage.removeItem("tokenAuthCRM");
+    toast.info("Sesión cerrada correctamente");
     window.location.reload();
   };
 
-  useSocketEvent(
-    "notifications:system",
-    () => {
-      invalidateQk(notificationsSystemQkeys.all);
-    },
-    [invalidateQk]
-  );
-
-  // handlers
-  const selectNoti = (noti: UiNotificacion) => {
-    setNotiSelected(noti);
-    setOpenNotiDetails(true);
-  };
-
+  // -----------------------------
+  // 6. RENDER DE INTERFAZ
+  // -----------------------------
   return (
     <div className="flex min-h-screen bg-background">
       <SidebarProvider>
@@ -240,51 +186,31 @@ export default function Layout2({ children }: LayoutProps) {
         <div className="flex flex-col flex-1 w-full">
           {/* HEADER */}
           <header className="sticky top-0 z-20 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-            <div className="mx-auto flex px-2 items-center justify-between">
-              {/* LADO IZQUIERDO: Logo + sucursal */}
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="h-8 w-8 -ml-1" />
-                <Link to={isCrmLocation ? "/crm" : "/"}>
+            <div className="mx-auto flex px-3 py-2 items-center justify-between">
+              {/* LADO IZQUIERDO: Logo + Nombre Empresa */}
+              <div className="flex items-center gap-3">
+                <SidebarTrigger className="h-8 w-8 -ml-1 text-muted-foreground" />
+                <Link to="/">
                   <img
                     src={logo}
                     alt="Logo"
-                    className="h-10 w-10 sm:h-12 sm:w-12"
+                    className="h-9 w-9 sm:h-10 sm:w-10 object-contain"
                   />
                 </Link>
-                <p className="text-xs sm:text-sm truncate max-w-[160px] sm:max-w-xs">
-                  {empresaInfo?.nombre || ""}
+                <p className="text-sm font-medium text-foreground truncate max-w-[160px] sm:max-w-xs">
+                  {empresaInfo?.nombre || "Cargando..."}
                 </p>
               </div>
 
-              {/* LADO DERECHO: Toggle tema + switch CRM/POS + notis + user */}
-              <div className="flex items-center space-x-2">
+              {/* LADO DERECHO: Tema + Notificaciones + Menú de Usuario */}
+              <div className="flex items-center space-x-1 sm:space-x-2">
                 <ModeToggle />
 
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="hidden sm:inline-flex items-center gap-2 transition-colors"
-                >
-                  <a href={isCrmLocation ? erpLink : crmLink}>
-                    {isCrmLocation ? (
-                      <>
-                        <Monitor className="h-4 w-4" />
-                        <span>POS</span>
-                      </>
-                    ) : (
-                      <>
-                        <LayoutDashboard className="h-4 w-4" />
-                        <span>CRM</span>
-                      </>
-                    )}
-                  </a>
-                </Button>
-
+                {/* Notificaciones Bot */}
                 <NotificationsSheet
                   selectNoti={selectNoti}
                   tooltipText="Notificaciones Bot"
-                  icon={<Robot size={24} />}
+                  icon={<Robot size={20} />} // Ajusté el size a 20 para match
                   notifications={secureNotificationsBot}
                   isLoading={isLoadingNotis}
                   onDelete={deleteNoti}
@@ -294,6 +220,7 @@ export default function Layout2({ children }: LayoutProps) {
                   setOpenDeleteAllNoti={setOpenDeleteAllNoti}
                 />
 
+                {/* Notificaciones Sistema */}
                 <NotificationsSheet
                   tooltipText="Notificaciones Sistema"
                   icon={<Bell size={20} />}
@@ -307,32 +234,71 @@ export default function Layout2({ children }: LayoutProps) {
                   selectNoti={selectNoti}
                 />
 
+                {/* Menú de Perfil (Dropdown) */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full p-0"
-                      aria-label="User menu"
+                      className="rounded-full h-8 w-8 ml-1 ring-2 ring-transparent transition-all hover:ring-slate-200 focus-visible:ring-slate-300"
+                      aria-label="Menú de usuario"
                     >
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="h-8 w-8 bg-[#13cd95] text-white font-semibold uppercase flex items-center justify-center">
-                          {getInitials(displayName)}
+                      <Avatar className="h-8 w-8 border border-border">
+                        {/* Añadimos object-cover para que la foto no se deforme */}
+                        <AvatarImage
+                          src={userData?.perfil?.avatar?.url}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-emerald-600 text-white font-semibold uppercase text-xs">
+                          {getInitials(userData?.nombre || nombre)}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>{displayName || "Usuario"}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <AtSign className="mr-2 h-4 w-4" />
-                      <span>{displayEmail || "correo@ejemplo.com"}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
+                  {/* Aumentamos un poco el ancho a w-60 para que el correo no se corte fácilmente */}
+                  <DropdownMenuContent align="end" className="w-60">
+                    {/* SECCIÓN 1: Info del Usuario (Label no es clickeable) */}
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1.5">
+                        <p className="text-sm font-semibold leading-none text-foreground truncate">
+                          {userData?.nombre || nombre || "Usuario"}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground truncate">
+                          {userData?.correo || correo || "correo@ejemplo.com"}
+                        </p>
+                        {/* Mostramos el Rol como un pequeño Badge de texto */}
+                        {(userData?.rol || userData.rol) && (
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mt-1">
+                            {(userData?.rol || userData.rol).replace("_", " ")}
+                          </p>
+                        )}
+                      </div>
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuSeparator />
+
+                    {/* SECCIÓN 2: Acciones (Ir al perfil) */}
+                    <DropdownMenuGroup>
+                      {/* Ajusta la ruta "/crm/perfil" a la ruta real de tu componente CrmProfileConfig */}
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link
+                          to="/crm/perfil"
+                          className="flex items-center w-full"
+                        >
+                          <UserCog className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>Configuración de Perfil</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+
+                    <DropdownMenuSeparator />
+
+                    {/* SECCIÓN 3: Peligro (Cerrar Sesión) */}
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-destructive focus:bg-destructive/10 cursor-pointer"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Cerrar Sesión</span>
                     </DropdownMenuItem>
@@ -342,23 +308,26 @@ export default function Layout2({ children }: LayoutProps) {
             </div>
           </header>
 
-          {/* MAIN */}
+          {/* MAIN (Contenido inyectado por el Router) */}
           <main className="flex-1 overflow-y-auto">
-            <div className="mx-auto w-full">{children || <Outlet />}</div>
+            <div className="mx-auto w-full h-full">
+              {children || <Outlet />}
+            </div>
           </main>
 
           {/* FOOTER */}
           <footer className="border-t bg-background">
-            <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6 py-3">
-              <p className="text-center text-xs sm:text-sm text-muted-foreground">
-                &copy; 2025 Nova Sistemas. Todos los derechos reservados
+            <div className="mx-auto max-w-7xl px-4 py-3">
+              <p className="text-center text-xs text-muted-foreground">
+                &copy; {new Date().getFullYear()} Nova Sistemas CRM. Todos los
+                derechos reservados.
               </p>
             </div>
           </footer>
         </div>
       </SidebarProvider>
 
-      {/* Dialog para eliminar todas las notificaciones (solo UI) */}
+      {/* DIALOGOS Y MODALES GLOBALES */}
       <AdvancedDialogCRM
         open={openDeleteAllNoti}
         onOpenChange={setOpenDeleteAllNoti}
@@ -385,14 +354,4 @@ export default function Layout2({ children }: LayoutProps) {
       />
     </div>
   );
-}
-function useRequestNotificationPermission() {
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!("Notification" in window)) return;
-
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
 }

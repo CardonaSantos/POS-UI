@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RolUsuario, type UserProfile } from "./interfacesProfile";
+import { RolUsuario } from "./interfacesProfile";
 import { getUserProfile, updateUserProfile } from "./ProfileConfig.api";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { toast } from "sonner";

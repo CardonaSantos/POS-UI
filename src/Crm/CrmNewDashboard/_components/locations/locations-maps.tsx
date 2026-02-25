@@ -27,11 +27,13 @@ const MarkerIcon = ({
   sizeClass,
   isHovered,
   name,
+  avatarUrl,
   rol,
 }: {
   sizeClass: string;
   isHovered: boolean;
   name: string;
+  avatarUrl?: string;
   rol?: string;
 }) => {
   const initial = name ? name.charAt(0).toUpperCase() : "?";
@@ -59,12 +61,15 @@ const MarkerIcon = ({
   return (
     <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110 cursor-pointer">
       <div
+        // 1. CAMBIO: Reemplazamos "bg-white" por theme.bg
         className={`flex items-center justify-center rounded-full border-[3px] ${theme.border} shadow-lg ${sizeClass} ${
-          isHovered ? " z-50 scale-110" : "bg-white"
+          isHovered ? "z-50 scale-110" : theme.bg
         } text-white transition-all overflow-hidden`}
       >
-        <Avatar className="h-full w-full">
-          <AvatarImage src="https://github.com/shadcn.png" />
+        <Avatar className="h-full w-full border-none">
+          {/* 2. CAMBIO: Añadimos object-cover y tamaño full a la imagen */}
+          <AvatarImage src={avatarUrl} className="object-cover w-full h-full" />
+
           <AvatarFallback
             className={`${theme.bg} text-white font-bold text-xs`}
           >
@@ -79,7 +84,6 @@ const MarkerIcon = ({
     </div>
   );
 };
-
 export const PersonaInfoWindow = ({
   location,
 }: {
@@ -253,14 +257,14 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
       case "sm":
         return "w-6 h-6";
       default:
-        return "w-8 h-8";
+        return "w-9 h-9";
     }
   }, [markerSize]);
 
   const defaultCenter = { lat: 15.679026415483003, lng: -91.74822125438106 };
 
   return (
-    <div className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 relative bg-slate-100">
+    <div className="w-ful  h-full rounded-xl overflow-hidden shadow-inner border border-slate-200 relative bg-slate-100">
       <Map
         mapId="e209b83095802909"
         defaultZoom={12}
@@ -293,6 +297,7 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
             >
               <MarkerIcon
                 rol={persona.usuario.rol}
+                avatarUrl={persona.usuario.avatarUrl}
                 name={persona.usuario.nombre}
                 sizeClass={markerSizeClass}
                 isHovered={
