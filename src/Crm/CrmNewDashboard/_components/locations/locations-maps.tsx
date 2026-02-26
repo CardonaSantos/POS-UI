@@ -61,13 +61,11 @@ const MarkerIcon = ({
   return (
     <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110 cursor-pointer">
       <div
-        // 1. CAMBIO: Reemplazamos "bg-white" por theme.bg
         className={`flex items-center justify-center rounded-full border-[3px] ${theme.border} shadow-lg ${sizeClass} ${
           isHovered ? "z-50 scale-110" : theme.bg
         } text-white transition-all overflow-hidden`}
       >
         <Avatar className="h-full w-full border-none">
-          {/* 2. CAMBIO: Añadimos object-cover y tamaño full a la imagen */}
           <AvatarImage src={avatarUrl} className="object-cover w-full h-full" />
 
           <AvatarFallback

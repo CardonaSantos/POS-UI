@@ -68,7 +68,6 @@ export const routesCrm_SuperAdmin = [
       },
     ],
   },
-  // SERVICIOS Y GESTIÓN DE SERVICIOS
   {
     icon: Waypoints,
     label: "Servicios",
@@ -95,6 +94,19 @@ export const routesCrm_SuperAdmin = [
     icon: MapPin,
     label: "Sectores",
     href: "/crm-sectores",
+  },
+
+  {
+    icon: BotMessageSquare,
+    label: "Bot y Mensajería",
+    submenu: [
+      { icon: Bot, label: "Bot", href: "/crm/bot" },
+      {
+        icon: BotMessageSquare,
+        label: "Mensajería Whatsapp",
+        href: "/crm/bot/whatsapp?page=1",
+      },
+    ],
   },
 
   {
@@ -140,6 +152,30 @@ export const routesCrm_SuperAdmin = [
   },
 
   {
+    icon: Landmark,
+    label: "Créditos",
+    submenu: [
+      {
+        icon: NotebookPen,
+        label: "Registrar Crédito",
+        href: "/crm/credito",
+      },
+
+      {
+        icon: FileText,
+        label: "Créditos",
+        href: "/crm/credito-registros",
+      },
+
+      {
+        icon: FileType,
+        label: "Contrato",
+        href: "/crm/contrato",
+      },
+    ],
+  },
+
+  {
     icon: MapIcon,
     label: "Registros eliminados",
     submenu: [
@@ -151,27 +187,7 @@ export const routesCrm_SuperAdmin = [
     ],
   },
 
-  {
-    icon: MapIcon,
-    label: "Créditos",
-    submenu: [
-      {
-        icon: MapPin,
-        label: "Registrar Crédito",
-        href: "/crm/credito",
-      },
-
-      {
-        icon: MapPin,
-        label: "Crédito",
-        href: "/crm/credito-registros",
-      },
-    ],
-  },
-
   { icon: Sheet, label: "Reports", href: "/crm/reports" },
-
-  { icon: Bot, label: "Bot", href: "/crm/bot" },
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },

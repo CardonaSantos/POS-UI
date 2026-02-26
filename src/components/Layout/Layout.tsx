@@ -3,8 +3,6 @@ import { Link, Outlet } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 import { Bell, LogOut, UserCog } from "lucide-react";
-
-// Componentes UI (Shadcn & Layout)
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +19,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 // Hooks & Stores
 
 // Assets & Tipos
-import logo from "@/assets/logo.png"; // Ajusta tu import
+import logo from "@/assets/LogoCrmPng.png"; // Ajusta tu import
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
 import { useGetNotification } from "@/Crm/CrmHooks/hooks/use-notifications/useNotification";
@@ -190,7 +188,7 @@ export default function LayoutCrm({ children }: LayoutProps) {
               {/* LADO IZQUIERDO: Logo + Nombre Empresa */}
               <div className="flex items-center gap-3">
                 <SidebarTrigger className="h-8 w-8 -ml-1 text-muted-foreground" />
-                <Link to="/">
+                <Link to="/crm">
                   <img
                     src={logo}
                     alt="Logo"

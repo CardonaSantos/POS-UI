@@ -65,17 +65,14 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             Icon={AlertTriangle}
           />
 
-          <div className="col-span-2 md:col-span-1 rounded-xl px-3 py-2.5 shadow-sm bg-slate-800/95 dark:bg-slate-900/95 text-slate-50 flex flex-col justify-between min-w-0 overflow-hidden">
-            <p className="text-[10px] uppercase tracking-wide opacity-80 font-semibold">
-              Total pagadas
-            </p>
-            <p
-              className="text-base md:text-lg lg:text-xl font-bold mt-1 truncate"
-              title={formattMonedaGT(facturacion.montoCobradoMes)}
-            >
-              {formattMonedaGT(facturacion.montoCobradoMes)}
-            </p>
-          </div>
+          <KpiCard
+            type="FACTURACION"
+            linkValue="PAGADAS"
+            title="Total Pagadas"
+            value={formattMonedaGT(facturacion.montoCobradoMes)}
+            color="bg-teal-500 dark:bg-teal-600"
+            Icon={AlertTriangle}
+          />
         </div>
       </section>
 

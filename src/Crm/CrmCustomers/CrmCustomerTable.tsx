@@ -102,6 +102,28 @@ const estadosConDescripcion = [
 ];
 
 export default function ClientesTable() {
+  // Dentro de ClientesTable
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Función para actualizar la URL sin perder otros parámetros
+  const updateQueryParams = (
+    newParams: Record<string, string | number | null | undefined>,
+  ) => {
+    const params = new URLSearchParams(searchParams);
+
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") {
+        params.delete(key);
+      } else {
+        params.set(key, value.toString());
+      }
+    });
+
+    setSearchParams(params, { replace: true });
+  };
+
+  //--------------------------------------------
+
   const [searchParam] = useSearchParams();
   const estadoFromUrl = searchParam.get("estado");
   const atBottom = useWindowScrollPosition(); // Asumo que este hook existe
@@ -115,18 +137,29 @@ export default function ClientesTable() {
   });
 
   // -- Estado de Filtros (UI) --
-  const [search, setSearch] = useState(""); // Input de texto
-  const [depaSelected, setDepaSelected] = useState<string | null>("8"); // Default: 8
-  const [muniSelected, setMuniSelected] = useState<string | null>(null);
-  const [sectorSelected, setSectorSelected] = useState<string | null>(null);
-  const [zonaFactSelected, setZonaFactSelected] = useState<string | null>(null);
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [depaSelected, setDepaSelected] = useState<string | null>(
+    searchParams.get("dep") || "8",
+  );
+  const [muniSelected, setMuniSelected] = useState<string | null>(
+    searchParams.get("muni") || null,
+  );
+  const [sectorSelected, setSectorSelected] = useState<string | null>(
+    searchParams.get("sec") || null,
+  );
+  const [zonaFactSelected, setZonaFactSelected] = useState<string | null>(
+    searchParams.get("zona") || null,
+  );
   const [estadoSelected, setEstadoSelected] = useState<string | null>(
-    estadoFromUrl || null,
+    searchParams.get("est") || estadoFromUrl || null,
   );
 
   const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
+    // URL usa base 1, TanStack usa base 0
+    pageIndex: Number(searchParams.get("p"))
+      ? Number(searchParams.get("p")) - 1
+      : 0,
+    pageSize: Number(searchParams.get("l")) || 10,
   });
 
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([]);
@@ -184,6 +217,29 @@ export default function ClientesTable() {
 
   const [debouncedSearch] = useDebounce(search, 500);
 
+  // Persistir filtros en la URL cuando cambien
+  useEffect(() => {
+    updateQueryParams({
+      q: debouncedSearch,
+      dep: depaSelected,
+      muni: muniSelected,
+      sec: sectorSelected,
+      zona: zonaFactSelected,
+      est: estadoSelected,
+      p: pagination.pageIndex + 1, // Guardamos en base 1 para que sea legible
+      l: pagination.pageSize,
+    });
+  }, [
+    debouncedSearch,
+    depaSelected,
+    muniSelected,
+    sectorSelected,
+    zonaFactSelected,
+    estadoSelected,
+    pagination.pageIndex,
+    pagination.pageSize,
+  ]);
+
   const queryDto: GetCustomersQueryDto = useMemo(
     () => ({
       page: pagination.pageIndex + 1,
@@ -219,24 +275,37 @@ export default function ClientesTable() {
     pendiente_activo: 0,
   };
   const totalCount = responseTable?.totalCount || 0;
+  const handleResetPagination = () =>
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
 
   // -- Handlers de Selects --
   const handleSelectDepartamento = (opt: OptionSelected | null) => {
     setDepaSelected(opt?.value ?? null);
-    setMuniSelected(null); // Resetear municipio al cambiar departamento
+    setMuniSelected(null);
+    handleResetPagination();
   };
 
-  const handleSelectMunicipio = (opt: OptionSelected | null) =>
+  const handleSelectMunicipio = (opt: OptionSelected | null) => {
     setMuniSelected(opt?.value ?? null);
 
-  const handleSelectSector = (opt: OptionSelected | null) =>
-    setSectorSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
 
-  const handleSelectZonaFacturacion = (opt: OptionSelected | null) =>
+  const handleSelectSector = (opt: OptionSelected | null) => {
+    setSectorSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
+
+  const handleSelectZonaFacturacion = (opt: OptionSelected | null) => {
     setZonaFactSelected(opt?.value ?? null);
 
-  const handleSelectEstado = (opt: OptionSelected | null) =>
+    handleResetPagination();
+  };
+
+  const handleSelectEstado = (opt: OptionSelected | null) => {
     setEstadoSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
 
   const handleToggleScroll = () => {
     window.scrollTo({
@@ -322,6 +391,7 @@ export default function ClientesTable() {
   const selectedIds = Object.keys(table.getState().rowSelection);
 
   console.log("Los ids de los clientes seleccionados son: ", selectedIds);
+  console.log("Los clientes son: ", clientes);
 
   return (
     <PageTransitionCrm

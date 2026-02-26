@@ -37,7 +37,6 @@ import { SelectCobradores } from "./SelectCobradores";
 import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
 import { SelectSectoresMulti } from "./SelectSectores";
 // Tipos
-import { type CreateRutaDto } from "./rutas-types";
 import { useRutasCreate } from "../CrmHooks/hooks/useRutasCreate";
 import { TableBaseGeneric } from "../Utils/Components/TableBaseTanstakGeneric";
 import { columnsClientesRutaCreate } from "./_table_clientes_create/columns_create_ruta";
@@ -47,13 +46,14 @@ import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
+import { CreateRutaDto } from "../features/rutas/rutas.interfaces";
 
 export function RutasCobroCreate() {
   const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [selectedFacturaIds, setSelectedFacturaIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [totalSeleccionado, setTotalSeleccionado] = useState<number>(0);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -86,15 +86,17 @@ export function RutasCobroCreate() {
   const recomputeTotal = (factIds: Set<string>): number => {
     let sum = 0;
     vm.clientes.forEach((c) => {
-      (c.facturas ?? []).forEach((f) => {
-        if (factIds.has(String(f.id))) sum += Number(f.montoFactura || 0);
-      });
+      (c.facturas ?? []).forEach(
+        (f: { id: string | number; montoFactura?: number | string }) => {
+          if (factIds.has(String(f.id))) sum += Number(f.montoFactura || 0);
+        },
+      );
     });
     return sum;
   };
 
   const handleRowSelectionChange = (
-    upd: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)
+    upd: RowSelectionState | ((old: RowSelectionState) => RowSelectionState),
   ) => {
     const next = typeof upd === "function" ? upd(rowSelection) : upd;
 
@@ -108,11 +110,15 @@ export function RutasCobroCreate() {
 
       if (isNow && !was) {
         nextClients.add(id);
-        (c.facturas ?? []).forEach((fx) => nextFacts.add(String(fx.id)));
+        (c.facturas ?? []).forEach((fx: { id: string | number }) =>
+          nextFacts.add(String(fx.id)),
+        );
       }
       if (!isNow && was) {
         nextClients.delete(id);
-        (c.facturas ?? []).forEach((fx) => nextFacts.delete(String(fx.id)));
+        (c.facturas ?? []).forEach((fx: { id: string | number }) =>
+          nextFacts.delete(String(fx.id)),
+        );
       }
     });
 
@@ -127,12 +133,12 @@ export function RutasCobroCreate() {
 
   // Derivados desde selección actual (página actual)
   const selectedClientes = vm.clientes.filter(
-    (c) => rowSelection[String(c.id)]
+    (c) => rowSelection[String(c.id)],
   );
 
   // Handlers de formulario
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setNuevaRuta((prev) => ({ ...prev, [name]: value }));

@@ -6,6 +6,10 @@ export enum EstadoRuta {
   EN_CURSO = "EN_CURSO",
   CERRADO = "CERRADO",
   ASIGNADA = "ASIGNADA",
+  PENDIENTE = "PENDIENTE",
+
+  COMPLETADO = "COMPLETADO",
+  INACTIVO = "INACTIVO",
 }
 
 // Interfaces

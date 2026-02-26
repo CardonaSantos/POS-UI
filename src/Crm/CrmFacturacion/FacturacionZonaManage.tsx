@@ -71,6 +71,10 @@ const FacturacionZonaManage: React.FC = () => {
     enviarRecordatorio: true,
     diaCorte: 25,
     suspenderTrasFacturas: 2,
+    actualizadoEn: "",
+    creadoEn: "",
+    email: false,
+
     // whatsapp: false,
     // email: false,
     // sms: false,
@@ -117,7 +121,7 @@ const FacturacionZonaManage: React.FC = () => {
     try {
       const response = await axios.post(
         `${VITE_CRM_API_URL}/facturacion-zona`,
-        zonaData
+        zonaData,
       );
 
       if (response.status === 201) {
@@ -142,11 +146,14 @@ const FacturacionZonaManage: React.FC = () => {
         enviarRecordatorio: true,
         diaCorte: 25,
         suspenderTrasFacturas: 2,
-        // whatsapp: false,
-        // email: false,
-        // sms: false,
-        // llamada: false,
-        // telegram: false,
+
+        actualizadoEn: "",
+        creadoEn: "",
+        email: false,
+        llamada: false,
+        sms: false,
+        telegram: false,
+        whatsapp: true,
       });
     } catch (err) {
       toast.error("Error al crear zona");
@@ -170,7 +177,7 @@ const FacturacionZonaManage: React.FC = () => {
     try {
       const response = await axios.patch(
         `${VITE_CRM_API_URL}/facturacion-zona/update-zona-facturacion`,
-        updatedZona
+        updatedZona,
       );
 
       if (response.status === 200) {
@@ -183,7 +190,7 @@ const FacturacionZonaManage: React.FC = () => {
       toast.error("Error al actualizar zona");
       console.error("Error al actualizar zona de facturación:", err);
       setError(
-        "Error al actualizar la zona de facturación. Intente nuevamente."
+        "Error al actualizar la zona de facturación. Intente nuevamente.",
       );
     } finally {
       setIsLoading(false);
@@ -204,7 +211,7 @@ const FacturacionZonaManage: React.FC = () => {
 
     try {
       const response = await axios.delete(
-        `${VITE_CRM_API_URL}/facturacion-zona/${deleteZonaId}`
+        `${VITE_CRM_API_URL}/facturacion-zona/${deleteZonaId}`,
       );
 
       if (response.status === 200) {
@@ -224,7 +231,7 @@ const FacturacionZonaManage: React.FC = () => {
 
   // Filter zonas based on search
   const filteredZonas = zonas.filter((zona) =>
-    zona.nombre.toLowerCase().includes(searchZona.toLowerCase())
+    zona.nombre.toLowerCase().includes(searchZona.toLowerCase()),
   );
 
   return (
