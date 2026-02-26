@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Router } from "lucide-react";
 import ReactSelectComponent from "react-select";
-import type { NetworkConfigSectionProps } from "./customer-form-types";
+import type { MkConfigSectionProps } from "./customer-form-types";
 
 /**
  * Sección de configuración de red (IP + Mikrotik)
@@ -14,7 +14,7 @@ export function MikrotikSection({
   mikrotiks,
   optionsMikrotiks,
   onSelectMk,
-}: NetworkConfigSectionProps) {
+}: MkConfigSectionProps) {
   return (
     <Card>
       <CardHeader className="pb-3">

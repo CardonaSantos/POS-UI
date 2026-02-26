@@ -253,7 +253,7 @@ export default function Dashboard() {
         // {API_URL}/analytics/venta-dia/${suc.id}
 
         axios.get(
-          `${API_URL}/analytics/get-ventas/semanal-chart/${sucursalId}`
+          `${API_URL}/analytics/get-ventas/semanal-chart/${sucursalId}`,
         ),
 
         axios.get(`${API_URL}/analytics/get-productos-mas-vendidos/`),
@@ -299,7 +299,7 @@ export default function Dashboard() {
   const getSolicitudesTransferencia = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/solicitud-transferencia-producto`
+        `${API_URL}/solicitud-transferencia-producto`,
       );
       if (response.status === 200) {
         setSolicitudesTransferencia(response.data);
@@ -324,7 +324,7 @@ export default function Dashboard() {
   const handleAceptRequest = async (idSolicitud: number) => {
     try {
       const response = await axios.patch(
-        `${API_URL}/price-request/acept-request-price/${idSolicitud}/${userID}`
+        `${API_URL}/price-request/acept-request-price/${idSolicitud}/${userID}`,
       );
       if (response.status === 200) {
         toast.success("Petición aceptada, precio concedido");
@@ -340,7 +340,7 @@ export default function Dashboard() {
   const handleRejectRequest = async (idSolicitud: number) => {
     try {
       const response = await axios.patch(
-        `${API_URL}/price-request/reject-request-price/${idSolicitud}/${userID}`
+        `${API_URL}/price-request/reject-request-price/${idSolicitud}/${userID}`,
       );
       if (response.status === 200) {
         toast.warning("Petición rechazada");
@@ -406,7 +406,7 @@ export default function Dashboard() {
 
   // Funciones para manejar aceptar y rechazar en el card de transferencia
   const handleAceptarTransferencia = async (
-    idSolicitudTransferencia: number
+    idSolicitudTransferencia: number,
   ) => {
     try {
       // Realiza la llamada al backend usando axios
@@ -415,7 +415,7 @@ export default function Dashboard() {
         {
           idSolicitudTransferencia,
           userID,
-        }
+        },
       );
 
       console.log("Respuesta del servidor:", response.data);
@@ -432,12 +432,12 @@ export default function Dashboard() {
   };
 
   const handleRejectTransferencia = async (
-    idSolicitudTransferencia: number
+    idSolicitudTransferencia: number,
   ) => {
     try {
       // Realiza la llamada al backend usando axios
       const response = await axios.delete(
-        `${API_URL}/solicitud-transferencia-producto/rechazar/${idSolicitudTransferencia}/${userID}`
+        `${API_URL}/solicitud-transferencia-producto/rechazar/${idSolicitudTransferencia}/${userID}`,
       );
 
       if (response.status === 200) {
@@ -481,7 +481,6 @@ export default function Dashboard() {
 
   const estadoColor = {
     [EstadoGarantia.RECIBIDO]: "bg-blue-500",
-
     [EstadoGarantia.ENVIADO_A_PROVEEDOR]: "bg-purple-500",
     [EstadoGarantia.EN_REPARACION]: "bg-orange-500",
     [EstadoGarantia.REPARADO]: "bg-green-500",
@@ -521,7 +520,7 @@ export default function Dashboard() {
           comentario,
           descripcionProblema,
           estado,
-        }
+        },
       );
       if (response.status === 200) {
         toast.success("Registro actualizado correctamente");
@@ -564,7 +563,7 @@ export default function Dashboard() {
     try {
       const response = await axios.post(
         `${API_URL}/warranty/create-regist-warranty`,
-        dtoFinishW
+        dtoFinishW,
       );
 
       if (response.status === 201) {
@@ -590,7 +589,7 @@ export default function Dashboard() {
     setIsLoadingCreditos(true);
     try {
       const response = await axios.get(
-        `${API_URL}/cuotas/get-credits-without-paying`
+        `${API_URL}/cuotas/get-credits-without-paying`,
       );
       if (response.status === 200) {
         setCreditos(response.data);
@@ -611,7 +610,7 @@ export default function Dashboard() {
   const getReparacionesRegis = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/repair/get-regist-open-repair`
+        `${API_URL}/repair/get-regist-open-repair`,
       );
       if (response.status === 200) {
         setReparaciones(response.data);
@@ -772,10 +771,10 @@ export default function Dashboard() {
             {saldoRestante > 0
               ? formatearMoneda(saldoRestante)
               : saldoRestante === 0
-              ? "Completamente pagado"
-              : `Extra por interés: ${formatearMoneda(
-                  Math.abs(saldoRestante)
-                )}`}
+                ? "Completamente pagado"
+                : `Extra por interés: ${formatearMoneda(
+                    Math.abs(saldoRestante),
+                  )}`}
           </div>
 
           <p className="text-sm">
@@ -791,7 +790,7 @@ export default function Dashboard() {
               <strong>
                 {
                   ventaCuota.cuotas.filter(
-                    (cuota) => cuota.fechaPago && cuota.monto > 0
+                    (cuota) => cuota.fechaPago && cuota.monto > 0,
                   ).length
                 }
               </strong>{" "}
@@ -821,7 +820,7 @@ export default function Dashboard() {
                       .sort(
                         (a, b) =>
                           new Date(a.creadoEn).getTime() -
-                          new Date(b.creadoEn).getTime()
+                          new Date(b.creadoEn).getTime(),
                       )
                       .map((cuota, index) => {
                         if (cuota.monto > 0) {
@@ -958,7 +957,7 @@ export default function Dashboard() {
         try {
           const response = await axios.post(
             `${API_URL}/cuotas/register-new-pay`,
-            data
+            data,
           );
 
           if (response.status === 201) {
@@ -973,7 +972,7 @@ export default function Dashboard() {
         } catch (error) {
           console.error("Error:", error);
           setError(
-            "Error al registrar el pago. Por favor, intente nuevamente."
+            "Error al registrar el pago. Por favor, intente nuevamente.",
           );
           console.log("Error al registrar pago de crédito. Inténtelo de nuevo");
         }
@@ -1014,7 +1013,7 @@ export default function Dashboard() {
         // Realiza la solicitud
         const response = await axios.patch(
           `${API_URL}/cuotas/close-credit-regist/${creditID}`,
-          payload
+          payload,
         );
 
         if (response.status === 200) {
@@ -1182,7 +1181,7 @@ export default function Dashboard() {
     const [estado, setEstado] = useState(reparacion.estado);
     const [problemas, setProblemas] = useState(reparacion.problemas);
     const [observaciones, setObservaciones] = useState(
-      reparacion.observaciones || ""
+      reparacion.observaciones || "",
     );
 
     const [openClose, setOpenClose] = useState(false);
@@ -1218,7 +1217,7 @@ export default function Dashboard() {
       try {
         const response = await axios.patch(
           `${API_URL}/repair/update-repair/${reparacion.id}`,
-          payload
+          payload,
         );
         if (response.status === 200) {
           toast.success("Registro actualizado");
@@ -1240,7 +1239,7 @@ export default function Dashboard() {
     console.log("El form de cerrar es: ", formCloseRegist);
 
     const handleChangeCloseRegist = (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
       const { name, value } = e.target;
 
@@ -1270,7 +1269,7 @@ export default function Dashboard() {
 
         const response = await axios.patch(
           `${API_URL}/repair/close-regist-repair/${reparacion.id}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Registro cerrado correctamente");
@@ -2182,7 +2181,7 @@ export default function Dashboard() {
                 }}
                 labelFormatter={(label) => {
                   const dayData = ventasSemanalChart.find(
-                    (d) => d.dia === label
+                    (d) => d.dia === label,
                   );
                   return dayData
                     ? `Fecha: ${new Date(dayData.fecha).toLocaleDateString()}`

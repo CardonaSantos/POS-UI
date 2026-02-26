@@ -9,15 +9,12 @@ import { NetworkConfigSection } from "./network-config-section";
 import { ServiceInfoSection } from "./service-info-section";
 import { LocationSection } from "./location-section";
 import { StatusBillingSection } from "./status-billing-section";
-import { ContractSection } from "./contract-section";
+// import { ContractSection } from "./contract-section";
 import { ObservationsSection } from "./observations-section";
 import type {
   FormData,
   ContratoID,
   OptionSelected,
-  Departamentos,
-  Municipios,
-  Sector,
   ServiciosInternet,
   MikrotikRoutersResponse,
   FormChangeHandler,
@@ -25,9 +22,16 @@ import type {
   MultiSelectHandler,
 } from "./customer-form-types";
 import type { Dispatch, SetStateAction } from "react";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  Sector,
+} from "../features/cliente-interfaces/cliente-types";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 import { MikrotikSection } from "./mikrotik-section";
+import {
+  Departamentos,
+  Municipios,
+} from "../features/locations-interfaces/municipios_departamentos.interfaces";
 
 // ========= Props del componente principal =========
 export interface CustomerEditFormCardProps {
@@ -77,7 +81,8 @@ export interface CustomerEditFormCardProps {
 
 export function CustomerEditFormCard({
   formData,
-  formDataContrato,
+  // formDataContrato,
+
   fechaInstalacion,
   depaSelected,
   muniSelected,
@@ -110,8 +115,8 @@ export function CustomerEditFormCard({
   onSelectEstadoCliente,
   handleEnviarRecordatorioChange,
   handleSelectMk,
-  handleChangeDataContrato,
-  setFormDataContrato,
+  // handleChangeDataContrato,
+  // setFormDataContrato,
   onClickDelete,
   onClickOpenConfirm,
   setOpenUpdNet,
@@ -192,26 +197,27 @@ export function CustomerEditFormCard({
             optionsMikrotiks={optionsMikrotiks}
             onChangeForm={onChangeForm}
             onSelectMk={handleSelectMk}
+            isCreation={false}
           />
 
           <MikrotikSection
-            isInstalation={isInstalation}
-            setOpenAuth={setOpenAuth}
-            setOpenUpdNet={setOpenUpdNet}
-            formData={formData}
+            // isInstalation={isInstalation}
+            // setOpenAuth={setOpenAuth}
+            // setOpenUpdNet={setOpenUpdNet}
+            // formData={formData}
             mkSelected={mkSelected}
             mikrotiks={mikrotiks}
             optionsMikrotiks={optionsMikrotiks}
-            onChangeForm={onChangeForm}
+            // onChangeForm={onChangeForm}
             onSelectMk={handleSelectMk}
           />
 
           {/* SECCIÓN 4: CONTRATO */}
-          <ContractSection
+          {/* <ContractSection
             formDataContrato={formDataContrato}
             onChangeContrato={handleChangeDataContrato}
             setFormDataContrato={setFormDataContrato}
-          />
+          /> */}
 
           {/* SECCIÓN 5: OBSERVACIONES */}
           <ObservationsSection

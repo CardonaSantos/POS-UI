@@ -2,64 +2,71 @@
 import { useRef, useState, useMemo } from "react";
 import { MultiValue } from "react-select";
 
-// Components
 import TicketList from "./CrmTicketList";
 import TicketDetail from "./CrmTicketDetails";
 import TicketFilters from "./CrmTicketFilter";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 
-// Hooks & Queries
 import { useGetTicketSoluciones } from "../CrmHooks/hooks/use-ticket-soluciones/useTicketSoluciones";
-import { useGetTicketsSoporte } from "../CrmHooks/hooks/use-tickets/useTicketsSoporte";
+import {
+  QuerySearchTickets,
+  useGetTicketsSoporte,
+} from "../CrmHooks/hooks/use-tickets/useTicketsSoporte";
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
 import { useGetCustomerToSelect } from "../CrmHooks/hooks/Client/useGetClient";
 import { useGetTagsTicket } from "../CrmHooks/hooks/tags-ticket/useTagsTickets";
 
-// Types & Utils
 import type { Ticket } from "./ticketTypes";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { EstadoTicketSoporte } from "../DashboardCRM/types";
-
-type DateRange = {
-  startDate: Date | undefined;
-  endDate: Date | undefined;
-};
+import CrmTicketPagination from "./CrmTicketPagination";
+import { MetaPropsResponse } from "../features/meta-server-response/meta-responses";
 
 export default function TicketDashboard() {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [openCreateTicket, setOpenCreateTicket] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
 
-  const [filterText, setFilterText] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
-  const [selectedCreator, setSelectedCreator] = useState<string | null>(null);
   const [tecnicoSelected, setTecnicoSelected] = useState<string | null>(null);
-  const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: undefined,
-    endDate: undefined,
-  });
 
-  // ----------------------------------------------------------------------
+  const [filters, setFilters] = useState<QuerySearchTickets>({
+    page: 1,
+    limit: 10,
+  });
   // 5. DATA FETCHING (API HOOKS)
-  // ----------------------------------------------------------------------
-  const { data: rawTickets, refetch: getTickets } = useGetTicketsSoporte();
+  const query = useMemo(() => filters, [filters]);
+
+  const { data: rawTickets, refetch: getTickets } = useGetTicketsSoporte(query);
   const { data: rawSolutions } = useGetTicketSoluciones();
   const { data: rawCustomers } = useGetCustomerToSelect();
   const { data: rawTags } = useGetTagsTicket();
   const { data: rawTecs } = useGetUsersToSelect();
 
   // Data normalization (Safe access)
-  const ticketsSoporte = useMemo(() => rawTickets ?? [], [rawTickets]);
+  const ticketsSoporte = rawTickets?.data ? rawTickets.data : [];
+
+  const meta = useMemo(() => {
+    const met: MetaPropsResponse = rawTickets?.meta
+      ? rawTickets?.meta
+      : {
+          hasNextPage: false,
+          hasPrevPage: false,
+          limit: 10,
+          page: 1,
+          total: 0,
+          totalPages: 0,
+        };
+    return met;
+  }, [rawTickets]);
+
   const soluciones = useMemo(() => rawSolutions ?? [], [rawSolutions]);
   const clientes = useMemo(() => rawCustomers ?? [], [rawCustomers]);
   const etiquetas = useMemo(() => rawTags ?? [], [rawTags]);
   const tecnicos = useMemo(() => rawTecs ?? [], [rawTecs]);
 
-  // ----------------------------------------------------------------------
   // 6. DERIVED DATA (MEMOIZED OPTIONS & STATS)
-  // ----------------------------------------------------------------------
 
   // Opciones para Selects
   const optionsLabels = useMemo(
@@ -68,7 +75,7 @@ export default function TicketDashboard() {
         value: label.id.toString(),
         label: label.nombre,
       })),
-    [etiquetas]
+    [etiquetas],
   );
 
   const optionsTecs = useMemo(
@@ -77,7 +84,7 @@ export default function TicketDashboard() {
         value: tec.id.toString(),
         label: tec.nombre,
       })),
-    [tecnicos]
+    [tecnicos],
   );
 
   const optionsCustomers = useMemo(
@@ -86,100 +93,62 @@ export default function TicketDashboard() {
         value: c.id.toString(),
         label: c.nombre,
       })),
-    [clientes]
+    [clientes],
   );
 
   // Ticket seleccionado actualmente
   const selectedTicket = useMemo(
     () => ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
-    [ticketsSoporte, selectedTicketId]
+    [ticketsSoporte, selectedTicketId],
   );
 
   const stats = useMemo(
     () => ({
       abiertos: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.ABIERTA
+        (t) => t.status === EstadoTicketSoporte.ABIERTA,
       ).length,
       proceso: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.EN_PROCESO
+        (t) => t.status === EstadoTicketSoporte.EN_PROCESO,
       ).length,
       resueltos: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.RESUELTA
+        (t) => t.status === EstadoTicketSoporte.RESUELTA,
       ).length,
     }),
-    [ticketsSoporte]
+    [ticketsSoporte],
   );
-
-  const filteredTickets = useMemo(() => {
-    return ticketsSoporte.filter((ticket) => {
-      const term = filterText.toLowerCase();
-      const matchesText =
-        ticket.title.toLowerCase().includes(term) ||
-        (ticket.customer?.name || "").toLowerCase().includes(term) ||
-        (ticket.description || "").toLowerCase().includes(term) ||
-        ticket.id.toString().includes(filterText);
-
-      if (!matchesText) return false;
-
-      if (selectedStatus && String(ticket.status) !== selectedStatus)
-        return false;
-
-      if (
-        selectedAssignee &&
-        ticket.assignee?.id.toString() !== selectedAssignee
-      )
-        return false;
-      if (selectedCreator && ticket.creator?.id.toString() !== selectedCreator)
-        return false;
-      if (tecnicoSelected && ticket.assignee?.id.toString() !== tecnicoSelected)
-        return false;
-
-      if (labelsSelecteds.length > 0) {
-        const originalMatchLogic = ticket.tags?.some((tag) =>
-          labelsSelecteds.includes(Number(tag.value))
-        );
-        if (!originalMatchLogic) return false;
-      }
-
-      if (dateRange.startDate || dateRange.endDate) {
-        const ticketDate = new Date(ticket.date);
-        if (isNaN(ticketDate.getTime())) return false;
-
-        const start = dateRange.startDate
-          ? new Date(dateRange.startDate)
-          : new Date(0);
-        start.setHours(0, 0, 0, 0);
-
-        const end = dateRange.endDate
-          ? new Date(dateRange.endDate)
-          : new Date();
-        end.setHours(23, 59, 59, 999);
-
-        if (ticketDate < start || ticketDate > end) return false;
-      }
-
-      return true;
-    });
-  }, [
-    ticketsSoporte,
-    filterText,
-    selectedStatus,
-    selectedAssignee,
-    selectedCreator,
-    tecnicoSelected,
-    labelsSelecteds,
-    dateRange,
-  ]);
 
   const handleSelectedTecnico = (optionSelect: OptionSelected | null) => {
     setTecnicoSelected(optionSelect ? optionSelect.value : null);
+
+    setFilters((prev) => ({
+      ...prev,
+      tecs: optionSelect ? [Number(optionSelect.value)] : undefined,
+      page: 1,
+    }));
   };
 
   const handleChangeLabels = (
-    selectedOptions: MultiValue<{ value: string; label: string }>
+    selectedOptions: MultiValue<{ value: string; label: string }>,
   ) => {
-    const selectedIds = selectedOptions.map((option) => parseInt(option.value));
-    setLabelsSelecteds(selectedIds);
+    const selectedIds = selectedOptions.map((option) => Number(option.value));
+
+    setFilters((prev) => ({
+      ...prev,
+      tags: selectedIds.length ? selectedIds : undefined,
+      page: 1,
+    }));
+  };
+
+  type DateSide = "start" | "end";
+
+  const handleChangeDates = (side: DateSide, date: Date | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [side === "start" ? "fechaInicio" : "fechaFin"]: date
+        ? date.toISOString()
+        : undefined,
+      page: 1,
+    }));
   };
 
   const handleSelectTicket = (ticket: Ticket) => {
@@ -188,7 +157,69 @@ export default function TicketDashboard() {
       detailRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
   };
-  console.log("Los tickets llegando son: ", filteredTickets);
+
+  const handleSearchChange = (value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      search: value || undefined,
+      page: 1,
+    }));
+  };
+
+  const handleStatusChange = (value: string | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      estado: value ? (value as EstadoTicketSoporte) : undefined,
+      page: 1,
+    }));
+  };
+
+  const handleQuickViewChange = (value: string, userId: number) => {
+    setFilters((prev) => {
+      if (value === "assignedToMe") {
+        return {
+          ...prev,
+          tecs: [userId],
+          creadosPor: undefined,
+          page: 1,
+        };
+      }
+
+      if (value === "createdByMe") {
+        return {
+          ...prev,
+          creadosPor: userId,
+          tecs: undefined,
+          page: 1,
+        };
+      }
+
+      return {
+        ...prev,
+        tecs: undefined,
+        creadosPor: undefined,
+        page: 1,
+      };
+    });
+  };
+
+  const handleNextPage = () => {
+    if (!meta?.hasNextPage) return;
+
+    setFilters((prev) => ({
+      ...prev,
+      page: (prev.page ?? 1) + 1,
+    }));
+  };
+
+  const handlePrevPage = () => {
+    if (!meta?.hasPrevPage) return;
+
+    setFilters((prev) => ({
+      ...prev,
+      page: Math.max((prev.page ?? 1) - 1, 1),
+    }));
+  };
 
   return (
     <PageTransitionCrm
@@ -197,50 +228,51 @@ export default function TicketDashboard() {
       variant="fade-pure"
     >
       <div>
-        {/* FILTERS AREA */}
         <TicketFilters
-          tickets={filteredTickets} // Pasamos los ya filtrados o los totales según necesite el componente para conteos
-          onFilterChange={setFilterText}
-          onStatusChange={setSelectedStatus}
-          // Create Modal Props
+          tickets={ticketsSoporte}
+          onFilterChange={handleSearchChange}
+          onStatusChange={handleStatusChange}
+          onQuickViewChange={(value) => handleQuickViewChange(value, userId)}
           openCreatT={openCreateTicket}
           setOpenCreateT={setOpenCreateTicket}
           getTickets={getTickets}
-          // Filter Setters
-          setSelectedAssignee={setSelectedAssignee}
-          setSelectedCreator={setSelectedCreator}
-          // Technical Filters
           tecnicos={tecnicos}
           tecnicoSelected={tecnicoSelected}
           handleSelectedTecnico={handleSelectedTecnico}
-          // Label Filters
           etiquetas={etiquetas}
-          etiquetasSelecteds={labelsSelecteds}
+          etiquetasSelecteds={filters.tags ?? []}
           handleChangeLabels={handleChangeLabels}
-          // Date Filters
-          dateRange={dateRange}
-          setDateRange={setDateRange}
+          dateRangeStart={filters.fechaInicio}
+          dateRangeEnd={filters.fechaFin}
+          handleChangeDates={handleChangeDates}
         />
 
         {/* CONTENT AREA */}
-        {/* <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-220px)]"> */}
-        <div className="mt-2 h-[calc(100vh-220px)] flex flex-col lg:grid lg:grid-cols-2 gap-4">
-          {/* LEFT COLUMN: LIST */}
+        <div className="mt-2 h-[calc(100vh-230px)] flex flex-col lg:grid lg:grid-cols-2 gap-4">
           <div
-            className={`flex flex-col overflow-hidden 
-  ${selectedTicket ? "h-1/2" : "h-full"} 
-  lg:h-full`}
+            className={`flex flex-col overflow-hidden bg-background border border-border rounded-lg shadow-sm
+            ${selectedTicket ? "h-1/2" : "h-full"} 
+            lg:h-full`}
           >
-            <TicketList
-              tickets={filteredTickets}
-              selectedTicketId={selectedTicketId}
-              onSelectTicket={handleSelectTicket}
-            />
+            <div className="flex-1 min-h-0">
+              <TicketList
+                tickets={ticketsSoporte}
+                selectedTicketId={selectedTicketId}
+                onSelectTicket={handleSelectTicket}
+              />
+            </div>
+
+            <div className="shrink-0 z-10">
+              <CrmTicketPagination
+                handleNextPage={handleNextPage}
+                handlePrevPage={handlePrevPage}
+                meta={meta}
+              />
+            </div>
           </div>
 
-          {/* RIGHT COLUMN: DETAIL */}
           {selectedTicket && (
-            <div className="flex flex-col h-1/2 overflow-hidden lg:h-full">
+            <div className="flex flex-col h-1/2 overflow-hidden lg:h-full bg-background border border-border rounded-lg shadow-sm">
               <TicketDetail
                 ticket={selectedTicket}
                 setSelectedTicketId={setSelectedTicketId}

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import ReactSelectComponent from "react-select";
 import axios from "axios";
-import type { Usuario } from "./rutas-types";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
+import { Usuario } from "../Notifications/interfaces2";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -25,7 +25,7 @@ export function SelectCobradores({ value, onChange }: SelectCobradoresProps) {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/user/get-users-to-rutas`
+        `${VITE_CRM_API_URL}/user/get-users-to-rutas`,
       );
       setCobradores(response.data);
     } catch (err) {

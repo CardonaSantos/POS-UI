@@ -1,15 +1,13 @@
-// DashboardChartsGrid.tsx
-
 import { ChartDataLineNivo } from "@/Crm/_charts/line-chart/LineChart.interfaces";
-import { PersonaCampo } from "../interfaces/dashboard-interfaces";
 import { NivoBarData } from "@/Crm/_charts/bar-chart/bar-chart.interface";
 import { LineChartNivo } from "@/Crm/_charts/line-chart/LineChart";
 import LocationsMaps from "./locations/locations-maps";
 import { BarChartNivo } from "@/Crm/_charts/bar-chart/BarChart";
+import { RealTimeLocationRaw } from "@/Crm/features/real-time-location/real-time-location";
 
 interface DashboardChartsGridProps {
   instalacionesMes: ChartDataLineNivo;
-  usuariosEnCampo: PersonaCampo[];
+  usuariosEnCampo: RealTimeLocationRaw[];
   instalacionesHistoricas: NivoBarData;
 }
 
@@ -35,9 +33,6 @@ export function DashboardChartsGrid({
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 px-2 py-2">
-          <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wide mb-1">
-            En campo
-          </p>
           <LocationsMaps personas={usuariosEnCampo} />
         </div>
 

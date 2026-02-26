@@ -21,9 +21,18 @@ export interface ClienteTableDto {
   facturacionZonaId: number;
   sector: Sector;
   sectorId: number;
-  clasificacionCredito: ClasificacionCliente;
+  clasificacionCredito: creditoResumen;
 }
-
+interface creditoResumen {
+  resumen: {
+    puntualidadPct: number;
+    promedioAtraso: number;
+    medianaAtraso: number;
+    rachaActual: number;
+    score: number;
+    clasificacion: ClasificacionCliente;
+  };
+}
 interface Sector {
   id: number;
   nombre: string;

@@ -37,6 +37,7 @@ export interface FormData {
   gateway: string;
   estado: EstadoCliente;
   enviarRecordatorio: boolean;
+  activateOnMk?: boolean;
 }
 
 export interface ContratoID {
@@ -48,17 +49,17 @@ export interface ContratoID {
 }
 
 // ========= Interfaces de datos seguros =========
-export interface Departamentos {
+interface Departamentos {
   id: number;
   nombre: string;
 }
 
-export interface Municipios {
+interface Municipios {
   id: number;
   nombre: string;
 }
 
-export interface Sector {
+interface Sector {
   id: number;
   nombre: string;
   descripcion: string | null;
@@ -94,16 +95,32 @@ export interface PersonalInfoSectionProps {
   onChangeForm: FormChangeHandler;
 }
 
-export interface NetworkConfigSectionProps {
-  formData: Pick<FormData, "ip" | "gateway" | "mascara" | "estado">;
+export interface MkConfigSectionProps {
   mkSelected: number | null;
   mikrotiks: MikrotikRoutersResponse[];
   optionsMikrotiks: OptionSelected[];
-  onChangeForm: FormChangeHandler;
   onSelectMk: SelectHandler<OptionSelected>;
+
+  // formData: Pick<FormData, "ip" | "gateway" | "mascara" | "estado">;
+
+  // onChangeForm: FormChangeHandler;
+  // setOpenUpdNet: () => void;
+  // setOpenAuth: () => void;
+  // isInstalation: boolean;
+
+  //  mkSelected,
+  // mikrotiks,
+  // optionsMikrotiks,
+  // onSelectMk
+}
+
+export interface NetworkConfigSectionProps extends MkConfigSectionProps {
+  formData: Pick<FormData, "ip" | "gateway" | "mascara" | "estado">;
+  onChangeForm: FormChangeHandler;
   setOpenUpdNet: () => void;
   setOpenAuth: () => void;
   isInstalation: boolean;
+  isCreation: boolean;
 }
 
 export interface ServiceInfoSectionProps {

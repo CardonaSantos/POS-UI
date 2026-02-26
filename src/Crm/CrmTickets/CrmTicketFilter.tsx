@@ -1,7 +1,14 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
-import { Search, Calendar, Plus, Filter, User, Tag, Layers } from "lucide-react";
+import {
+  Search,
+  Calendar,
+  Plus,
+  Filter,
+  User,
+  Tag,
+  Layers,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,14 +27,12 @@ import {
 
 import { es } from "date-fns/locale";
 import CrmCreateTicket from "./CreateTickets/CrmCreateTicket";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import ReactSelectComponent, { MultiValue } from "react-select";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import DatePicker from "react-datepicker";
 import { Ticket } from "./ticketTypes";
-import "react-datepicker/dist/react-datepicker.css"; // Asegúrate de importar esto si no está global
+import "react-datepicker/dist/react-datepicker.css";
 
-// --- Interfaces (Mantenemos las tuyas) ---
 interface Tecnicos {
   id: number;
   nombre: string;
@@ -38,30 +43,27 @@ interface Etiqueta {
   nombre: string;
 }
 
-type DateRange = {
-  startDate: Date | undefined;
-  endDate: Date | undefined;
-};
+type DateSide = "start" | "end";
 
 interface TicketFiltersProps {
+  dateRangeStart: Date | undefined;
+  dateRangeEnd: Date | undefined;
+  onQuickViewChange: (value: string) => void;
+  handleChangeDates: (side: DateSide, date: Date | null) => void;
   tickets: Ticket[];
   onFilterChange: (value: string) => void;
   onStatusChange: (value: string | null) => void;
   openCreatT: boolean;
   setOpenCreateT: (value: boolean) => void;
   getTickets: () => void;
-  setSelectedAssignee: (value: string | null) => void;
-  setSelectedCreator: (value: string | null) => void;
   tecnicos: Tecnicos[];
   tecnicoSelected: string | null;
   handleSelectedTecnico: (value: OptionSelected | null) => void;
   etiquetas: Etiqueta[];
   etiquetasSelecteds: number[];
   handleChangeLabels: (
-    selectedOptions: MultiValue<{ value: string; label: string }>
+    selectedOptions: MultiValue<{ value: string; label: string }>,
   ) => void;
-  dateRange: DateRange;
-  setDateRange: Dispatch<SetStateAction<DateRange>>;
 }
 
 export default function TicketFilters({
@@ -70,34 +72,23 @@ export default function TicketFilters({
   getTickets,
   openCreatT,
   setOpenCreateT,
-  setSelectedAssignee,
-  setSelectedCreator,
+  onQuickViewChange,
   tecnicos,
   tecnicoSelected,
   handleSelectedTecnico,
   etiquetas,
   etiquetasSelecteds,
   handleChangeLabels,
-  dateRange,
-  setDateRange,
+  dateRangeEnd,
+  dateRangeStart,
+  handleChangeDates,
 }: TicketFiltersProps) {
-  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
-
   const coincidencias = tickets.filter(
-    (ticket) => ticket.status !== "RESUELTA"
+    (ticket) => ticket.status !== "RESUELTA",
   );
 
   const handleFilterChange = (value: string) => {
-    if (value === "assignedToMe") {
-      setSelectedAssignee(String(userId));
-      setSelectedCreator(null);
-    } else if (value === "createdByMe") {
-      setSelectedCreator(String(userId));
-      setSelectedAssignee(null);
-    } else {
-      setSelectedAssignee(null);
-      setSelectedCreator(null);
-    }
+    onQuickViewChange(value);
   };
 
   const optionsTecnicos = tecnicos.map((tec) => ({
@@ -141,19 +132,17 @@ export default function TicketFilters({
       height: "30px",
     }),
     menu: (provided: any) => ({
-        ...provided,
-        fontSize: "12px",
-        zIndex: 50
-    })
+      ...provided,
+      fontSize: "12px",
+      zIndex: 50,
+    }),
   };
 
   return (
     <div className="w-full  p-2 border-b border-gray-100 ">
       <div className="flex flex-col xl:flex-row gap-3 items-center justify-between">
-        
         {/* BLOQUE IZQUIERDO: Buscador + Filtros */}
         <div className="flex flex-1 flex-col lg:flex-row gap-2 w-full xl:w-auto items-center">
-          
           {/* 1. Buscador (Flexible) */}
           <div className="relative w-full lg:w-[220px] shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -166,9 +155,7 @@ export default function TicketFilters({
 
           <div className="h-4 w-[1px] bg-gray-200  hidden lg:block mx-1" />
 
-          {/* 2. Grupo de Filtros (Scroll horizontal en movil, wrap en desktop medio) */}
           <div className="flex flex-wrap items-center gap-2 w-full">
-            
             {/* Fechas Compactas */}
             <div className="flex items-center rounded-md border border-input bg-background h-8 overflow-hidden shadow-sm">
               <div className="px-2 border-r border-gray-100 bg-gray-50 h-full flex items-center justify-center">
@@ -176,23 +163,24 @@ export default function TicketFilters({
               </div>
               <DatePicker
                 locale={es}
-                selected={dateRange.startDate || null}
-                onChange={(date) => setDateRange((prev) => ({ ...prev, startDate: date || undefined }))}
+                selected={dateRangeStart || null}
+                onChange={(date) => handleChangeDates("start", date)}
                 selectsStart
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
+                startDate={dateRangeStart}
+                endDate={dateRangeEnd}
                 placeholderText="Desde"
                 className="w-[85px] h-full border-none text-xs text-center focus:ring-0 bg-transparent cursor-pointer"
                 dateFormat="dd/MM/yy"
               />
               <div className="text-gray-300 text-[10px]">–</div>
               <DatePicker
-                selected={dateRange.endDate || null}
-                onChange={(date) => setDateRange((prev) => ({ ...prev, endDate: date || undefined }))}
+                locale={es}
+                selected={dateRangeEnd || null}
+                onChange={(date) => handleChangeDates("end", date)}
                 selectsEnd
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                minDate={dateRange.startDate}
+                startDate={dateRangeEnd}
+                endDate={dateRangeEnd}
+                minDate={dateRangeEnd}
                 placeholderText="Hasta"
                 className="w-[85px] h-full border-none text-xs text-center focus:ring-0 bg-transparent cursor-pointer"
                 dateFormat="dd/MM/yy"
@@ -201,37 +189,58 @@ export default function TicketFilters({
 
             {/* Selects con Iconos usando React Select Compacto */}
             <div className="w-full sm:w-[160px]">
-                <ReactSelectComponent
+              <ReactSelectComponent
                 className="text-black"
-
-                    placeholder={<div className="flex items-center gap-1"><User className="h-3 w-3"/> <span className="text-[11px]">Técnico</span></div>}
-                    options={optionsTecnicos}
-                    isClearable
-                    styles={customSelectStyles}
-                    onChange={handleSelectedTecnico}
-                    value={tecnicoSelected ? { value: tecnicoSelected, label: tecnicos.find((t) => t.id.toString() === tecnicoSelected)?.nombre || "" } : null}
-                />
+                placeholder={
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />{" "}
+                    <span className="text-[11px]">Técnico</span>
+                  </div>
+                }
+                options={optionsTecnicos}
+                isClearable
+                styles={customSelectStyles}
+                onChange={handleSelectedTecnico}
+                value={
+                  tecnicoSelected
+                    ? {
+                        value: tecnicoSelected,
+                        label:
+                          tecnicos.find(
+                            (t) => t.id.toString() === tecnicoSelected,
+                          )?.nombre || "",
+                      }
+                    : null
+                }
+              />
             </div>
 
             <div className="w-full sm:w-[200px]">
-                <ReactSelectComponent
+              <ReactSelectComponent
                 className="text-black"
-                    placeholder={<div className="flex items-center gap-1"><Tag className="h-3 w-3"/> <span className="text-[11px]">Etiquetas</span></div>}
-                    options={optionsLabels}
-                    isClearable
-                    isMulti
-                    styles={customSelectStyles}
-                    onChange={handleChangeLabels}
-                    value={optionsLabels.filter((opt) => etiquetasSelecteds.includes(Number(opt.value)))}
-                />
+                placeholder={
+                  <div className="flex items-center gap-1">
+                    <Tag className="h-3 w-3" />{" "}
+                    <span className="text-[11px]">Etiquetas</span>
+                  </div>
+                }
+                options={optionsLabels}
+                isClearable
+                isMulti
+                styles={customSelectStyles}
+                onChange={handleChangeLabels}
+                value={optionsLabels.filter((opt) =>
+                  etiquetasSelecteds.includes(Number(opt.value)),
+                )}
+              />
             </div>
 
             {/* Filtro Rápido (View) */}
-             <Select onValueChange={handleFilterChange}>
+            <Select onValueChange={handleFilterChange}>
               <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs border-dashed text-gray-600">
                 <div className="flex items-center gap-2">
-                    <Filter className="h-3 w-3" />
-                    <SelectValue placeholder="Vista" />
+                  <Filter className="h-3 w-3" />
+                  <SelectValue placeholder="Vista" />
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -240,48 +249,45 @@ export default function TicketFilters({
                 <SelectItem value="createdByMe">Creados por mí</SelectItem>
               </SelectContent>
             </Select>
-
           </div>
         </div>
 
         {/* BLOQUE DERECHO: Acciones y Contador */}
         <div className="flex items-center gap-3 w-full xl:w-auto justify-between xl:justify-end border-t xl:border-t-0 pt-2 xl:pt-0 border-gray-100">
-             
-             {/* Contador Sutil */}
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-gray-50  px-2 py-1 rounded-md border border-gray-100 ">
-                            <Layers className="h-3.5 w-3.5" />
-                            <span className="font-medium">{coincidencias.length}</span>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                        <p>Tickets abiertos o en proceso</p>
-                    </TooltipContent>
-                </Tooltip>
-             </TooltipProvider>
+          {/* Contador Sutil */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-gray-50  px-2 py-1 rounded-md border border-gray-100 ">
+                  <Layers className="h-3.5 w-3.5" />
+                  <span className="font-medium">{coincidencias.length}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Tickets abiertos o en proceso</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-            {/* Botón Crear */}
-            <div className="flex gap-2">
-                <Button
-                    onClick={() => setOpenCreateT(true)}
-                    size="sm"
-                    className="h-8 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Nuevo Ticket
-                </Button>
-                
-                {/* Modal Inyectado */}
-                <CrmCreateTicket
-                    getTickets={getTickets}
-                    openCreatT={openCreatT}
-                    setOpenCreateT={setOpenCreateT}
-                />
-            </div>
+          {/* Botón Crear */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setOpenCreateT(true)}
+              size="sm"
+              className="h-8 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Nuevo Ticket
+            </Button>
+
+            {/* Modal Inyectado */}
+            <CrmCreateTicket
+              getTickets={getTickets}
+              openCreatT={openCreatT}
+              setOpenCreateT={setOpenCreateT}
+            />
+          </div>
         </div>
-
       </div>
     </div>
   );

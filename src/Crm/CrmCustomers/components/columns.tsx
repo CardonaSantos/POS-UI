@@ -264,7 +264,8 @@ export const clienteTableColumns: ColumnDef<ClienteTableDto>[] = [
     accessorKey: "clasificacionCredito",
     header: "Crédito",
     cell: ({ row }) => {
-      const clasificacion = row.original.clasificacionCredito;
+      const clasificacion =
+        row.original.clasificacionCredito.resumen.clasificacion;
       if (!clasificacion)
         return <span className="text-xs text-gray-400">N/A</span>;
 

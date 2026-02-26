@@ -8,7 +8,6 @@ import {
   useGetTicketProceso,
 } from "../CrmHooks/hooks/dashboard/useDashboard";
 
-import { PersonaCampo } from "./interfaces/dashboard-interfaces";
 import { DashboardRoutesSidebar } from "./_components/DashboardRoutesSidebar";
 import { DashboardSupportSidebar } from "./_components/DashboardSupportSidebar";
 import { DashboardChartsGrid } from "./_components/DashboardChartsGrid";
@@ -26,6 +25,10 @@ import { useInvalidateQk } from "../CrmHooks/hooks/useInvalidateQk/useInvalidate
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { showTicketBrowserNotification } from "../WEB/browserNotifications";
+import { useGetUsersRealTime } from "../CrmHooks/hooks/use-real-time-location/use-real-time-location";
+import { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
+import { realTimeQkeys } from "../CrmHooks/hooks/use-real-time-location/Qk";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DEFAULT_DASHBOARD_DATA: DashboardData = {
   clientes: {
@@ -64,6 +67,7 @@ const initialCobrosData: DashboardCobrosResponse = {
 
 function NewDashboard() {
   const invalidateQk = useInvalidateQk();
+  const queryClient = useQueryClient();
 
   const { data: instalacionesMes = [] } = useGetDashboardChartInstalaciones();
 
@@ -85,46 +89,24 @@ function NewDashboard() {
 
   const { data: cobros = initialCobrosData } = useGetCobrosDashboard();
 
+  const { data: locationsRaw } = useGetUsersRealTime();
+
+  let locations = locationsRaw ? locationsRaw : [];
+
   const rutasActivas = cobros.rutasActiva;
   const topMorosos = cobros.morosoTop;
-
-  const usuariosEnCampo: PersonaCampo[] = [
-    {
-      id: 1,
-      nombreCompleto: "Pedro Tec.",
-      location: {
-        lat: 15.667949507438097,
-        lng: -91.71367510658024,
-      },
-    },
-    {
-      id: 2,
-      nombreCompleto: "Luis Tec.",
-      location: {
-        lat: 15.667497802956671,
-        lng: -91.71273683529152,
-      },
-    },
-  ];
-
-  console.log("Tickets: ", tickets);
-  console.log("Las instalaciones historicas: ", instalacionesHistoricas);
-  console.log("Las kpisData: ", kpisData);
 
   useSocketEvent(
     "ticket-soporte:change-status",
     (payload) => {
-      // 1) invalidar queries
       invalidateQk(TicketsProcesoQkeys.all);
-
-      // 2) toast diferenciado por estado
       if (payload.nuevoEstado === "EN_PROCESO") {
         toast.success(`Ticket #${payload.ticketId} fue tomado en proceso`);
       } else if (payload.nuevoEstado === "PENDIENTE_REVISION") {
         toast.info(`Ticket #${payload.ticketId} quedó pendiente de revisión`);
       } else {
         toast.info(
-          `Ticket #${payload.ticketId} cambió a ${payload.nuevoEstado}`
+          `Ticket #${payload.ticketId} cambió a ${payload.nuevoEstado}`,
         );
       }
 
@@ -135,7 +117,7 @@ function NewDashboard() {
         tecnico: payload.tecnico,
       });
     },
-    [invalidateQk]
+    [invalidateQk],
   );
 
   useSocketEvent(
@@ -143,11 +125,33 @@ function NewDashboard() {
     () => {
       invalidateQk(DashboardQkeys.cobros);
     },
-    [invalidateQk]
+    [invalidateQk],
   );
 
   useSocketEvent("facturacion:change-event", () => {
     invalidateQk(DashboardQkeys.kps);
+  });
+
+  console.log("los locations son: ", locations);
+
+  useSocketEvent("emit:location:real-time", (payload) => {
+    queryClient.setQueryData(
+      realTimeQkeys.all,
+      (oldData: RealTimeLocationRaw[] | undefined) => {
+        console.log("El payload entrante es: ", payload);
+        const incoming = payload;
+        if (!oldData) return [incoming];
+        const exists = oldData.find((l) => l.usuarioId === incoming.usuarioId);
+
+        if (exists) {
+          return oldData.map((l) =>
+            l.usuarioId === incoming.usuarioId ? incoming : l,
+          );
+        }
+
+        return [...oldData, incoming];
+      },
+    );
   });
 
   return (
@@ -166,10 +170,9 @@ function NewDashboard() {
         <DashboardSupportSidebar ticketsSoporte={tickets} />
       </div>
 
-      {/* FILA INFERIOR: CHARTS */}
       <DashboardChartsGrid
         instalacionesMes={instalacionesMes}
-        usuariosEnCampo={usuariosEnCampo}
+        usuariosEnCampo={locations}
         instalacionesHistoricas={instalacionesHistoricas}
       />
     </motion.div>

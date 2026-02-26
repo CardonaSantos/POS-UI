@@ -1,4 +1,3 @@
-import type { ClienteInternetFromCreateRuta } from "../rutas-types";
 import type { SortDir, SortField } from "../types/types";
 import { UseQueryResult } from "@tanstack/react-query";
 import { CRM } from "@/hooks/indexCalls";
@@ -7,6 +6,7 @@ import {
   Sector,
 } from "@/Crm/features/cliente-interfaces/cliente-types";
 import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
+import { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
 
 // Paginado genérico
 export type Paged<T> = {
@@ -42,8 +42,8 @@ const clean = (obj: Record<string, unknown>) =>
         v !== undefined &&
         v !== null &&
         !(Array.isArray(v) && v.length === 0) &&
-        !(typeof v === "string" && v.trim() === "")
-    )
+        !(typeof v === "string" && v.trim() === ""),
+    ),
   );
 
 export const rutasCobroKeys = {
@@ -56,7 +56,7 @@ export const rutasCobroKeys = {
 
 // —— Queries —— //
 export function useClientesRuta(
-  params: Partial<ClientesRutaParams>
+  params: Partial<ClientesRutaParams>,
 ): UseQueryResult<Paged<ClienteInternetFromCreateRuta>, Error> {
   const initialPaged: Paged<ClienteInternetFromCreateRuta> = {
     items: [],
@@ -74,7 +74,7 @@ export function useClientesRuta(
       placeholderData: (prev) => prev ?? initialPaged,
       initialData: initialPaged,
       retry: 1,
-    }
+    },
   );
 }
 
@@ -83,7 +83,7 @@ export function useZonasFacturacion() {
     rutasCobroKeys.zonas(),
     "/facturacion-zona/get-zonas-facturacion-to-ruta",
     undefined,
-    { initialData: [], retry: 1 }
+    { initialData: [], retry: 1 },
   );
 }
 
@@ -92,7 +92,7 @@ export function useSectoresSelect() {
     rutasCobroKeys.sectores(),
     "/sector/sectores-to-select",
     undefined,
-    { initialData: [], retry: 1 }
+    { initialData: [], retry: 1 },
   );
 }
 

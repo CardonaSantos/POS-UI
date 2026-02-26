@@ -4,16 +4,28 @@ import {
   MapPin,
   FileText,
   MessageSquare,
-  Calendar,
-  Building,
-  Map,
-  LandPlot,
   Wifi,
   Package,
-  Tag,
   CreditCard,
+  Wallet,
+  Activity,
+  CalendarDays,
+  Receipt,
+  Server,
+  WifiOff,
+  SquareDot,
+  EyeOff,
+  GitCommitHorizontal,
+  Building2,
+  LandPlot,
+  Map,
+  Globe,
+  Wrench,
+  Key,
+  Router,
+  UserCheck,
+  Banknote,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -24,348 +36,289 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ClienteDetailsDto } from "@/Crm/features/cliente-interfaces/cliente-types";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
-// Define la interfaz completa para los datos del cliente
+import {
+  ClienteDetailsDto,
+  EstadoCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
+import { InfoCard, InfoItem } from "./components/info-card";
+import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
+import { cn } from "@/lib/utils";
+import {
+  getEstadoOperandoClienteColorBadge,
+  returnStatusClient,
+} from "@/Crm/Utils/Utils2";
 
 interface ClientOverviewProps {
   cliente: ClienteDetailsDto;
 }
 
-// Función de utilidad para formatear moneda
-const formatearMoneda = (valor: number) => {
-  return new Intl.NumberFormat("es-GT", {
-    style: "currency",
-    currency: "GTQ", // Moneda de Guatemala, ajusta según sea necesario
-    minimumFractionDigits: 2,
-  }).format(valor);
+const StatusBadge = ({ status }: { status: string; active?: boolean }) => {
+  return (
+    <span
+      className={cn(
+        "px-2 py-1 text-xs font-medium border rounded-md ",
+        getEstadoOperandoClienteColorBadge(
+          returnStatusClient(status as EstadoCliente),
+        ),
+      )}
+    >
+      {status.replace("_", " ")}
+    </span>
+  );
 };
 
 export function ClientOverview({ cliente }: ClientOverviewProps) {
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Información Personal & Contacto de Referencia */}
-        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-          <CardHeader className="pb-3">
-            {/* Usamos flex justify-between para separar título y botón */}
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-                <User className="h-4 w-4 mr-2 text-primary dark:text-white" />
-                Información Personal
-              </CardTitle>
+  const estadoItems: InfoItem[] = [
+    {
+      label: "Estado Sistema",
+      value: <StatusBadge status={cliente.estadoCliente} />,
+      icon: UserCheck,
+    },
+    {
+      label: "Servicio Mikrotik",
+      value: (
+        <StatusBadge
+          status={cliente.estadoServicioMikrotik}
+          active={cliente.servicioEstado}
+        />
+      ),
+      icon: Server,
+    },
+    {
+      label: "Saldo Pendiente",
+      value: (
+        <span className="font-bold text-red-600 dark:text-red-400">
+          {formattMonedaGT(cliente.saldoCliente?.saldoPendiente || 0)}
+        </span>
+      ),
+      icon: Banknote,
+      divider: true,
+    },
+  ];
 
-              {/* BOTÓN DE VERIFICACIÓN */}
+  const personalItems: InfoItem[] = [
+    {
+      label: "Nombre",
+      value: `${cliente.nombre} ${cliente.apellidos}`,
+      icon: User,
+    },
+    { label: "Teléfono", value: cliente.telefono, icon: Phone },
+    { label: "DPI", value: cliente.dpi, icon: FileText },
+    {
+      label: "Contacto Referencia",
+      value: cliente.contactoReferenciaNombre,
+      icon: User,
+      divider: true,
+    },
+    {
+      label: "Teléfono Referencia",
+      value: cliente.contactoReferenciaTelefono,
+      icon: Phone,
+    },
+    {
+      label: "Observaciones",
+      value: cliente.observaciones,
+      icon: MessageSquare,
+      divider: true,
+    },
+  ];
+
+  const facturacionItems: InfoItem[] = [
+    {
+      label: "Zona Asignada",
+      value: cliente.facturacionZona?.nombre,
+      icon: MapPin,
+    },
+    {
+      label: "Día de Generación",
+      value: cliente.facturacionZona?.diaGeneracionFactura
+        ? `Día ${cliente.facturacionZona.diaGeneracionFactura}`
+        : null,
+      icon: Receipt,
+    },
+    {
+      label: "Día de Pago",
+      value: cliente.facturacionZona?.diaPago
+        ? `Día ${cliente.facturacionZona.diaPago}`
+        : null,
+      icon: CalendarDays,
+    },
+    {
+      label: "Día de Corte",
+      value: cliente.facturacionZona?.diaCorte
+        ? `Día ${cliente.facturacionZona.diaCorte}`
+        : null,
+      icon: WifiOff,
+    },
+  ];
+  const internetItems: InfoItem[] = [
+    {
+      label: "Plan",
+      value: cliente.servicio?.nombre,
+      icon: Globe, // Un globo terráqueo representa mejor el acceso a "la red" que un paquete de envíos.
+    },
+    {
+      label: "Precio Mensual",
+      value: cliente.servicio?.precio
+        ? formattMonedaGT(cliente.servicio.precio)
+        : null,
+      icon: Wallet, // Mucho más claro para representar dinero/pagos que una etiqueta (Tag).
+    },
+
+    {
+      label: "Fecha Instalación",
+      value: cliente.fechaInstalacion
+        ? format(new Date(cliente.fechaInstalacion), "PPP", { locale: es })
+        : null,
+      icon: Wrench, // Una llave inglesa le da ese toque "técnico/físico" de que alguien fue a instalarlo. (CalendarCheck también es buena opción).
+      divider: true,
+    },
+    {
+      label: "SSID Wi-Fi",
+      value: cliente.ssidRouter,
+      icon: Router, // Un enrutador físico distingue bien la señal de red del aparato en sí. (Wifi también es perfecto si prefieres mantenerlo).
+    },
+    {
+      label: "Contraseña",
+      value: cliente.contrasenaWifi,
+      icon: Key, // Una llave suele ser más directa para "credenciales" de acceso que un candado cerrado.
+    },
+  ];
+
+  const ubicacionItems: InfoItem[] = [
+    {
+      label: "Dirección",
+      value: cliente.direccion,
+      icon: MapPin,
+    },
+    {
+      label: "Sector",
+      value: cliente.sector?.nombre,
+      icon: LandPlot,
+    },
+    {
+      label: "Municipio",
+      value: cliente.municipio?.nombre,
+      icon: Building2,
+    },
+    {
+      label: "Departamento",
+      value: cliente.departamento?.nombre,
+      icon: Map,
+    },
+  ];
+
+  const tecnicaItems: InfoItem[] = [
+    { label: "Router Mikrotik", value: cliente.mikrotik?.nombre, icon: Server },
+    {
+      label: "Dirección IP",
+      value: cliente.IP?.direccion,
+      icon: SquareDot,
+      divider: true,
+    },
+    { label: "Máscara", value: cliente.IP?.mascara, icon: EyeOff },
+    { label: "Gateway", value: cliente.IP?.gateway, icon: GitCommitHorizontal },
+  ];
+
+  return (
+    <div className="space-y-4 pb-4">
+      {/* GRID PRINCIPAL */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-1">
+        {/* BLOQUE IZQUIERDO: Lo más urgente (Identidad, Estado Financiero, Facturación) */}
+        <div className="space-y-4 lg:space-y-1">
+          <InfoCard
+            title="Estado y Saldos"
+            icon={Activity}
+            items={estadoItems}
+            className="border-primary/20 bg-primary/5 dark:bg-primary/10" // Le damos un tinte ligero para resaltarlo
+            action={
               <Link to={`/crm/credito?clienteId=${cliente.id}`}>
-                <Button size="sm" variant="outline" className="h-8 gap-2 ">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-8 gap-2 shadow-sm"
+                >
                   <CreditCard className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Verificar Crédito</span>
-                  <span className="sm:hidden">Verificar</span>
+                  <span>Verificar Crédito</span>
                 </Button>
               </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="grid gap-2">
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <User className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Nombre:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.nombre} {cliente.apellidos}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Teléfono:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.telefono || "No especificado"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <FileText className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  DPI:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.dpi || "No especificado"}
-                </dd>
-              </div>
-              <div className="border-t pt-3 mt-3 space-y-2">
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <User className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Contacto Referencia:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.contactoReferenciaNombre || "No especificado"}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Teléfono Referencia:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.contactoReferenciaTelefono || "No especificado"}
-                  </dd>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            }
+          />
 
-        {/* Servicio de Internet */}
-        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-              <Wifi className="h-4 w-4 mr-2 text-primary dark:text-white" />
-              Servicio de Internet
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="grid gap-2">
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Package className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Plan:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.servicio?.nombre || "No asignado"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Wifi className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Velocidad:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.servicio?.velocidad || "No especificada"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Tag className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Precio:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.servicio?.precio
-                    ? formatearMoneda(cliente.servicio.precio)
-                    : "No especificado"}
-                </dd>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <InfoCard
+            title="Información Personal"
+            icon={User}
+            items={personalItems}
+          />
+          <InfoCard
+            title="Reglas de Facturación"
+            icon={Receipt}
+            items={facturacionItems}
+          />
+        </div>
 
-        {/* Ubicación Completa & Sistema */}
-        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-              <Building className="h-4 w-4 mr-2 text-primary dark:text-white" />
-              Ubicación Completa & Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="grid gap-2">
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-start gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Dirección:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.direccion || "No especificada"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.empresa?.nombre || "No especificada"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <MapPin className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Municipio:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.municipio?.nombre || "No especificado"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <LandPlot className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Sector:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.sector?.nombre || "No especificado"}
-                </dd>
-              </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                <dt className="font-medium text-muted-foreground flex items-center">
-                  <Map className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                  Departamento:
-                </dt>
-                <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                  {cliente.departamento?.nombre || "No especificado"}
-                </dd>
-              </div>
-              <div className="border-t pt-3 mt-3 space-y-2">
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-start gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <MessageSquare className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Observaciones:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.observaciones ||
-                      "No hay observaciones registradas."}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Fecha Instalación:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.fechaInstalacion
-                      ? format(new Date(cliente.fechaInstalacion), "PPP", {
-                          locale: es,
-                        })
-                      : "No disponible"}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Creado:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.creadoEn
-                      ? format(new Date(cliente.creadoEn), "PPP", {
-                          locale: es,
-                        })
-                      : "No disponible"}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Actualizado:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.actualizadoEn
-                      ? format(new Date(cliente.actualizadoEn), "PPP", {
-                          locale: es,
-                        })
-                      : "No disponible"}
-                  </dd>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Configuración IP */}
-        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-              <FileText className="h-4 w-4 mr-2 text-primary dark:text-white" />
-              Configuración IP
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            {cliente.IP ? (
-              <div className="grid gap-2">
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <FileText className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Dirección IP:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.IP.direccion}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <FileText className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Máscara:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.IP.mascara}
-                  </dd>
-                </div>
-                <div className="flex flex-col sm:grid sm:grid-cols-3 sm:items-center gap-1 sm:gap-0">
-                  <dt className="font-medium text-muted-foreground flex items-center">
-                    <FileText className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                    Gateway:
-                  </dt>
-                  <dd className="sm:col-span-2 break-words text-gray-900 dark:text-gray-50">
-                    {cliente.IP.gateway}
-                  </dd>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                No hay configuración IP asignada.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* BLOQUE DERECHO: Servicios, Ubicación y Técnica */}
+        <div className="space-y-4 lg:space-y-1">
+          <InfoCard
+            title="Servicio de Internet"
+            icon={Wifi}
+            items={internetItems}
+          />
+          <InfoCard title="Ubicación" icon={MapPin} items={ubicacionItems} />
+          <InfoCard
+            title="Configuración de Red"
+            icon={Server}
+            items={tecnicaItems}
+          />
+        </div>
       </div>
 
-      {/* Servicios Adicionales (ocupa todo el ancho) */}
-      <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center text-gray-800 dark:text-gray-100">
-            <Package className="h-4 w-4 mr-2 text-primary dark:text-white" />
-            Servicios Adicionales
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          {cliente.clienteServicio && cliente.clienteServicio.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table className="min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs sm:text-sm">
-                      Servicio
-                    </TableHead>
-                    <TableHead className="text-xs sm:text-sm">Precio</TableHead>
-                    <TableHead className="text-xs sm:text-sm">
-                      Fecha Contratación
-                    </TableHead>
+      {/* SERVICIOS ADICIONALES (Ancho completo abajo) */}
+      <InfoCard title="Servicios Adicionales Contratados" icon={Package}>
+        {cliente.clienteServicio && cliente.clienteServicio.length > 0 ? (
+          <div className="overflow-x-auto border rounded-md mt-2">
+            <Table className="min-w-full">
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-xs sm:text-sm">Servicio</TableHead>
+                  {/* <TableHead className="text-xs sm:text-sm">Tipo</TableHead> */}
+                  <TableHead className="text-xs sm:text-sm">Precio</TableHead>
+                  <TableHead className="text-xs sm:text-sm">
+                    Fecha Contratación
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cliente.clienteServicio.map((cs) => (
+                  <TableRow className="text-xs sm:text-sm" key={cs.id}>
+                    <TableCell className="py-3 font-medium">
+                      {cs.servicio.nombre}
+                    </TableCell>
+                    {/* <TableCell className="py-3 text-muted-foreground">{cs.servicio.tipo}</TableCell> */}
+
+                    <TableCell className="py-3">
+                      {formattMonedaGT(cs.servicio.precio)}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      {cs.fechaContratacion
+                        ? format(new Date(cs.fechaContratacion), "PPP", {
+                            locale: es,
+                          })
+                        : "N/A"}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cliente.clienteServicio.map((servicio) => (
-                    <TableRow className="text-xs sm:text-sm" key={servicio.id}>
-                      <TableCell className="py-2">
-                        {servicio.servicio.nombre}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        {formatearMoneda(servicio.servicio.precio)}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        {format(new Date(servicio.fechaContratacion), "PPP", {
-                          locale: es,
-                        })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">
-              No hay servicios adicionales contratados.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-2 italic">
+            No hay servicios adicionales contratados.
+          </p>
+        )}
+      </InfoCard>
     </div>
   );
 }

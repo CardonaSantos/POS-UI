@@ -1,5 +1,4 @@
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
-import { ClienteInternetFromRuta } from "../rutas-types";
 import { Badge, Home, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { returnStatusClient } from "@/Crm/Utils/Utils2";
@@ -16,6 +15,7 @@ import {
 import { copyToClipBoard } from "@/utils/clipBoard";
 import { openNumberPhone } from "@/utils/openNumberPhone";
 import { Link } from "react-router-dom";
+import { ClienteInternetFromRuta } from "@/Crm/features/rutas/rutas.interfaces";
 
 interface PropMiniPerfilCard {
   cliente: ClienteInternetFromRuta;
@@ -37,8 +37,8 @@ function MiniPerfilClienteCard({ cliente }: PropMiniPerfilCard) {
             className={cn(
               "text-[9px]",
               getClienteEstadoBadgeClass(
-                getEstadoClienteLabel(cliente.estadoCliente)
-              )
+                getEstadoClienteLabel(cliente.estadoCliente),
+              ),
             )}
           >
             {returnStatusClient(cliente.estadoCliente)}

@@ -26,7 +26,7 @@ interface DialogProps {
   setOpenEdit: (value: boolean) => void;
   openEdit: boolean;
   handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   handleRolChange: (value: string) => void;
   handleActivoChange: (checked: boolean) => void;

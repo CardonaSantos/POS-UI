@@ -5,25 +5,35 @@ const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
 export const getUserProfile = async (id: number): Promise<UserProfile> => {
   const res = await axios.get(
-    `${VITE_CRM_API_URL}/user/user-profile-info/${id}`
+    `${VITE_CRM_API_URL}/user/user-profile-info/${id}`,
   );
   return res.data;
 };
 
 export const updateUserProfile = async (
   id: number,
-  userData: Partial<UserProfile>
+  userData: Partial<UserProfile> | FormData,
 ): Promise<UserProfile> => {
   const res = await axios.put(
     `${VITE_CRM_API_URL}/user/user-profile/${id}`,
-    userData
+    userData,
+    {
+      headers: {
+        // Axios configura el multipart/form-data automáticamente si es un FormData,
+        // pero es buena práctica estar seguros.
+        "Content-Type":
+          userData instanceof FormData
+            ? "multipart/form-data"
+            : "application/json",
+      },
+    },
   );
   return res.data;
 };
 
 export const getProfiles = async (): Promise<UsersProfile[]> => {
   const response = await axios.get(
-    `${VITE_CRM_API_URL}/user/get-user-profile-config`
+    `${VITE_CRM_API_URL}/user/get-user-profile-config`,
   );
   return response.data;
 };
@@ -34,11 +44,11 @@ export const deleteUserProfile = async (id: number): Promise<void> => {
 
 export const updateOneUserProfile = async (
   id: number,
-  userData: Partial<UserProfile>
+  userData: Partial<UserProfile>,
 ): Promise<UserProfile> => {
   const res = await axios.put(
     `${VITE_CRM_API_URL}/user/update-user-profile/${id}`,
-    userData
+    userData,
   );
   return res.data;
 };

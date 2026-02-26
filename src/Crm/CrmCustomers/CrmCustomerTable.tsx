@@ -20,8 +20,10 @@ import {
 import { useSearchParams } from "react-router-dom";
 import {
   Archive,
+  Calendar,
   ChevronDown,
   ChevronUp,
+  Download,
   Loader2,
   Option,
   Search,
@@ -59,10 +61,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   downloadFile,
+  FiltersProps,
   useGenerateHistorialPagos,
   useGenerateInfoReport,
+  useGenerateReportCobranza,
 } from "../CrmHooks/hooks/use-reports/use-reports";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import DatePicker from "react-datepicker";
+import { es } from "date-fns/locale";
+import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
+import { Label } from "@/components/ui/label";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
@@ -84,6 +102,28 @@ const estadosConDescripcion = [
 ];
 
 export default function ClientesTable() {
+  // Dentro de ClientesTable
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Función para actualizar la URL sin perder otros parámetros
+  const updateQueryParams = (
+    newParams: Record<string, string | number | null | undefined>,
+  ) => {
+    const params = new URLSearchParams(searchParams);
+
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") {
+        params.delete(key);
+      } else {
+        params.set(key, value.toString());
+      }
+    });
+
+    setSearchParams(params, { replace: true });
+  };
+
+  //--------------------------------------------
+
   const [searchParam] = useSearchParams();
   const estadoFromUrl = searchParam.get("estado");
   const atBottom = useWindowScrollPosition(); // Asumo que este hook existe
@@ -97,18 +137,29 @@ export default function ClientesTable() {
   });
 
   // -- Estado de Filtros (UI) --
-  const [search, setSearch] = useState(""); // Input de texto
-  const [depaSelected, setDepaSelected] = useState<string | null>("8"); // Default: 8
-  const [muniSelected, setMuniSelected] = useState<string | null>(null);
-  const [sectorSelected, setSectorSelected] = useState<string | null>(null);
-  const [zonaFactSelected, setZonaFactSelected] = useState<string | null>(null);
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [depaSelected, setDepaSelected] = useState<string | null>(
+    searchParams.get("dep") || "8",
+  );
+  const [muniSelected, setMuniSelected] = useState<string | null>(
+    searchParams.get("muni") || null,
+  );
+  const [sectorSelected, setSectorSelected] = useState<string | null>(
+    searchParams.get("sec") || null,
+  );
+  const [zonaFactSelected, setZonaFactSelected] = useState<string | null>(
+    searchParams.get("zona") || null,
+  );
   const [estadoSelected, setEstadoSelected] = useState<string | null>(
-    estadoFromUrl || null,
+    searchParams.get("est") || estadoFromUrl || null,
   );
 
   const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
+    // URL usa base 1, TanStack usa base 0
+    pageIndex: Number(searchParams.get("p"))
+      ? Number(searchParams.get("p")) - 1
+      : 0,
+    pageSize: Number(searchParams.get("l")) || 10,
   });
 
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([]);
@@ -166,6 +217,29 @@ export default function ClientesTable() {
 
   const [debouncedSearch] = useDebounce(search, 500);
 
+  // Persistir filtros en la URL cuando cambien
+  useEffect(() => {
+    updateQueryParams({
+      q: debouncedSearch,
+      dep: depaSelected,
+      muni: muniSelected,
+      sec: sectorSelected,
+      zona: zonaFactSelected,
+      est: estadoSelected,
+      p: pagination.pageIndex + 1, // Guardamos en base 1 para que sea legible
+      l: pagination.pageSize,
+    });
+  }, [
+    debouncedSearch,
+    depaSelected,
+    muniSelected,
+    sectorSelected,
+    zonaFactSelected,
+    estadoSelected,
+    pagination.pageIndex,
+    pagination.pageSize,
+  ]);
+
   const queryDto: GetCustomersQueryDto = useMemo(
     () => ({
       page: pagination.pageIndex + 1,
@@ -201,24 +275,37 @@ export default function ClientesTable() {
     pendiente_activo: 0,
   };
   const totalCount = responseTable?.totalCount || 0;
+  const handleResetPagination = () =>
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
 
   // -- Handlers de Selects --
   const handleSelectDepartamento = (opt: OptionSelected | null) => {
     setDepaSelected(opt?.value ?? null);
-    setMuniSelected(null); // Resetear municipio al cambiar departamento
+    setMuniSelected(null);
+    handleResetPagination();
   };
 
-  const handleSelectMunicipio = (opt: OptionSelected | null) =>
+  const handleSelectMunicipio = (opt: OptionSelected | null) => {
     setMuniSelected(opt?.value ?? null);
 
-  const handleSelectSector = (opt: OptionSelected | null) =>
-    setSectorSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
 
-  const handleSelectZonaFacturacion = (opt: OptionSelected | null) =>
+  const handleSelectSector = (opt: OptionSelected | null) => {
+    setSectorSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
+
+  const handleSelectZonaFacturacion = (opt: OptionSelected | null) => {
     setZonaFactSelected(opt?.value ?? null);
 
-  const handleSelectEstado = (opt: OptionSelected | null) =>
+    handleResetPagination();
+  };
+
+  const handleSelectEstado = (opt: OptionSelected | null) => {
     setEstadoSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
 
   const handleToggleScroll = () => {
     window.scrollTo({
@@ -304,6 +391,7 @@ export default function ClientesTable() {
   const selectedIds = Object.keys(table.getState().rowSelection);
 
   console.log("Los ids de los clientes seleccionados son: ", selectedIds);
+  console.log("Los clientes son: ", clientes);
 
   return (
     <PageTransitionCrm
@@ -448,14 +536,14 @@ export default function ClientesTable() {
             {/* BLOQUE 2: Herramientas de Vista (Derecha) */}
             <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
               {/* Ordenar */}
-              <div className="w-full sm:w-[160px]">
+              <div className="w-full sm:w-[120px]">
                 <ReactSelectComponent
                   className="text-xs text-black"
                   styles={compactSelectStyles}
                   options={sortOptions}
                   isClearable
                   onChange={handleSortChange}
-                  placeholder="Ordenar..."
+                  placeholder="Ordenar"
                 />
               </div>
 
@@ -478,6 +566,8 @@ export default function ClientesTable() {
                     <SelectItem value="10">10 filas</SelectItem>
                     <SelectItem value="20">20 filas</SelectItem>
                     <SelectItem value="50">50 filas</SelectItem>
+                    <SelectItem value="100">100 filas</SelectItem>
+                    <SelectItem value="200">200 filas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -490,6 +580,8 @@ export default function ClientesTable() {
               {selectedIds.length > 0 ? (
                 <OptionsSelectedMenu selectedIds={selectedIds} />
               ) : null}
+
+              <OptionsReportsCobros />
             </div>
           </div>
 
@@ -595,7 +687,6 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
     );
   };
 
-  // Verificar si algo está cargando para deshabilitar botones
   const isLoading =
     exportInfoMutation.isPending || exportPagosMutation.isPending;
 
@@ -605,15 +696,15 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
         <Button
           size="sm"
           variant="outline"
-          className="ml-2 gap-2 bg-white data-[state=open]:bg-gray-100"
+          className="ml-2 gap-1.5 px-2.5"
           disabled={isLoading}
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Option className="h-4 w-4" />
+            <Option className="h-3.5 w-3.5" />
           )}
-          <span className="hidden sm:inline">
+          <span className="hidden sm:inline text-xs">
             Acciones ({selectedIds.length})
           </span>
         </Button>
@@ -676,3 +767,264 @@ const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
     </DropdownMenu>
   );
 };
+
+export function OptionsReportsCobros() {
+  const { data: rawUsers } = useGetUsersToSelect();
+  const users = rawUsers || [];
+
+  const [filters, setFilters] = useState<FiltersProps>({
+    startDate: undefined,
+    endDate: null,
+
+    startDateG: undefined,
+    endDateG: null,
+
+    userId: null,
+    estados: [],
+  });
+
+  const createReportCobranza = useGenerateReportCobranza();
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelectState = (val: Array<string>) => {
+    setFilters((previa) => ({
+      ...previa,
+      estados: val,
+    }));
+  };
+
+  const options: OptionSelected[] = users.map((u) => ({
+    label: u.nombre,
+    value: u.id.toString(),
+  }));
+
+  const selectedUserOption = filters.userId
+    ? options.find((opt) => opt.value === filters.userId?.toString()) || null
+    : null;
+
+  const handleSelectUser = (option: OptionSelected | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      userId: option ? parseInt(option.value) : null,
+    }));
+  };
+
+  const handleChangeDates = (side: "start" | "end", date: Date | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [side === "start" ? "startDate" : "endDate"]: date,
+    }));
+  };
+
+  const handleChangeDatesG = (side: "start" | "end", date: Date | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      [side === "start" ? "startDateG" : "endDateG"]: date,
+    }));
+  };
+
+  const handleClear = () => {
+    setFilters({
+      startDate: undefined,
+      endDate: null,
+      userId: null,
+      endDateG: null,
+      startDateG: undefined,
+      estados: [],
+    });
+  };
+
+  const handleGenerateReport = async () => {
+    setIsOpen(false);
+    toast.promise(createReportCobranza.mutateAsync(filters), {
+      loading: "Generando reporte...",
+      success: (data: any) => {
+        downloadFile(data, `Reporte_Pagos_${Date.now()}.xlsx`);
+        setIsOpen(false);
+        return "Reporte generado";
+      },
+      error: (error) => getApiErrorMessageAxios(error),
+    });
+  };
+
+  console.log("Los estados seleccionados: ", filters);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="ml-2 h-8 w-8 text-slate-700 dark:text-slate-300"
+          title="Filtros de Reporte"
+        >
+          <Sheet className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[425px] p-5">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg text-center">
+            Reporte de Cobranzas
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Contenedor principal con espaciado uniforme */}
+        <div className="space-y-4">
+          {/* RANGO DE PAGO */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Rango de Fecha Pagada
+            </Label>
+            <div className="flex items-center rounded-md border border-input bg-background h-8 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+              <div className="px-2.5 flex items-center justify-center border-r border-border h-full bg-muted/30">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <DatePicker
+                locale={es}
+                selected={filters.startDate}
+                onChange={(date) => handleChangeDates("start", date)} // Ojo aquí, lee la nota abajo
+                selectsStart
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+                placeholderText="Desde"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+              <span className="text-muted-foreground/50 text-xs px-1">-</span>
+              <DatePicker
+                locale={es}
+                selected={filters.endDate}
+                onChange={(date) => handleChangeDates("end", date)}
+                selectsEnd
+                startDate={filters.startDate}
+                endDate={filters.endDate}
+                minDate={filters.startDate}
+                placeholderText="Hasta"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+            </div>
+          </div>
+
+          {/* RANGO DE GENERACIÓN */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Rango de Fecha Generada
+            </Label>
+            <div className="flex items-center rounded-md border border-input bg-background h-8 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+              <div className="px-2.5 flex items-center justify-center border-r border-border h-full bg-muted/30">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <DatePicker
+                locale={es}
+                selected={filters.startDateG}
+                onChange={(date) => handleChangeDatesG("start", date)} // Asumo que creaste una función diferente para la fecha G
+                selectsStart
+                startDate={filters.startDateG}
+                endDate={filters.endDateG}
+                placeholderText="Desde"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+              <span className="text-muted-foreground/50 text-xs px-1">-</span>
+              <DatePicker
+                locale={es}
+                selected={filters.endDateG}
+                onChange={(date) => handleChangeDatesG("end", date)}
+                selectsEnd
+                startDate={filters.startDateG}
+                endDate={filters.endDateG}
+                minDate={filters.startDateG}
+                placeholderText="Hasta"
+                className="w-full h-full border-none text-xs text-center focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                dateFormat="dd/MM/yy"
+              />
+            </div>
+          </div>
+
+          {/* ESTADO DE FACTURA */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Estado de la Factura
+            </Label>
+            <ToggleGroup
+              type="multiple"
+              value={filters.estados}
+              onValueChange={handleSelectState}
+              className="flex flex-wrap justify-start gap-1"
+            >
+              <ToggleGroupItem
+                value="PAGADA"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PAGADA
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="PENDIENTE"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PENDIENTE
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="PARCIAL"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                PARCIAL
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="VENCIDA"
+                className="h-7 px-2 text-[10px] sm:text-xs"
+              >
+                VENCIDA
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          {/* COBRADOR */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">
+              Cobrador
+            </Label>
+            <ReactSelectComponent
+              className="text-black text-xs" // Ajustado a text-xs para mantener el estilo compacto
+              options={options}
+              onChange={handleSelectUser}
+              value={selectedUserOption}
+              placeholder="Seleccionar cobrador..."
+              isClearable
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-4 pt-4 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={handleClear}
+            className="text-xs h-8 text-muted-foreground"
+          >
+            Limpiar Filtros
+          </Button>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="w-full sm:w-auto h-8 text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGenerateReport}
+              className="w-full sm:w-auto h-8 text-xs gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Generar
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

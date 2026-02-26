@@ -14,6 +14,7 @@ import {
   Flag,
   Loader,
   Users,
+  Smartphone,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,8 @@ interface FormData {
   tecnicoId: number | null;
   tecnicosAdicionales: number[];
 
+  telefonoTemporal: string;
+
   titulo: "";
   descripcion: "";
   estado: "NUEVO";
@@ -105,6 +108,7 @@ function CrmCreateTicket({
     userId: userId,
     empresaId: empresaId,
     tecnicosAdicionales: [],
+    telefonoTemporal: "",
   });
 
   const clearFormData = () => {
@@ -119,6 +123,7 @@ function CrmCreateTicket({
       userId: userId,
       empresaId: empresaId,
       tecnicosAdicionales: [],
+      telefonoTemporal: "",
     });
     setLabelsSelecteds([]);
   };
@@ -137,7 +142,7 @@ function CrmCreateTicket({
   const getClientes = async () => {
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customers-to-ticket`
+        `${VITE_CRM_API_URL}/internet-customer/get-customers-to-ticket`,
       );
       if (response.status === 200) {
         setClientes(response.data);
@@ -150,7 +155,7 @@ function CrmCreateTicket({
   const getTecs = async () => {
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/user/get-users-to-create-tickets`
+        `${VITE_CRM_API_URL}/user/get-users-to-create-tickets`,
       );
       if (response.status === 200) {
         setTecnicos(response.data);
@@ -164,7 +169,7 @@ function CrmCreateTicket({
   const getEtiquetas = async () => {
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/tags-ticket/get-tags-to-ticket`
+        `${VITE_CRM_API_URL}/tags-ticket/get-tags-to-ticket`,
       );
       if (response.status === 200) {
         setEtiquetas(response.data);
@@ -182,7 +187,7 @@ function CrmCreateTicket({
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -221,7 +226,7 @@ function CrmCreateTicket({
   };
 
   const handleChangeCustomerSelect = (
-    selectedOption: OptionSelectedReactComponent | null
+    selectedOption: OptionSelectedReactComponent | null,
   ) => {
     const newCustomerId = selectedOption
       ? parseInt(selectedOption.value, 10)
@@ -301,12 +306,32 @@ function CrmCreateTicket({
                           value={
                             optionsCustomers.find(
                               (option) =>
-                                option.value === formData.clienteId?.toString()
+                                option.value === formData.clienteId?.toString(),
                             ) || null
                           }
                           onChange={handleChangeCustomerSelect}
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="titulo"
+                        className="flex items-center gap-2 text-sm font-medium"
+                      >
+                        <Smartphone className="h-4 w-4 text-muted-foreground" />
+                        Tel. Temporal (Opcional)
+                      </Label>
+                      <Input
+                        id="telefonoTemporal"
+                        name="telefonoTemporal"
+                        value={formData.telefonoTemporal}
+                        onChange={handleChange}
+                        placeholder="12345678"
+                        required
+                        type="tel"
+                        className="text-sm"
+                      />
                     </div>
 
                     {/* Técnico Asignado */}
@@ -323,13 +348,13 @@ function CrmCreateTicket({
                           options={optionsTecs.filter(
                             (o) =>
                               !formData.tecnicosAdicionales.includes(
-                                Number(o.value)
-                              )
+                                Number(o.value),
+                              ),
                           )}
                           value={
                             optionsTecs.find(
                               (tec) =>
-                                tec.value === formData.tecnicoId?.toString()
+                                tec.value === formData.tecnicoId?.toString(),
                             ) || null
                           }
                           onChange={(opt) => {
@@ -353,10 +378,10 @@ function CrmCreateTicket({
                         <MultiSelect
                           disabled={tecnicoSelected}
                           options={optionsTecs.filter(
-                            (t) => t.value !== formData.tecnicoId?.toString()
+                            (t) => t.value !== formData.tecnicoId?.toString(),
                           )}
                           value={optionsTecs.filter((t) =>
-                            formData.tecnicosAdicionales.includes(+t.value)
+                            formData.tecnicosAdicionales.includes(+t.value),
                           )}
                           onChange={(opts) =>
                             setFormData({
@@ -541,7 +566,7 @@ function CrmCreateTicket({
                     <MultiSelect
                       options={optionsLabels}
                       value={optionsLabels.filter((o) =>
-                        labelsSelecteds.includes(Number(o.value))
+                        labelsSelecteds.includes(Number(o.value)),
                       )}
                       onChange={(opts) =>
                         setLabelsSelecteds(opts.map((o) => Number(o.value)))

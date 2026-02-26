@@ -1,5 +1,4 @@
 "use client";
-
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -101,7 +100,7 @@ export function StatusBillingSection({
                   }
                 : null
             }
-            className="text-xs"
+            className="text-xs text-black"
             placeholder="Seleccionar zona..."
             styles={compactSelectStyles}
           />

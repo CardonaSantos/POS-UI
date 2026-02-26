@@ -22,7 +22,7 @@ export function ProtectRouteCrmUser({ children }: ProtectedRouteProps) {
     return <Navigate to="/crm/login" />;
   }
 
-  if (!["ADMIN", "TECNICO", "SUPER_ADMIN"].includes(userRol)) {
+  if (!["ADMIN", "TECNICO", "SUPER_ADMIN", "COBRADOR"].includes(userRol)) {
     return <Navigate to="/crm" />;
   }
 

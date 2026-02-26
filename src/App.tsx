@@ -59,7 +59,6 @@ import SucursalesSumary from "./Pages/Sumary/SucursalesSumary";
 import Metas from "./Pages/Metas/Metas";
 import MyGoals from "./Pages/Metas/MyGoals";
 import ReportesExcel from "./Pages/Reports/Ventas/ReportesExcel";
-import CrmDashboard from "./Crm/DashboardCRM/CrmDashboard";
 import TicketDashboard from "./Crm/CrmTickets/CrmTicketDashboard";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
@@ -93,7 +92,6 @@ import DeletedInvoicesView from "./Crm/CrmFacturasEliminadas/DeletedFacturas";
 import CustomerProfile from "./Crm/CrmCustomer/newCustomerPage/customer-profile";
 import RutasAsignadasMain from "./Crm/CrmRutas/_rutas_asignadas/rutas_asignadas_main";
 import ReportsMainPage from "./Crm/reports/page/ReportsMainPage";
-import BilingTable from "./Crm/CrmBilling/BillingTable";
 import ClientesTable from "./Crm/CrmCustomers/CrmCustomerTable";
 import RouterMainPage from "./Crm/routers/page";
 import OltMainPage from "./Crm/Olt/page";
@@ -569,15 +567,6 @@ function App() {
             />
 
             <Route
-              path="/crm/perfil-config"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmDashboard />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
               path="/crm-clientes"
               element={
                 <ProtectRouteCrmUser>
@@ -600,15 +589,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <EditCustomers />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/facturacion"
-              element={
-                <ProtectRouteCrmUser>
-                  <BilingTable />
                 </ProtectRouteCrmUser>
               }
             />

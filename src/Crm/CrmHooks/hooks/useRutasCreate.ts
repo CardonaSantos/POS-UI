@@ -7,9 +7,9 @@ import {
   useSectoresSelect,
   useZonasFacturacion,
 } from "../../CrmRutas/API/rutas-cobro.api";
-import { ClienteInternetFromCreateRuta } from "../../CrmRutas/rutas-types";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { EstadoCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
+import { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
 type ClientesPaged = Paged<ClienteInternetFromCreateRuta>;
 
 export function useRutasCreate(empresaId: number) {
@@ -52,7 +52,7 @@ export function useRutasCreate(empresaId: number) {
       sortDir,
       page,
       perPage,
-    ]
+    ],
   );
 
   // ---- Queries ----
@@ -93,7 +93,7 @@ export function useRutasCreate(empresaId: number) {
       pageData
         .filter((c) => selected.includes(String(c.id)))
         .reduce((sum, c) => sum + (c.saldoPendiente || 0), 0),
-    [pageData, selected]
+    [pageData, selected],
   );
 
   // ---- Mutation crear ruta ----
@@ -141,7 +141,7 @@ export function useRutasCreate(empresaId: number) {
     isFetchingClientes || zonasQ.isFetching || sectoresQ.isFetching;
 
   const errors = [clientesError, zonasQ.error, sectoresQ.error].filter(
-    Boolean
+    Boolean,
   ) as any[];
 
   return {

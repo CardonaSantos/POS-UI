@@ -1,4 +1,4 @@
-import { EstadoRuta } from "../rutas-types";
+import { EstadoRuta } from "@/Crm/features/rutas/rutas.interfaces";
 
 export const getEstadoBadgeColorRutaList = (estado: EstadoRuta) => {
   switch (estado) {

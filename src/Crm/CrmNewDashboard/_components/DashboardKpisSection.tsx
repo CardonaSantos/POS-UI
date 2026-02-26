@@ -1,4 +1,3 @@
-// DashboardKpisSection.tsx
 import { DashboardData } from "@/Crm/features/dashboard/dashboard.interfaces";
 import { KpiCard } from "./KpiCard";
 import {
@@ -22,14 +21,14 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
   const { facturacion, clientes } = kpisData;
 
   return (
-    <main className="flex-1 flex flex-col gap-3">
+    <main className="flex-1 flex flex-col gap-4">
       {/* FACTURACIÓN */}
       <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2.5">
           Facturación
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-fr">
           {/* Cantidades (facturas) */}
           <KpiCard
             type="FACTURACION"
@@ -52,7 +51,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
           <KpiCard
             type="FACTURACION"
             linkValue=""
-            title="Facturado mes"
+            title="Facturado"
             value={formattMonedaGT(facturacion.montoFacturadoMes)}
             color="bg-indigo-500 dark:bg-indigo-600"
             Icon={CreditCard}
@@ -66,24 +65,24 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             Icon={AlertTriangle}
           />
 
-          <div className="col-span-2 md:col-span-1 rounded-xl px-3 py-2 shadow-sm bg-slate-800/95 dark:bg-slate-900/95 text-slate-50 flex flex-col justify-between">
-            <p className="text-[10px] uppercase tracking-wide opacity-80 font-semibold">
-              Total pagadas
-            </p>
-            <p className="text-lg md:text-xl font-bold mt-1">
-              {formattMonedaGT(facturacion.montoCobradoMes)}
-            </p>
-          </div>
+          <KpiCard
+            type="FACTURACION"
+            linkValue="PAGADAS"
+            title="Total Pagadas"
+            value={formattMonedaGT(facturacion.montoCobradoMes)}
+            color="bg-teal-500 dark:bg-teal-600"
+            Icon={AlertTriangle}
+          />
         </div>
       </section>
 
       {/* ESTADO DE CLIENTES */}
       <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2.5">
           Clientes
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1 auto-rows-fr">
           <KpiCard
             type="CLIENTE"
             linkValue=""
@@ -96,7 +95,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
           <KpiCard
             type="CLIENTE"
             linkValue="ACTIVO"
-            title="Activos (al día)"
+            title="Activos"
             value={clientes.activos}
             color="bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100/80 dark:border-emerald-800 text-emerald-800"
             solidText={false}
@@ -123,7 +122,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
           <KpiCard
             type="CLIENTE"
             linkValue="PENDIENTE_ACTIVO"
-            title="Pendiente activo"
+            title="Pend. activo"
             value={clientes.pendientesActivacion}
             color="bg-fuchsia-50 dark:bg-fuchsia-900/40 border border-fuchsia-100/80 dark:border-fuchsia-800 text-fuchsia-800"
             solidText={false}
