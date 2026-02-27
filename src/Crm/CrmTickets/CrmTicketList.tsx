@@ -273,21 +273,19 @@ const TicketsListContainer = ({
           ) : (
             <motion.div
               variants={containerVariants}
-              initial="hidden"
+              initial={false}
               animate="show"
               className="flex flex-col"
             >
-              {[...tickets]
-                .sort((a, b) => Number(!!b.fixed) - Number(!!a.fixed))
-                .map((ticket) => (
-                  <TicketItem
-                    key={ticket.id}
-                    ticket={ticket}
-                    isSelected={Number(selectedTicketId) === Number(ticket.id)}
-                    onSelect={onSelectTicket}
-                    avatarColor={colorMap[ticket.id] || "bg-gray-200"}
-                  />
-                ))}
+              {[...tickets].map((ticket) => (
+                <TicketItem
+                  key={ticket.id}
+                  ticket={ticket}
+                  isSelected={Number(selectedTicketId) === Number(ticket.id)}
+                  onSelect={onSelectTicket}
+                  avatarColor={colorMap[ticket.id] || "bg-gray-200"}
+                />
+              ))}
             </motion.div>
           )}
         </AnimatePresence>

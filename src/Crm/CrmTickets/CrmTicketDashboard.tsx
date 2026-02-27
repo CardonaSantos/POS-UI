@@ -11,6 +11,7 @@ import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import { useGetTicketSoluciones } from "../CrmHooks/hooks/use-ticket-soluciones/useTicketSoluciones";
 import {
   QuerySearchTickets,
+  TicketsData,
   useGetTicketsSoporte,
 } from "../CrmHooks/hooks/use-tickets/useTicketsSoporte";
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
@@ -61,6 +62,17 @@ export default function TicketDashboard() {
     return met;
   }, [rawTickets]);
 
+  const ticketsData = useMemo(() => {
+    const tData: TicketsData = rawTickets?.ticketsData
+      ? rawTickets.ticketsData
+      : {
+          ticketEnProceso: 0,
+          ticketsDisponibles: 0,
+          ticketsResueltos: 0,
+        };
+    return tData;
+  }, [rawTickets?.ticketsData]);
+
   const soluciones = useMemo(() => rawSolutions ?? [], [rawSolutions]);
   const clientes = useMemo(() => rawCustomers ?? [], [rawCustomers]);
   const etiquetas = useMemo(() => rawTags ?? [], [rawTags]);
@@ -100,21 +112,6 @@ export default function TicketDashboard() {
   const selectedTicket = useMemo(
     () => ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
     [ticketsSoporte, selectedTicketId],
-  );
-
-  const stats = useMemo(
-    () => ({
-      abiertos: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.ABIERTA,
-      ).length,
-      proceso: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.EN_PROCESO,
-      ).length,
-      resueltos: ticketsSoporte.filter(
-        (t) => t.status === EstadoTicketSoporte.RESUELTA,
-      ).length,
-    }),
-    [ticketsSoporte],
   );
 
   const handleSelectedTecnico = (optionSelect: OptionSelected | null) => {
@@ -224,11 +221,12 @@ export default function TicketDashboard() {
   return (
     <PageTransitionCrm
       titleHeader="Tickets Soporte"
-      subtitle={`${stats.abiertos} abiertos · ${stats.proceso} en proceso · ${stats.resueltos} cerrados hoy`}
+      subtitle={`${ticketsData.ticketsDisponibles} abiertos · ${ticketsData.ticketEnProceso} en proceso · ${ticketsData.ticketsResueltos} cerrados hoy`}
       variant="fade-pure"
     >
       <div>
         <TicketFilters
+          ticketsTotal={ticketsData.ticketsDisponibles}
           tickets={ticketsSoporte}
           onFilterChange={handleSearchChange}
           onStatusChange={handleStatusChange}

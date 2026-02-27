@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
-import { Bell, LogOut, UserCog } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Monitor, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -52,6 +52,11 @@ function useRequestNotificationPermission() {
 }
 
 export default function LayoutCrm({ children }: LayoutProps) {
+  const location = useLocation();
+  const isCrmLocation = location.pathname.startsWith("/crm");
+  const erpLink = import.meta.env.VITE_ERP_LINK;
+  const crmLink = import.meta.env.VITE_CRM_LINK;
+
   useRequestNotificationPermission();
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   // -----------------------------
@@ -202,6 +207,27 @@ export default function LayoutCrm({ children }: LayoutProps) {
 
               {/* LADO DERECHO: Tema + Notificaciones + Menú de Usuario */}
               <div className="flex items-center space-x-1 sm:space-x-2">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="hidden sm:inline-flex items-center gap-2 transition-colors"
+                >
+                  <a href={isCrmLocation ? erpLink : crmLink}>
+                    {isCrmLocation ? (
+                      <>
+                        <Monitor className="h-4 w-4" />
+                        <span>ERP</span>
+                      </>
+                    ) : (
+                      <>
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>CRM</span>
+                      </>
+                    )}
+                  </a>
+                </Button>
+
                 <ModeToggle />
 
                 {/* Notificaciones Bot */}
