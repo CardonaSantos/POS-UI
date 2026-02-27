@@ -6,7 +6,14 @@ import { MetaPropsResponse } from "@/Crm/features/meta-server-response/meta-resp
 
 interface PropsResponse {
   data: Array<Ticket>;
+  ticketsData?: TicketsData;
   meta: MetaPropsResponse;
+}
+
+export interface TicketsData {
+  ticketsDisponibles: number;
+  ticketEnProceso: number;
+  ticketsResueltos: number;
 }
 
 export class QuerySearchTickets {
