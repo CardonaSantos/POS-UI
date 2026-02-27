@@ -10,11 +10,16 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import type { Ticket } from "./ticketTypes";
+import { TicketsData } from "../CrmHooks/hooks/use-tickets/useTicketsSoporte";
 
 interface TicketListProps {
   tickets: Ticket[];
+  ticketsData: TicketsData;
   selectedTicketId: number | null;
   onSelectTicket: (ticket: Ticket) => void;
+
+  activeTab: string;
+  onTabChange: (value: string) => void;
 }
 
 const getStatusStyles = (status: string) => {
@@ -297,8 +302,11 @@ const TicketsListContainer = ({
 // --- MAIN EXPORT ---
 export default function TicketList({
   tickets,
+  ticketsData,
   selectedTicketId,
   onSelectTicket,
+  activeTab,
+  onTabChange,
 }: TicketListProps) {
   const [colorMap, setColorMap] = useState<Record<string, string>>({});
 
@@ -337,51 +345,32 @@ export default function TicketList({
     });
   }, [tickets]);
 
-  const filterTickets = (statusFilter: (t: Ticket) => boolean) =>
-    tickets.filter(statusFilter);
-
-  const allActive = filterTickets(
-    (t) =>
-      t.status !== "RESUELTA" &&
-      t.status !== "ARCHIVADA" &&
-      t.status !== "CANCELADA",
-  );
-  const inProgress = filterTickets(
-    (t) => t.status === "EN_PROCESO" || t.status === "PENDIENTE_TECNICO",
-  );
-  const resolved = filterTickets((t) => t.status === "RESUELTA");
-  const archived = filterTickets(
-    (t) => t.status === "ARCHIVADA" || t.status === "CANCELADA",
-  );
-
   return (
     <div className="flex flex-col h-full bg-background/50 rounded-lg border shadow-sm overflow-hidden">
-      <Tabs defaultValue="inbox" className="w-full h-full flex flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={onTabChange}
+        className="w-full h-full flex flex-col"
+      >
         <div className="px-3 py-2 border-b bg-background/95 backdrop-blur">
-          <TabsList className="grid w-full grid-cols-4 h-9 bg-muted/50 p-1">
+          <TabsList className="grid w-full grid-cols-3 h-9 bg-muted/50 p-1">
             <TabsTrigger
               value="inbox"
               className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
-              TODOS ({allActive.length})
+              TODOS ({ticketsData.ticketsDisponibles})
             </TabsTrigger>
             <TabsTrigger
               value="enProceso"
               className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
-              PROCESO ({inProgress.length})
+              PROCESO ({ticketsData.ticketEnProceso})
             </TabsTrigger>
             <TabsTrigger
               value="lista"
               className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
-              LISTOS ({resolved.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="archivados"
-              className="text-[10px] sm:text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              HISTORIAL
+              RESUELTOS ({ticketsData.ticketsResueltos})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -393,7 +382,7 @@ export default function TicketList({
             className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
           >
             <TicketsListContainer
-              tickets={allActive}
+              tickets={tickets}
               selectedTicketId={selectedTicketId}
               onSelectTicket={onSelectTicket}
               colorMap={colorMap}
@@ -410,7 +399,7 @@ export default function TicketList({
             className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
           >
             <TicketsListContainer
-              tickets={inProgress}
+              tickets={tickets}
               selectedTicketId={selectedTicketId}
               onSelectTicket={onSelectTicket}
               colorMap={colorMap}
@@ -426,29 +415,13 @@ export default function TicketList({
             className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
           >
             <TicketsListContainer
-              tickets={resolved}
+              tickets={tickets}
               selectedTicketId={selectedTicketId}
               onSelectTicket={onSelectTicket}
               colorMap={colorMap}
               emptyMessage={{
                 title: "Sin resueltos",
                 description: "Aún no has resuelto tickets hoy.",
-              }}
-            />
-          </TabsContent>
-
-          <TabsContent
-            value="archivados"
-            className="m-0 h-full data-[state=active]:flex flex-col min-h-0"
-          >
-            <TicketsListContainer
-              tickets={archived}
-              selectedTicketId={selectedTicketId}
-              onSelectTicket={onSelectTicket}
-              colorMap={colorMap}
-              emptyMessage={{
-                title: "Archivo limpio",
-                description: "El historial de tickets está vacío.",
               }}
             />
           </TabsContent>

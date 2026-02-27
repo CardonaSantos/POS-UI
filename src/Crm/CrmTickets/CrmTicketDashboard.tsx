@@ -26,6 +26,7 @@ import { MetaPropsResponse } from "../features/meta-server-response/meta-respons
 
 export default function TicketDashboard() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+  const [activeTab, setActiveTab] = useState<string>("inbox");
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [openCreateTicket, setOpenCreateTicket] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -34,7 +35,7 @@ export default function TicketDashboard() {
 
   const [filters, setFilters] = useState<QuerySearchTickets>({
     page: 1,
-    limit: 10,
+    limit: 15,
   });
   // 5. DATA FETCHING (API HOOKS)
   const query = useMemo(() => filters, [filters]);
@@ -54,7 +55,7 @@ export default function TicketDashboard() {
       : {
           hasNextPage: false,
           hasPrevPage: false,
-          limit: 10,
+          limit: 15,
           page: 1,
           total: 0,
           totalPages: 0,
@@ -113,6 +114,16 @@ export default function TicketDashboard() {
     () => ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
     [ticketsSoporte, selectedTicketId],
   );
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+
+    setFilters((prev) => ({
+      ...prev,
+      page: 1,
+      vista: value,
+    }));
+  };
 
   const handleSelectedTecnico = (optionSelect: OptionSelected | null) => {
     setTecnicoSelected(optionSelect ? optionSelect.value : null);
@@ -218,10 +229,12 @@ export default function TicketDashboard() {
     }));
   };
 
+  console.log("Los tickes response del server son", rawTickets);
+
   return (
     <PageTransitionCrm
       titleHeader="Tickets Soporte"
-      subtitle={`${ticketsData.ticketsDisponibles} abiertos · ${ticketsData.ticketEnProceso} en proceso · ${ticketsData.ticketsResueltos} cerrados hoy`}
+      subtitle={`${ticketsData.ticketsDisponibles} abiertos · ${ticketsData.ticketEnProceso} en proceso`}
       variant="fade-pure"
     >
       <div>
@@ -254,6 +267,9 @@ export default function TicketDashboard() {
           >
             <div className="flex-1 min-h-0">
               <TicketList
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                ticketsData={ticketsData}
                 tickets={ticketsSoporte}
                 selectedTicketId={selectedTicketId}
                 onSelectTicket={handleSelectTicket}
