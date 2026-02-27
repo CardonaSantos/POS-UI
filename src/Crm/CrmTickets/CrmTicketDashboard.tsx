@@ -226,6 +226,7 @@ export default function TicketDashboard() {
     >
       <div>
         <TicketFilters
+          ticketsTotal={ticketsData.ticketsDisponibles}
           tickets={ticketsSoporte}
           onFilterChange={handleSearchChange}
           onStatusChange={handleStatusChange}

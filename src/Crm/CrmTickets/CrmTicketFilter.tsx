@@ -64,10 +64,13 @@ interface TicketFiltersProps {
   handleChangeLabels: (
     selectedOptions: MultiValue<{ value: string; label: string }>,
   ) => void;
+
+  ticketsTotal: number;
 }
 
 export default function TicketFilters({
-  tickets,
+  // tickets,
+  ticketsTotal,
   onFilterChange,
   getTickets,
   openCreatT,
@@ -83,10 +86,6 @@ export default function TicketFilters({
   dateRangeStart,
   handleChangeDates,
 }: TicketFiltersProps) {
-  const coincidencias = tickets.filter(
-    (ticket) => ticket.status !== "RESUELTA",
-  );
-
   const handleFilterChange = (value: string) => {
     onQuickViewChange(value);
   };
@@ -260,7 +259,7 @@ export default function TicketFilters({
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-gray-50  px-2 py-1 rounded-md border border-gray-100 ">
                   <Layers className="h-3.5 w-3.5" />
-                  <span className="font-medium">{coincidencias.length}</span>
+                  <span className="font-medium">{ticketsTotal}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="bottom">

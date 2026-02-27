@@ -3,6 +3,7 @@ import { ticketsSoporteQkeys } from "./Qk";
 import { Ticket } from "@/Crm/CrmTickets/ticketTypes";
 import { EstadoTicketSoporte } from "@/Crm/DashboardCRM/types";
 import { MetaPropsResponse } from "@/Crm/features/meta-server-response/meta-responses";
+import { keepPreviousData } from "@tanstack/react-query";
 
 interface PropsResponse {
   data: Array<Ticket>;
@@ -49,6 +50,7 @@ export function useGetTicketsSoporte(query: QuerySearchTickets) {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
+      placeholderData: keepPreviousData,
     },
   );
 }

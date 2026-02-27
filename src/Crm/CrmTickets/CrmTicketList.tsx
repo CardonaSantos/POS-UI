@@ -273,7 +273,7 @@ const TicketsListContainer = ({
           ) : (
             <motion.div
               variants={containerVariants}
-              initial="hidden"
+              initial={false}
               animate="show"
               className="flex flex-col"
             >
