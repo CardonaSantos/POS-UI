@@ -46,6 +46,7 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
   const getNextAction = (): NextAction => {
     if (isActivo) return "SUSPENDER";
     if (isSuspendido) return "ACTIVAR";
+    if (isPendiente) return "ACTIVAR";
     return null;
   };
 
@@ -58,6 +59,7 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
       clienteId: cliente.id,
       password,
       userId,
+      isPasswordRequired: true,
     };
 
     const action =
@@ -154,8 +156,8 @@ function CustomerNetworkControl({ cliente }: CustomerNetworkControlProps) {
                 disabled={
                   !hasMikrotik ||
                   !hasIp ||
-                  isPendiente ||
-                  isError ||
+                  // isError ||           // ← quita isPendiente del disabled
+                  isSinMk || // ← agrega este en su lugar
                   suspendCustomer.isPending ||
                   activateCustomer.isPending
                 }

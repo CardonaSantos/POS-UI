@@ -13,7 +13,7 @@ import {
   Battery,
   X,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { CustomMapControls } from "./custom-maps-control";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { handleCall, handleOpenWhatsapp } from "@/Crm/_Utils/helpersText";
@@ -23,65 +23,70 @@ interface Props {
   personas: RealTimeLocationRaw[];
   markerSize?: "sm" | "md" | "lg";
 }
-const MarkerIcon = ({
-  sizeClass,
-  isHovered,
-  name,
-  avatarUrl,
-  rol,
-}: {
-  sizeClass: string;
-  isHovered: boolean;
-  name: string;
-  avatarUrl?: string;
-  rol?: string;
-}) => {
-  const initial = name ? name.charAt(0).toUpperCase() : "?";
+const MarkerIcon = React.memo(
+  ({
+    sizeClass,
+    isHovered,
+    name,
+    avatarUrl,
+    rol,
+  }: {
+    sizeClass: string;
+    isHovered: boolean;
+    name: string;
+    avatarUrl?: string;
+    rol?: string;
+  }) => {
+    const initial = name ? name.charAt(0).toUpperCase() : "?";
 
-  let theme = {
-    border: "border-rose-600",
-    bg: "bg-rose-600",
-    triangle: "border-t-rose-600",
-  };
-
-  if (rol === "ADMIN") {
-    theme = {
-      border: "border-emerald-600",
-      bg: "bg-emerald-600",
-      triangle: "border-t-emerald-600",
+    let theme = {
+      border: "border-[#00d061]",
+      bg: "bg-[#00d061]",
+      triangle: "border-t-[#00d061]",
     };
-  } else if (rol === "COBRADOR") {
-    theme = {
-      border: "border-purple-600",
-      bg: "bg-purple-600",
-      triangle: "border-t-purple-600",
-    };
-  }
 
-  return (
-    <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110 cursor-pointer">
-      <div
-        className={`flex items-center justify-center rounded-full border-[3px] ${theme.border} shadow-lg ${sizeClass} ${
-          isHovered ? "z-50 scale-110" : theme.bg
-        } text-white transition-all overflow-hidden`}
-      >
-        <Avatar className="h-full w-full border-none">
-          <AvatarImage src={avatarUrl} className="object-cover w-full h-full" />
+    if (rol === "ADMIN") {
+      theme = {
+        border: "border-rose-600",
+        bg: "bg-rose-600",
+        triangle: "border-t-rose-600",
+      };
+    } else if (rol === "COBRADOR") {
+      theme = {
+        border: "border-purple-600",
+        bg: "bg-purple-600",
+        triangle: "border-t-purple-600",
+      };
+    }
 
-          <AvatarFallback
-            className={`${theme.bg} text-white font-bold text-xs`}
-          >
-            {initial || "X"}
-          </AvatarFallback>
-        </Avatar>
+    return (
+      <div className="relative flex flex-col items-center transition-transform duration-200 hover:scale-110 cursor-pointer">
+        <div
+          className={`flex items-center justify-center rounded-full border-[3px] ${theme.border} shadow-lg ${sizeClass} ${
+            isHovered ? "z-50 scale-110" : theme.bg
+          } text-white transition-all overflow-hidden`}
+        >
+          <Avatar className="h-full w-full border-none">
+            <AvatarImage
+              src={avatarUrl}
+              className="object-cover w-full h-full"
+            />
+
+            <AvatarFallback
+              className={`${theme.bg} text-white font-bold text-xs`}
+            >
+              {initial || "X"}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
+        <div
+          className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-transparent -mt-[1px] ${theme.triangle}`}
+        />
       </div>
-
-      <div
-        className={`w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-transparent -mt-[1px] ${theme.triangle}`}
-      />
-    </div>
-  );
-};
+    );
+  },
+);
 export const PersonaInfoWindow = ({
   location,
 }: {
@@ -133,7 +138,9 @@ export const PersonaInfoWindow = ({
         </div>
         <div className="flex flex-col items-center justify-center text-center border-x border-slate-200">
           <Gauge className="w-3 h-3 mb-0.5 text-sky-500" />
-          <span className="font-medium">{location.velocidad} km/h</span>
+          <span className="font-medium">
+            {location.velocidad?.toFixed(3)} km/h
+          </span>
         </div>
         <div className="flex flex-col items-center justify-center text-center">
           <Clock className="w-3 h-3 mb-0.5 text-amber-500" />
@@ -204,36 +211,36 @@ export const PersonaInfoWindow = ({
 
 const MapBoundsHandler = ({
   personas,
+  hasSelection, // ← nueva prop
 }: {
   personas: RealTimeLocationRaw[];
+  hasSelection: boolean;
 }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (!map || personas.length === 0) return;
+    if (!map || personas.length === 0 || hasSelection) return; // ← no ajustar si hay popup abierto
 
-    const bounds = new google.maps.LatLngBounds();
+    const timer = setTimeout(() => {
+      const bounds = new google.maps.LatLngBounds();
+      personas.forEach((p) => {
+        if (typeof p.latitud === "number" && typeof p.longitud === "number") {
+          bounds.extend({ lat: p.latitud, lng: p.longitud });
+        }
+      });
+      // map.fitBounds(bounds, { padding: 80 }); // padding para que no quede pegado al borde
+      map.fitBounds(bounds, {}); // padding para que no quede pegado al borde
 
-    personas.forEach((p) => {
-      if (typeof p.latitud === "number" && typeof p.longitud === "number") {
-        bounds.extend({
-          lat: p.latitud,
-          lng: p.longitud,
-        });
-      }
-    });
+      if (personas.length === 1) map.setZoom(14);
+    }, 2000);
 
-    map.fitBounds(bounds);
-
-    if (personas.length === 1) {
-      map.setZoom(14);
-    }
-  }, [map, personas]);
+    return () => clearTimeout(timer);
+  }, [map, personas, hasSelection]);
 
   return null;
 };
 
-const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
+const LocationsMaps = React.memo(({ personas, markerSize = "md" }: Props) => {
   const [selected, setSelected] = useState<RealTimeLocationRaw | null>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
@@ -272,8 +279,12 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
         gestureHandling="greedy"
         disableDefaultUI={true}
         mapTypeId="hybrid"
+        reuseMaps={true}
       >
-        <MapBoundsHandler personas={validPersonas} />
+        <MapBoundsHandler
+          personas={validPersonas}
+          hasSelection={!!selected} // ← si hay popup abierto, no mover el mapa
+        />
         <CustomMapControls />
         <MapSelectionPanner selected={selected} />
 
@@ -335,7 +346,7 @@ const LocationsMaps = ({ personas, markerSize = "md" }: Props) => {
       </Map>
     </div>
   );
-};
+});
 
 const MapSelectionPanner = ({
   selected,

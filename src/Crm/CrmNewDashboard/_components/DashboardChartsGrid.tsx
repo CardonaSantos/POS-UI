@@ -4,6 +4,7 @@ import { LineChartNivo } from "@/Crm/_charts/line-chart/LineChart";
 import LocationsMaps from "./locations/locations-maps";
 import { BarChartNivo } from "@/Crm/_charts/bar-chart/BarChart";
 import { RealTimeLocationRaw } from "@/Crm/features/real-time-location/real-time-location";
+import React from "react";
 
 interface DashboardChartsGridProps {
   instalacionesMes: ChartDataLineNivo;
@@ -16,6 +17,8 @@ export function DashboardChartsGrid({
   usuariosEnCampo,
   instalacionesHistoricas,
 }: DashboardChartsGridProps) {
+  // DashboardChartsGrid.tsx
+
   return (
     <section className="px-1 md:px-0">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 px-3">
@@ -33,7 +36,7 @@ export function DashboardChartsGrid({
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 px-2 py-2">
-          <LocationsMaps personas={usuariosEnCampo} />
+          <MemoizedMap usuariosEnCampo={usuariosEnCampo} />
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/40 dark:bg-slate-900/40 px-2 py-2">
@@ -51,3 +54,20 @@ export function DashboardChartsGrid({
     </section>
   );
 }
+const MemoizedMap = React.memo(
+  ({ usuariosEnCampo }: { usuariosEnCampo: RealTimeLocationRaw[] }) => (
+    <LocationsMaps personas={usuariosEnCampo} />
+  ),
+  (prev, next) => {
+    if (prev.usuariosEnCampo.length !== next.usuariosEnCampo.length)
+      return false;
+    return prev.usuariosEnCampo.every((prevUser, i) => {
+      const nextUser = next.usuariosEnCampo[i];
+      return (
+        prevUser.latitud === nextUser.latitud &&
+        prevUser.longitud === nextUser.longitud &&
+        prevUser.usuarioId === nextUser.usuarioId
+      );
+    });
+  },
+);
