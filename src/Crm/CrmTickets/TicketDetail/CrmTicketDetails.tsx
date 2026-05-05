@@ -1,16 +1,9 @@
 "use client";
-import React, { useEffect,  useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Loader2,
-  Send,
-} from "lucide-react";
-import dayjs from "dayjs";
-import localizedFormat from "dayjs/plugin/localizedFormat";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-import axios from "axios";
+import { Loader2, Send } from "lucide-react";
+import { useStoreCrm } from "../../ZustandCrm/ZustandCrmContext";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -21,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
 import {
   Select,
   SelectContent,
@@ -30,15 +22,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SelectComponent, { MultiValue, SingleValue } from "react-select";
-import { RolUsuario } from "../CrmProfile/interfacesProfile";
-import { Ticket } from "./ticketTypes";
+import { Ticket } from "../ticketTypes";
 import { Switch } from "@/components/ui/switch";
-import { TicketHeader } from "./TicketDetail/TicketHeader";
-import { TicketTimeline } from "./TicketDetail/TicketTimeline";
-import { SolucionTicketItem } from "../features/ticket-soluciones/ticket-soluciones.interface";
-import { useCreateTicketResumen } from "../CrmHooks/hooks/use-ticket-resumen/useTicketResumen";
+import { TicketHeader } from "./TicketHeader";
+import { TicketTimeline } from "./TicketTimeline";
+import { SolucionTicketItem } from "../../features/ticket-soluciones/ticket-soluciones.interface";
+import { useCreateTicketResumen } from "../../CrmHooks/hooks/use-ticket-resumen/useTicketResumen";
 import { useForm } from "react-hook-form";
-import { ticketResumenSchema, TicketResumenSchemaType } from "./CrmCloseTickets/schema";
+import {
+  ticketResumenSchema,
+  TicketResumenSchemaType,
+} from "../CrmCloseTickets/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -48,16 +42,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription
+  FormDescription,
 } from "@/components/ui/form";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-dayjs.extend(localizedFormat);
-dayjs.extend(customParseFormat);
-dayjs.locale("es");
-
-
+import {
+  useDeleteTicket,
+  usePostCommentary,
+  useUpdateTicket,
+} from "../../CrmHooks/hooks/use-tickets/useTicketsSoporte";
+import { RolUsuario } from "@/Crm/features/users/users-rol";
 
 interface OptionSelectedReactComponent {
   value: string;
@@ -71,14 +64,26 @@ interface TicketDetailProps {
   optionsLabels: OptionSelectedReactComponent[];
   optionsTecs: OptionSelectedReactComponent[];
   optionsCustomers: OptionSelectedReactComponent[];
-  soluciones: SolucionTicketItem[]
+  soluciones: SolucionTicketItem[];
 }
 
-interface SeguimientoData {
+export interface ComentarioSeguimientoDto {
   ticketId: number | null;
   usuarioId: number | null;
   descripcion: string;
 }
+
+// export interface updateTicketDto {
+//   title: string;
+//   description: string | null;
+//   priority: PrioridadTicketSoporte;
+//   status: EstadoTicketSoporte;
+//   fixed: boolean;
+//   clienteId: number | null;
+//   tecnicoId: number | null;
+//   tecnicosAdicionales: number[];
+//   tags: number[];
+// }
 
 enum PrioridadTicketSoporte {
   BAJA = "BAJA",
@@ -105,63 +110,68 @@ export default function TicketDetail({
   const [openUpdateTicket, setOpenUpdateTicket] = useState(false);
   const [ticketToEdit, setTicketToEdit] = useState<Ticket>(ticket);
 
-  const [formDataComent, setFormDataComent] = useState<SeguimientoData>({
-    descripcion: "".trim(),
-    ticketId: ticket.id,
-    usuarioId: userId,
-  });
+  const [formDataComent, setFormDataComent] =
+    useState<ComentarioSeguimientoDto>({
+      descripcion: "".trim(),
+      ticketId: ticket.id,
+      usuarioId: userId,
+    });
 
   const [openCloseTicket, setOpenCloseTicket] = useState(false);
-  const [ticketDeleteId, setTicketDeleteId] = useState<number | null>(null);
+  const [ticketDeleteId, setTicketDeleteId] = useState<number>(0);
   const [openDelete, setOpenDelete] = useState(false);
   const createTicketResumen = useCreateTicketResumen();
 
+  const postCommentary = usePostCommentary();
+
+  const updateTicket = useUpdateTicket(ticketToEdit.id);
+
+  const deleteTicket = useDeleteTicket(ticketDeleteId);
+
   const formCloseTicket = useForm<TicketResumenSchemaType>({
-     resolver: zodResolver(ticketResumenSchema),
-     defaultValues: {
-       ticketId: ticket.id,
-       solucionId: 1, 
-       resueltoComo: "",
-       notasInternas: "",
-     }
+    resolver: zodResolver(ticketResumenSchema),
+    defaultValues: {
+      ticketId: ticket.id,
+      solucionId: 1,
+      resueltoComo: "",
+      notasInternas: "",
+    },
   });
 
-    const onSubmitClose = (data: TicketResumenSchemaType) => {
-      const payload = {
-          ...data, 
-          ticketId: ticket.id, 
-          resueltoComo: data.resueltoComo || null, 
-          notasInternas: data.notasInternas || null,
-          reabierto: false, 
-          intentos: 1,
-      };
+  const onSubmitClose = (data: TicketResumenSchemaType) => {
+    const payload = {
+      ...data,
+      ticketId: ticket.id,
+      resueltoComo: data.resueltoComo || null,
+      notasInternas: data.notasInternas || null,
+      reabierto: false,
+      intentos: 1,
+    };
 
-      toast.promise(
-        createTicketResumen.mutateAsync(payload), 
-        {
-          loading: "Cerrando ticket...",
-          success: () => {
-              setOpenCloseTicket(false); 
-              getTickets(); 
-              formCloseTicket.reset({
-                notasInternas: "",
-                resueltoComo: "",
-                solucionId: null,
-                ticketId: ticket.id
-              })
-              return "Ticket cerrado y resumen creado";
-          },
-          error:(error)=> getApiErrorMessageAxios(error)
-        }
-      );
-    }
+    toast.promise(createTicketResumen.mutateAsync(payload), {
+      loading: "Cerrando ticket...",
+      success: () => {
+        setOpenCloseTicket(false);
+        getTickets();
+        formCloseTicket.reset({
+          notasInternas: "",
+          resueltoComo: "",
+          solucionId: null,
+          ticketId: ticket.id,
+        });
+        return "Ticket cerrado y resumen creado";
+      },
+      error: (error) => getApiErrorMessageAxios(error),
+    });
+  };
 
-  const optionsSoluciones:Array<OptionSelectedReactComponent> = soluciones.map((s)=>({
-    label: s.solucion,
-    value: s.id.toString(),
-  }))
+  const optionsSoluciones: Array<OptionSelectedReactComponent> = soluciones.map(
+    (s) => ({
+      label: s.solucion,
+      value: s.id.toString(),
+    }),
+  );
 
-  // Sincronizar estado cuando cambia el prop ticket
   useEffect(() => {
     setTicketToEdit(ticket);
     setFormDataComent((prev) => ({
@@ -172,37 +182,28 @@ export default function TicketDetail({
 
   const submitNewComentaryFollowUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (!formDataComent.descripcion) {
-        toast.info("No se pueden enviar mensajes vacíos");
-        return;
-      }
-      if (!formDataComent.ticketId || !formDataComent.usuarioId) {
-        toast.info("Datos incompletos para el seguimiento");
-        return;
-      }
 
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/ticket-seguimiento`,
-        formDataComent
-      );
+    if (!formDataComent.descripcion) {
+      toast.info("No se pueden enviar mensajes vacíos");
+      return;
+    }
 
-      if (response.status === 201) {
-        toast.success("Comentario añadido");
+    toast.promise(postCommentary.mutateAsync(formDataComent), {
+      loading: "Añadiendo comentario...",
+      success: async () => {
         await getTickets();
         setFormDataComent((prev) => ({
           ...prev,
           descripcion: "",
         }));
-      }
-    } catch (error) {
-      toast.info("Error al añadir seguimiento");
-      console.error(error);
-    }
+        return "Comentario añadido";
+      },
+      error: (error) => getApiErrorMessageAxios(error),
+    });
   };
 
   const handleChangeCustomer = (
-    selectedOption: SingleValue<{ value: string; label: string }>
+    selectedOption: SingleValue<{ value: string; label: string }>,
   ) => {
     if (selectedOption) {
       setTicketToEdit((prev) => ({
@@ -254,7 +255,7 @@ export default function TicketDetail({
   const { bgColor, text, textColor } = getBadgeProps(ticket.priority);
 
   const handleChangePropsTicket = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setTicketToEdit((prev) => ({
@@ -279,7 +280,7 @@ export default function TicketDetail({
   };
 
   const handleChangeTecSelect = (
-    selectedOption: SingleValue<{ value: string; label: string }>
+    selectedOption: SingleValue<{ value: string; label: string }>,
   ) => {
     if (selectedOption) {
       setTicketToEdit((prev) => ({
@@ -291,7 +292,7 @@ export default function TicketDetail({
             .split(" ")
             .map((word) => word[0])
             .join(""),
-          rol: "TECNICO", 
+          rol: RolUsuario.TECNICO,
           avatar: "",
         },
       }));
@@ -304,7 +305,7 @@ export default function TicketDetail({
   };
 
   const handleChangeCompanions = (
-    selectedOptions: MultiValue<{ value: string; label: string }>
+    selectedOptions: MultiValue<{ value: string; label: string }>,
   ) => {
     setTicketToEdit((prev) => ({
       ...prev,
@@ -320,53 +321,53 @@ export default function TicketDetail({
 
   const handleSubmitTicketEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      // PREPARAMOS EL PAYLOAD CORRECTO PARA EL BACKEND
-      const payload = {
-        title: ticketToEdit.title,
-        description: ticketToEdit.description,
-        priority: ticketToEdit.priority,
-        status: ticketToEdit.status,
-        fixed: ticketToEdit.fixed,
 
-        clienteId: ticketToEdit.customer?.id || null,
-        tecnicoId: ticketToEdit.assignee?.id || null,
-
-        tecnicosAdicionales: ticketToEdit.companios?.map((c) => c.id) || [],
-        tags: ticketToEdit.tags?.map((t) => Number(t.value)) || [],
-      };
-
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/tickets-soporte/update-ticket-soporte/${ticketToEdit.id}`,
-        payload
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        toast.success("Ticket actualizado correctamente");
-        await getTickets(); // Refresca la lista
-        setOpenUpdateTicket(false);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Error al actualizar el ticket");
+    if (!ticketToEdit.title?.trim()) {
+      toast.info("El ticket debe tener un título");
+      return;
     }
+
+    const payload = {
+      title: ticketToEdit.title.trim(),
+      description: ticketToEdit.description?.trim() || "",
+      priority: ticketToEdit.priority,
+      status: ticketToEdit.status,
+      fixed: ticketToEdit.fixed,
+
+      clienteId: ticketToEdit.customer?.id ?? null,
+      tecnicoId: ticketToEdit.assignee?.id ?? null,
+
+      tecnicosAdicionales: ticketToEdit.companios?.map((c) => c.id) ?? [],
+      tags: ticketToEdit.tags?.map((t) => Number(t.value)) ?? [],
+    };
+
+    toast.promise(updateTicket.mutateAsync(payload), {
+      loading: "Actualizando ticket...",
+      success: async () => {
+        await getTickets();
+        setOpenUpdateTicket(false);
+        return "Ticket actualizado";
+      },
+      error: (error) => getApiErrorMessageAxios(error),
+    });
   };
 
   const handleDeleteTicket = async () => {
-    try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/tickets-soporte/delete-ticket/${ticketDeleteId}`
-      );
-      if (response.status === 200) {
-        toast.success("Ticket eliminado");
+    if (!ticketDeleteId) {
+      toast.info("No hay ticket seleccionado");
+      return;
+    }
+
+    toast.promise(deleteTicket.mutateAsync(), {
+      loading: "Eliminando ticket...",
+      success: async () => {
+        await getTickets();
         setOpenDelete(false);
         setSelectedTicketId(null);
-        await getTickets();
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Algo salió mal");
-    }
+        return "Ticket eliminado";
+      },
+      error: (error) => getApiErrorMessageAxios(error),
+    });
   };
 
   const handleClose = () => {
@@ -379,53 +380,68 @@ export default function TicketDetail({
       label: c.name,
     })) || [];
 
-    const metricas = ticket.metrics
+  const metricas = ticket.metrics;
 
   return (
     <div className="flex flex-col h-full rounded-sm overflow-hidden shadow-sm border ">
-    <div className="flex-none z-20 shadow-sm"> 
-      <TicketHeader 
-        ticket={ticket}
-        badgeProps={{ bgColor, text, textColor }}
-        onCloseView={handleClose}
-        onEdit={() => { setTicketToEdit(ticket); setOpenUpdateTicket(true); }}
-        onDelete={() => { setTicketDeleteId(ticket.id); setOpenDelete(true); }}
-        onCloseTicket={() => { setTicketToEdit(ticket); setOpenCloseTicket(true); }}
+      <div className="flex-none z-20 shadow-sm">
+        <TicketHeader
+          ticket={ticket}
+          badgeProps={{ bgColor, text, textColor }}
+          onCloseView={handleClose}
+          onEdit={() => {
+            setTicketToEdit(ticket);
+            setOpenUpdateTicket(true);
+          }}
+          onDelete={() => {
+            setTicketDeleteId(ticket.id);
+            setOpenDelete(true);
+          }}
+          onCloseTicket={() => {
+            setTicketToEdit(ticket);
+            setOpenCloseTicket(true);
+          }}
+        />
+      </div>
+
+      <TicketTimeline
+        metricas={metricas}
+        comments={ticket.comments}
+        creator={ticket.creator}
+        closedAt={ticket.closedAt}
       />
-    </div>
 
-    {/* 2. TIMELINE (Scrollable) */}
-    <TicketTimeline 
-      metricas={metricas}
-      comments={ticket.comments}
-      creator={ticket.creator}
-      closedAt={ticket.closedAt}
-    />
-
-    {/* 3. INPUT AREA (Fijo abajo) */}
-    <div className="flex-none p-3 ">
-      <form onSubmit={submitNewComentaryFollowUp} className="relative flex items-end gap-2">
+      <div className="flex-none p-3 ">
+        <form
+          onSubmit={submitNewComentaryFollowUp}
+          className="relative flex items-end gap-2"
+        >
           <Textarea
             placeholder="Escribe un seguimiento..."
             className=""
             value={formDataComent.descripcion}
-            onChange={(e) => setFormDataComent(prev => ({ ...prev, descripcion: e.target.value }))}
+            onChange={(e) =>
+              setFormDataComent((prev) => ({
+                ...prev,
+                descripcion: e.target.value,
+              }))
+            }
             onKeyDown={(e) => {
-               if(e.key === 'Enter' && !e.shiftKey) {
-                 e.preventDefault();
-                 submitNewComentaryFollowUp(e);
-               }
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submitNewComentaryFollowUp(e);
+              }
             }}
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             size="icon"
             className="h-10 w-10 bg-emerald-600 hover:bg-emerald-700 shrink-0 rounded-lg shadow-sm"
           >
             <Send className="w-4 h-4 text-white" />
           </Button>
-      </form>
-    </div>
+        </form>
+      </div>
 
       {/* DIALOG PARA LA EDICION DEL TICKET */}
       <Dialog open={openUpdateTicket} onOpenChange={setOpenUpdateTicket}>
@@ -437,7 +453,6 @@ export default function TicketDetail({
             {/* BODY - Con ScrollArea natural si la pantalla es muy pequeña */}
             <div className="flex-1 overflow-y-auto p-5">
               <div className="grid gap-4">
-                {/* FILA 1: Título (Grande) y Switch Fijar (Compacto) */}
                 <div className="flex gap-4">
                   <div className="flex-1 space-y-1.5">
                     <Label
@@ -522,7 +537,8 @@ export default function TicketDetail({
                         ticketToEdit.customer
                           ? optionsCustomers.find(
                               (c) =>
-                                c.value === ticketToEdit.customer!.id.toString()
+                                c.value ===
+                                ticketToEdit.customer!.id.toString(),
                             )
                           : null
                       }
@@ -596,7 +612,8 @@ export default function TicketDetail({
                         ticketToEdit.assignee
                           ? optionsTecs.find(
                               (t) =>
-                                t.value === ticketToEdit.assignee!.id.toString()
+                                t.value ===
+                                ticketToEdit.assignee!.id.toString(),
                             )
                           : null
                       }
@@ -615,7 +632,7 @@ export default function TicketDetail({
                       isClearable
                       isMulti
                       options={optionsTecs.filter(
-                        (t) => t.value !== ticketToEdit.assignee?.id.toString()
+                        (t) => t.value !== ticketToEdit.assignee?.id.toString(),
                       )}
                       value={companionOptions}
                       onChange={handleChangeCompanions}
@@ -662,9 +679,7 @@ export default function TicketDetail({
       </Dialog>
 
       <Dialog open={openDelete} onOpenChange={setOpenDelete}>
-        {/* ... contenido delete ... */}
         <DialogContent className="sm:max-w-[425px]">
-          {/* ... header y alerts ... */}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDelete(false)}>
               Cancelar
@@ -676,7 +691,6 @@ export default function TicketDetail({
         </DialogContent>
       </Dialog>
 
-    
       <Dialog open={openCloseTicket} onOpenChange={setOpenCloseTicket}>
         <DialogContent className="">
           <DialogHeader>
@@ -684,40 +698,50 @@ export default function TicketDetail({
           </DialogHeader>
 
           <Form {...formCloseTicket}>
-            <form onSubmit={formCloseTicket.handleSubmit(onSubmitClose)} className="space-y-4 py-2">
-              
-              <input type="hidden" {...formCloseTicket.register("ticketId", { valueAsNumber: true })} />
-              
-          <FormField
-            control={formCloseTicket.control}
-            name="solucionId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Solución</FormLabel>
-                <FormControl>
-                  <SelectComponent
-                    placeholder="Selecciona una solución..."
-                    options={optionsSoluciones}
-                    isClearable
-                    value={
-                      field.value 
-                      ? optionsSoluciones.find(opt => Number(opt.value) === field.value) 
-                      : null
-                    }
-                    onChange={(option: SingleValue<{ label: string, value: string }>) => {
-                      field.onChange(option ? Number(option.value) : null);
-                    }}
-                    className="text-sm text-black"
-                    menuPlacement="auto"
-                  />
-                  </FormControl>
-                  
-                  {/* Mensaje de error automático de Zod (ej: "Seleccione una solución") */}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-              
+            <form
+              onSubmit={formCloseTicket.handleSubmit(onSubmitClose)}
+              className="space-y-4 py-2"
+            >
+              <input
+                type="hidden"
+                {...formCloseTicket.register("ticketId", {
+                  valueAsNumber: true,
+                })}
+              />
+
+              <FormField
+                control={formCloseTicket.control}
+                name="solucionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Solución</FormLabel>
+                    <FormControl>
+                      <SelectComponent
+                        placeholder="Selecciona una solución..."
+                        options={optionsSoluciones}
+                        isClearable
+                        value={
+                          field.value
+                            ? optionsSoluciones.find(
+                                (opt) => Number(opt.value) === field.value,
+                              )
+                            : null
+                        }
+                        onChange={(
+                          option: SingleValue<{ label: string; value: string }>,
+                        ) => {
+                          field.onChange(option ? Number(option.value) : null);
+                        }}
+                        className="text-sm text-black"
+                        menuPlacement="auto"
+                      />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={formCloseTicket.control}
                 name="resueltoComo"
@@ -725,10 +749,10 @@ export default function TicketDetail({
                   <FormItem>
                     <FormLabel>Resumen de Solución (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Ej: Se reinició el router y se validó la IP..." 
+                      <Textarea
+                        placeholder="Ej: Se reinició el router y se validó la IP..."
                         className="resize-none min-h-[80px]"
-                        {...field} 
+                        {...field}
                         value={field.value || ""} // Manejo seguro de null
                       />
                     </FormControl>
@@ -747,11 +771,11 @@ export default function TicketDetail({
                   <FormItem>
                     <FormLabel>Notas Internas (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Detalles técnicos solo para el equipo..." 
+                      <Textarea
+                        placeholder="Detalles técnicos solo para el equipo..."
                         className="resize-none min-h-[60px]"
-                        {...field} 
-                        value={field.value || ""} 
+                        {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -760,16 +784,16 @@ export default function TicketDetail({
               />
 
               <DialogFooter className="mt-4 gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setOpenCloseTicket(false)}
                   disabled={createTicketResumen.isPending}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-emerald-600 hover:bg-emerald-700"
                   disabled={createTicketResumen.isPending}
                 >

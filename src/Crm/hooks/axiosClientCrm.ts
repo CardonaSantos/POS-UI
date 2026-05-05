@@ -30,7 +30,7 @@ function attachLogging(client: AxiosInstance, name: string) {
     const url = fullUrlFrom(cfg);
 
     console.groupCollapsed(
-      `➡️ [${name}] ${String(cfg.method).toUpperCase()} ${url}`
+      `➡️ [${name}] ${String(cfg.method).toUpperCase()} ${url}`,
     );
     console.log("params:", cfg.params);
     if (cfg.data) console.log("data:", cfg.data);
@@ -52,8 +52,8 @@ function attachLogging(client: AxiosInstance, name: string) {
 
       console.groupCollapsed(
         `✅ [${name}] ${res.status} ${res.statusText} — ${String(
-          res.config.method
-        ).toUpperCase()} ${url}` + (ms != null ? ` (${ms} ms)` : "")
+          res.config.method,
+        ).toUpperCase()} ${url}` + (ms != null ? ` (${ms} ms)` : ""),
       );
       console.log("data:", res.data);
       console.log("headers:", res.headers);
@@ -82,7 +82,7 @@ function attachLogging(client: AxiosInstance, name: string) {
 
       console.groupCollapsed(
         `⛔ [${name}] Axios error — ${method} ${url}` +
-          (ms != null ? ` (${ms} ms)` : "")
+          (ms != null ? ` (${ms} ms)` : ""),
       );
       console.error("message:", ax.message);
       console.error("code:", ax.code);
@@ -91,7 +91,7 @@ function attachLogging(client: AxiosInstance, name: string) {
       console.groupEnd();
 
       return Promise.reject(error);
-    }
+    },
   );
 }
 

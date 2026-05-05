@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bell, BellRing, Smartphone } from "lucide-react";
-import { RolUsuario } from "../interfacesProfile";
+import { RolUsuario } from "@/Crm/features/users/users-rol";
 
 export interface ProfileFormData {
   nombre: string;

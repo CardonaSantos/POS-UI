@@ -43,6 +43,7 @@ import {
   KnowledgeCreateType,
 } from "./_components/knowledge/schema-knowledge";
 import FormKnowledgeCreate from "./_components/knowledge/form-create-knowledge";
+import { crm } from "../API/crmApi";
 // Componente principal
 function BotMainPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,7 +62,6 @@ function BotMainPage() {
 
   const [openUpdateKnowledge, setOpenUpdateKnowledge] = useState(false);
   const [openDeleteK, setOpenDeleteK] = useState<boolean>(false);
-
   const [knowledgeSelected, setKnowledgeSelected] =
     useState<KnowledgeDocumentUpdate>(initialKnowledgeDocumentState);
   const [isCreatingKnowledge, setIsCreatingKnowledge] = useState(false);
@@ -167,7 +167,7 @@ function BotMainPage() {
         // El error ya lo maneja el toast
         console.log(err);
       }
-    }
+    },
   );
 
   const handleUpdateK = async () => {
