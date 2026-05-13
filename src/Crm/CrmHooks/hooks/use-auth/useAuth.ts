@@ -1,4 +1,4 @@
-import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile";
+import { RolUsuario } from "@/Crm/features/users/users-rol";
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 
 export interface LoginDto {

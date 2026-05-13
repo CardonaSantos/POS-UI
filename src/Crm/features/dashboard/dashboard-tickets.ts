@@ -7,7 +7,14 @@ export type EstadoTicketSoporte =
   | "NUEVO"
   | "PENDIENTE_REVISION";
 
-export type PrioridadTicketSoporte = "BAJA" | "MEDIA" | "ALTA" | "URGENTE"; // ajusta a tu enum real
+// export type PrioridadTicketSoporte = "BAJA" | "MEDIA" | "ALTA" | "URGENTE"; // ajusta a tu enum real
+
+export enum PrioridadTicketSoporte {
+  BAJA = "BAJA",
+  MEDIA = "MEDIA",
+  ALTA = "ALTA",
+  URGENTE = "URGENTE",
+}
 
 export interface UbicacionMaps {
   lat: number;

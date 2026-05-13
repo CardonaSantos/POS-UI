@@ -30,7 +30,7 @@ function attachLogging(client: AxiosInstance, name: string) {
       }
     })();
     console.groupCollapsed(
-      `➡️ [${name}] ${String(cfg.method).toUpperCase()} ${url}`
+      `➡️ [${name}] ${String(cfg.method).toUpperCase()} ${url}`,
     );
     console.log("params:", cfg.params);
     if (cfg.data) console.log("data:", cfg.data);
@@ -42,13 +42,13 @@ function attachLogging(client: AxiosInstance, name: string) {
   client.interceptors.response.use(
     (res: AxiosResponse) => {
       const ms = Math.round(
-        performance.now() - (res.config as any).metadata?.start!
+        performance.now() - (res.config as any).metadata?.start!,
       );
       const url = (() => {
         try {
           return new URL(
             res.config.url ?? "",
-            res.config.baseURL ?? ""
+            res.config.baseURL ?? "",
           ).toString();
         } catch {
           return `${res.config.baseURL ?? ""}${res.config.url ?? ""}`;
@@ -56,8 +56,8 @@ function attachLogging(client: AxiosInstance, name: string) {
       })();
       console.groupCollapsed(
         `✅ [${name}] ${res.status} ${res.statusText} — ${String(
-          res.config.method
-        ).toUpperCase()} ${url} (${ms} ms)`
+          res.config.method,
+        ).toUpperCase()} ${url} (${ms} ms)`,
       );
       console.log("data:", res.data);
       console.log("headers:", res.headers);
@@ -86,7 +86,7 @@ function attachLogging(client: AxiosInstance, name: string) {
 
       console.groupCollapsed(
         `⛔ [${name}] Axios error — ${method} ${url}` +
-          (ms != null ? ` (${ms} ms)` : "")
+          (ms != null ? ` (${ms} ms)` : ""),
       );
       console.error("message:", ax.message);
       console.error("code:", ax.code);
@@ -95,7 +95,7 @@ function attachLogging(client: AxiosInstance, name: string) {
       console.groupEnd();
 
       return Promise.reject(error);
-    }
+    },
   );
 }
 

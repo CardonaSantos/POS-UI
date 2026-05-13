@@ -14,7 +14,7 @@ import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import { Link } from "react-router-dom";
-import type { EstadoTicketSoporte, FormattedTicket } from "./types";
+import type { FormattedTicket } from "./types";
 import { useEffect, useState } from "react";
 import {
   Select,
@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { copyToClipboard } from "./utils";
 import { Badge } from "@/components/ui/badge";
+import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
@@ -79,7 +80,7 @@ export default function MyTickets({
   getEnProcesoStatus,
 }: MyTicketsProps) {
   const [selectedTicket, setSelectedTicket] = useState<FormattedTicket | null>(
-    null
+    null,
   );
   const [openDetail, setOpenDetail] = useState<boolean>(false);
 
@@ -173,7 +174,7 @@ function DialogDetails({
   getEnProcesoStatus,
 }: DialogDetailsProps) {
   const [updatingTicket, setUpdatingTicket] = useState<FormattedTicket | null>(
-    ticket
+    ticket,
   );
   console.log("El actualizando es: ", updatingTicket);
   useEffect(() => {
@@ -191,7 +192,7 @@ function DialogDetails({
     try {
       const response = await axios.patch(
         `${VITE_CRM_API_URL}/tickets-soporte/update-status-ticket/${ticket.id}`,
-        { estado: updatingTicket?.status }
+        { estado: updatingTicket?.status },
       );
       if (response.status === 200) {
         toast.success("Ticket actualizado");
@@ -287,7 +288,7 @@ function DialogDetails({
                           onClick={() =>
                             window.open(
                               handleOpenWhatsapp(ticket.clientPhone ?? ""),
-                              "_blank"
+                              "_blank",
                             )
                           }
                           disabled={isDisableContact}
@@ -297,7 +298,7 @@ function DialogDetails({
                         <DropdownMenuCheckboxItem
                           onClick={() =>
                             (window.location.href = handleCall(
-                              ticket.clientPhone ?? ""
+                              ticket.clientPhone ?? "",
                             ))
                           }
                           disabled={isDisableContact}
@@ -308,7 +309,7 @@ function DialogDetails({
                           disabled={isDisableContact}
                           onClick={() =>
                             copyToClipboard(
-                              ticket?.clientPhone ?? "No disponible"
+                              ticket?.clientPhone ?? "No disponible",
                             )
                           }
                         >
@@ -346,7 +347,7 @@ function DialogDetails({
                           disabled={isDisableReference}
                           onClick={() =>
                             copyToClipboard(
-                              ticket?.referenceContact ?? "No disponible"
+                              ticket?.referenceContact ?? "No disponible",
                             )
                           }
                         >
@@ -420,7 +421,7 @@ function DialogDetails({
                   onClick={() =>
                     window.open(
                       `https://www.google.com/maps/search/?api=1&query=${ticket.location.lat},${ticket.location.lng}`,
-                      "_blank"
+                      "_blank",
                     )
                   }
                 >

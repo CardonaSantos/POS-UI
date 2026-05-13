@@ -12,9 +12,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { useUpdateClienteBot } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/useGetClienteWhatsapp";
+import { toast } from "sonner";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { UpdateClienteDialog } from "./update-cliente-dialog";
+import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
+import { ClienteWhatsAppQkeys } from "@/Crm/CrmHooks/hooks/bot-server/use-whatsapp-server/Qk";
+import { clienteHistorialWhatsappQkeys } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/Qk";
 
 interface ChatHeaderProps {
   clientName: string;
+  clientId: number;
   clientPhone: string;
   toggleFilters: () => void;
   showFilters: boolean;
@@ -29,7 +38,11 @@ export function ChatHeader({
   showFilters,
   botActivo,
   toggleOpen,
+  clientId,
 }: ChatHeaderProps) {
+  const invalidate = useInvalidateQk();
+  const updateCliente = useUpdateClienteBot(clientId);
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -37,6 +50,30 @@ export function ChatHeader({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  interface payloadd {
+    id: number;
+    nombre: string | null;
+  }
+
+  const [openUpdate, setOpenUpdate] = useState(false);
+  const clienteSeleccionado: payloadd = {
+    id: clientId,
+    nombre: clientName,
+  };
+
+  const handleUpdateCliente = async (payload: {
+    id: number;
+    nombre: string;
+  }) => {
+    toast.promise(updateCliente.mutateAsync(payload), {
+      success: "Cliente actualizado",
+      loading: "Actualizando...",
+      error: (error) => getApiErrorMessageAxios(error),
+    });
+    invalidate(ClienteWhatsAppQkeys.all);
+    invalidate(clienteHistorialWhatsappQkeys.chats({}));
   };
 
   return (
@@ -51,7 +88,7 @@ export function ChatHeader({
               // Si el bot está activo, añade un anillo verde brillante
               botActivo
                 ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-background"
-                : "grayscale opacity-90"
+                : "grayscale opacity-90",
             )}
           >
             {/* Fallback con gradiente sutil para verse mas moderno */}
@@ -64,7 +101,7 @@ export function ChatHeader({
           <span
             className={cn(
               "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background transition-colors",
-              botActivo ? "bg-emerald-500" : "bg-gray-400"
+              botActivo ? "bg-emerald-500" : "bg-gray-400",
             )}
           />
         </div>
@@ -84,7 +121,7 @@ export function ChatHeader({
             <div
               className={cn(
                 "flex items-center gap-1 text-[10px] font-medium transition-colors",
-                botActivo ? "text-emerald-600" : "text-muted-foreground"
+                botActivo ? "text-emerald-600" : "text-muted-foreground",
               )}
             >
               {botActivo ? (
@@ -135,7 +172,7 @@ export function ChatHeader({
                 "focus:bg-accent cursor-pointer",
                 botActivo
                   ? "text-red-600 focus:text-red-600"
-                  : "text-emerald-600 focus:text-emerald-600"
+                  : "text-emerald-600 focus:text-emerald-600",
               )}
             >
               {botActivo ? (
@@ -153,6 +190,13 @@ export function ChatHeader({
 
             <DropdownMenuSeparator />
 
+            <DropdownMenuItem
+              onClick={() => setOpenUpdate(true)}
+              className="text-sm"
+            >
+              Editar
+            </DropdownMenuItem>
+
             <DropdownMenuItem disabled className="text-xs opacity-50">
               <Ban className="mr-2 h-3.5 w-3.5" />
               Bloquear cliente
@@ -160,6 +204,12 @@ export function ChatHeader({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <UpdateClienteDialog
+        open={openUpdate}
+        onOpenChange={setOpenUpdate}
+        cliente={clienteSeleccionado}
+        onUpdate={handleUpdateCliente}
+      />
     </div>
   );
 }

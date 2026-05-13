@@ -59,7 +59,6 @@ import SucursalesSumary from "./Pages/Sumary/SucursalesSumary";
 import Metas from "./Pages/Metas/Metas";
 import MyGoals from "./Pages/Metas/MyGoals";
 import ReportesExcel from "./Pages/Reports/Ventas/ReportesExcel";
-import TicketDashboard from "./Crm/CrmTickets/CrmTicketDashboard";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
 import CreateCustomers from "./Crm/CrmCreateCustomers/CreateCustomers";
@@ -100,12 +99,12 @@ import { MainDashboardPage } from "./Crm/CrmNewDashboard/page";
 import TecDashboard from "./Crm/CrmNewDashboard/tec-dashboard";
 import TicketAsignadoDetails from "./Crm/CrmNewDashboard/_components/tec-ticket/ticket-details";
 import WhatsappChats from "./Crm/CrmWhatsapp/page";
-import ChatPage from "./Crm/CrmWhatsapp/_components/chat/page";
 import CrmCreditoMainPage from "./Crm/CrmCredito/create/page";
 import { CreditosMainPage } from "@/Crm/CrmCredito/main/page";
 import CreditoDetails from "./Crm/CrmCredito/credito/page";
 import ContratoBuilder from "./Crm/CrmCredito/contrato/page";
 import PrinteablePlantilla from "./Crm/CrmCredito/contrato/printeable";
+import TicketDashboard from "./Crm/CrmTickets/crm-ticket-dashboard";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -869,15 +868,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <WhatsappChats />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot/cliente-whatsapp/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <ChatPage />
                 </ProtectRouteCrmUser>
               }
             />

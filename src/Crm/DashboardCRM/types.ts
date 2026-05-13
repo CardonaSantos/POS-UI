@@ -1,5 +1,5 @@
-// src/interfaces/ticket.ts
 import currency from "currency.js";
+import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 
 export interface FormattedTicket {
   id: number;
@@ -18,17 +18,6 @@ export interface FormattedTicket {
     lat: number;
     lng: number;
   };
-}
-export enum EstadoTicketSoporte {
-  NUEVO = "NUEVO",
-  ABIERTA = "ABIERTA",
-  EN_PROCESO = "EN_PROCESO",
-  PENDIENTE = "PENDIENTE",
-  PENDIENTE_CLIENTE = "PENDIENTE_CLIENTE",
-  PENDIENTE_TECNICO = "PENDIENTE_TECNICO",
-  RESUELTA = "RESUELTA",
-  CANCELADA = "CANCELADA",
-  ARCHIVADA = "ARCHIVADA",
 }
 
 export const formatearMoneda = (monto: number) => {

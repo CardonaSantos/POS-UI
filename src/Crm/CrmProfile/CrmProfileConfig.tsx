@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RolUsuario } from "./interfacesProfile";
 import { getUserProfile, updateUserProfile } from "./ProfileConfig.api";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
   ProfileFormData,
 } from "./components/profile-basic-info";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { RolUsuario } from "../features/users/users-rol";
 
 export default function CrmProfileConfig() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;

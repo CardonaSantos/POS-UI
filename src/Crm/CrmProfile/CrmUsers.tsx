@@ -4,7 +4,7 @@ import {
   getProfiles,
   updateOneUserProfile,
 } from "./ProfileConfig.api";
-import { RolUsuario, UserProfile, UsersProfile } from "./interfacesProfile";
+import { UserProfile, UsersProfile } from "./interfacesProfile";
 import { Loader, Trash2, UserCog, RefreshCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import DialogDelete from "./DialogDelete";
 import { toast } from "sonner";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useAuthStoreCRM } from "../CrmAuthRoutes/AuthStateCRM";
+import { RolUsuario } from "../features/users/users-rol";
 
 function CrmUsers() {
   const userRol = useAuthStoreCRM((state) => state.userRol);

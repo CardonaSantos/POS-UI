@@ -22,9 +22,9 @@ import {
 } from "@/components/ui/select";
 import { AtSign, Lock, User, Eye, EyeOff } from "lucide-react"; // Añadimos Eye/EyeOff
 import { toast } from "sonner";
-import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile"; // Asegúrate de importar el Enum correcto
 import { useRegister } from "../CrmHooks/hooks/use-auth/useAuth";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { RolUsuario } from "../features/users/users-rol";
 
 export default function CrmRegist() {
   const [formData, setFormData] = useState({

@@ -1,12 +1,5 @@
 import { User } from "../CrmTickets/ticketTypes";
-
-export enum RolUsuario {
-  TECNICO = "TECNICO",
-  OFICINA = "OFICINA",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-  COBRADOR = "COBRADOR",
-}
+import { RolUsuario } from "../features/users/users-rol";
 
 export interface UserProfile {
   id: number;
