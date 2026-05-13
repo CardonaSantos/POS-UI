@@ -18,6 +18,8 @@ export interface FindClientHistoryQuery {
   startDate?: string;
   endDate?: string;
 
+  clienteId?: number;
+
   // 📄 Paginación
   // Nota: El backend espera 'limit', aunque en la respuesta 'meta' devuelva 'take'.
   // Es estándar enviar 'limit' y recibir 'take'.

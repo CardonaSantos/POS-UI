@@ -18,7 +18,7 @@ import { MetaPropsResponse } from "../features/meta-server-response/meta-respons
 import { useSearchParams } from "react-router-dom";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
 import { ReusableTabs, TabItem } from "../Utils/Components/tabs/reusable-tabs";
-import { Kanban, Ticket as TicketIcon } from "lucide-react";
+import { Clipboard, Kanban, Ticket as TicketIcon } from "lucide-react";
 import TicketList from "./components/ticket-list";
 // import TicketDetail from "./TicketDetail/CrmTicketDetails";
 import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
@@ -233,7 +233,7 @@ export default function TicketDashboard() {
 
   const tabs: Array<TabItem> = [
     {
-      label: "Tickets",
+      label: "TICKETS",
       value: "tickets",
       icon: <TicketIcon size={16} />,
       content: (
@@ -305,12 +305,23 @@ export default function TicketDashboard() {
     },
 
     {
-      label: "Operativo",
-      value: "tickets-operativo",
+      label: "OPERATIVO",
+      value: "operativo",
       icon: <Kanban size={16} />,
       content: (
         <div className="">
-          <h2>Otra page</h2>
+          <h2>PRÓXIMAMENTE</h2>
+        </div>
+      ),
+    },
+
+    {
+      label: "GERENCIAL",
+      value: "gerencial",
+      icon: <Clipboard size={16} />,
+      content: (
+        <div className="">
+          <h2>PRÓXIMAMENTE</h2>
         </div>
       ),
     },

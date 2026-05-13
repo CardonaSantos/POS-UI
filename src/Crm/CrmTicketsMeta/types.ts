@@ -1,7 +1,7 @@
 // Interface para el front-end que representa la respuesta de metas de técnico
 
-import { RolUsuario } from "../CrmProfile/interfacesProfile";
 import { PrioridadTicketSoporte } from "../features/dashboard/dashboard-tickets";
+import { RolUsuario } from "../features/users/users-rol";
 
 // Enum de estados según el modelo Prisma
 export type EstadoMetaTicket =

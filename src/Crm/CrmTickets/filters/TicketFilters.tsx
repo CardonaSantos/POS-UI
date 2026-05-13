@@ -3,12 +3,12 @@
 import { Plus } from "lucide-react";
 import { FilterSearch } from "./FilterSearch";
 import { FilterDateRange } from "./FilterDateRange";
-import { FilterTecnico } from "./FilterTecnico";
 import { FilterEtiquetas } from "./FilterEtiquetas";
 import { FilterVista } from "./FilterVista";
 import { TicketCounter } from "./TicketCounter";
 import type { TicketFiltersProps } from "./ticket-filters.types";
 import CrmCreateTicket from "../CreateTickets/CrmCreateTicket";
+import { FilterTecnico } from "./FilterTecnico";
 
 export default function TicketFilters({
   ticketsTotal,
@@ -48,7 +48,7 @@ export default function TicketFilters({
         <FilterTecnico
           tecnicos={tecnicos}
           tecnicoSelected={tecnicoSelected}
-          onChange={handleSelectedTecnico}
+          handleSelectedTecnico={handleSelectedTecnico}
         />
 
         {/* Etiquetas */}

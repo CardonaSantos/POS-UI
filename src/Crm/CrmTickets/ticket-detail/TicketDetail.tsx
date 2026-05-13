@@ -252,7 +252,7 @@ export default function TicketDetail({
   console.log("Los comentarios son: ", ticket);
 
   return (
-    <div className="flex flex-col h-full border border-gray-200 rounded overflow-hidden bg-white">
+    <div className="flex flex-col h-full border border-gray-200 rounded overflow-hidden ">
       {/* Header: sticky, compact */}
       <TicketHeader
         ticket={ticket}

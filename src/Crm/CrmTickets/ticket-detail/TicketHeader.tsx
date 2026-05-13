@@ -62,7 +62,7 @@ export function TicketHeader({
   const assigneeName = ticket.assignee?.name ?? null;
 
   return (
-    <div className="px-3 pt-2 pb-2 border-b bg-white sticky top-0 z-10">
+    <div className="px-3 pt-2 pb-2 border-b sticky top-0 z-10">
       {/* Row 1: avatar + customer + actions */}
       <div className="flex items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -155,7 +155,7 @@ export function TicketHeader({
 
       {/* Row 2: title + description */}
       <div className="mt-1.5 min-w-0">
-        <p className="text-xs font-semibold leading-tight truncate text-gray-800">
+        <p className="text-xs font-semibold leading-tight truncate text-gray-800 dark:text-white ">
           <span className="text-gray-400 font-normal mr-1">#{ticket.id}</span>
           {ticket.title}
         </p>

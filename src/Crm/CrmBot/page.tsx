@@ -43,8 +43,6 @@ import {
   KnowledgeCreateType,
 } from "./_components/knowledge/schema-knowledge";
 import FormKnowledgeCreate from "./_components/knowledge/form-create-knowledge";
-import { crm } from "../API/crmApi";
-// Componente principal
 function BotMainPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = (searchParams.get("tab") as string) || "general";

@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Ticket, SelectOption } from "../ticket-detail.types";
+import type { SelectOption } from "../ticket-detail.types";
+import { Ticket } from "../../ticketTypes";
 
 interface DialogEditTicketProps {
   open: boolean;
@@ -28,7 +29,9 @@ interface DialogEditTicketProps {
   optionsTecs: SelectOption[];
   optionsCustomers: SelectOption[];
   onSubmit: (e: React.FormEvent) => void;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   onSelectChange: (name: string, value: string) => void;
   onChangeCustomer: (opt: SingleValue<SelectOption>) => void;
   onChangeTec: (opt: SingleValue<SelectOption>) => void;
@@ -47,7 +50,11 @@ const compactSelectStyles = {
   dropdownIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
   clearIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
   valueContainer: (base: object) => ({ ...base, padding: "0 6px" }),
-  option: (base: object) => ({ ...base, fontSize: "12px", padding: "5px 10px" }),
+  option: (base: object) => ({
+    ...base,
+    fontSize: "12px",
+    padding: "5px 10px",
+  }),
   menuPortal: (base: object) => ({ ...base, zIndex: 9999 }),
 };
 
@@ -78,7 +85,9 @@ export function DialogEditTicket({
       <DialogContent className="sm:max-w-[680px] p-0 overflow-y-auto max-h-[90vh] flex flex-col">
         <form onSubmit={onSubmit} className="flex flex-col h-full">
           <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle className="text-sm">Editar Ticket #{ticket.id}</DialogTitle>
+            <DialogTitle className="text-sm">
+              Editar Ticket #{ticket.id}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -103,9 +112,7 @@ export function DialogEditTicket({
                 <div className="flex items-center gap-1.5 border rounded px-2 h-7 bg-gray-50 text-xs">
                   <Switch
                     checked={ticket.fixed}
-                    onCheckedChange={(v) =>
-                      onSelectChange("fixed", String(v))
-                    }
+                    onCheckedChange={(v) => onSelectChange("fixed", String(v))}
                     className="scale-75 origin-left"
                   />
                   <span className="text-[10px] text-gray-500">
@@ -125,7 +132,7 @@ export function DialogEditTicket({
                 value={ticket.description ?? ""}
                 onChange={onChange}
                 rows={3}
-                className="w-full resize-y text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
+                className="w-full resize-y text-xs border bg-transparent border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
                 placeholder="Detalles del requerimiento…"
               />
             </div>
@@ -133,7 +140,7 @@ export function DialogEditTicket({
             {/* Customer + Priority + Status */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
+                <Label className="text-[10px] font-semibold uppercase">
                   Cliente
                 </Label>
                 <SelectComponent
@@ -142,14 +149,14 @@ export function DialogEditTicket({
                   options={optionsCustomers}
                   value={
                     ticket.customer
-                      ? optionsCustomers.find(
+                      ? (optionsCustomers.find(
                           (c) => c.value === ticket.customer!.id.toString(),
-                        ) ?? null
+                        ) ?? null)
                       : null
                   }
                   onChange={onChangeCustomer}
                   styles={compactSelectStyles}
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                  className="text-black"
                 />
               </div>
 
@@ -165,10 +172,18 @@ export function DialogEditTicket({
                     <SelectValue placeholder="Seleccionar" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BAJA" className="text-xs">Baja</SelectItem>
-                    <SelectItem value="MEDIA" className="text-xs">Media</SelectItem>
-                    <SelectItem value="ALTA" className="text-xs">Alta</SelectItem>
-                    <SelectItem value="URGENTE" className="text-xs">Urgente</SelectItem>
+                    <SelectItem value="BAJA" className="text-xs">
+                      Baja
+                    </SelectItem>
+                    <SelectItem value="MEDIA" className="text-xs">
+                      Media
+                    </SelectItem>
+                    <SelectItem value="ALTA" className="text-xs">
+                      Alta
+                    </SelectItem>
+                    <SelectItem value="URGENTE" className="text-xs">
+                      Urgente
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -185,11 +200,21 @@ export function DialogEditTicket({
                     <SelectValue placeholder="Seleccionar" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NUEVO" className="text-xs">Nuevo</SelectItem>
-                    <SelectItem value="ABIERTA" className="text-xs">Abierta</SelectItem>
-                    <SelectItem value="EN_PROCESO" className="text-xs">En Proceso</SelectItem>
-                    <SelectItem value="PENDIENTE" className="text-xs">Pendiente</SelectItem>
-                    <SelectItem value="RESUELTA" className="text-xs">Resuelta</SelectItem>
+                    <SelectItem value="NUEVO" className="text-xs">
+                      Nuevo
+                    </SelectItem>
+                    <SelectItem value="ABIERTA" className="text-xs">
+                      Abierta
+                    </SelectItem>
+                    <SelectItem value="EN_PROCESO" className="text-xs">
+                      En Proceso
+                    </SelectItem>
+                    <SelectItem value="PENDIENTE" className="text-xs">
+                      Pendiente
+                    </SelectItem>
+                    <SelectItem value="RESUELTA" className="text-xs">
+                      Resuelta
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -209,15 +234,15 @@ export function DialogEditTicket({
                   options={optionsTecs}
                   value={
                     ticket.assignee
-                      ? optionsTecs.find(
+                      ? (optionsTecs.find(
                           (t) => t.value === ticket.assignee!.id.toString(),
-                        ) ?? null
+                        ) ?? null)
                       : null
                   }
                   onChange={onChangeTec}
                   styles={compactSelectStyles}
                   menuPlacement="top"
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                  className="text-black"
                 />
               </div>
 
@@ -236,7 +261,7 @@ export function DialogEditTicket({
                   onChange={onChangeCompanions}
                   styles={compactSelectStyles}
                   menuPlacement="top"
-                  menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                  className="text-black"
                 />
               </div>
             </div>
@@ -254,12 +279,12 @@ export function DialogEditTicket({
                 onChange={onChangeLabels}
                 styles={compactSelectStyles}
                 menuPlacement="top"
-                menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
+                className="text-black"
               />
             </div>
           </div>
 
-          <DialogFooter className="px-4 py-2.5 border-t bg-gray-50 gap-2 shrink-0">
+          <DialogFooter className="px-4 py-2.5 border-t gap-2 shrink-0">
             <Button
               variant="outline"
               type="button"

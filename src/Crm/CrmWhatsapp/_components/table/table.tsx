@@ -11,7 +11,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Users, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 import type {
   ClienteWhatsappServerListItem,
@@ -53,7 +53,7 @@ export function ClientesTableWhatsapp({
 
   const pagination: PaginationState = useMemo(
     () => ({ pageIndex, pageSize: meta.take }),
-    [pageIndex, meta.take]
+    [pageIndex, meta.take],
   );
 
   const table = useReactTable({
@@ -100,13 +100,6 @@ export function ClientesTableWhatsapp({
   return (
     <div className="h-full flex flex-col border rounded-lg overflow-hidden bg-background">
       {/* Header */}
-      <div className="p-4 border-b flex items-center gap-2">
-        <Users className="h-5 w-5 " />
-        <h2 className="text-lg font-semibold">Clientes WhatsApp</h2>
-        <span className="ml-auto text-xs text-muted-foreground">
-          {meta.total} clientes
-        </span>
-      </div>
 
       {/* Toolbar (server filter) */}
       <div className="border-b bg-background p-3">
@@ -138,7 +131,7 @@ export function ClientesTableWhatsapp({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </th>
                 ))}
@@ -175,7 +168,7 @@ export function ClientesTableWhatsapp({
                     <td key={cell.id} className="p-3 align-top">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

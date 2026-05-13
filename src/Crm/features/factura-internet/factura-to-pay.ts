@@ -1,9 +1,9 @@
-import { RolUsuario } from "@/Crm/CrmProfile/interfacesProfile";
 import {
   EstadoCliente,
   estadoFacturaInternet,
   FacturaInternet,
 } from "../cliente-interfaces/cliente-types";
+import { RolUsuario } from "../users/users-rol";
 
 export interface FacturaInternetToPay {
   id: number;

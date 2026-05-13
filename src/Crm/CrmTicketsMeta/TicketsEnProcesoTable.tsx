@@ -41,35 +41,10 @@ import {
   CheckCircle2,
   Timer,
 } from "lucide-react";
+import { EstadoTicket, TicketMoment } from "./types";
+import { PrioridadTicketSoporte } from "../features/dashboard/dashboard-tickets";
 
-interface Acompañantes {
-  id: number;
-  nombre: string;
-}
 // Types
-interface TicketMoment {
-  id: number;
-  titulo: string;
-  descripcion?: string;
-  estado: string;
-  prioridad: PrioridadTicketSoporte;
-  tecnico?: {
-    nombre: string;
-  };
-  acompanantes: Acompañantes[];
-  cliente: {
-    id: number;
-    nombre: string;
-    apellidos: string;
-  };
-}
-
-enum PrioridadTicketSoporte {
-  BAJA = "BAJA",
-  MEDIA = "MEDIA",
-  ALTA = "ALTA",
-  URGENTE = "URGENTE",
-}
 
 // Función para obtener el color del badge según la prioridad
 const getPrioridadColor = (prioridad: PrioridadTicketSoporte) => {
@@ -163,7 +138,7 @@ const TicketRow = ({
                 )}
                 <div
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border w-fit ${getEstadoColor(
-                    ticket.estado
+                    ticket.estado,
                   )}`}
                 >
                   {getEstadoIcon(ticket.estado)}
@@ -287,7 +262,7 @@ export default function ImprovedTicketsComponent({
   data: TicketMoment[];
 }) {
   const [selectedTicket, setSelectedTicket] = useState<TicketMoment | null>(
-    null
+    null,
   );
   console.log("Los tickets en procesos son: ", data);
 
@@ -295,7 +270,7 @@ export default function ImprovedTicketsComponent({
   const { ticketsEnProceso, ticketsPendientes } = useMemo(() => {
     const enProceso = data.filter((ticket) => ticket.estado === "EN_PROCESO");
     const pendientes = data.filter(
-      (ticket) => ticket.estado === "PENDIENTE_REVISION"
+      (ticket) => ticket.estado === EstadoTicket.PENDIENTE,
     );
 
     return {
@@ -362,7 +337,7 @@ export default function ImprovedTicketsComponent({
                           </Badge>
                           <div
                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(
-                              ticket.estado
+                              ticket.estado,
                             )}`}
                           >
                             {getEstadoIcon(ticket.estado)}

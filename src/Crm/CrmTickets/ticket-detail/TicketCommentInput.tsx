@@ -7,7 +7,10 @@ interface TicketCommentInputProps {
   onSubmit: (text: string) => void;
 }
 
-export function TicketCommentInput({ isPending, onSubmit }: TicketCommentInputProps) {
+export function TicketCommentInput({
+  isPending,
+  onSubmit,
+}: TicketCommentInputProps) {
   const [value, setValue] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +31,7 @@ export function TicketCommentInput({ isPending, onSubmit }: TicketCommentInputPr
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-end gap-1.5 px-3 py-2 border-t bg-white"
+      className="flex items-end gap-1.5 px-3 py-2 border-t "
     >
       <textarea
         rows={2}
@@ -37,7 +40,7 @@ export function TicketCommentInput({ isPending, onSubmit }: TicketCommentInputPr
         onKeyDown={handleKeyDown}
         placeholder="Escribe un seguimiento… (Enter para enviar)"
         disabled={isPending}
-        className="flex-1 resize-none text-xs border border-gray-200 rounded px-2 py-1.5 leading-snug focus:outline-none focus:border-gray-400 placeholder:text-gray-300 disabled:opacity-50 bg-white"
+        className="flex-1 resize-none text-xs border bg-transparent border-gray-200 rounded px-2 py-1.5 leading-snug focus:outline-none focus:border-gray-400 placeholder:text-gray-300 disabled:opacity-50 "
       />
       <Button
         type="submit"

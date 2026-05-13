@@ -38,10 +38,10 @@ export function TicketCommentItem({ comment }: TicketCommentItemProps) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1 mb-0.5">
-          <span className="text-[10px] font-semibold text-gray-700 truncate">
+          <span className="text-[10px] font-semibold  truncate">
             {userName}
           </span>
-          <span className="text-[9px] text-gray-300 shrink-0">
+          <span className="text-[9px]  shrink-0">
             {formatDate(comment.date)}
           </span>
           {comment.isPrivate && (
@@ -51,8 +51,8 @@ export function TicketCommentItem({ comment }: TicketCommentItemProps) {
           )}
         </div>
 
-        <div className="px-2 py-1 bg-white border border-gray-100 rounded rounded-tl-none">
-          <p className="text-xs text-gray-600 leading-snug whitespace-pre-wrap break-words">
+        <div className="px-2 py-1  border rounded rounded-tl-none">
+          <p className="text-xs leading-snug whitespace-pre-wrap break-words">
             {comment.text}
           </p>
         </div>

@@ -18,7 +18,8 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import type { UseFormReturn } from "react-hook-form";
-import type { SolucionTicketItem, SelectOption } from "../ticket-detail.types";
+import type { SelectOption } from "../ticket-detail.types";
+import { SolucionTicketItem } from "@/Crm/features/ticket-soluciones/ticket-soluciones.interface";
 
 /** Schema type — mirrors what the parent defines via zod */
 export interface TicketResumenSchemaType {
@@ -48,7 +49,11 @@ const compactSelectStyles = {
   dropdownIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
   clearIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
   valueContainer: (base: object) => ({ ...base, padding: "0 6px" }),
-  option: (base: object) => ({ ...base, fontSize: "12px", padding: "5px 10px" }),
+  option: (base: object) => ({
+    ...base,
+    fontSize: "12px",
+    padding: "5px 10px",
+  }),
   menuPortal: (base: object) => ({ ...base, zIndex: 9999 }),
 };
 
@@ -70,12 +75,20 @@ export function DialogCloseTicket({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-sm">Cerrar Ticket #{ticketId}</DialogTitle>
+          <DialogTitle className="text-sm">
+            Cerrar Ticket #{ticketId}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 pt-1">
-            <input type="hidden" {...form.register("ticketId", { valueAsNumber: true })} />
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-3 pt-1"
+          >
+            <input
+              type="hidden"
+              {...form.register("ticketId", { valueAsNumber: true })}
+            />
 
             {/* Tipo de solución */}
             <FormField
@@ -102,7 +115,6 @@ export function DialogCloseTicket({
                         field.onChange(opt ? Number(opt.value) : null)
                       }
                       styles={compactSelectStyles}
-                      menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
                     />
                   </FormControl>
                   <FormMessage className="text-[10px]" />
@@ -118,7 +130,9 @@ export function DialogCloseTicket({
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-gray-400 uppercase">
                     Resumen de Solución
-                    <span className="normal-case font-normal text-gray-300 ml-1">(opcional)</span>
+                    <span className="normal-case font-normal text-gray-300 ml-1">
+                      (opcional)
+                    </span>
                   </FormLabel>
                   <FormControl>
                     <textarea
@@ -145,7 +159,9 @@ export function DialogCloseTicket({
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-gray-400 uppercase">
                     Notas Internas
-                    <span className="normal-case font-normal text-gray-300 ml-1">(opcional)</span>
+                    <span className="normal-case font-normal text-gray-300 ml-1">
+                      (opcional)
+                    </span>
                   </FormLabel>
                   <FormControl>
                     <textarea

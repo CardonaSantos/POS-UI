@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
-import { TicketAsignadoTecnico } from "@/Crm/features/dashboard/dashboard-tickets";
+import {
+  PrioridadTicketSoporte,
+  TicketAsignadoTecnico,
+} from "@/Crm/features/dashboard/dashboard-tickets";
 import {
   MapPin,
   Phone,
@@ -88,7 +91,7 @@ const INITIAL_TICKET_ASIGNADO: TicketAsignadoTecnico = {
   titulo: "",
   abiertoEn: "",
   estado: "NUEVO",
-  prioridad: "MEDIA",
+  prioridad: PrioridadTicketSoporte.MEDIA,
   descripcion: "",
   clientId: 0,
   clienteNombre: "",
@@ -197,7 +200,7 @@ function TicketAsignadoDetails() {
     const { lat, lng } = ticket.ubicacionMaps;
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-      "_blank"
+      "_blank",
     );
   };
   const handleStartRouteMaps = () => {
@@ -205,7 +208,7 @@ function TicketAsignadoDetails() {
     const { lat, lng } = ticket.ubicacionMaps;
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      "_blank"
+      "_blank",
     );
   };
   const handleCopyCoords = () => {

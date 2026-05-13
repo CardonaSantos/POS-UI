@@ -28,9 +28,11 @@ export interface TicketFiltersProps {
   onQuickViewChange: (value: string) => void;
   onStatusChange: (value: string | null) => void;
   handleChangeDates: (side: DateSide, date: Date | null) => void;
-  handleSelectedTecnico: (value: OptionSelected | null) => void;
+  // firma del select
+  handleSelectedTecnico: (optionSelect: OptionSelected | null) => void;
+
   handleChangeLabels: (
-    selectedOptions: MultiValue<{ value: string; label: string }>
+    selectedOptions: MultiValue<{ value: string; label: string }>,
   ) => void;
   setOpenCreateT: (value: boolean) => void;
   getTickets: () => void;

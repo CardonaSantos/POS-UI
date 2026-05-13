@@ -3,19 +3,20 @@
 import { User } from "lucide-react";
 import ReactSelect from "react-select";
 import { compactSelectStyles } from "./react-select-compact-styles";
-import { OptionSelected } from "../../ReactSelectComponent/OptionSelected";
+// import { OptionSelected } from "../../ReactSelectComponent/OptionSelected";
 import type { Tecnico } from "./ticket-filters.types";
+import { OptionSelected } from "@/Crm/ReactSelectComponent/OptionSelected";
 
 interface FilterTecnicoProps {
   tecnicos: Tecnico[];
   tecnicoSelected: string | null;
-  onChange: (value: OptionSelected | null) => void;
+  handleSelectedTecnico: (optionSelect: OptionSelected | null) => void;
 }
 
 export function FilterTecnico({
   tecnicos,
   tecnicoSelected,
-  onChange,
+  handleSelectedTecnico,
 }: FilterTecnicoProps) {
   const options = tecnicos.map((t) => ({
     value: String(t.id),
@@ -25,7 +26,8 @@ export function FilterTecnico({
   const value = tecnicoSelected
     ? {
         value: tecnicoSelected,
-        label: tecnicos.find((t) => String(t.id) === tecnicoSelected)?.nombre ?? "",
+        label:
+          tecnicos.find((t) => String(t.id) === tecnicoSelected)?.nombre ?? "",
       }
     : null;
 
@@ -41,8 +43,9 @@ export function FilterTecnico({
         options={options}
         isClearable
         styles={compactSelectStyles}
-        onChange={onChange}
         value={value}
+        onChange={handleSelectedTecnico}
+        isMulti={false}
       />
     </div>
   );

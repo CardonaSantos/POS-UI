@@ -1,11 +1,11 @@
 import type {
   FacturacionZona,
   NuevaFacturacionZona,
-} from "../features/zonas-facturacion/FacturacionZonaTypes";
+} from "../../features/zonas-facturacion/FacturacionZonaTypes";
 
 // Validate that days are in logical order
 export const validateDays = (
-  zona: NuevaFacturacionZona | FacturacionZona
+  zona: NuevaFacturacionZona | FacturacionZona,
 ): boolean => {
   // If there's no cut-off day, no problem
   if (!zona.diaCorte) return true;
@@ -43,7 +43,7 @@ export const isFormValid = (nuevaZona: NuevaFacturacionZona): boolean => {
 
 // Check if the edit form is valid
 export const isEditFormValid = (
-  editingZona: FacturacionZona | null
+  editingZona: FacturacionZona | null,
 ): boolean => {
   if (!editingZona) return false;
 
@@ -67,7 +67,7 @@ export const isEditFormValid = (
 
 // Convert notification methods from string to boolean format
 export const stringToNotificationMethods = (
-  mediosString: string
+  mediosString: string,
 ): {
   whatsapp: boolean;
   email: boolean;
