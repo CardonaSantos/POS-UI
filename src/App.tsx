@@ -99,7 +99,6 @@ import { MainDashboardPage } from "./Crm/CrmNewDashboard/page";
 import TecDashboard from "./Crm/CrmNewDashboard/tec-dashboard";
 import TicketAsignadoDetails from "./Crm/CrmNewDashboard/_components/tec-ticket/ticket-details";
 import WhatsappChats from "./Crm/CrmWhatsapp/page";
-import ChatPage from "./Crm/CrmWhatsapp/_components/chat/page";
 import CrmCreditoMainPage from "./Crm/CrmCredito/create/page";
 import { CreditosMainPage } from "@/Crm/CrmCredito/main/page";
 import CreditoDetails from "./Crm/CrmCredito/credito/page";
@@ -869,15 +868,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <WhatsappChats />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot/cliente-whatsapp/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <ChatPage />
                 </ProtectRouteCrmUser>
               }
             />

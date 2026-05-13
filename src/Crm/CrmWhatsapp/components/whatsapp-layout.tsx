@@ -6,17 +6,20 @@ import { useGetClientes } from "@/Crm/CrmHooks/hooks/bot-server/use-whatsapp-ser
 import { ChatSidebar } from "./chat-sidebar";
 import { ChatPanel } from "./chat-panel";
 import { ChatEmptyState } from "./chat-empty-state";
-import { MessageSquare, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
+import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
+import { ClienteWhatsAppQkeys } from "@/Crm/CrmHooks/hooks/bot-server/use-whatsapp-server/Qk";
 
 export function WhatsappLayout() {
   const [page, setPage] = useState(1);
   const [take] = useState(15);
   const [nombre, setNombre] = useState("");
+  const invalidateQk = useInvalidateQk();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
-
   // On mobile: track if the chat panel is shown (selected chat open)
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
@@ -62,20 +65,21 @@ export function WhatsappLayout() {
     setMobileChatOpen(false);
   };
 
+  useSocketEvent("nuvia:new-message", () => {
+    invalidateQk(ClienteWhatsAppQkeys.list(params));
+
+    // markAsRead.mutateAsync();
+    console.log("INVALIDANDO FETCH EN EL SIDEBAR NUEVO");
+  });
+
   return (
     <div
       className="flex h-screen max-h-screen w-full overflow-hidden"
       aria-label="Mensajería WhatsApp"
     >
-      {/*
-       * ── LEFT PANEL: sidebar list ──────────────────────────────────────────
-       * On mobile: visible only when no chat is open
-       * On md+: always visible, fixed width
-       */}
       <div
         className={cn(
           "flex flex-col shrink-0",
-          // mobile: full width, hide when chat open
           "w-full md:w-64 lg:w-72 xl:w-80",
           mobileChatOpen ? "hidden md:flex" : "flex",
         )}
@@ -93,19 +97,12 @@ export function WhatsappLayout() {
         />
       </div>
 
-      {/*
-       * ── RIGHT PANEL: chat ─────────────────────────────────────────────────
-       * On mobile: full width, visible only when a chat is selected & open
-       * On md+: flex-1 (takes remaining space), always rendered
-       */}
       <div
         className={cn(
           "flex-1 flex flex-col min-w-0 overflow-hidden",
-          // mobile: hide when no chat is open
           mobileChatOpen ? "flex" : "hidden md:flex",
         )}
       >
-        {/* Mobile back button row */}
         {mobileChatOpen && selectedId && (
           <div className="flex items-center gap-1 px-2 py-1 border-b border-border md:hidden shrink-0">
             <Button

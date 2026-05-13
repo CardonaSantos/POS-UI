@@ -182,46 +182,46 @@ export default function LayoutCrm({ children }: LayoutProps) {
   // 6. RENDER DE INTERFAZ
   // -----------------------------
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <SidebarProvider>
         <AppSidebar />
 
-        <div className="flex flex-col flex-1 w-full">
+        <div className="flex flex-col flex-1 min-w-0 min-h-0">
           {/* HEADER */}
-          <header className="sticky top-0 z-20 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-            <div className="mx-auto flex px-3 py-2 items-center justify-between">
+          <header className="sticky top-0 z-20 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shrink-0">
+            <div className="mx-auto flex px-2 py-1 items-center justify-between">
               {/* LADO IZQUIERDO: Logo + Nombre Empresa */}
-              <div className="flex items-center gap-3">
-                <SidebarTrigger className="h-8 w-8 -ml-1 text-muted-foreground" />
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="h-7 w-7 -ml-0.5 text-muted-foreground" />
                 <Link to="/crm">
                   <img
                     src={logo}
                     alt="Logo"
-                    className="h-9 w-9 sm:h-10 sm:w-10 object-contain"
+                    className="h-7 w-7 object-contain"
                   />
                 </Link>
-                <p className="text-sm font-medium text-foreground truncate max-w-[160px] sm:max-w-xs">
+                <p className="text-xs font-medium text-foreground truncate max-w-[140px] sm:max-w-xs">
                   {empresaInfo?.nombre || "Cargando..."}
                 </p>
               </div>
 
               {/* LADO DERECHO: Tema + Notificaciones + Menú de Usuario */}
-              <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-0.5 sm:space-x-1">
                 <Button
                   asChild
                   size="sm"
                   variant="outline"
-                  className="hidden sm:inline-flex items-center gap-2 transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 h-7 px-2 text-xs transition-colors"
                 >
                   <a href={isCrmLocation ? erpLink : crmLink}>
                     {isCrmLocation ? (
                       <>
-                        <Monitor className="h-4 w-4" />
+                        <Monitor className="h-3.5 w-3.5" />
                         <span>ERP</span>
                       </>
                     ) : (
                       <>
-                        <LayoutDashboard className="h-4 w-4" />
+                        <LayoutDashboard className="h-3.5 w-3.5" />
                         <span>CRM</span>
                       </>
                     )}
@@ -234,7 +234,7 @@ export default function LayoutCrm({ children }: LayoutProps) {
                 <NotificationsSheet
                   selectNoti={selectNoti}
                   tooltipText="Notificaciones Bot"
-                  icon={<Robot size={20} />} // Ajusté el size a 20 para match
+                  icon={<Robot size={16} />}
                   notifications={secureNotificationsBot}
                   isLoading={isLoadingNotis}
                   onDelete={deleteNoti}
@@ -247,7 +247,7 @@ export default function LayoutCrm({ children }: LayoutProps) {
                 {/* Notificaciones Sistema */}
                 <NotificationsSheet
                   tooltipText="Notificaciones Sistema"
-                  icon={<Bell size={20} />}
+                  icon={<Bell size={16} />}
                   notifications={secureNotifications}
                   isLoading={isLoadingNotis}
                   onDelete={deleteNoti}
@@ -264,16 +264,15 @@ export default function LayoutCrm({ children }: LayoutProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full h-8 w-8 ml-1 ring-2 ring-transparent transition-all hover:ring-slate-200 focus-visible:ring-slate-300"
+                      className="rounded-full h-7 w-7 ml-0.5 ring-2 ring-transparent transition-all hover:ring-border focus-visible:ring-border"
                       aria-label="Menú de usuario"
                     >
-                      <Avatar className="h-8 w-8 border border-border">
-                        {/* Añadimos object-cover para que la foto no se deforme */}
+                      <Avatar className="h-7 w-7 border border-border">
                         <AvatarImage
                           src={userData?.perfil?.avatar?.url}
                           className="object-cover"
                         />
-                        <AvatarFallback className="bg-emerald-600 text-white font-semibold uppercase text-xs">
+                        <AvatarFallback className="bg-emerald-600 text-white font-semibold uppercase text-[10px]">
                           {getInitials(userData?.nombre || nombre)}
                         </AvatarFallback>
                       </Avatar>
@@ -340,14 +339,6 @@ export default function LayoutCrm({ children }: LayoutProps) {
           </main>
 
           {/* FOOTER */}
-          <footer className="border-t bg-background">
-            <div className="mx-auto max-w-7xl px-4 py-3">
-              <p className="text-center text-xs text-muted-foreground">
-                &copy; {new Date().getFullYear()} Nova Sistemas CRM. Todos los
-                derechos reservados.
-              </p>
-            </div>
-          </footer>
         </div>
       </SidebarProvider>
 

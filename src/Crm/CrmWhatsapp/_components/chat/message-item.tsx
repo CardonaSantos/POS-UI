@@ -26,11 +26,6 @@ interface MessageItemProps {
   message: WhatsappMessage;
 }
 
-// SENT = "SENT",
-// DELIVERED = "DELIVERED",
-// READ = "READ",
-// FAILED = "FAILED",
-
 export function MessageItem({ message }: MessageItemProps) {
   const isOutbound = message.direction === "OUTBOUND";
 
@@ -89,7 +84,7 @@ export function MessageItem({ message }: MessageItemProps) {
               "rounded-lg px-3 py-2 text-xs max-w-[85%] italic",
               isOutbound
                 ? "bg-primary/20 text-primary ml-auto"
-                : "bg-muted text-muted-foreground"
+                : "bg-muted text-muted-foreground",
             )}
           >
             Mensaje de tipo {message.type}
@@ -112,7 +107,7 @@ export function MessageItem({ message }: MessageItemProps) {
     <div
       className={cn(
         "flex flex-col gap-1 mb-3",
-        isOutbound ? "items-end" : "items-start"
+        isOutbound ? "items-end" : "items-start",
       )}
     >
       {renderMessageContent()}

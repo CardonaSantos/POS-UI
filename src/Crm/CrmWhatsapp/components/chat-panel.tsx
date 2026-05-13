@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { FindClientHistoryQuery } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/query-cliente-whatsapp.query";
 import {
   useGetClienteHistorialChatsWz,
-  useToggleBotCliente,
+  useToggleBotClientex,
 } from "@/Crm/CrmHooks/hooks/bot-server/use-cliente-whatsapp/useGetClienteWhatsapp";
 import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
 import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
@@ -42,7 +42,7 @@ export function ChatPanel({ clienteId }: ChatPanelProps) {
     ...filters,
   });
 
-  const toggleBotMutation = useToggleBotCliente();
+  const toggleBotMutation = useToggleBotClientex();
 
   const handleFiltersChange = (newFilters: FindClientHistoryQuery) => {
     setFilters(newFilters);
@@ -138,6 +138,7 @@ export function ChatPanel({ clienteId }: ChatPanelProps) {
         showFilters={showFilters}
         clientName={clientInfo.nombre}
         clientPhone={clientInfo.telefono}
+        clientId={clienteId}
       />
 
       {showFilters && (

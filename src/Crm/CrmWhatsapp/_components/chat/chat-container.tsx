@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { MessageItem } from "./message-item";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { WhatsappMessage } from "@/Crm/features/bot-server/cliente-whatsapp-historial/cliente-historial-chat.interface";
 import { useEffect, useRef, useState } from "react";
@@ -32,15 +31,22 @@ export function ChatContainer({
   const fileInputRef = useRef<HTMLInputElement>(null); //  Ref para el input oculto
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  };
+
   const [newMessage, setNewMessage] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // Estado del archivo
 
   // Hook de mutación
   const { mutate: sendMessage, isPending } = useSendAgentMessage();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // const scrollToBottom = () => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // };
 
   useEffect(() => {
     scrollToBottom();
@@ -74,7 +80,7 @@ export function ChatContainer({
 
           invalidateQk(clienteHistorialWhatsappQkeys.chats(filters));
         },
-      }
+      },
     );
   };
 
@@ -96,7 +102,10 @@ export function ChatContainer({
       />
 
       {/* 1. ScrollArea con flex-1 para ocupar todo el espacio disponible */}
-      <ScrollArea className={cn("flex-1 w-full pr-4", className)}>
+      <div
+        ref={scrollContainerRef}
+        className={cn("flex-1 min-h-0 overflow-y-auto w-full", className)}
+      >
         <div className="space-y-4 pb-2 p-2">
           {messages.length === 0 ? (
             <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
@@ -109,7 +118,7 @@ export function ChatContainer({
           )}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       {/* 2. Área de Input: shrink-0 (no se aplasta), sin sticky, p-2 (compacto) */}
       <div className="border-t bg-background p-2 shrink-0 z-10">

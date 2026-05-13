@@ -13,9 +13,6 @@ export function ChatEmptyState() {
         <p className="text-sm font-medium text-foreground">
           Selecciona un chat
         </p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Elige una conversación del panel izquierdo
-        </p>
       </div>
     </div>
   );

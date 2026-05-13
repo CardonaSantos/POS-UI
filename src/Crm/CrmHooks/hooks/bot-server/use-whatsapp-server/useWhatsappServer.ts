@@ -9,12 +9,6 @@ export function useGetClientes(params: FindClientesQuery) {
     ClienteWhatsAppQkeys.list(params),
     `cliente/get-all`,
     { params },
-    {
-      staleTime: 0,
-      refetchOnWindowFocus: "always",
-      refetchOnMount: "always",
-      refetchOnReconnect: "always",
-      retry: 1,
-    }
+    undefined,
   );
 }
