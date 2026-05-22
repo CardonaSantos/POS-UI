@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Ticket } from "../ticketTypes";
 import { BadgeProps } from "./ticket-detail.types";
+import { Link } from "react-router-dom";
 
 interface TicketHeaderProps {
   ticket: Ticket;
@@ -59,6 +60,8 @@ export function TicketHeader({
   onCloseTicket,
 }: TicketHeaderProps) {
   const customerName = ticket.customer?.name ?? null;
+  const customerId = ticket.customer?.id ?? null;
+
   const assigneeName = ticket.assignee?.name ?? null;
 
   return (
@@ -76,7 +79,13 @@ export function TicketHeader({
                 customerName ? "text-blue-600" : "text-gray-400 italic"
               }`}
             >
-              {customerName ?? "Sin cliente"}
+              {customerId ? (
+                <Link to={`/crm/cliente/${customerId}`}>
+                  {customerName ?? "Sin cliente"}
+                </Link>
+              ) : (
+                "Sin cliente"
+              )}
             </span>
             <span className="text-[10px] text-gray-400 truncate">
               {assigneeName ? `Téc: ${assigneeName}` : "Sin técnico"}

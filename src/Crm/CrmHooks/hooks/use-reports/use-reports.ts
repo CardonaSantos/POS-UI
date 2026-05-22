@@ -1,3 +1,4 @@
+import { TicketReportPayload } from "@/Crm/CrmTickets/components/operativo/filterts";
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 
 export interface FiltersProps {
@@ -40,6 +41,17 @@ export function useGenerateReportCobranza() {
     },
   );
 }
+
+export function useGenerateTicketReports() {
+  return useCrmMutation<Blob, TicketReportPayload>(
+    "post",
+    "/generate-reports/tickets/diario",
+    {
+      responseType: "blob",
+    },
+  );
+}
+
 export const downloadFile = (data: Blob, filename: string) => {
   const url = window.URL.createObjectURL(data);
   const link = document.createElement("a");

@@ -28,17 +28,6 @@ import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { ticketsSoporteQkeys } from "@/Crm/CrmHooks/hooks/use-tickets/Qk";
-// import {
-//   getPriorityBadge,
-//   type Ticket,
-//   type SelectOption,
-//   type SolucionTicketItem,
-// } from "./ticket-detail.types";
-
-// ─── Hook stubs — replace with your actual hooks ──────────────────────────
-// import { usePostCommentary, useUpdateTicket, useDeleteTicket } from "@/hooks/useTicketsSoporte";
-// import { useCreateTicketResumen } from "@/hooks/useTicketResumen";
-// import { useStoreCrm } from "@/ZustandCrm/ZustandCrmContext";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -180,15 +169,6 @@ export default function TicketDetail({
     }));
   };
 
-  // Submit edit — wire to useUpdateTicket().mutateAsync in real app
-  // const handleSubmitEdit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!ticketEdit.title?.trim()) return;
-  //   await updateTicket.mutateAsync(ticketEdit);
-  //   await getTickets();
-  //   setOpenEdit(false);
-  // };
-
   const handleSubmitEdit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -215,7 +195,7 @@ export default function TicketDetail({
       loading: "Actualizando ticket...",
       success: async () => {
         await getTickets();
-        // setOpenUpdateTicket(false);
+        setOpenEdit(false);
         return "Ticket actualizado";
       },
       error: (error) => getApiErrorMessageAxios(error),
@@ -235,19 +215,30 @@ export default function TicketDetail({
   };
 
   const handleCloseTicket = async (data: TicketResumenSchemaType) => {
-    toast.promise(create_ticket_resumen.mutateAsync(data), {
-      loading: "Cerrando ticket...",
-      success: "Ticket cerrado",
-      error: (error) => getApiErrorMessageAxios(error),
-    });
-    setOpenClose(false);
-    await getTickets();
-    formCloseTicket.reset({
-      notasInternas: "",
-      resueltoComo: "",
-      solucionId: null,
-      ticketId: ticket.id,
-    });
+    await toast.promise(
+      async () => {
+        await create_ticket_resumen.mutateAsync(data);
+
+        await q.invalidateQueries({
+          queryKey: ticketsSoporteQkeys.search(query),
+          exact: true,
+        });
+
+        setSelectedTicketId(null);
+        setOpenClose(false);
+        formCloseTicket.reset({
+          notasInternas: "",
+          resueltoComo: "",
+          solucionId: null,
+          ticketId: ticket.id,
+        });
+      },
+      {
+        loading: "Cerrando ticket...",
+        success: "Ticket cerrado",
+        error: (error) => getApiErrorMessageAxios(error),
+      },
+    );
   };
   console.log("Los comentarios son: ", ticket);
 
