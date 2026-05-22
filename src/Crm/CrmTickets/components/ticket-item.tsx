@@ -26,11 +26,18 @@ export function TicketItem({
     : "NA";
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(ticket)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(ticket);
+        }
+      }}
       className={cn(
-        "w-full text-left flex gap-2 px-2 py-1.5 border-b border-border/50 cursor-pointer transition-colors",
+        "w-full text-left flex gap-2 px-2 py-1.5 border-b border-border/50 cursor-pointer transition-colors select-text",
         "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
         "border-l-2",
         isSelected
@@ -149,6 +156,6 @@ export function TicketItem({
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

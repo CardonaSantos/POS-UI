@@ -5,7 +5,12 @@ export type EstadoTicketSoporte =
   | "PENDIENTE_CLIENTE"
   | "PENDIENTE_TECNICO"
   | "NUEVO"
-  | "PENDIENTE_REVISION";
+  | "PENDIENTE_REVISION"
+  | "RESUELTA"
+  | "ARCHIVADA"
+  | "CERRADO"
+  | "PENDIENTE_REVISION"
+  | "CANCELADA";
 
 // export type PrioridadTicketSoporte = "BAJA" | "MEDIA" | "ALTA" | "URGENTE"; // ajusta a tu enum real
 

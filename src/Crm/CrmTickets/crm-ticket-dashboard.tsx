@@ -24,6 +24,7 @@ import TicketList from "./components/ticket-list";
 import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 import TicketFilters from "./filters/TicketFilters";
 import TicketDetail from "./ticket-detail/TicketDetail";
+import OperativoMainPage from "./components/operativo/page";
 
 export default function TicketDashboard() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
@@ -310,7 +311,7 @@ export default function TicketDashboard() {
       icon: <Kanban size={16} />,
       content: (
         <div className="">
-          <h2>PRÓXIMAMENTE</h2>
+          <OperativoMainPage tecnicos={tecnicos} />
         </div>
       ),
     },

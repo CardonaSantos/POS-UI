@@ -1,7 +1,7 @@
 import { useCrmQuery } from "@/Crm/hooks/crmApiHooks";
 import { usersQkeys } from "./Qk";
 
-interface UsuarioToTicket {
+export interface UsuarioToTicket {
   id: number;
   nombre: string;
 }

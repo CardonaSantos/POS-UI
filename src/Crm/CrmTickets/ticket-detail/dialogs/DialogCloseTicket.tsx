@@ -101,6 +101,7 @@ export function DialogCloseTicket({
                   </FormLabel>
                   <FormControl>
                     <SelectComponent
+                      className="text-black text-sm"
                       placeholder="Selecciona una solución…"
                       options={optionsSoluciones}
                       isClearable
@@ -138,7 +139,7 @@ export function DialogCloseTicket({
                     <textarea
                       rows={3}
                       placeholder="Ej: Se reinició el router y se validó la IP…"
-                      className="w-full resize-none text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
+                      className="w-full resize-none text-black  text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300 "
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -167,7 +168,7 @@ export function DialogCloseTicket({
                     <textarea
                       rows={2}
                       placeholder="Detalles técnicos solo para el equipo…"
-                      className="w-full resize-none text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
+                      className="w-full resize-none text-black text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
                       {...field}
                       value={field.value ?? ""}
                     />
