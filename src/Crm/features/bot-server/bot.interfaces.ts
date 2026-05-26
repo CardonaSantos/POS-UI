@@ -1,4 +1,3 @@
-// Si quieres reutilizar el status como tipo
 export type BotStatus = "ACTIVE" | "DISABLED";
 
 export interface BotApi {

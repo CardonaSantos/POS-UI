@@ -22,6 +22,8 @@ export const crm_endpoints = {
   ticket: {
     post_commentary: `/ticket-seguimiento`,
 
+    create_ticket: `/tickets-soporte`,
+
     tickets_list_search: `/tickets-soporte`,
 
     update_ticket: (id: number) =>

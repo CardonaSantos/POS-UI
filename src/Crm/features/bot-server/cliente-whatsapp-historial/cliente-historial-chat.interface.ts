@@ -1,18 +1,9 @@
-// types/enums.ts
-
+import {
+  WazDirection,
+  WazStatus,
+} from "../clientes-whatsapp-server/clientes-whatsapp-server";
 import { PaginatedMeta } from "../whatsapp-messages/query";
 
-export enum WazDirection {
-  INBOUND = "INBOUND", // Entrante (Cliente -> Bot)
-  OUTBOUND = "OUTBOUND", // Saliente (Bot -> Cliente)
-}
-
-export enum WazStatus {
-  SENT = "SENT",
-  DELIVERED = "DELIVERED",
-  READ = "READ",
-  FAILED = "FAILED",
-}
 export enum WazMessageType {
   TEXT = "TEXT",
   IMAGE = "IMAGE",

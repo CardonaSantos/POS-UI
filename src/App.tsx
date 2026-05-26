@@ -105,6 +105,7 @@ import CreditoDetails from "./Crm/CrmCredito/credito/page";
 import ContratoBuilder from "./Crm/CrmCredito/contrato/page";
 import PrinteablePlantilla from "./Crm/CrmCredito/contrato/printeable";
 import TicketDashboard from "./Crm/CrmTickets/crm-ticket-dashboard";
+import ComprobantesMediaPage from "./Crm/CrmWhatsapp/galery-whatsapp/page";
 // import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
 
 function App() {
@@ -810,6 +811,24 @@ function App() {
             />
 
             <Route
+              path="/crm/bot/whatsapp"
+              element={
+                <ProtectRouteCrmUser>
+                  <WhatsappChats />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
+              path="/crm/bot/whatsapp/galery"
+              element={
+                <ProtectRouteCrmUser>
+                  <ComprobantesMediaPage />
+                </ProtectRouteCrmUser>
+              }
+            />
+
+            <Route
               path="/crm/facturas-eliminadas"
               element={
                 <ProtectRouteCrmUser>
@@ -859,15 +878,6 @@ function App() {
               element={
                 <ProtectRouteCrmUser>
                   <TicketAsignadoDetails />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot/whatsapp"
-              element={
-                <ProtectRouteCrmUser>
-                  <WhatsappChats />
                 </ProtectRouteCrmUser>
               }
             />

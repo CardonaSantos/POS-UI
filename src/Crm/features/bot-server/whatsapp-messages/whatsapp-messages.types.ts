@@ -1,8 +1,8 @@
+import { WazMessageType } from "../cliente-whatsapp-historial/cliente-historial-chat.interface";
 import {
   WazDirection,
-  WazMessageType,
   WazStatus,
-} from "../cliente-whatsapp-historial/cliente-historial-chat.interface";
+} from "../clientes-whatsapp-server/clientes-whatsapp-server";
 
 export interface ClienteLite {
   id: number;

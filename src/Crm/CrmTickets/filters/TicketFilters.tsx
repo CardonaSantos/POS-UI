@@ -1,5 +1,4 @@
 "use client";
-
 import { Plus } from "lucide-react";
 import { FilterSearch } from "./FilterSearch";
 import { FilterDateRange } from "./FilterDateRange";
@@ -29,45 +28,27 @@ export default function TicketFilters({
 }: TicketFiltersProps) {
   return (
     <div className="w-full border-b border-gray-100  px-3 py-1.5">
-      {/* Single row on desktop, wraps on mobile */}
       <div className="flex flex-wrap items-center gap-1.5">
-        {/* Search */}
         <FilterSearch onChange={onFilterChange} />
-
-        {/* Divider — hidden on mobile */}
         <span className="hidden sm:block h-4 w-px bg-gray-200" />
-
-        {/* Date Range */}
         <FilterDateRange
           dateRangeStart={dateRangeStart}
           dateRangeEnd={dateRangeEnd}
           onChangeDates={handleChangeDates}
         />
-
-        {/* Tecnico */}
         <FilterTecnico
           tecnicos={tecnicos}
           tecnicoSelected={tecnicoSelected}
           handleSelectedTecnico={handleSelectedTecnico}
         />
-
-        {/* Etiquetas */}
         <FilterEtiquetas
           etiquetas={etiquetas}
           etiquetasSelecteds={etiquetasSelecteds}
           onChange={handleChangeLabels}
         />
-
-        {/* Vista */}
         <FilterVista onChange={onQuickViewChange} />
-
-        {/* Spacer pushes counter + button to the right */}
         <span className="flex-1" />
-
-        {/* Counter */}
         <TicketCounter total={ticketsTotal} label="tickets activos" />
-
-        {/* Create button */}
         <button
           type="button"
           onClick={() => setOpenCreateT(true)}
@@ -76,8 +57,6 @@ export default function TicketFilters({
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Nuevo Ticket</span>
         </button>
-
-        {/* Modal — rendered here so it stays with the bar */}
         <CrmCreateTicket
           getTickets={getTickets}
           openCreatT={openCreatT}
