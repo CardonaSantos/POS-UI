@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { MultiValue, SingleValue } from "react-select";
-
 import { TicketHeader } from "./TicketHeader";
 import { TicketTimeline } from "./TicketTimeline";
 import { TicketCommentInput } from "./TicketCommentInput";
@@ -28,6 +27,7 @@ import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { ticketsSoporteQkeys } from "@/Crm/CrmHooks/hooks/use-tickets/Qk";
+import { formatDateGT } from "@/Crm/Utils/dayjs-utility";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -37,14 +37,12 @@ interface TicketDetailProps {
   optionsTecs: SelectOption[];
   optionsCustomers: SelectOption[];
   soluciones: SolucionTicketItem[];
-  /** Current logged-in user id — from your Zustand store */
   userId?: number;
   query: QuerySearchTickets;
 }
 
 export default function TicketDetail({
   ticket,
-  getTickets,
   setSelectedTicketId,
   optionsLabels,
   optionsTecs,
@@ -54,27 +52,19 @@ export default function TicketDetail({
 }: TicketDetailProps) {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const q = useQueryClient();
-
-  // ── Local state ──────────────────────────────────────────────────────────
   const [ticketEdit, setTicketEdit] = useState<Ticket>(ticket);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const [openClose, setOpenClose] = useState(false);
   const [commentPending, setCommentPending] = useState(false);
-
   const create_ticket_resumen = useCreateTicketResumen();
-
   const deleteTicket = useDeleteTicket(ticket.id);
   const updateTicket = useUpdateTicket(ticketEdit.id);
-
   const postCommentary = usePostCommentary();
-
-  // Sync ticket prop → local edit copy when parent changes selection
   useEffect(() => {
     setTicketEdit(ticket);
   }, [ticket]);
 
-  // ── Close-ticket form ────────────────────────────────────────────────────
   const formCloseTicket = useForm<TicketResumenSchemaType>({
     defaultValues: {
       ticketId: ticket.id,
@@ -83,8 +73,6 @@ export default function TicketDetail({
       notasInternas: "",
     },
   });
-
-  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleClose = () => setSelectedTicketId(null);
 
@@ -108,7 +96,6 @@ export default function TicketDetail({
           error: (error) => getApiErrorMessageAxios(error),
         },
       );
-      await getTickets();
     } finally {
       setCommentPending(false);
     }
@@ -194,7 +181,6 @@ export default function TicketDetail({
     toast.promise(updateTicket.mutateAsync(payload), {
       loading: "Actualizando ticket...",
       success: async () => {
-        await getTickets();
         setOpenEdit(false);
         return "Ticket actualizado";
       },
@@ -202,45 +188,35 @@ export default function TicketDetail({
     });
   };
 
-  // Delete — wire to useDeleteTicket().mutateAsync in real app
   const handleDelete = async () => {
     toast.promise(deleteTicket.mutateAsync(), {
       success: "Ticket eliminado",
       loading: "Eliminando ticket...",
       error: (error) => getApiErrorMessageAxios(error),
     });
-    await getTickets();
     setOpenDelete(false);
     setSelectedTicketId(null);
   };
 
   const handleCloseTicket = async (data: TicketResumenSchemaType) => {
-    await toast.promise(
-      async () => {
-        await create_ticket_resumen.mutateAsync(data);
-
-        await q.invalidateQueries({
-          queryKey: ticketsSoporteQkeys.search(query),
-          exact: true,
-        });
-
-        setSelectedTicketId(null);
-        setOpenClose(false);
-        formCloseTicket.reset({
-          notasInternas: "",
-          resueltoComo: "",
-          solucionId: null,
-          ticketId: ticket.id,
-        });
-      },
-      {
+    try {
+      await toast.promise(create_ticket_resumen.mutateAsync(data), {
         loading: "Cerrando ticket...",
         success: "Ticket cerrado",
         error: (error) => getApiErrorMessageAxios(error),
-      },
-    );
+      });
+
+      setSelectedTicketId(null);
+      setOpenClose(false);
+
+      formCloseTicket.reset({
+        notasInternas: "",
+        resueltoComo: "",
+        solucionId: null,
+        ticketId: ticket.id,
+      });
+    } catch {}
   };
-  console.log("Los comentarios son: ", ticket);
 
   return (
     <div className="flex flex-col h-full border border-gray-200 rounded overflow-hidden ">
@@ -262,6 +238,8 @@ export default function TicketDetail({
 
       {/* Timeline: scrollable middle section */}
       <TicketTimeline
+        date={formatDateGT(ticket.date)}
+        closedAt={formatDateGT(ticket.closedAt)}
         metricas={ticket.metrics}
         comments={ticket.comments}
         creator={ticket.creator}

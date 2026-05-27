@@ -55,7 +55,9 @@ export const nowGuatemalaDate = () => dayjs().tz("America/Guatemala").toDate();
  * Formato legible para humanos (Ej: "27 de Diciembre del 2025, 10:30 AM")
  */
 export const formatDateGT = (date?: string | Date) => {
-  return dayjs(date)
-    .tz("America/Guatemala")
-    .format("DD [de] MMMM [del] YYYY, h:mm A");
+  return date
+    ? dayjs(date)
+        .tz("America/Guatemala")
+        .format("DD [de] MMMM [del] YYYY, h:mm A")
+    : "N/A";
 };

@@ -25,6 +25,7 @@ import {
   Landmark,
   NotebookPen,
   FileType,
+  GalleryHorizontal,
 } from "lucide-react";
 
 export interface Route {
@@ -105,6 +106,11 @@ export const routesCrm_SuperAdmin = [
         icon: BotMessageSquare,
         label: "Mensajería Whatsapp",
         href: "/crm/bot/whatsapp?page=1",
+      },
+      {
+        icon: GalleryHorizontal,
+        label: "Galería",
+        href: "crm/bot/whatsapp/galery",
       },
     ],
   },
@@ -264,6 +270,12 @@ export const routesCrm_Admin = [
         icon: BotMessageSquare,
         label: "Mensajería Whatsapp",
         href: "/crm/bot/whatsapp?page=1",
+      },
+
+      {
+        icon: GalleryHorizontal,
+        label: "Galería",
+        href: "crm/bot/whatsapp/galery",
       },
     ],
   },

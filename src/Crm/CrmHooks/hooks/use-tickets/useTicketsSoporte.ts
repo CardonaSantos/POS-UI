@@ -7,6 +7,9 @@ import { crm_endpoints } from "@/Crm/API/routes/endpoints";
 import { crm } from "@/Crm/API/crmApi";
 import { EstadoTicketSoporte } from "@/Crm/features/dashboard/dashboard-tickets";
 import { updateTicketDto } from "@/Crm/features/ticket/ticket-types";
+import { PayloadCreateTicket } from "@/Crm/CrmTickets/CreateTickets/CrmCreateTicket";
+import { useInvalidateQk } from "../useInvalidateQk/useInvalidateQk";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PropsResponse {
   data: Array<Ticket>;
@@ -39,6 +42,7 @@ export class QuerySearchTickets {
 
   creadosPor?: number;
 }
+
 export function useGetTicketsSoporte(query: QuerySearchTickets) {
   return crm.useQueryApi<PropsResponse>(
     ticketsSoporteQkeys.search(query),
@@ -84,14 +88,41 @@ export function usePostCommentary() {
 }
 
 /**
+ * HOOK PARA CREAR TICKET
+ * @returns
+ */
+export function useCreateTicket() {
+  const q = useInvalidateQk();
+  return crm.useMutationApi<void, PayloadCreateTicket>(
+    "post",
+    crm_endpoints.ticket.create_ticket,
+    undefined,
+    {
+      onSuccess: () => {
+        q(ticketsSoporteQkeys.search({}));
+      },
+    },
+  );
+}
+
+/**
  * ACTUALIZAR TICKET
  * @param id
  * @returns
  */
 export function useUpdateTicket(id: number) {
+  const q = useQueryClient();
   return crm.useMutationApi<void, updateTicketDto>(
     "patch",
     crm_endpoints.ticket.update_ticket(id),
+    undefined,
+    {
+      onSuccess: () => {
+        q.invalidateQueries({
+          queryKey: ticketsSoporteQkeys.all,
+        });
+      },
+    },
   );
 }
 

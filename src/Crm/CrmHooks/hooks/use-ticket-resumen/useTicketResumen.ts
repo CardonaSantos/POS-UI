@@ -1,4 +1,6 @@
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ticketsSoporteQkeys } from "../use-tickets/Qk";
 
 export interface CreateTicketResumenPayload {
   ticketId: number;
@@ -12,10 +14,22 @@ export interface CreateTicketResumenPayload {
   tiempoTecnicoMinutos?: number | null;
 }
 
+/**
+ * CIERRE DE TICKET
+ * @returns
+ */
 export function useCreateTicketResumen() {
+  const q = useQueryClient();
   return useCrmMutation<void, CreateTicketResumenPayload>(
     "patch",
     `tickets-soporte/close-ticket-soporte`,
     undefined,
+    {
+      onSuccess: () => {
+        q.invalidateQueries({
+          queryKey: ticketsSoporteQkeys.all,
+        });
+      },
+    },
   );
 }

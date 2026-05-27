@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Ticket,
   User,
@@ -38,27 +38,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import SelectComponent from "react-select";
-import axios from "axios";
 import { toast } from "sonner";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { MultiSelect } from "./MultiSelect";
 import { TechSelect } from "./TechSelect";
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-// Tipos
+import { useCreateTicket } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketsSoporte";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { useGetTagsTicket } from "@/Crm/CrmHooks/hooks/tags-ticket/useTagsTickets";
+import { useGetUsersToSelect } from "@/Crm/CrmHooks/hooks/useUsuarios/use-usuers";
+import { useGetCustomerToSelect } from "@/Crm/CrmHooks/hooks/Client/useGetClient";
 interface CreateTicketProps {
   openCreatT: boolean;
   setOpenCreateT: (open: boolean) => void;
   getTickets: () => void;
-}
-
-interface Cliente {
-  id: number;
-  nombre: string;
-}
-
-interface Usuario {
-  id: number;
-  nombre: string;
 }
 
 interface OptionSelectedReactComponent {
@@ -66,11 +58,7 @@ interface OptionSelectedReactComponent {
   label: string;
 }
 
-interface Etiqueta {
-  id: number;
-  nombre: string;
-}
-interface FormData {
+interface FormDataCreateTicket {
   clienteId: number | null;
   tecnicoId: number | null;
   tecnicosAdicionales: number[];
@@ -86,18 +74,19 @@ interface FormData {
   empresaId: number;
 }
 
-function CrmCreateTicket({
-  openCreatT,
-  setOpenCreateT,
-  getTickets,
-}: CreateTicketProps) {
+export interface PayloadCreateTicket extends FormDataCreateTicket {
+  etiquetas: Array<number>;
+  tecnicoId: number | null;
+}
+
+function CrmCreateTicket({ openCreatT, setOpenCreateT }: CreateTicketProps) {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
+  const createTicket = useCreateTicket();
+  const isSubmitting = createTicket.isPending;
 
-  // Estados para los campos del formulario
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormDataCreateTicket>({
     clienteId: 0,
     tecnicoId: 0,
     titulo: "",
@@ -128,63 +117,13 @@ function CrmCreateTicket({
     setLabelsSelecteds([]);
   };
 
-  // Datos simulados
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const { data: clientesx } = useGetCustomerToSelect();
+  const clientes = clientesx ? clientesx : [];
+  const { data: tecnicosx } = useGetUsersToSelect();
+  const tecnicos = tecnicosx ? tecnicosx : [];
+  const { data: etiquetasx } = useGetTagsTicket();
 
-  const [tecnicos, setTecnicos] = useState<Usuario[]>([
-    { id: 1, nombre: "Técnico 1" },
-    { id: 2, nombre: "Técnico 2" },
-    { id: 3, nombre: "Técnico 3" },
-  ]);
-
-  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
-
-  const getClientes = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customers-to-ticket`,
-      );
-      if (response.status === 200) {
-        setClientes(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir los clientes");
-    }
-  };
-  const getTecs = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/user/get-users-to-create-tickets`,
-      );
-      if (response.status === 200) {
-        setTecnicos(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir los clientes");
-    }
-  };
-
-  const getEtiquetas = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/tags-ticket/get-tags-to-ticket`,
-      );
-      if (response.status === 200) {
-        setEtiquetas(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("No se pudieron conseguir tags");
-    }
-  };
-
-  useEffect(() => {
-    getClientes();
-    getTecs();
-    getEtiquetas();
-  }, []);
+  const etiquetas = etiquetasx ? etiquetasx : [];
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -198,30 +137,24 @@ function CrmCreateTicket({
   };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
+    const payload: PayloadCreateTicket = {
+      ...formData,
+      etiquetas: labelsSelecteds,
+      tecnicoId:
+        formData.tecnicoId !== null && formData.tecnicoId !== undefined
+          ? Number(formData.tecnicoId)
+          : null,
+    };
 
-    try {
-      const response = await axios.post(`${VITE_CRM_API_URL}/tickets-soporte`, {
-        ...formData,
-        etiquetas: labelsSelecteds,
-        tecnicoId:
-          formData.tecnicoId !== null && formData.tecnicoId !== undefined
-            ? Number(formData.tecnicoId)
-            : null,
-      });
-
-      if (response.status === 201) {
-        toast.success("Ticket Creado");
+    toast.promise(createTicket.mutateAsync(payload), {
+      success: () => {
         clearFormData();
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al crear ticket");
-    } finally {
-      setIsSubmitting(false);
-    }
+        return "Ticket creado";
+      },
+      loading: "Registrando...",
+      error: (error) => getApiErrorMessageAxios(error),
+    });
 
-    getTickets();
     setOpenCreateT(false);
   };
 
@@ -250,8 +183,6 @@ function CrmCreateTicket({
   }));
 
   const tecnicoSelected = formData.tecnicoId ? false : true;
-
-  console.log("El form data es: ", formData);
 
   return (
     <Dialog open={openCreatT} onOpenChange={setOpenCreateT}>

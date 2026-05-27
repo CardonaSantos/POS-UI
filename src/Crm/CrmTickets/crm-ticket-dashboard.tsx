@@ -20,7 +20,6 @@ import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithPara
 import { ReusableTabs, TabItem } from "../Utils/Components/tabs/reusable-tabs";
 import { Clipboard, Kanban, Ticket as TicketIcon } from "lucide-react";
 import TicketList from "./components/ticket-list";
-// import TicketDetail from "./TicketDetail/CrmTicketDetails";
 import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 import TicketFilters from "./filters/TicketFilters";
 import TicketDetail from "./ticket-detail/TicketDetail";
@@ -28,18 +27,13 @@ import OperativoMainPage from "./components/operativo/page";
 
 export default function TicketDashboard() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
-
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = (searchParams.get("tab") as string) || "tickets";
-
   const [ticketTab, setTicketTab] = useState("inbox");
   const [dashboardTab, setDashboardTab] = useState(defaultTab);
-
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [openCreateTicket, setOpenCreateTicket] = useState(false);
-
   const [tecnicoSelected, setTecnicoSelected] = useState<string | null>(null);
-
   const [filters, setFilters] = useState<QuerySearchTickets>({
     page: 1,
     limit: 15,
@@ -50,8 +44,6 @@ export default function TicketDashboard() {
   const { data: rawCustomers } = useGetCustomerToSelect();
   const { data: rawTags } = useGetTagsTicket();
   const { data: rawTecs } = useGetUsersToSelect();
-
-  // Data normalization (Safe access)
   const ticketsSoporte = rawTickets?.data ? rawTickets.data : [];
 
   const meta = useMemo(() => {
@@ -111,7 +103,6 @@ export default function TicketDashboard() {
     [clientes],
   );
 
-  // Ticket seleccionado actualmente
   const selectedTicket = useMemo(
     () => ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
     [ticketsSoporte, selectedTicketId],
@@ -224,7 +215,6 @@ export default function TicketDashboard() {
     }));
   };
 
-  // Tabs
   const handleChangeTabs = useTabChangeWithUrl({
     activeTab: dashboardTab,
     setActiveTab: setDashboardTab,
