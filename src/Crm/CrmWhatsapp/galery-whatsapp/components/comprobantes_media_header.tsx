@@ -1,4 +1,4 @@
-import { FileImage, Filter, RefreshCcw, RotateCcw, Search } from "lucide-react";
+import { Filter, RefreshCcw, RotateCcw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,15 @@ import {
   WazDirection,
   WazMediaType,
 } from "@/Crm/features/bot-server/clientes-whatsapp-server/clientes-whatsapp-server";
+import ReactSelect from "react-select";
+import { OptionSelected } from "@/Crm/features/OptionSelected/OptionSelected";
 
 interface ComprobantesMediaHeaderProps {
+  clienteOptions: OptionSelected[];
+  clienteSelected: OptionSelected | null;
+  isLoadingClientes: boolean;
+  onSelectCliente: (option: OptionSelected | null) => void;
+
   filters: MediaFilterState;
   total: number;
   isFetching: boolean;
@@ -82,26 +89,16 @@ export function ComprobantesMediaHeader({
   onChangeFilter,
   onResetFilters,
   onRefresh,
+  onSelectCliente,
+  clienteOptions,
+  clienteSelected,
+  isLoadingClientes,
 }: ComprobantesMediaHeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-3 py-3 sm:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border bg-muted">
-              <FileImage className="size-4" aria-hidden="true" />
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="truncate text-sm font-semibold sm:text-base">
-                Galería de comprobantes
-              </h1>
-
-              <p className="truncate text-xs text-muted-foreground">
-                Imágenes, videos y documentos recibidos por WhatsApp
-              </p>
-            </div>
-          </div>
+          <div className="flex min-w-0 items-center gap-2"></div>
 
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="h-7 rounded-lg text-xs">
@@ -132,28 +129,63 @@ export function ComprobantesMediaHeader({
           className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6"
         >
           <div className="space-y-1">
-            <Label htmlFor="clienteId" className="text-xs">
-              Cliente ID
-            </Label>
-
             <div className="relative">
-              <Search
-                className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
+              <div className="space-y-1">
+                <Label htmlFor="clienteId" className="text-xs">
+                  Cliente
+                </Label>
 
-              <Input
-                id="clienteId"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={filters.clienteId}
-                onChange={(event) => {
-                  onChangeFilter("clienteId", event.target.value);
-                }}
-                placeholder="Ej. 557"
-                className="h-8 pl-7 text-xs"
-              />
+                <ReactSelect<OptionSelected, false>
+                  inputId="clienteId"
+                  value={clienteSelected}
+                  options={clienteOptions}
+                  onChange={(option) => {
+                    onSelectCliente(option);
+                  }}
+                  isClearable
+                  isLoading={isLoadingClientes}
+                  placeholder="Buscar cliente..."
+                  noOptionsMessage={() => "Sin clientes"}
+                  loadingMessage={() => "Cargando clientes..."}
+                  className="text-xs text-black"
+                  classNamePrefix="react-select"
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      minHeight: "32px",
+                      height: "32px",
+                      borderRadius: "0.5rem",
+                      fontSize: "12px",
+                    }),
+                    valueContainer: (base) => ({
+                      ...base,
+                      height: "32px",
+                      padding: "0 8px",
+                    }),
+                    input: (base) => ({
+                      ...base,
+                      margin: 0,
+                      padding: 0,
+                    }),
+                    indicatorsContainer: (base) => ({
+                      ...base,
+                      height: "32px",
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      fontSize: "12px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "12px",
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 50,
+                    }),
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -211,22 +243,6 @@ export function ComprobantesMediaHeader({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="creadoEn" className="text-xs">
-              Fecha exacta
-            </Label>
-
-            <Input
-              id="creadoEn"
-              type="date"
-              value={filters.creadoEn}
-              onChange={(event) => {
-                onChangeFilter("creadoEn", event.target.value);
-              }}
-              className="h-8 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1">
             <Label htmlFor="startDate" className="text-xs">
               Desde
             </Label>
@@ -254,7 +270,7 @@ export function ComprobantesMediaHeader({
               onChange={(event) => {
                 onChangeFilter("endDate", event.target.value);
               }}
-              className="h-8 text-xs"
+              className="h-8 text-xs "
             />
           </div>
         </section>
