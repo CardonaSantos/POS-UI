@@ -214,13 +214,7 @@ export function CustomerCreateFormCard({
               onCheckedChange={handleChangeSwitch}
             />
           </div>
-          {/* SECCIÓN 4 */}
-          {/* <ContractSection
-            formDataContrato={formDataContrato}
-            onChangeContrato={onChangeContrato}
-            setFormDataContrato={() => {}}
-          /> */}
-          {/* SECCIÓN 5 */}
+
           <ObservationsSection
             observaciones={formData.observaciones}
             onChangeForm={onChangeForm}
