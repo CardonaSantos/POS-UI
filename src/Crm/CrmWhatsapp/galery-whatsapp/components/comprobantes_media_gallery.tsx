@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CalendarDays,
   ExternalLink,
+  Eye,
   FileText,
   ImageIcon,
   User,
@@ -23,6 +24,15 @@ import {
   WazDirection,
   WazMediaType,
 } from "@/Crm/features/bot-server/clientes-whatsapp-server/clientes-whatsapp-server";
+import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Props {
   items: GalleryMediaRecord[];
@@ -193,6 +203,94 @@ function EmptyMediaPreview({
   );
 }
 
+function ImagePreviewDialog({
+  item,
+  mediaUrl,
+}: {
+  item: GalleryMediaRecord;
+  mediaUrl: string;
+}) {
+  const alt = getMediaAlt(item);
+  const title = getBodyText(item);
+
+  return (
+    <Dialog>
+      <div className="group relative overflow-hidden rounded-lg border bg-muted">
+        <img
+          src={mediaUrl}
+          alt={alt}
+          loading="lazy"
+          className="aspect-[4/3] w-full object-cover transition duration-200 group-hover:scale-[1.02] group-hover:brightness-75"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="h-8 gap-1.5 text-xs"
+            >
+              <Eye className="size-3.5" aria-hidden="true" />
+              Ver
+            </Button>
+          </DialogTrigger>
+
+          <Button
+            asChild
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="h-8 gap-1.5 text-xs"
+          >
+            <a href={mediaUrl} target="_blank" rel="noreferrer">
+              Abrir
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+      </div>
+
+      <DialogContent className="flex h-[92dvh] w-[96vw] max-w-[96vw] flex-col overflow-hidden p-0 sm:h-[94dvh] sm:w-[94vw] sm:max-w-[94vw]">
+        <DialogHeader className="shrink-0 border-b px-3 py-2 text-left">
+          <DialogTitle className="line-clamp-1 text-sm">
+            Vista previa del comprobante
+          </DialogTitle>
+
+          <DialogDescription className="line-clamp-1 text-xs">
+            {title}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex min-h-0 flex-1 items-center justify-center bg-black/95 p-2 sm:p-4">
+          <img
+            src={mediaUrl}
+            alt={alt}
+            className="max-h-full max-w-full rounded-md object-contain"
+          />
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t px-3 py-2">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 text-xs"
+          >
+            <a href={mediaUrl} target="_blank" rel="noreferrer">
+              Abrir en otra pestaña
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function MediaPreview({ item }: { item: GalleryMediaRecord }) {
   const mediaUrl = getMediaUrl(item);
 
@@ -201,51 +299,59 @@ function MediaPreview({ item }: { item: GalleryMediaRecord }) {
   }
 
   if (item.type === WazMediaType.IMAGE) {
-    return (
-      <img
-        src={mediaUrl}
-        alt={getMediaAlt(item)}
-        loading="lazy"
-        className="aspect-[4/3] w-full rounded-lg border object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }}
-      />
-    );
+    return <ImagePreviewDialog item={item} mediaUrl={mediaUrl} />;
   }
 
   if (item.type === WazMediaType.VIDEO) {
     return (
-      <video
-        src={mediaUrl}
-        controls
-        preload="metadata"
-        className="aspect-[4/3] w-full rounded-lg border bg-black object-cover"
-      >
-        Tu navegador no puede reproducir este video.
-      </video>
+      <div className="group relative overflow-hidden rounded-lg border bg-black">
+        <video
+          src={mediaUrl}
+          controls
+          preload="metadata"
+          className="aspect-[4/3] w-full object-cover"
+        >
+          Tu navegador no puede reproducir este video.
+        </video>
+
+        <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <Button
+            asChild
+            size="sm"
+            variant="secondary"
+            className="h-8 gap-1.5 text-xs"
+          >
+            <a href={mediaUrl} target="_blank" rel="noreferrer">
+              Abrir
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-lg border bg-muted p-3 text-center">
+    <div className="group relative flex aspect-[4/3] flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border bg-muted p-3 text-center">
       <FileText className="size-8 text-muted-foreground" aria-hidden="true" />
 
       <p className="line-clamp-2 text-xs text-muted-foreground">
         {getBodyText(item)}
       </p>
 
-      <Button
-        asChild
-        size="sm"
-        variant="outline"
-        className="h-8 gap-1.5 text-xs"
-      >
-        <a href={mediaUrl} target="_blank" rel="noreferrer">
-          Abrir
-          <ExternalLink className="size-3.5" aria-hidden="true" />
-        </a>
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 text-xs"
+        >
+          <a href={mediaUrl} target="_blank" rel="noreferrer">
+            Abrir
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+          </a>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -257,6 +363,9 @@ const ComprobanteMediaCard = memo(function ComprobanteMediaCard({
 }) {
   const type = item.type;
   const clienteNombre = getClienteNombre(item);
+
+  const idCliente = item.cliente.id;
+
   const clienteTelefono = getClienteTelefono(item);
   const bodyText = getBodyText(item);
   const createdAt = formatDate(item.creadoEn);
@@ -290,8 +399,10 @@ const ComprobanteMediaCard = memo(function ComprobanteMediaCard({
             <p className="flex min-w-0 items-center gap-1.5">
               <User className="size-3.5 shrink-0" aria-hidden="true" />
 
-              <span className="truncate">
-                {clienteNombre} · {clienteTelefono}
+              <span className="truncate hover:text-blue-600 hover:underline">
+                <Link to={`/crm/bot/whatsapp?clienteId=${idCliente}`}>
+                  {clienteNombre} · {clienteTelefono}
+                </Link>
               </span>
             </p>
 
@@ -323,7 +434,6 @@ function LoadingGrid() {
 export function ComprobantesMediaGallery({ items, isLoading, isError }: Props) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const columns = useResponsiveColumns();
-
   const safeItems = Array.isArray(items) ? items : [];
 
   const rows = useMemo(() => {

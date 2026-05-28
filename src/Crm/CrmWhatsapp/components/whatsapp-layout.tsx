@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { FindClientesQuery } from "@/Crm/features/bot-server/whatsapp-messages/query";
 import { useGetClientes } from "@/Crm/CrmHooks/hooks/bot-server/use-whatsapp-server/useWhatsappServer";
 import { ChatSidebar } from "./chat-sidebar";
@@ -13,15 +14,35 @@ import { useSocketEvent } from "@/Crm/WEB/SocketProvider";
 import { useInvalidateQk } from "@/Crm/CrmHooks/hooks/useInvalidateQk/useInvalidateQk";
 import { ClienteWhatsAppQkeys } from "@/Crm/CrmHooks/hooks/bot-server/use-whatsapp-server/Qk";
 
+function getNumberParam(
+  searchParams: URLSearchParams,
+  key: string,
+  fallback: number,
+) {
+  const value = searchParams.get(key);
+  const parsed = value ? Number(value) : NaN;
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getNullableNumberParam(searchParams: URLSearchParams, key: string) {
+  const value = searchParams.get(key);
+  const parsed = value ? Number(value) : NaN;
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function WhatsappLayout() {
-  const [page, setPage] = useState(1);
-  const [take] = useState(15);
-  const [nombre, setNombre] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const invalidateQk = useInvalidateQk();
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  // On mobile: track if the chat panel is shown (selected chat open)
-  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const page = getNumberParam(searchParams, "page", 1);
+  const take = getNumberParam(searchParams, "take", 15);
+  const selectedId = getNullableNumberParam(searchParams, "clienteId");
+  const nombre = searchParams.get("nombre") ?? "";
+
+  const [mobileChatOpen, setMobileChatOpen] = useState(Boolean(selectedId));
 
   const skip = (page - 1) * take;
 
@@ -37,6 +58,7 @@ export function WhatsappLayout() {
   const q = useGetClientes(params);
 
   const rows = q.data?.data ?? [];
+
   const meta = q.data?.meta ?? {
     total: 0,
     take,
@@ -47,17 +69,43 @@ export function WhatsappLayout() {
     hasPreviousPage: false,
   };
 
+  const patchUrlParams = (
+    patch: Record<string, string | number | null | undefined>,
+  ) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+
+      Object.entries(patch).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === "") {
+          next.delete(key);
+          return;
+        }
+
+        next.set(key, String(value));
+      });
+
+      return next;
+    });
+  };
+
   const handleNombreChange = (value: string) => {
-    setNombre(value);
-    setPage(1);
+    patchUrlParams({
+      nombre: value.trim() ? value : null,
+      page: 1,
+    });
   };
 
   const handlePageChange = (pageIndex: number) => {
-    setPage(pageIndex + 1);
+    patchUrlParams({
+      page: pageIndex + 1,
+    });
   };
 
   const handleSelectCliente = (id: number) => {
-    setSelectedId(id);
+    patchUrlParams({
+      clienteId: id,
+    });
+
     setMobileChatOpen(true);
   };
 
@@ -68,7 +116,6 @@ export function WhatsappLayout() {
   useSocketEvent("nuvia:new-message", () => {
     invalidateQk(ClienteWhatsAppQkeys.list(params));
 
-    // markAsRead.mutateAsync();
     console.log("INVALIDANDO FETCH EN EL SIDEBAR NUEVO");
   });
 

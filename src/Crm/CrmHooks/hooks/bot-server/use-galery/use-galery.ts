@@ -24,6 +24,9 @@ function buildMediaSearchDto(filters: MediaFilterState): QueryMediaSearch {
 export function useComprobantesMedia(filters: MediaFilterState) {
   const query = buildMediaSearchDto(filters);
 
+  console.log("filters UI:", filters);
+  console.log("query DTO enviado:", query);
+
   return useBotQuery<WazMediaRecord[]>(
     comprobantesMediaQKeys.search(query),
     bot_server_endpoints.media.galery_filter,

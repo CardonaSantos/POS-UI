@@ -36,11 +36,11 @@ export function ChatSidebar({
   const canNext = meta.hasNextPage;
 
   const handlePrev = () => {
-    if (canPrev) onPageChange(meta.page - 2); // pageIndex (0-based)
+    if (canPrev) onPageChange(meta.page - 2);
   };
 
   const handleNext = () => {
-    if (canNext) onPageChange(meta.page); // pageIndex (0-based)
+    if (canNext) onPageChange(meta.page);
   };
 
   return (
