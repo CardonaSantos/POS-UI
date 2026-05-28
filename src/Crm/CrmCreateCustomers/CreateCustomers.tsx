@@ -1,13 +1,14 @@
 "use client";
+
 import type React from "react";
-import { useEffect, useState } from "react";
-import { Check, X, AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import axios from "axios";
-import { toast } from "sonner";
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-import { MultiValue } from "react-select";
+import { useState } from "react";
+import type { MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
+
+import { AlertCircle, Check, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -15,168 +16,106 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+
 import { CustomerCreateFormCard } from "./customer_create_form_card";
-import type { FormData } from "../CrmNewCustomerEdition/customer-form-types";
-import type { OptionSelected } from "../CrmNewCustomerEdition/customer-form-types";
-import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
-import {
-  Departamentos,
-  Municipios,
-} from "../features/locations-interfaces/municipios_departamentos.interfaces";
-import {
-  EstadoCliente,
-  Sector,
-} from "../features/cliente-interfaces/cliente-types";
-import { ServiciosInternet } from "../CrmNewCustomerEdition/customer-form-types";
+
+import type {
+  FormData,
+  OptionSelected,
+} from "../CrmNewCustomerEdition/customer-form-types";
+
+import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+
+import { useCreateCustomer } from "../CrmHooks/hooks/Client/useGetClient";
+import { useGetDepartamentos } from "../CrmHooks/hooks/Departamentos/useGetDepartamentos";
 import { useGetMikroTiks } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
+import { useGetMunicipios } from "../CrmHooks/hooks/Municipios/useGetMunicipios";
+import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
+import { useGetServicios } from "../CrmHooks/hooks/Servicios/useGetServicios";
+import { useGetServiciosWifi } from "../CrmHooks/hooks/ServiciosWfi/useGetServiciosWifi";
+import { useGetZonasFacturacion } from "../CrmHooks/hooks/use-zonas-facturacion/use-zonas-facturacion";
 
-interface Servicios {
-  id: number;
-  nombre: string;
-}
-
-interface contradoID {
+interface ContratoFormData {
   clienteId: number;
-  idContrato: string; //UNIQUE EL CAMPO
+  idContrato: string;
   fechaFirma: Date | null;
   archivoContrato: string;
   observaciones: string;
 }
 
+const INITIAL_FORM_DATA: FormData = {
+  nombre: "",
+  coordenadas: "",
+  ip: "",
+  gateway: "",
+  mascara: "",
+  apellidos: "",
+  telefono: "",
+  direccion: "",
+  dpi: "",
+  observaciones: "",
+  contactoReferenciaNombre: "",
+  contactoReferenciaTelefono: "",
+
+  // Datos del servicio
+  contrasenaWifi: "",
+  ssidRouter: "",
+  fechaInstalacion: null,
+  asesorId: "",
+  servicioId: "",
+  municipioId: "",
+  departamentoId: "",
+  empresaId: "",
+  estado: EstadoCliente.ACTIVO,
+  enviarRecordatorio: true,
+  activateOnMk: false,
+};
+
+const INITIAL_CONTRATO_FORM_DATA: ContratoFormData = {
+  archivoContrato: "",
+  clienteId: 0,
+  fechaFirma: new Date(),
+  idContrato: "",
+  observaciones: "",
+};
+
 function CreateCustomers() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+  const createCustomer = useCreateCustomer();
+  const isSubmitting = createCustomer.isPending;
   const [openConfirm, setOpenConfirm] = useState(false);
-  const [departamentos, setDepartamentos] = useState<Departamentos[]>([]);
-  const [municipios, setMunicipios] = useState<Municipios[]>([]);
-  const [servicios, setServicios] = useState<Servicios[]>([]);
-
-  const [zonasFacturacion, setZonasFacturacion] = useState<FacturacionZona[]>(
-    [],
-  );
-  const [sectores, setSectores] = useState<Sector[]>([]);
-  const [serviciosWifi, setServiciosWifi] = useState<ServiciosInternet[]>([]);
   const [fechaInstalacion, setFechaInstalacion] = useState<Date | null>(
     new Date(),
   );
+
   const [depaSelected, setDepaSelected] = useState<number | null>(null);
   const [muniSelected, setMuniSelected] = useState<number | null>(null);
-  const [serviceSelected, setSeriviceSelected] = useState<number[]>([]);
-  const [serviceWifiSelected, setSeriviceWifiSelected] = useState<
-    number | null
-  >(null);
+  const [sectorSelected, setSectorSelected] = useState<number | null>(null);
+  const [serviceSelected, setServiceSelected] = useState<number[]>([]);
+  const [serviceWifiSelected, setServiceWifiSelected] = useState<number | null>(
+    null,
+  );
+
   const [zonasFacturacionSelected, setZonasFacturacionSelected] = useState<
     number | null
   >(null);
-  const [sectorSelected, setSectorSelected] = useState<number | null>(null);
-
-  const { data: mikrotiksResponse } = useGetMikroTiks();
-  const secureMikroTiks = mikrotiksResponse ? mikrotiksResponse : [];
-
-  const getDepartamentos = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/location/get-all-departamentos`,
-      );
-
-      if (response.status === 200) {
-        setDepartamentos(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getMunicipios = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/location/get-municipio/${Number(depaSelected)}`,
-      );
-
-      if (response.status === 200) {
-        setMunicipios(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const getServicios = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/servicio/get-servicios-to-customer`,
-      );
-
-      if (response.status === 200) {
-        setServicios(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir servicios");
-    }
-  };
-
-  const getServiciosWifi = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/servicio-internet/get-services-to-customer`,
-      );
-
-      if (response.status === 200) {
-        setServiciosWifi(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir servicios wifi");
-    }
-  };
-
-  const getFacturacionZona = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/facturacion-zona/get-zonas-facturacion-to-customer`,
-      );
-
-      if (response.status === 200) {
-        setZonasFacturacion(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.info("Error al conseguir servicios wifi");
-    }
-  };
-
-  const getSectores = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/sector/sectores-to-select`,
-      );
-
-      if (response.status === 200) {
-        setSectores(response.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getDepartamentos();
-    getServicios();
-    getServiciosWifi();
-    getFacturacionZona();
-    getSectores();
-  }, []);
-
-  useEffect(() => {
-    if (depaSelected) {
-      getMunicipios();
-    } else {
-      setMunicipios([]);
-      setMuniSelected(null);
-    }
-  }, [depaSelected]);
-
+  const [mkSelected, setMkSelected] = useState<number | null>(null);
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
+  const [formDataContrato, setFormDataContrato] = useState<ContratoFormData>(
+    INITIAL_CONTRATO_FORM_DATA,
+  );
+  // Queries
+  const { data: mikrotiks = [] } = useGetMikroTiks();
+  const { data: departamentos = [] } = useGetDepartamentos();
+  const { data: municipios = [] } = useGetMunicipios(depaSelected);
+  const { data: sectores = [] } = useGetSectores();
+  const { data: serviciosWifi = [] } = useGetServiciosWifi();
+  const { data: zonasFacturacion = [] } = useGetZonasFacturacion();
+  const { data: servicios = [] } = useGetServicios();
+  // Select options
   const optionsDepartamentos: OptionSelected[] = departamentos.map((depa) => ({
     value: depa.id,
     label: depa.nombre,
@@ -192,7 +131,7 @@ function CreateCustomers() {
     label: service.nombre,
   }));
 
-  const optionsMikrotiks: OptionSelected[] = secureMikroTiks.map((mk) => ({
+  const optionsMikrotiks: OptionSelected[] = mikrotiks.map((mk) => ({
     value: mk.id,
     label: mk.nombre,
   }));
@@ -209,23 +148,62 @@ function CreateCustomers() {
     label: sector.nombre,
   }));
 
-  const optionsZonasFacturacion: OptionSelected[] = zonasFacturacion
+  const optionsZonasFacturacion: OptionSelected[] = [...zonasFacturacion]
     .sort((a, b) => {
-      const numA = parseInt(a.nombre.match(/\d+/)?.[0] || "0");
-      const numB = parseInt(b.nombre.match(/\d+/)?.[0] || "0");
+      const numA = Number.parseInt(a.nombre.match(/\d+/)?.[0] || "0");
+      const numB = Number.parseInt(b.nombre.match(/\d+/)?.[0] || "0");
+
       return numA - numB;
     })
     .map((zona) => ({
       value: zona.id,
       label: `${zona.nombre} Clientes: (${zona.clientesCount}) Facturas:(${zona.facturasCount})`,
     }));
+  // General form handlers
 
-  // Manejar el cambio en el select de departamento
-  const handleSelectDepartamento = (selectedOption: OptionSelected | null) => {
-    setDepaSelected(selectedOption ? selectedOption.value : null);
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  // Manejar el cambio en el select de municipio
+  const handleChangeSwitch = (value: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      activateOnMk: value,
+    }));
+  };
+
+  const handleSelectEstadoCliente = (value: EstadoCliente) => {
+    setFormData((prev) => ({
+      ...prev,
+      estado: value,
+    }));
+  };
+  // Contrato handlers
+  const handleChangeDataContrato = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormDataContrato((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectDepartamento = (selectedOption: OptionSelected | null) => {
+    const departamentoId = selectedOption ? selectedOption.value : null;
+
+    setDepaSelected(departamentoId);
+    setMuniSelected(null);
+  };
+
   const handleSelectMunicipio = (selectedOption: OptionSelected | null) => {
     setMuniSelected(selectedOption ? selectedOption.value : null);
   };
@@ -233,17 +211,17 @@ function CreateCustomers() {
   const handleSelectSector = (selectedOption: OptionSelected | null) => {
     setSectorSelected(selectedOption ? selectedOption.value : null);
   };
-  //manejar cambio en el select de mis servicios
+
   const handleSelectService = (
-    selectedOption: MultiValue<OptionSelected> | null,
+    selectedOptions: MultiValue<OptionSelected> | null,
   ) => {
-    setSeriviceSelected(
-      selectedOption ? selectedOption.map((option) => option.value) : [],
+    setServiceSelected(
+      selectedOptions ? selectedOptions.map((option) => option.value) : [],
     );
   };
 
   const handleSelectServiceWifi = (selectedOption: OptionSelected | null) => {
-    setSeriviceWifiSelected(selectedOption ? selectedOption.value : null);
+    setServiceWifiSelected(selectedOption ? selectedOption.value : null);
   };
 
   const handleSelectZonaFacturacion = (
@@ -252,74 +230,32 @@ function CreateCustomers() {
     setZonasFacturacionSelected(selectedOption ? selectedOption.value : null);
   };
 
-  const [formData, setFormData] = useState<FormData>({
-    nombre: "",
-    coordenadas: "",
-    ip: "",
-    gateway: "",
-    mascara: "",
-    apellidos: "",
-    telefono: "",
-    direccion: "",
-    dpi: "",
-    observaciones: "",
-    contactoReferenciaNombre: "",
-    contactoReferenciaTelefono: "",
-    // Datos del servicio
-    contrasenaWifi: "",
-    ssidRouter: "",
-    fechaInstalacion: null as Date | null,
-    asesorId: "",
-    servicioId: "",
-    municipioId: "",
-    departamentoId: "",
-    empresaId: "",
-    estado: EstadoCliente.ACTIVO,
-    enviarRecordatorio: true,
-    activateOnMk: false,
-  });
-
-  const handleChangeSwitch = (value: boolean) => {
-    setFormData((previa) => ({
-      ...previa,
-      activateOnMk: value,
-    }));
-  };
-
-  const [mkSelected, setMkSelected] = useState<number | null>(null);
   const handleSelectMk = (selectedOption: OptionSelected | null) => {
     setMkSelected(selectedOption ? Number(selectedOption.value) : null);
   };
-  const [formDataContrado, setFormDataContrato] = useState<contradoID>({
-    archivoContrato: "",
-    clienteId: 0,
-    fechaFirma: new Date(),
-    idContrato: "".trim(),
-    observaciones: "".trim(),
-  });
+  // Helpers
+  const resetFormData = () => {
+    setFormData(INITIAL_FORM_DATA);
 
-  const handleChangeDataContrato = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormDataContrato((previaData) => ({
-      ...previaData,
-      [name]: value,
-    }));
+    setFormDataContrato({
+      ...INITIAL_CONTRATO_FORM_DATA,
+      fechaFirma: new Date(),
+    });
+
+    setDepaSelected(null);
+    setMuniSelected(null);
+    setSectorSelected(null);
+    setServiceSelected([]);
+    setServiceWifiSelected(null);
+    setZonasFacturacionSelected(null);
+    setMkSelected(null);
+    setFechaInstalacion(new Date());
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formDataToSend = {
+  const buildCustomerPayload = () => {
+    return {
       userId,
+
       nombre: formData.nombre.trim(),
       apellidos: formData.apellidos.trim(),
       ip: formData.ip.trim(),
@@ -328,140 +264,98 @@ function CreateCustomers() {
       dpi: formData.dpi.trim(),
       observaciones: formData.observaciones.trim(),
       estado: formData.estado,
+
       contactoReferenciaNombre: formData.contactoReferenciaNombre.trim(),
       contactoReferenciaTelefono: formData.contactoReferenciaTelefono.trim(),
+
       contrasenaWifi: formData.contrasenaWifi.trim(),
       ssidRouter: formData.ssidRouter.trim(),
-      fechaInstalacion: fechaInstalacion,
+
+      fechaInstalacion,
+
       municipioId: Number(muniSelected) || null,
       departamentoId: Number(depaSelected) || null,
       sectorId: Number(sectorSelected) || null,
+
       empresaId: 1,
+
       coordenadas:
         formData.coordenadas && formData.coordenadas !== ""
           ? formData.coordenadas.split(",").map((item) => item.trim())
           : [],
 
       servicesIds: serviceSelected.map((id) => Number(id)),
-      servicioWifiId: Number(serviceWifiSelected),
-      zonaFacturacionId: Number(zonasFacturacionSelected),
-      //
-      idContrato: formDataContrado.idContrato,
-      fechaFirma: formDataContrado.fechaFirma,
-      archivoContrato: formDataContrado.archivoContrato,
-      observacionesContrato: formDataContrado.observaciones,
-      mkSelected: mkSelected,
+      servicioWifiId: Number(serviceWifiSelected) || null,
+      zonaFacturacionId: Number(zonasFacturacionSelected) || null,
+
+      idContrato: formDataContrato.idContrato,
+      fechaFirma: formDataContrato.fechaFirma,
+      archivoContrato: formDataContrato.archivoContrato,
+      observacionesContrato: formDataContrato.observaciones,
+
+      mkSelected,
       activateOnMk: formData.activateOnMk,
     };
+  };
 
-    // Validar si municipio y departamento están seleccionados
-    if (!formDataToSend.municipioId) {
-      toast.info("Seleccione un municipio");
-      return;
-    }
-
-    if (!formDataToSend.departamentoId) {
+  const validateCustomerPayload = (
+    payload: ReturnType<typeof buildCustomerPayload>,
+  ) => {
+    if (!payload.departamentoId) {
       toast.info("Seleccione un departamento");
-      return;
+      return false;
     }
 
-    if (!formDataToSend.zonaFacturacionId) {
+    if (!payload.municipioId) {
+      toast.info("Seleccione un municipio");
+      return false;
+    }
+
+    if (!payload.zonaFacturacionId) {
       toast.warning("Debe agregar una zona de facturación");
-      return;
+      return false;
     }
 
-    if (!formDataToSend.servicioWifiId) {
+    if (!payload.servicioWifiId) {
       toast.warning("No puede crear un cliente sin asignarle un servicio");
-      return;
+      return false;
     }
+
+    return true;
+  };
+  // Submit
+
+  const handleSubmit = async () => {
+    const formDataToSend = buildCustomerPayload();
+
+    const isValid = validateCustomerPayload(formDataToSend);
+
+    if (!isValid) return;
 
     try {
-      setIsSubmitting(true);
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/internet-customer/create-new-customer`,
-        formDataToSend,
-      );
-
-      if (response.status === 201) {
-        toast.success("Cliente creado");
-        resetFormData();
-        setOpenConfirm(false);
-        setIsSubmitting(false);
-      }
-
-      console.log("Respuesta del servidor:", response.data);
+      await toast.promise(createCustomer.mutateAsync(formDataToSend), {
+        loading: "Registrando usuario...",
+        success: () => {
+          resetFormData();
+          setOpenConfirm(false);
+          return "Cliente creado correctamente";
+        },
+        error: (error) => getApiErrorMessageAxios(error),
+      });
     } catch (error) {
       console.error("Error al enviar los datos:", error);
-      toast.info("Revise sus datos enviados");
-      setIsSubmitting(false);
     }
-  };
-
-  const resetFormData = () => {
-    setFormData({
-      nombre: "",
-      coordenadas: "",
-      ip: "",
-      apellidos: "",
-      telefono: "",
-      direccion: "",
-      dpi: "",
-      observaciones: "",
-      contactoReferenciaNombre: "",
-      contactoReferenciaTelefono: "",
-      contrasenaWifi: "",
-      ssidRouter: "",
-      fechaInstalacion: null,
-      asesorId: "",
-      servicioId: "",
-      municipioId: "",
-      departamentoId: "",
-      empresaId: "",
-      gateway: "",
-      mascara: "",
-      estado: EstadoCliente.ACTIVO,
-      enviarRecordatorio: true,
-      activateOnMk: false,
-    });
-
-    // Resetear formDataContrato
-    setFormDataContrato({
-      archivoContrato: "",
-      clienteId: 0,
-      fechaFirma: new Date(),
-      idContrato: "",
-      observaciones: "",
-    });
-    // Resetear los selects
-    setDepaSelected(null);
-    setMuniSelected(null);
-    setSectorSelected(null);
-    setSeriviceSelected([]);
-    setSeriviceWifiSelected(null);
-    setZonasFacturacionSelected(null);
-    setFechaInstalacion(new Date());
-  };
-
-  const handleSelectEstadoCliente = (value: EstadoCliente) => {
-    setFormData((prev) =>
-      prev
-        ? {
-            ...prev,
-            estado: value,
-          }
-        : prev,
-    );
   };
 
   return (
     <PageTransitionCrm
       titleHeader="Añadir nuevo cliente"
-      subtitle={``}
+      subtitle=""
       variant="fade-pure"
     >
       <CustomerCreateFormCard
         formData={formData}
-        formDataContrato={formDataContrado}
+        formDataContrato={formDataContrato}
         fechaInstalacion={fechaInstalacion}
         depaSelected={depaSelected}
         muniSelected={muniSelected}
@@ -475,6 +369,14 @@ function CreateCustomers() {
         optionsServicesWifi={optionsServicesWifi}
         optionsZonasFacturacion={optionsZonasFacturacion}
         optionsSectores={optionsSectores}
+        optionsMikrotiks={optionsMikrotiks}
+        secureDepartamentos={departamentos}
+        secureMunicipios={municipios}
+        secureSectores={sectores}
+        secureServiciosWifi={serviciosWifi}
+        secureZonasFacturacion={zonasFacturacion}
+        mikrotiks={mikrotiks}
+        mkSelected={mkSelected}
         onChangeForm={handleChange}
         onChangeContrato={handleChangeDataContrato}
         onSelectDepartamento={handleSelectDepartamento}
@@ -487,22 +389,12 @@ function CreateCustomers() {
         onSelectEstadoCliente={handleSelectEstadoCliente}
         onSubmit={() => setOpenConfirm(true)}
         isSubmitting={isSubmitting}
-        optionsMikrotiks={optionsMikrotiks}
-        secureDepartamentos={departamentos}
-        secureMunicipios={municipios}
-        secureSectores={sectores}
-        secureServiciosWifi={serviciosWifi}
-        secureZonasFacturacion={zonasFacturacion}
-        mikrotiks={secureMikroTiks}
-        mkSelected={mkSelected}
         handleSelectMk={handleSelectMk}
         handleChangeSwitch={handleChangeSwitch}
       />
 
-      {/* Confirmation Dialog */}
       <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
-          {/* Warning icon */}
           <div className="flex justify-center mt-6">
             <div className="rounded-full p-3 shadow-lg border-4 border-white">
               <div className="bg-amber-100 p-3 rounded-full animate-pulse">
@@ -511,32 +403,30 @@ function CreateCustomers() {
             </div>
           </div>
 
-          {/* Header */}
           <DialogHeader className="pt-8 px-6 pb-2">
             <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
               Confirmación de Cliente
             </DialogTitle>
+
             <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
               Por favor revise los datos antes de continuar
             </p>
           </DialogHeader>
 
           <div className="px-6 py-4">
-            {/* Question card */}
             <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
               <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
                 ¿Estás seguro de que deseas crear este cliente con los datos
                 proporcionados?
               </h3>
+
               <p className="text-sm text-gray-600 text-center dark:text-gray-400">
                 Por favor, revisa cuidadosamente los datos antes de proceder.
               </p>
             </div>
 
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5"></div>
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5" />
 
-            {/* Action buttons */}
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
               <Button
                 variant="outline"
@@ -546,6 +436,7 @@ function CreateCustomers() {
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
+
               <Button
                 type="button"
                 onClick={handleSubmit}

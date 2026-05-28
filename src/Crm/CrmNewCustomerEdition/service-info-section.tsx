@@ -1,19 +1,19 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wifi } from "lucide-react";
 import ReactSelectComponent from "react-select";
 import type { ServiceInfoSectionProps } from "./customer-form-types";
 
 export function ServiceInfoSection({
-  formData,
+  // formData,
   serviceSelected,
   serviceWifiSelected,
   optionsServices,
   optionsServicesWifi,
   secureServiciosWifi,
-  onChangeForm,
+  // onChangeForm,
   onSelectService,
   onSelectServiceWifi,
 }: ServiceInfoSectionProps) {
@@ -43,7 +43,7 @@ export function ServiceInfoSection({
         {/* Plan de Internet */}
         <div className="space-y-1">
           <Label htmlFor="servicioWifiId-all" className="text-xs">
-            Plan de Internet <span className="text-destructive">*</span>
+            Servicio Principal <span className="text-destructive">*</span>
           </Label>
           <ReactSelectComponent
             options={optionsServicesWifi}
@@ -84,7 +84,7 @@ export function ServiceInfoSection({
         </div>
 
         {/* Contraseña WiFi */}
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <Label htmlFor="contrasenaWifi-all" className="text-xs">
             Contraseña Router <span className="text-destructive">*</span>
           </Label>
@@ -97,10 +97,10 @@ export function ServiceInfoSection({
             required
             className="h-8 text-xs"
           />
-        </div>
+        </div> */}
 
         {/* SSID */}
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <Label htmlFor="ssidRouter-all" className="text-xs">
             Nombre Red (SSID)
           </Label>
@@ -112,7 +112,7 @@ export function ServiceInfoSection({
             placeholder="Nombre de la red WiFi"
             className="h-8 text-xs"
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

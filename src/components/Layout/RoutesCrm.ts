@@ -5,8 +5,6 @@ import {
   FileText,
   UserPlus,
   Waypoints,
-  Cpu,
-  Wifi,
   Tags,
   MonitorSmartphone,
   MapIcon,
@@ -26,6 +24,8 @@ import {
   NotebookPen,
   FileType,
   GalleryHorizontal,
+  BadgeCheck,
+  BadgePlus,
 } from "lucide-react";
 
 export interface Route {
@@ -74,14 +74,14 @@ export const routesCrm_SuperAdmin = [
     label: "Servicios",
     submenu: [
       {
-        icon: Cpu,
-        label: "Gestión de Servicios",
-        href: "/crm-servicios",
+        icon: BadgeCheck,
+        label: "Servicio Principal",
+        href: "/crm-servicios-internet",
       },
       {
-        icon: Wifi,
-        label: "Servicios de Internet",
-        href: "/crm-servicios-internet",
+        icon: BadgePlus,
+        label: "Servicios Adicionales",
+        href: "/crm-servicios",
       },
     ],
   },
@@ -238,14 +238,14 @@ export const routesCrm_Admin = [
     label: "Servicios",
     submenu: [
       {
-        icon: Cpu,
-        label: "Gestión de Servicios",
-        href: "/crm-servicios",
+        icon: BadgeCheck,
+        label: "Servicio Principal",
+        href: "/crm-servicios-internet",
       },
       {
-        icon: Wifi,
-        label: "Servicios de Internet",
-        href: "/crm-servicios-internet",
+        icon: BadgePlus,
+        label: "Servicios Adicionales",
+        href: "/crm-servicios",
       },
     ],
   },

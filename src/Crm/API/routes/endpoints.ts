@@ -4,6 +4,10 @@ export const crm_endpoints = {
     login: "/auth/login-user",
   },
 
+  customer: {
+    create: "/internet-customer/create-new-customer",
+  },
+
   zonas_facturacion: {
     get_all: "/facturacion-zona",
 
