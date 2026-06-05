@@ -1,3 +1,6 @@
+import { MessageIcon } from "@/Crm/Icons/MessageIcon";
+import { MetaIcon } from "@/Crm/Icons/MetaIcon";
+import { WhatsappIcon } from "@/Crm/Icons/WhatsappIcon";
 import {
   Home,
   Users,
@@ -98,7 +101,7 @@ export const routesCrm_SuperAdmin = [
   },
 
   {
-    icon: BotMessageSquare,
+    icon: WhatsappIcon,
     label: "Bot y Mensajería",
     submenu: [
       { icon: Bot, label: "Bot", href: "/crm/bot" },
@@ -111,6 +114,17 @@ export const routesCrm_SuperAdmin = [
         icon: GalleryHorizontal,
         label: "Galería",
         href: "crm/bot/whatsapp/galery",
+      },
+
+      {
+        icon: MetaIcon,
+        label: "Plantillas Meta",
+        href: "/whatsapp-campaign-templates",
+      },
+      {
+        icon: MessageIcon,
+        label: "Enviar campaña",
+        href: "/whatsapp-campaign-messaging",
       },
     ],
   },

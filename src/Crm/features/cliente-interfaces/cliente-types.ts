@@ -64,6 +64,13 @@ export enum EstadoCliente {
   EN_INSTALACION = "EN_INSTALACION",
 }
 
+export enum EstadoCobranzaCliente {
+  AL_DIA = "AL_DIA",
+  PAGO_PENDIENTE = "PAGO_PENDIENTE",
+  ATRASADO = "ATRASADO",
+  MOROSO = "MOROSO",
+}
+
 // ======================================================
 // CONTRATO SERVICIO INTERNET
 // ======================================================
@@ -275,3 +282,31 @@ export interface ClienteServicio {
   servicio: Servicio;
   fechaContratacion: string;
 }
+
+// CAMPAING WHATSAPP HOOK & FILTERS
+export interface CustomerCampaignWhatsapp {
+  id: number;
+  nombre: string;
+  facturasPendientes: number;
+  estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
+  telefono: string;
+  telefonoRef: string;
+}
+
+export interface CustomersCampaingQuery {
+  zonaF?: number;
+  sector?: number;
+  municipio?: number;
+  departamento?: number;
+  nombre?: string;
+  numeroFact?: number;
+  estado?: EstadoCliente;
+  estadoCobranza?: EstadoCobranzaCliente;
+}
+
+export type NormalizedCampaignCustomer = CustomerCampaignWhatsapp & {
+  fullName: string;
+  normalizedPhone: string;
+  isValidPhone: boolean;
+};
