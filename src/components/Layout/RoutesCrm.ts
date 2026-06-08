@@ -119,12 +119,12 @@ export const routesCrm_SuperAdmin = [
       {
         icon: MetaIcon,
         label: "Plantillas Meta",
-        href: "/whatsapp-campaign-templates",
+        href: "/crm/whatsapp-campaign-templates",
       },
       {
         icon: MessageIcon,
         label: "Enviar campaña",
-        href: "/whatsapp-campaign-messaging",
+        href: "/crm/whatsapp-campaign-messaging",
       },
     ],
   },

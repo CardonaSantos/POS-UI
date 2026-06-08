@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ import { useGetMunicipios } from "@/Crm/CrmHooks/hooks/Municipios/useGetMunicipi
 import { useGetDepartamentos } from "@/Crm/CrmHooks/hooks/Departamentos/useGetDepartamentos";
 import { CampaignCustomerFilters } from "./components/campaign-customer-filters";
 import { CampaignCustomerPicker } from "./components/campaign-customer-picker";
+import { useGetZonasFacturacion } from "@/Crm/CrmHooks/hooks/use-zonas-facturacion/use-zonas-facturacion";
 
 function cleanCustomerQuery(
   query: CustomersCampaingQuery,
@@ -141,6 +143,7 @@ export function WhatsappMessaginCapaing() {
   const [customerQuery, setCustomerQuery] = useState<CustomersCampaingQuery>(
     {},
   );
+
   const cleanQuery = useMemo(
     () => cleanCustomerQuery(customerQuery),
     [customerQuery],
@@ -148,6 +151,7 @@ export function WhatsappMessaginCapaing() {
 
   const selectedDepartamentoId = cleanQuery.departamento ?? null;
 
+  const { data: zonasF = [] } = useGetZonasFacturacion();
   const { data: sectores = [] } = useGetSectores();
   const { data: municipios = [] } = useGetMunicipios(selectedDepartamentoId);
   const { data: departamentos = [] } = useGetDepartamentos();
@@ -172,9 +176,11 @@ export function WhatsappMessaginCapaing() {
 
   const [sendMode, setSendMode] = useState<CampaignSendMode>("SELECTED");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [selectionTab, setSelectionTab] = useState<"select" | "table">(
-    "select",
-  );
+  const [selectionTab, setSelectionTab] = useState<"select" | "table">("table");
+
+  const [customersCacheById, setCustomersCacheById] = useState<
+    Map<number, NormalizedCampaignCustomer>
+  >(new Map());
 
   const [phoneFilter, setPhoneFilter] = useState<PhoneFilter>("valid");
   const [simulateQty, setSimulateQty] = useState("");
@@ -189,66 +195,6 @@ export function WhatsappMessaginCapaing() {
     );
   }, [sectores, cleanQuery.municipio]);
 
-  const handleCustomerQueryChange = useCallback(
-    (patch: Partial<CustomersCampaingQuery>) => {
-      setCustomerQuery((prev) => {
-        const next = cleanCustomerQuery({
-          ...prev,
-          ...patch,
-        });
-
-        if (
-          Object.prototype.hasOwnProperty.call(patch, "departamento") &&
-          patch.departamento !== prev.departamento
-        ) {
-          next.municipio = undefined;
-          next.sector = undefined;
-        }
-
-        if (
-          Object.prototype.hasOwnProperty.call(patch, "municipio") &&
-          patch.municipio !== prev.municipio
-        ) {
-          next.sector = undefined;
-        }
-
-        return next;
-      });
-
-      setSelectedIds(new Set<number>());
-    },
-    [],
-  );
-
-  const handleClearCustomerQuery = useCallback(() => {
-    setCustomerQuery({});
-    setPhoneFilter("valid");
-    setSelectedIds(new Set<number>());
-  }, []);
-
-  const handleResetAfterSuccess = useCallback(() => {
-    setSelectedTemplate(null);
-    setSendMode("SELECTED");
-    setSelectedIds(new Set<number>());
-    setSelectionTab("select");
-
-    setCustomerQuery({});
-    setPhoneFilter("valid");
-
-    setSimulateQty("");
-    setHeaderImageUrl("");
-
-    setConfirmOpen(false);
-    setPayloadOpen(false);
-
-    setTemplateFilters({
-      name: "",
-      language: "ALL",
-      category: "ALL",
-      status: "APPROVED",
-    });
-  }, []);
-
   const normalizedClients = useMemo<NormalizedCampaignCustomer[]>(
     () =>
       rawClients.map((customer) => ({
@@ -261,6 +207,20 @@ export function WhatsappMessaginCapaing() {
       })),
     [rawClients],
   );
+
+  useEffect(() => {
+    if (normalizedClients.length === 0) return;
+
+    setCustomersCacheById((prev) => {
+      const next = new Map(prev);
+
+      normalizedClients.forEach((customer) => {
+        next.set(customer.id, customer);
+      });
+
+      return next;
+    });
+  }, [normalizedClients]);
 
   const clientsByPhoneFilter = useMemo(() => {
     return normalizedClients.filter((customer) => {
@@ -276,22 +236,39 @@ export function WhatsappMessaginCapaing() {
     [normalizedClients],
   );
 
-  const effectiveSelectedIds = useMemo<Set<number>>(() => {
-    if (sendMode === "ALL_VALID") {
-      return new Set(validClients.map((customer) => customer.id));
-    }
-
-    return selectedIds;
-  }, [sendMode, validClients, selectedIds]);
-
-  const selectedClients = useMemo(
-    () =>
-      normalizedClients.filter(
-        (customer) =>
-          effectiveSelectedIds.has(customer.id) && customer.isValidPhone,
-      ),
-    [normalizedClients, effectiveSelectedIds],
+  const tableValidClients = useMemo(
+    () => clientsByPhoneFilter.filter((customer) => customer.isValidPhone),
+    [clientsByPhoneFilter],
   );
+
+  const tableInvalidCount = useMemo(
+    () =>
+      clientsByPhoneFilter.filter((customer) => !customer.isValidPhone).length,
+    [clientsByPhoneFilter],
+  );
+
+  const effectiveSelectedIds = useMemo<Set<number>>(() => {
+    return selectedIds;
+  }, [selectedIds]);
+
+  const selectedClients = useMemo(() => {
+    return Array.from(selectedIds)
+      .map((id) => customersCacheById.get(id))
+      .filter((customer): customer is NormalizedCampaignCustomer =>
+        Boolean(customer?.isValidPhone),
+      );
+  }, [selectedIds, customersCacheById]);
+
+  const allVisibleSelected = useMemo(() => {
+    return (
+      tableValidClients.length > 0 &&
+      tableValidClients.every((customer) => selectedIds.has(customer.id))
+    );
+  }, [tableValidClients, selectedIds]);
+
+  const someVisibleSelected = useMemo(() => {
+    return tableValidClients.some((customer) => selectedIds.has(customer.id));
+  }, [tableValidClients, selectedIds]);
 
   const unitCost = useMemo(
     () =>
@@ -326,14 +303,185 @@ export function WhatsappMessaginCapaing() {
   const isMissingRequiredImageUrl =
     selectedTemplateNeedsImage && !hasHeaderImageUrl;
 
+  const hasActiveFilters =
+    hasCustomerQueryActive(cleanQuery) || phoneFilter !== "valid";
+
+  const handleCustomerQueryChange = useCallback(
+    (patch: Partial<CustomersCampaingQuery>) => {
+      setCustomerQuery((prev) => {
+        const next: CustomersCampaingQuery = {
+          ...prev,
+          ...patch,
+        };
+
+        if (
+          Object.prototype.hasOwnProperty.call(patch, "departamento") &&
+          patch.departamento !== prev.departamento
+        ) {
+          next.municipio = undefined;
+          next.sector = undefined;
+        }
+
+        if (
+          Object.prototype.hasOwnProperty.call(patch, "municipio") &&
+          patch.municipio !== prev.municipio
+        ) {
+          next.sector = undefined;
+        }
+
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleCustomerNameChange = useCallback((nombre: string) => {
+    setCustomerQuery((prev) => ({
+      ...prev,
+      nombre,
+    }));
+  }, []);
+
+  const handleClearCustomerQuery = useCallback(() => {
+    setCustomerQuery({});
+    setPhoneFilter("valid");
+  }, []);
+
+  const handleClearSelectedCustomers = useCallback(() => {
+    setSelectedIds(new Set<number>());
+  }, []);
+
+  const handleToggleId = useCallback(
+    (id: number) => {
+      const customer =
+        customersCacheById.get(id) ??
+        clientsByPhoneFilter.find((item) => item.id === id);
+
+      if (!customer?.isValidPhone) return;
+
+      setCustomersCacheById((prev) => {
+        const next = new Map(prev);
+        next.set(customer.id, customer);
+        return next;
+      });
+
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+
+        return next;
+      });
+    },
+    [clientsByPhoneFilter, customersCacheById],
+  );
+
+  const handleToggleAllVisible = useCallback(
+    (checked: boolean) => {
+      const validVisibleCustomers = clientsByPhoneFilter.filter(
+        (customer) => customer.isValidPhone,
+      );
+
+      setCustomersCacheById((prev) => {
+        const next = new Map(prev);
+
+        validVisibleCustomers.forEach((customer) => {
+          next.set(customer.id, customer);
+        });
+
+        return next;
+      });
+
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+
+        validVisibleCustomers.forEach((customer) => {
+          if (checked) {
+            next.add(customer.id);
+          } else {
+            next.delete(customer.id);
+          }
+        });
+
+        return next;
+      });
+    },
+    [clientsByPhoneFilter],
+  );
+
+  const handleSelectedIdsChange = useCallback(
+    (nextVisibleSelectedIds: Set<number>) => {
+      const visibleIds = new Set(
+        clientsByPhoneFilter.map((customer) => customer.id),
+      );
+
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+
+        visibleIds.forEach((id) => {
+          next.delete(id);
+        });
+
+        nextVisibleSelectedIds.forEach((id) => {
+          next.add(id);
+        });
+
+        return next;
+      });
+    },
+    [clientsByPhoneFilter],
+  );
+
+  const handleResetAfterSuccess = useCallback(() => {
+    setSelectedTemplate(null);
+    setSendMode("SELECTED");
+    setSelectedIds(new Set<number>());
+    setCustomersCacheById(new Map());
+    setSelectionTab("select");
+
+    setCustomerQuery({});
+    setPhoneFilter("valid");
+
+    setSimulateQty("");
+    setHeaderImageUrl("");
+
+    setConfirmOpen(false);
+    setPayloadOpen(false);
+
+    setTemplateFilters({
+      name: "",
+      language: "ALL",
+      category: "ALL",
+      status: "APPROVED",
+    });
+  }, []);
+
+  const handleRemoveSelectedCustomer = useCallback((customerId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(customerId);
+      return next;
+    });
+  }, []);
+
   const payload = useMemo<CampaignPayload | null>(() => {
     if (!selectedTemplate) return null;
+
+    const cleanHeaderImageUrl = headerImageUrl.trim();
 
     return {
       templateId: selectedTemplate.id,
       templateName: selectedTemplate.name,
       templateLanguage: selectedTemplate.language,
       templateCategory: selectedTemplate.category as WhatsappTemplateCategory,
+
+      headerImageUrl: selectedTemplateNeedsImage
+        ? cleanHeaderImageUrl
+        : undefined,
 
       sendMode,
       customerIds: selectedClients.map((customer) => customer.id),
@@ -362,6 +510,8 @@ export function WhatsappMessaginCapaing() {
     };
   }, [
     selectedTemplate,
+    selectedTemplateNeedsImage,
+    headerImageUrl,
     sendMode,
     selectedClients,
     unitCost,
@@ -369,46 +519,12 @@ export function WhatsappMessaginCapaing() {
     cleanQuery.nombre,
     phoneFilter,
   ]);
+
   const isReadyToSend =
     selectedTemplate !== null &&
     selectedTemplate.status === "APPROVED" &&
     selectedClients.length > 0 &&
     !isMissingRequiredImageUrl;
-
-  const handleToggleId = useCallback((id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-
-      return next;
-    });
-  }, []);
-
-  const handleToggleAllVisible = useCallback(
-    (checked: boolean) => {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-
-        clientsByPhoneFilter
-          .filter((customer) => customer.isValidPhone)
-          .forEach((customer) => {
-            if (checked) {
-              next.add(customer.id);
-            } else {
-              next.delete(customer.id);
-            }
-          });
-
-        return next;
-      });
-    },
-    [clientsByPhoneFilter],
-  );
 
   const handleConfirmSend = useCallback(async () => {
     if (!payload) return;
@@ -442,23 +558,6 @@ export function WhatsappMessaginCapaing() {
       console.error("Error enviando campaña", error);
     }
   }, [payload, sendCampaignMutation, handleResetAfterSuccess]);
-
-  const tableValidClients = clientsByPhoneFilter.filter(
-    (customer) => customer.isValidPhone,
-  );
-
-  const tableInvalidCount = clientsByPhoneFilter.filter(
-    (customer) => !customer.isValidPhone,
-  ).length;
-
-  const allVisibleSelected =
-    tableValidClients.length > 0 &&
-    tableValidClients.every((customer) =>
-      effectiveSelectedIds.has(customer.id),
-    );
-
-  const hasActiveFilters =
-    hasCustomerQueryActive(cleanQuery) || phoneFilter !== "valid";
 
   return (
     <PageTransitionCrm fallbackBackTo="/" titleHeader="Envio de campañas">
@@ -582,12 +681,14 @@ export function WhatsappMessaginCapaing() {
 
               <CardContent className="p-3 pt-0">
                 <CampaignCustomerFilters
-                  query={cleanQuery}
+                  query={customerQuery}
                   departamentos={departamentos}
                   municipios={municipios}
                   sectores={sectoresFiltrados}
                   phoneFilter={phoneFilter}
+                  zonasF={zonasF}
                   onQueryChange={handleCustomerQueryChange}
+                  onNameChange={handleCustomerNameChange}
                   onPhoneFilterChange={setPhoneFilter}
                 />
               </CardContent>
@@ -601,44 +702,59 @@ export function WhatsappMessaginCapaing() {
 
                 <div className="flex items-center gap-2">
                   <Checkbox
-                    id="all-valid"
-                    checked={sendMode === "ALL_VALID"}
-                    onCheckedChange={(value) =>
-                      setSendMode(value ? "ALL_VALID" : "SELECTED")
+                    id="all-valid-visible"
+                    checked={
+                      allVisibleSelected
+                        ? true
+                        : someVisibleSelected
+                          ? "indeterminate"
+                          : false
                     }
+                    onCheckedChange={(value) => {
+                      handleToggleAllVisible(value === true);
+                    }}
                   />
 
-                  <Label htmlFor="all-valid" className="text-xs cursor-pointer">
-                    Todos los válidos ({validClients.length})
+                  <Label
+                    htmlFor="all-valid-visible"
+                    className="text-xs cursor-pointer"
+                  >
+                    Seleccionar visibles válidos ({tableValidClients.length})
                   </Label>
                 </div>
               </CardHeader>
 
               <CardContent className="p-3 pt-0 space-y-2">
-                {sendMode === "ALL_VALID" && (
-                  <div className="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 p-2">
-                    <AlertTriangle className="size-3 text-amber-600 shrink-0" />
-                    <p className="text-[11px] text-amber-800">
-                      Se enviará a todos los {validClients.length} clientes con
-                      teléfono válido dentro del filtro actual.
-                    </p>
-                  </div>
-                )}
+                <CampaignCustomerPicker
+                  customers={clientsByPhoneFilter}
+                  selectedIds={selectedIds}
+                  effectiveSelectedIds={effectiveSelectedIds}
+                  selectionTab={selectionTab}
+                  onSelectionTabChange={setSelectionTab}
+                  onSelectedIdsChange={handleSelectedIdsChange}
+                  onToggleId={handleToggleId}
+                  onToggleAllVisible={handleToggleAllVisible}
+                  tableInvalidCount={tableInvalidCount}
+                  tableValidClients={tableValidClients}
+                  allVisibleSelected={allVisibleSelected}
+                />
 
-                {sendMode === "SELECTED" && (
-                  <CampaignCustomerPicker
-                    customers={clientsByPhoneFilter}
-                    selectedIds={selectedIds}
-                    effectiveSelectedIds={effectiveSelectedIds}
-                    selectionTab={selectionTab}
-                    onSelectionTabChange={setSelectionTab}
-                    onSelectedIdsChange={setSelectedIds}
-                    onToggleId={handleToggleId}
-                    onToggleAllVisible={handleToggleAllVisible}
-                    tableInvalidCount={tableInvalidCount}
-                    tableValidClients={tableValidClients}
-                    allVisibleSelected={allVisibleSelected}
-                  />
+                {selectedClients.length > 0 && (
+                  <div className="flex items-center justify-between rounded-md border bg-muted/30 px-2 py-1">
+                    <span className="text-[11px] text-muted-foreground">
+                      Acumulados para enviar: {selectedClients.length}
+                    </span>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={handleClearSelectedCustomers}
+                    >
+                      Limpiar seleccionados
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -649,12 +765,84 @@ export function WhatsappMessaginCapaing() {
               <CardContent className="p-3 space-y-1">
                 <p className="text-xs font-semibold mb-2">Clientes</p>
 
-                <StatRow
-                  icon={<Send className="size-3 text-primary" />}
-                  label="Seleccionados"
-                  value={selectedClients.length}
-                  bold
-                />
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full rounded-md px-1 py-1 text-left transition-colors hover:bg-muted/60"
+                      disabled={selectedClients.length === 0}
+                    >
+                      <StatRow
+                        icon={<Send className="size-3 text-primary" />}
+                        label="Seleccionados"
+                        value={selectedClients.length}
+                        bold
+                      />
+                    </button>
+                  </DialogTrigger>
+
+                  <DialogContent className="max-w-md p-3">
+                    <DialogHeader className="space-y-1">
+                      <DialogTitle className="text-sm">
+                        Clientes seleccionados
+                      </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="max-h-80 overflow-auto rounded-md border">
+                      {selectedClients.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-muted-foreground">
+                          No hay clientes seleccionados.
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {selectedClients.map((customer) => (
+                            <div
+                              key={customer.id}
+                              className="flex items-center justify-between gap-2 p-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-medium">
+                                  {customer.fullName || "Cliente sin nombre"}
+                                </p>
+
+                                <p className="truncate text-[11px] text-muted-foreground">
+                                  {customer.normalizedPhone || "Sin teléfono"} ·{" "}
+                                  {customer.facturasPendientes} factura(s)
+                                </p>
+                              </div>
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 shrink-0 px-2 text-[11px]"
+                                onClick={() =>
+                                  handleRemoveSelectedCustomer(customer.id)
+                                }
+                              >
+                                Quitar
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedClients.length > 0 && (
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={handleClearSelectedCustomers}
+                        >
+                          Limpiar todos
+                        </Button>
+                      </DialogFooter>
+                    )}
+                  </DialogContent>
+                </Dialog>
 
                 <Separator className="my-1" />
 

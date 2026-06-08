@@ -84,6 +84,9 @@ export function useGetCustomersCampaingWhatsapp(query: CustomersCampaingQuery) {
   return crm.useQueryApi<Array<CustomerCampaignWhatsapp>>(
     customerQkeys.filter(query),
     crm_endpoints.customer.get_customers_campaing_whatsapp,
+    {
+      params: query,
+    },
   );
 }
 

@@ -10,6 +10,7 @@ import {
   Departamentos,
   Municipios,
 } from "@/Crm/features/locations-interfaces/municipios_departamentos.interfaces";
+import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
 import { PhoneFilter } from "@/Types/whatsapp-campaing/types";
 import { useMemo } from "react";
 import ReactSelectComponent from "react-select";
@@ -60,9 +61,12 @@ type CampaignCustomerFiltersProps = {
   departamentos: Departamentos[];
   municipios: Municipios[];
   sectores: Sector[];
+  zonasF: FacturacionZona[];
   phoneFilter: PhoneFilter;
   onQueryChange: (patch: Partial<CustomersCampaingQuery>) => void;
   onPhoneFilterChange: (value: PhoneFilter) => void;
+
+  onNameChange: (nombre: string) => void;
 };
 
 function makeNumberOptions<T extends { id: number; nombre: string }>(
@@ -85,12 +89,14 @@ function findOption<T extends string | number>(
 
 export function CampaignCustomerFilters({
   query,
+  zonasF,
   departamentos,
   municipios,
   sectores,
   phoneFilter,
   onQueryChange,
   onPhoneFilterChange,
+  onNameChange,
 }: CampaignCustomerFiltersProps) {
   const estadoClienteOptions: SelectOption<EstadoCliente>[] = [
     { value: EstadoCliente.ACTIVO, label: "Activo" },
@@ -122,6 +128,11 @@ export function CampaignCustomerFilters({
 
   const sectorOptions = useMemo(() => makeNumberOptions(sectores), [sectores]);
 
+  const zonasFacturacionOptions = useMemo(
+    () => makeNumberOptions(zonasF),
+    [zonasF],
+  );
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
@@ -133,7 +144,7 @@ export function CampaignCustomerFilters({
           <Input
             id="campaign-customer-name"
             value={query.nombre ?? ""}
-            onChange={(event) => onQueryChange({ nombre: event.target.value })}
+            onChange={(event) => onNameChange(event.target.value)}
             placeholder="Buscar por nombre..."
             className="h-8 text-xs"
           />
@@ -218,7 +229,6 @@ export function CampaignCustomerFilters({
           <ReactSelectComponent
             inputId="campaign-sector"
             isClearable
-            isDisabled={!query.municipio}
             options={sectorOptions}
             value={findOption(sectorOptions, query.sector)}
             onChange={(option) =>
@@ -227,8 +237,31 @@ export function CampaignCustomerFilters({
                   (option as SelectOption<number> | null)?.value ?? undefined,
               })
             }
-            placeholder={query.municipio ? "Sector..." : "Primero municipio"}
+            placeholder={"Sector..."}
             noOptionsMessage={() => "Sin sectores"}
+            className="text-black"
+            styles={reactSelectStyles}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="campaign-sector" className="text-[11px]">
+            Zonas Fact.
+          </Label>
+
+          <ReactSelectComponent
+            inputId="campaign-sector"
+            isClearable
+            options={zonasFacturacionOptions}
+            value={findOption(zonasFacturacionOptions, query.zonaF)}
+            onChange={(option) =>
+              onQueryChange({
+                zonaF:
+                  (option as SelectOption<number> | null)?.value ?? undefined,
+              })
+            }
+            placeholder={"zonas de fac..."}
+            noOptionsMessage={() => "Sin zonas de facturación"}
             className="text-black"
             styles={reactSelectStyles}
           />

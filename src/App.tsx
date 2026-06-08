@@ -261,17 +261,17 @@ function App() {
           />
 
           <Route
-            path="/whatsapp-campaign-templates"
+            path="/crm/whatsapp-campaign-templates"
             element={adminRoute(<WhatsappTemplatesPage />)}
           />
 
           <Route
-            path="/whatsapp-campaing-create-templates"
+            path="/crm/whatsapp-campaing-create-templates"
             element={adminRoute(<WhatsappTemplateCreatePage />)}
           />
 
           <Route
-            path="/whatsapp-campaign-messaging"
+            path="/crm/whatsapp-campaign-messaging"
             element={adminRoute(<WhatsappMessaginCapaing />)}
           />
 
