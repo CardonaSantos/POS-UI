@@ -3,7 +3,11 @@ import { customerQkeys } from "./Qk";
 import { CustomerDataResponse } from "@/Crm/features/customer-response-data/customer-response-data.interface";
 import { crm } from "@/Crm/API/crmApi";
 import { crm_endpoints } from "@/Crm/API/routes/endpoints";
-import { EstadoCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
+import {
+  CustomerCampaignWhatsapp,
+  CustomersCampaingQuery,
+  EstadoCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 
 interface Cliente {
   id: number;
@@ -67,6 +71,21 @@ export function useGetCustomerToSelect() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
+    },
+  );
+}
+
+/**
+ * CONSEGUIR LOS CLIENTES CRM PARA VISTA DE CAMAPAING WHATSAPP
+ * @param query
+ * @returns
+ */
+export function useGetCustomersCampaingWhatsapp(query: CustomersCampaingQuery) {
+  return crm.useQueryApi<Array<CustomerCampaignWhatsapp>>(
+    customerQkeys.filter(query),
+    crm_endpoints.customer.get_customers_campaing_whatsapp,
+    {
+      params: query,
     },
   );
 }

@@ -5,60 +5,10 @@ import {
   Routes,
 } from "react-router-dom";
 import { Toaster } from "sonner";
-import Dashboard from "./Pages/Dashboard/Dashboard";
-import PuntoVenta from "./Pages/PuntoVenta";
-import Inventario from "./Pages/Inventario";
-// import Reportes from "./Pages/Reports/Reportes";
-import EntregasStock from "./Pages/EntregasStock";
-import Vencimientos from "./Pages/Vencimientos";
-import HistorialVentas from "./Pages/HistorialVentas";
-import Stock from "./Pages/Stock";
-import Invoice from "./components/PDF/Invoice";
-import Login from "./Pages/Auth/Login";
 import RegisterView from "./Pages/Auth/Register";
-import { ProtectedRoute } from "./components/Auth/ProtectedRoute";
 import NotFoundPage from "./Pages/NotFount/NotFoundPage";
-import AgregarProveedor from "./Pages/Provider/AgregarProveedor";
-import CreateCategory from "./Pages/Category/CreateCategory";
-import CreateSucursal from "./Pages/Sucursal/CreateSucursal";
-import ProductEditForm from "./Pages/Edit/EditProduct";
-import Sucursales from "./Pages/Sucursal/Sucursales";
-import TransferenciaProductos from "./Pages/Transferencia/TransferenciaProductos";
-import TransferenciaProductosHistorial from "./Pages/Transferencia/TransferenciaHistorial";
-import HistorialCambiosPrecio from "./Pages/HistorialPrecios/HistorialCambiosPrecio";
-import StockEdicion from "./Pages/StockEdicion/StockEdicion";
-import StockEliminaciones from "./Pages/Eliminaciones/StockEliminaciones";
-import GarantiaPage from "./components/PDF/GarantiaPage";
-import CreateCustomer from "./Pages/Customers/CreateCustomer";
 import Layout2 from "./components/Layout/Layout";
-import TicketPage from "./components/PDF/TicketPage";
-import TicketManage from "./Pages/TicketManage/TicketManage";
-import ReceiveWarrantyPage from "./Pages/Warranty/ReceiveWarrantyPage";
-import WarrantyPage from "./components/PDF/PDF-Warranty/WarrantyPage";
-import WarrantyFinalPage from "./components/PDF/WarrantyFinal/WarrantyFinalPDFPage";
-import RegistroDeposito from "./Pages/CashRegister/RegistroDeposito";
-import RegistroCaja from "./Pages/CashRegister/RegistroCaja";
-import CashRegisters from "./Pages/CashRegister/CashRegisters";
-import BalanceSucursal from "./Pages/CashRegister/BalanceSucursal";
-import UserConfig from "./Pages/Config/UserConfig";
-import SalesDeleted from "./Pages/SalesDeleted/SalesDeleted";
-import ClientHistorialPurchase from "./Pages/Client/ClientHistorialPurchase";
-import CreatePlaceholder from "./Pages/VentaCuotas/CreatePlaceholder";
-import CreateVentaCuotaForm from "./Pages/VentaCuotas/CreateVentaCuotas";
-import ContratoCredito from "./Pages/VentaCuotas/ContratoCredito";
-import EditPlaceHolder from "./Pages/VentaCuotas/EditPlaceHolder";
-import CuotasPage from "./components/PDF/Cuotas/CuotasPage";
-import { ProtectRSuperAdmin } from "./components/Auth/ProtectedRSuperAdmin";
 import { ProtectRouteAdmin } from "./components/Auth/ProtectRouteAdmin";
-import DashboardEmpleado from "./Pages/Dashboard/DashboardEmpleado";
-import RepairOrderForm from "./Pages/Reparaciones/RepairOrder";
-import ReparacionPage1 from "./components/PDF/ReparacionesPDF/ReparacionPage1";
-import ReparacionPdfPageFinal from "./components/PDF/ReparacionesPDF/ReparacionPdfPageFinal";
-import SucursalesSumary from "./Pages/Sumary/SucursalesSumary";
-// import VentasReport from "./Pages/Reports/Ventas/VentasReport";
-import Metas from "./Pages/Metas/Metas";
-import MyGoals from "./Pages/Metas/MyGoals";
-import ReportesExcel from "./Pages/Reports/Ventas/ReportesExcel";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
 import CreateCustomers from "./Crm/CrmCreateCustomers/CreateCustomers";
@@ -106,830 +56,293 @@ import ContratoBuilder from "./Crm/CrmCredito/contrato/page";
 import PrinteablePlantilla from "./Crm/CrmCredito/contrato/printeable";
 import TicketDashboard from "./Crm/CrmTickets/crm-ticket-dashboard";
 import ComprobantesMediaPage from "./Crm/CrmWhatsapp/galery-whatsapp/page";
-// import { RedirectToDashboard } from "./components/Auth/RedirectToDashboard";
+import WhatsappTemplatesPage from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/page";
+import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/create-templates/create-templates";
+import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
 
 function App() {
   const { checkAuth } = useAuthStore();
   const { checkAuthCRM } = useAuthStoreCRM();
 
   useEffect(() => {
-    checkAuth(); // Carga el estado de autenticación al iniciar
+    checkAuth();
     checkAuthCRM();
   }, []);
 
-  return (
-    <>
-      <Router>
-        {/* Notificaciones */}
-        <Toaster
-          richColors
-          expand={true}
-          closeButton={true}
-          position="top-right"
-          duration={3000}
-        />
+  const adminRoute = (element: JSX.Element) => (
+    <ProtectRouteAdmin>{element}</ProtectRouteAdmin>
+  );
 
-        <Routes>
-          {/* Redirecciona a dashboard */}
+  const crmRoute = (element: JSX.Element) => (
+    <ProtectRouteCrmUser>{element}</ProtectRouteCrmUser>
+  );
+
+  return (
+    <Router>
+      <Toaster
+        richColors
+        expand={true}
+        closeButton={true}
+        position="top-right"
+        duration={3000}
+      />
+
+      <Routes>
+        {/* ========================= */}
+        {/* RUTAS PÚBLICAS / AUTH */}
+        {/* ========================= */}
+
+        <Route path="/" element={adminRoute(<Navigate to="/crm" />)} />
+
+        {/* <Route path="/" element={<RedirectToDashboard />} /> */}
+
+        <Route path="/crm/register" element={<RegisterView />} />
+        <Route path="/crm/regist" element={<CrmRegist />} />
+        <Route path="/crm/login" element={<CrmLogin />} />
+
+        {/* ========================= */}
+        {/* RUTAS CON LAYOUT PRINCIPAL */}
+        {/* ========================= */}
+
+        <Route element={<Layout2 />}>
+          {/* ========================= */}
+          {/* DASHBOARD CRM */}
+          {/* ========================= */}
+
+          <Route path="/crm" element={crmRoute(<MainDashboardPage />)} />
+
+          {/* ========================= */}
+          {/* CLIENTES CRM */}
+          {/* ========================= */}
+
+          <Route path="/crm-clientes" element={crmRoute(<ClientesTable />)} />
+
           <Route
-            path="/"
-            element={
-              <ProtectRouteAdmin>
-                <Navigate to="/dashboard" />
-              </ProtectRouteAdmin>
-            }
+            path="/crm/cliente/:id"
+            element={crmRoute(<CustomerProfile />)}
           />
 
-          {/* <Route path="/" element={<RedirectToDashboard />} /> */}
-
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<RegisterView />} />
-          <Route path="/crm/regist" element={<CrmRegist />} />
-          <Route path="/crm/login" element={<CrmLogin />} />
-
-          <Route path="*" element={<NotFoundPage />} />
-
-          {/* Rutas protegidas con Layout */}
-          <Route element={<Layout2 />}>
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectRouteAdmin>
-                  <Dashboard />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/dashboard-empleado"
-              element={
-                <ProtectedRoute>
-                  <DashboardEmpleado />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/punto-venta"
-              element={
-                <ProtectedRoute>
-                  <PuntoVenta />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/venta/generar-factura/:id"
-              element={
-                <ProtectedRoute>
-                  <Invoice />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/add-sucursal"
-              element={
-                <ProtectRSuperAdmin>
-                  <CreateSucursal />
-                </ProtectRSuperAdmin>
-              }
-            />
-
-            <Route
-              path="/inventario"
-              element={
-                <ProtectedRoute>
-                  <Inventario />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/agregar-proveedor"
-              element={
-                <ProtectRouteAdmin>
-                  <AgregarProveedor />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/categorias"
-              element={
-                <ProtectRouteAdmin>
-                  <CreateCategory />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/adicion-stock"
-              element={
-                <ProtectedRoute>
-                  <Stock />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/reportes"
-              element={
-                <ProtectRouteAdmin>
-                  <ReportesExcel />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/entregas-stock"
-              element={
-                <ProtectRouteAdmin>
-                  <EntregasStock />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/vencimientos"
-              element={
-                <ProtectedRoute>
-                  <Vencimientos />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/historial/ventas"
-              element={
-                <ProtectedRoute>
-                  <HistorialVentas />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/editar-producto/:id"
-              element={
-                <ProtectRouteAdmin>
-                  <ProductEditForm />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/sucursal"
-              element={
-                <ProtectRouteAdmin>
-                  <Sucursales />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/transferencia"
-              element={
-                <ProtectRouteAdmin>
-                  <TransferenciaProductos />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/transferencia-historial"
-              element={
-                <ProtectRouteAdmin>
-                  <TransferenciaProductosHistorial />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/historial-cambios-precio"
-              element={
-                <ProtectedRoute>
-                  <HistorialCambiosPrecio />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/stock-edicion/:id"
-              element={
-                <ProtectRouteAdmin>
-                  <StockEdicion />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/stock-eliminaciones"
-              element={
-                <ProtectedRoute>
-                  <StockEliminaciones />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/garantía/generar-garantía/:id"
-              element={
-                <ProtectedRoute>
-                  <GarantiaPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/clientes-manage"
-              element={
-                <ProtectedRoute>
-                  <CreateCustomer />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/ticket/generar-ticket/:id"
-              element={
-                <ProtectedRoute>
-                  <TicketPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/ticket/manage"
-              element={
-                <ProtectRouteAdmin>
-                  <TicketManage />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/garantia/manage"
-              element={
-                <ProtectedRoute>
-                  <ReceiveWarrantyPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/ticket-garantia/:id"
-              element={
-                <ProtectedRoute>
-                  <WarrantyPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/garantia/comprobante-uso/:id"
-              element={
-                <ProtectedRoute>
-                  <WarrantyFinalPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/depositos-egresos/"
-              element={
-                <ProtectedRoute>
-                  <RegistroDeposito />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/registro-caja"
-              element={
-                <ProtectedRoute>
-                  <RegistroCaja />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/registros-caja"
-              element={
-                <ProtectRouteAdmin>
-                  <CashRegisters />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/historial/depositos-egresos"
-              element={
-                <ProtectRouteAdmin>
-                  <BalanceSucursal />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/config/user"
-              element={
-                <ProtectRouteAdmin>
-                  <UserConfig />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/historial/ventas-eliminaciones"
-              element={
-                <ProtectedRoute>
-                  <SalesDeleted />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/cliente-historial-compras/:id"
-              element={
-                <ProtectedRoute>
-                  <ClientHistorialPurchase />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/plantillas-venta-cuotas"
-              element={
-                <ProtectRouteAdmin>
-                  <CreatePlaceholder />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/creditos"
-              element={
-                <ProtectedRoute>
-                  <CreateVentaCuotaForm />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/imprimir/contrato/:recordId/:plantillaId"
-              element={
-                <ProtectedRoute>
-                  <ContratoCredito />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit/plantilla/:id"
-              element={
-                <ProtectRouteAdmin>
-                  <EditPlaceHolder />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/cuota/comprobante/:id"
-              element={
-                <ProtectedRoute>
-                  <CuotasPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/reparaciones"
-              element={
-                <ProtectedRoute>
-                  <RepairOrderForm />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/reparacion-comprobante/:id"
-              element={
-                <ProtectedRoute>
-                  <ReparacionPage1 />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/reparacion-comprobante-final/:id"
-              element={
-                <ProtectedRoute>
-                  <ReparacionPdfPageFinal />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/sumary"
-              element={
-                <ProtectRouteAdmin>
-                  <SucursalesSumary />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/metas"
-              element={
-                <ProtectRouteAdmin>
-                  <Metas />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/mis-metas"
-              element={
-                <ProtectRouteAdmin>
-                  <MyGoals />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            {/* RUTAS PARA EL CRM */}
-            <Route
-              path="/crm"
-              element={
-                <ProtectRouteCrmUser>
-                  <MainDashboardPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-clientes"
-              element={
-                <ProtectRouteCrmUser>
-                  <ClientesTable />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/cliente/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <CustomerProfile />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/cliente-edicion/:customerId"
-              element={
-                <ProtectRouteCrmUser>
-                  <EditCustomers />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/tickets"
-              element={
-                <ProtectRouteCrmUser>
-                  <TicketDashboard />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/crear-cliente-crm"
-              element={
-                <ProtectRouteCrmUser>
-                  <CreateCustomers />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/empresa"
-              element={
-                <ProtectRouteCrmUser>
-                  <EmpresaForm />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            {/* seccion para servicios */}
-            <Route
-              path="/crm-servicios"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmServiceManage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-servicios-internet"
-              element={
-                <ProtectRouteCrmUser>
-                  <ServicioInternetManage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-facturacion-zona"
-              element={
-                <ProtectRouteCrmUser>
-                  <FacturacionZonaManage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/tags"
-              element={
-                <ProtectRouteCrmUser>
-                  <EtiquetaTicketManage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-samples"
-              element={
-                <ProtectRouteCrmUser>
-                  <Samples1 />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/facturacion/pago-factura/:facturaId"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmPaymentFactura />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/editar"
-              element={
-                <ProtectRouteCrmUser>
-                  <FacturaEdit />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/ruta"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmRuta />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/rutas-cobro/edit/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <RutasCobroEdit />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/rutas-asignadas"
-              element={
-                <ProtectRouteCrmUser>
-                  <RutasAsignadasMain />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/factura-pago/pago-servicio-pdf/:factudaId"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmPdfPago />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/cobros-en-ruta/:rutaId"
-              element={
-                <ProtectRouteCrmUser>
-                  <RutaCobro />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-sectores"
-              element={
-                <ProtectRouteCrmUser>
-                  <SectorsManagement />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-mensajes-automaticos"
-              element={
-                <ProtectRouteCrmUser>
-                  <PlantillasMensajes />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-boleta-ticket-soporte/:ticketId"
-              element={
-                <ProtectRouteCrmUser>
-                  <BoletaTicket />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm-contrato-plantilla"
-              element={
-                // <ProtectRouteCrmUser>
-                <PlantillaContratoManage />
-                // </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/contrato/:id/vista"
-              element={
-                <ProtectRouteCrmUser>
-                  <ContratoServicioPDF />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/perfil"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmProfileConfig />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/usuarios"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmUsers />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/metas-soporte"
-              element={
-                <ProtectRouteCrmUser>
-                  <MetasTecnicosPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot"
-              element={
-                <ProtectRouteCrmUser>
-                  <BotMainPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot/whatsapp"
-              element={
-                <ProtectRouteCrmUser>
-                  <WhatsappChats />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/bot/whatsapp/galery"
-              element={
-                <ProtectRouteCrmUser>
-                  <ComprobantesMediaPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/facturas-eliminadas"
-              element={
-                <ProtectRouteCrmUser>
-                  <DeletedInvoicesView />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/olt"
-              element={
-                <ProtectRouteAdmin>
-                  <OltMainPage />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/crm/routers"
-              element={
-                <ProtectRouteAdmin>
-                  <RouterMainPage />
-                </ProtectRouteAdmin>
-              }
-            />
-
-            <Route
-              path="/crm/reports"
-              element={
-                <ProtectRouteCrmUser>
-                  <ReportsMainPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/tec-dashboard"
-              element={
-                <ProtectRouteCrmUser>
-                  <TecDashboard />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/ticket-detalles/:id"
-              element={
-                <ProtectRouteCrmUser>
-                  <TicketAsignadoDetails />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/credito"
-              element={
-                <ProtectRouteCrmUser>
-                  <CrmCreditoMainPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/credito-registros"
-              element={
-                <ProtectRouteCrmUser>
-                  <CreditosMainPage />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/credito/:creditoId"
-              element={
-                <ProtectRouteCrmUser>
-                  <CreditoDetails />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/contrato/:creditoId/:plantillaId"
-              element={
-                <ProtectRouteCrmUser>
-                  <PrinteablePlantilla />
-                </ProtectRouteCrmUser>
-              }
-            />
-
-            <Route
-              path="/crm/contrato"
-              element={
-                <ProtectRouteCrmUser>
-                  <ContratoBuilder />
-                </ProtectRouteCrmUser>
-              }
-            />
-          </Route>
-        </Routes>
-      </Router>
-    </>
+          <Route
+            path="/crm/cliente-edicion/:customerId"
+            element={crmRoute(<EditCustomers />)}
+          />
+
+          <Route
+            path="/crm/crear-cliente-crm"
+            element={crmRoute(<CreateCustomers />)}
+          />
+
+          {/* ========================= */}
+          {/* EMPRESA / PERFIL / USUARIOS */}
+          {/* ========================= */}
+
+          <Route path="/crm/empresa" element={crmRoute(<EmpresaForm />)} />
+
+          <Route path="/crm/perfil" element={crmRoute(<CrmProfileConfig />)} />
+
+          <Route path="/crm/usuarios" element={crmRoute(<CrmUsers />)} />
+
+          {/* ========================= */}
+          {/* SERVICIOS / INTERNET / ZONAS */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm-servicios"
+            element={crmRoute(<CrmServiceManage />)}
+          />
+
+          <Route
+            path="/crm-servicios-internet"
+            element={crmRoute(<ServicioInternetManage />)}
+          />
+
+          <Route
+            path="/crm-facturacion-zona"
+            element={crmRoute(<FacturacionZonaManage />)}
+          />
+
+          <Route
+            path="/crm-sectores"
+            element={crmRoute(<SectorsManagement />)}
+          />
+
+          {/* ========================= */}
+          {/* TICKETS / SOPORTE */}
+          {/* ========================= */}
+
+          <Route path="/crm/tickets" element={crmRoute(<TicketDashboard />)} />
+
+          <Route
+            path="/crm/tags"
+            element={crmRoute(<EtiquetaTicketManage />)}
+          />
+
+          <Route
+            path="/crm-boleta-ticket-soporte/:ticketId"
+            element={crmRoute(<BoletaTicket />)}
+          />
+
+          <Route
+            path="/crm/metas-soporte"
+            element={crmRoute(<MetasTecnicosPage />)}
+          />
+
+          <Route
+            path="/crm/tec-dashboard"
+            element={crmRoute(<TecDashboard />)}
+          />
+
+          <Route
+            path="/crm/ticket-detalles/:id"
+            element={crmRoute(<TicketAsignadoDetails />)}
+          />
+
+          {/* ========================= */}
+          {/* FACTURACIÓN / PAGOS */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm/facturacion/pago-factura/:facturaId"
+            element={crmRoute(<CrmPaymentFactura />)}
+          />
+
+          <Route path="/crm/editar" element={crmRoute(<FacturaEdit />)} />
+
+          <Route
+            path="/crm/factura-pago/pago-servicio-pdf/:factudaId"
+            element={crmRoute(<CrmPdfPago />)}
+          />
+
+          <Route
+            path="/crm/facturas-eliminadas"
+            element={crmRoute(<DeletedInvoicesView />)}
+          />
+
+          {/* ========================= */}
+          {/* RUTAS / COBROS EN RUTA */}
+          {/* ========================= */}
+
+          <Route path="/crm/ruta" element={crmRoute(<CrmRuta />)} />
+
+          <Route
+            path="/crm/rutas-cobro/edit/:id"
+            element={crmRoute(<RutasCobroEdit />)}
+          />
+
+          <Route
+            path="/crm/rutas-asignadas"
+            element={crmRoute(<RutasAsignadasMain />)}
+          />
+
+          <Route
+            path="/crm/cobros-en-ruta/:rutaId"
+            element={crmRoute(<RutaCobro />)}
+          />
+
+          {/* ========================= */}
+          {/* MENSAJES / BOT / WHATSAPP */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm-mensajes-automaticos"
+            element={crmRoute(<PlantillasMensajes />)}
+          />
+
+          <Route path="/crm/bot" element={crmRoute(<BotMainPage />)} />
+
+          <Route
+            path="/crm/bot/whatsapp"
+            element={crmRoute(<WhatsappChats />)}
+          />
+
+          <Route
+            path="/crm/bot/whatsapp/galery"
+            element={crmRoute(<ComprobantesMediaPage />)}
+          />
+
+          <Route
+            path="/crm/whatsapp-campaign-templates"
+            element={adminRoute(<WhatsappTemplatesPage />)}
+          />
+
+          <Route
+            path="/crm/whatsapp-campaing-create-templates"
+            element={adminRoute(<WhatsappTemplateCreatePage />)}
+          />
+
+          <Route
+            path="/crm/whatsapp-campaign-messaging"
+            element={adminRoute(<WhatsappMessaginCapaing />)}
+          />
+
+          {/* ========================= */}
+          {/* CONTRATOS / PLANTILLAS */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm-contrato-plantilla"
+            element={<PlantillaContratoManage />}
+          />
+
+          <Route
+            path="/crm/contrato/:id/vista"
+            element={crmRoute(<ContratoServicioPDF />)}
+          />
+
+          <Route
+            path="/crm/contrato/:creditoId/:plantillaId"
+            element={crmRoute(<PrinteablePlantilla />)}
+          />
+
+          <Route path="/crm/contrato" element={crmRoute(<ContratoBuilder />)} />
+
+          {/* ========================= */}
+          {/* CRÉDITOS */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm/credito"
+            element={crmRoute(<CrmCreditoMainPage />)}
+          />
+
+          <Route
+            path="/crm/credito-registros"
+            element={crmRoute(<CreditosMainPage />)}
+          />
+
+          <Route
+            path="/crm/credito/:creditoId"
+            element={crmRoute(<CreditoDetails />)}
+          />
+
+          {/* ========================= */}
+          {/* ADMIN / RED / EQUIPOS */}
+          {/* ========================= */}
+
+          <Route path="/crm/olt" element={adminRoute(<OltMainPage />)} />
+
+          <Route path="/crm/routers" element={adminRoute(<RouterMainPage />)} />
+
+          {/* ========================= */}
+          {/* REPORTES */}
+          {/* ========================= */}
+
+          <Route path="/crm/reports" element={crmRoute(<ReportsMainPage />)} />
+
+          {/* ========================= */}
+          {/* SAMPLES / PRUEBAS */}
+          {/* ========================= */}
+
+          <Route path="/crm-samples" element={crmRoute(<Samples1 />)} />
+        </Route>
+
+        {/* ========================= */}
+        {/* NOT FOUND */}
+        {/* ========================= */}
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Router>
   );
 }
 

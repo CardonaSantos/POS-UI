@@ -6,6 +6,8 @@ export const crm_endpoints = {
 
   customer: {
     create: "/internet-customer/create-new-customer",
+
+    get_customers_campaing_whatsapp: "/internet-customer/whatsapp-campaing",
   },
 
   zonas_facturacion: {
