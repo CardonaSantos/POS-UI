@@ -11,6 +11,8 @@ export interface GetCustomersQueryDto {
   depaSelected?: number;
   sectorSelected?: number;
   estadoSelected?: string;
+
+  estadoCobranzaSelected?: string;
 }
 
 interface Summary {

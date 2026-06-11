@@ -8,6 +8,7 @@ import { TicketCounter } from "./TicketCounter";
 import type { TicketFiltersProps } from "./ticket-filters.types";
 import CrmCreateTicket from "../CreateTickets/CrmCreateTicket";
 import { FilterTecnico } from "./FilterTecnico";
+import { FilterSector } from "./FilterSector";
 
 export default function TicketFilters({
   ticketsTotal,
@@ -25,6 +26,9 @@ export default function TicketFilters({
   handleChangeLabels,
   setOpenCreateT,
   getTickets,
+  sectores,
+  sectorSelected,
+  handleChangeSector,
 }: TicketFiltersProps) {
   return (
     <div className="w-full border-b border-gray-100  px-3 py-1.5">
@@ -46,6 +50,19 @@ export default function TicketFilters({
           etiquetasSelecteds={etiquetasSelecteds}
           onChange={handleChangeLabels}
         />
+
+        <FilterEtiquetas
+          etiquetas={etiquetas}
+          etiquetasSelecteds={etiquetasSelecteds}
+          onChange={handleChangeLabels}
+        />
+
+        <FilterSector
+          onChange={handleChangeSector}
+          sector={sectores}
+          sectorSelected={sectorSelected}
+        />
+
         <FilterVista onChange={onQuickViewChange} />
         <span className="flex-1" />
         <TicketCounter total={ticketsTotal} label="tickets activos" />

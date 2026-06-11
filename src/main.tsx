@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
-import "./index.css";
 import { ThemeProvider } from "./components/theme-provider.tsx";
 // import { SocketProvider } from "./components/Context/SocketContext.tsx";
 import { GoogleMapsProvider } from "./Crm/CrmRutas/CrmRutasCobro/GoogleMapsProvider .tsx";
@@ -13,6 +12,9 @@ import {
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "./utils/getApiAxiosMessage.ts";
 import { SocketProvider } from "./Crm/WEB/SocketProvider.tsx";
+import "./index.css";
+import "@/components/app/theme/app-theme.css";
+
 const VITE_WS_URL = import.meta.env.VITE_WS_URL;
 const VITE_WS_NAMESPACE = "/ws";
 const VITE_WS_PATH = "/socket.io";
@@ -50,5 +52,5 @@ createRoot(document.getElementById("root")!).render(
         </GoogleMapsProvider>
       </SocketProvider>
     </StrictMode>
-  </ThemeProvider>
+  </ThemeProvider>,
 );
