@@ -24,6 +24,7 @@ import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 import TicketFilters from "./filters/TicketFilters";
 import TicketDetail from "./ticket-detail/TicketDetail";
 import OperativoMainPage from "./components/operativo/page";
+import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
 
 export default function TicketDashboard() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
@@ -44,6 +45,9 @@ export default function TicketDashboard() {
   const { data: rawCustomers } = useGetCustomerToSelect();
   const { data: rawTags } = useGetTagsTicket();
   const { data: rawTecs } = useGetUsersToSelect();
+
+  const { data: sectores = [] } = useGetSectores();
+
   const ticketsSoporte = rawTickets?.data ? rawTickets.data : [];
 
   const meta = useMemo(() => {
@@ -136,6 +140,14 @@ export default function TicketDashboard() {
     setFilters((prev) => ({
       ...prev,
       tags: selectedIds.length ? selectedIds : undefined,
+      page: 1,
+    }));
+  };
+
+  const handleChangeSector = (sectorId: number | undefined) => {
+    setFilters((prev) => ({
+      ...prev,
+      sector: sectorId,
       page: 1,
     }));
   };
@@ -247,6 +259,9 @@ export default function TicketDashboard() {
             dateRangeStart={filters.fechaInicio}
             dateRangeEnd={filters.fechaFin}
             handleChangeDates={handleChangeDates}
+            sectorSelected={filters.sector ?? undefined}
+            sectores={sectores}
+            handleChangeSector={handleChangeSector}
           />
 
           {/* CONTENT AREA */}
@@ -294,7 +309,6 @@ export default function TicketDashboard() {
         </div>
       ),
     },
-
     {
       label: "OPERATIVO",
       value: "operativo",

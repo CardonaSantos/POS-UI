@@ -36,6 +36,8 @@ export class QuerySearchTickets {
 
   tecs?: number[];
 
+  sector?: number;
+
   fechaInicio?: Date;
 
   fechaFin?: Date;

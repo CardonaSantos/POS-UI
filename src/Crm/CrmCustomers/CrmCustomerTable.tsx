@@ -101,11 +101,15 @@ const estadosConDescripcion = [
   { value: "EN_INSTALACION", label: "EN INSTALACION" },
 ];
 
-export default function ClientesTable() {
-  // Dentro de ClientesTable
-  const [searchParams, setSearchParams] = useSearchParams();
+const estadosCobranza = [
+  { value: "AL_DIA", label: "AL DIA" },
+  { value: "PAGO_PENDIENTE", label: "PAGO PENDIENTE" },
+  { value: "ATRASADO", label: "ATRASADO" },
+  { value: "MOROSO", label: "MOROSO" },
+];
 
-  // Función para actualizar la URL sin perder otros parámetros
+export default function ClientesTable() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const updateQueryParams = (
     newParams: Record<string, string | number | null | undefined>,
   ) => {
@@ -122,11 +126,11 @@ export default function ClientesTable() {
     setSearchParams(params, { replace: true });
   };
 
-  //--------------------------------------------
-
   const [searchParam] = useSearchParams();
   const estadoFromUrl = searchParam.get("estado");
-  const atBottom = useWindowScrollPosition(); // Asumo que este hook existe
+  const estCobranzaFromUrl = searchParam.get("estadoCobranza");
+
+  const atBottom = useWindowScrollPosition();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
@@ -136,7 +140,6 @@ export default function ClientesTable() {
     clasificacionCredito: false,
   });
 
-  // -- Estado de Filtros (UI) --
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [depaSelected, setDepaSelected] = useState<string | null>(
     searchParams.get("dep") || "8",
@@ -154,8 +157,11 @@ export default function ClientesTable() {
     searchParams.get("est") || estadoFromUrl || null,
   );
 
+  const [estadoCobranzaSelected, setEstadoCobranzaSelected] = useState<
+    string | null
+  >(searchParams.get("estCobranza") || estCobranzaFromUrl || null);
+
   const [pagination, setPagination] = useState({
-    // URL usa base 1, TanStack usa base 0
     pageIndex: Number(searchParams.get("p"))
       ? Number(searchParams.get("p")) - 1
       : 0,
@@ -216,8 +222,6 @@ export default function ClientesTable() {
   );
 
   const [debouncedSearch] = useDebounce(search, 500);
-
-  // Persistir filtros en la URL cuando cambien
   useEffect(() => {
     updateQueryParams({
       q: debouncedSearch,
@@ -226,7 +230,7 @@ export default function ClientesTable() {
       sec: sectorSelected,
       zona: zonaFactSelected,
       est: estadoSelected,
-      p: pagination.pageIndex + 1, // Guardamos en base 1 para que sea legible
+      p: pagination.pageIndex + 1,
       l: pagination.pageSize,
     });
   }, [
@@ -252,6 +256,7 @@ export default function ClientesTable() {
         ? Number(zonaFactSelected)
         : undefined,
       estadoSelected: estadoSelected || undefined,
+      estadoCobranzaSelected: estadoCobranzaSelected || undefined,
     }),
     [
       pagination,
@@ -261,6 +266,7 @@ export default function ClientesTable() {
       sectorSelected,
       zonaFactSelected,
       estadoSelected,
+      estadoCobranzaSelected,
     ],
   );
 
@@ -278,7 +284,6 @@ export default function ClientesTable() {
   const handleResetPagination = () =>
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
 
-  // -- Handlers de Selects --
   const handleSelectDepartamento = (opt: OptionSelected | null) => {
     setDepaSelected(opt?.value ?? null);
     setMuniSelected(null);
@@ -307,6 +312,11 @@ export default function ClientesTable() {
     handleResetPagination();
   };
 
+  const handleSelectEstadoCobranza = (opt: OptionSelected | null) => {
+    setEstadoCobranzaSelected(opt?.value ?? null);
+    handleResetPagination();
+  };
+
   const handleToggleScroll = () => {
     window.scrollTo({
       top: atBottom ? 0 : document.documentElement.scrollHeight,
@@ -314,7 +324,6 @@ export default function ClientesTable() {
     });
   };
 
-  // -- Handler de Ordenamiento --
   const fieldMapping: Record<string, keyof ClienteTableDto> = {
     ip: "direccionIp",
     nombre: "nombreCompleto",
@@ -364,9 +373,9 @@ export default function ClientesTable() {
   const compactSelectStyles = {
     control: (base: any) => ({
       ...base,
-      minHeight: "32px", // Altura reducida
+      minHeight: "32px",
       height: "32px",
-      fontSize: "0.75rem", // text-xs
+      fontSize: "0.75rem",
     }),
     valueContainer: (base: any) => ({
       ...base,
@@ -390,9 +399,6 @@ export default function ClientesTable() {
 
   const selectedIds = Object.keys(table.getState().rowSelection);
 
-  console.log("Los ids de los clientes seleccionados son: ", selectedIds);
-  console.log("Los clientes son: ", clientes);
-
   return (
     <PageTransitionCrm
       titleHeader="Lista de clientes"
@@ -414,7 +420,6 @@ export default function ClientesTable() {
               placeholder="Buscar (Nombre, Tel, DPI, IP)..."
               className="h-6 w-full pl-8 pr-8 text-xs  "
             />
-            {/* 2. Botón Limpiar (A la derecha, solo si hay texto) */}
             {search && (
               <button
                 onClick={() => {
@@ -431,14 +436,13 @@ export default function ClientesTable() {
           </div>
 
           <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between p-2 rounded-lg border border-gray-100 ">
-            {/* Controles de filtrado */}
             <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5 xl:w-auto xl:flex-1">
               {/* Departamento */}
               <ReactSelectComponent
                 placeholder="Departamento"
                 isClearable
                 options={optionsDepartamentos}
-                styles={compactSelectStyles} // Aplicamos estilo compacto
+                styles={compactSelectStyles}
                 value={
                   depaSelected
                     ? {
@@ -498,13 +502,27 @@ export default function ClientesTable() {
 
               {/* Estado */}
               <ReactSelectComponent
-                placeholder="Estado"
+                placeholder="Operativo"
                 options={estadosConDescripcion}
                 styles={compactSelectStyles}
                 onChange={handleSelectEstado}
                 value={
                   estadosConDescripcion.find(
                     (opt) => opt.value === estadoSelected,
+                  ) || null
+                }
+                isClearable
+                className="text-xs text-black min-w-[120px]"
+              />
+
+              <ReactSelectComponent
+                placeholder="Cobranza"
+                options={estadosCobranza}
+                styles={compactSelectStyles}
+                onChange={handleSelectEstadoCobranza}
+                value={
+                  estadosCobranza.find(
+                    (opt) => opt.value === estadoCobranzaSelected,
                   ) || null
                 }
                 isClearable
@@ -547,7 +565,6 @@ export default function ClientesTable() {
                 />
               </div>
 
-              {/* Items por página (Shadcn Select optimizado) */}
               <div className="w-[80px]">
                 <Select
                   onValueChange={(value) =>
@@ -572,7 +589,6 @@ export default function ClientesTable() {
                 </Select>
               </div>
 
-              {/* Column Toggle (Tu componente nuevo) */}
               <div className="">
                 <ColumnToggle table={table} />
               </div>
@@ -640,17 +656,13 @@ export default function ClientesTable() {
 }
 interface PropsMenu {
   selectedIds: Array<string>;
-  onClearSelection?: () => void; // Opcional: para limpiar selección al terminar
+  onClearSelection?: () => void;
 }
 
 const OptionsSelectedMenu = ({ selectedIds, onClearSelection }: PropsMenu) => {
-  // 1. Inicializamos los Hooks
   const exportInfoMutation = useGenerateInfoReport();
   const exportPagosMutation = useGenerateHistorialPagos();
-
-  // Helper para procesar la descarga
   const handleExportInfo = () => {
-    // Convertimos IDs de string a number para el DTO
     const idsNumericos = selectedIds.map((id) => Number(id));
 
     exportInfoMutation.mutateAsync(

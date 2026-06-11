@@ -59,6 +59,7 @@ import ComprobantesMediaPage from "./Crm/CrmWhatsapp/galery-whatsapp/page";
 import WhatsappTemplatesPage from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/page";
 import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/create-templates/create-templates";
 import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
+import Testeos from "./components/testeos";
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -171,6 +172,8 @@ function App() {
           {/* ========================= */}
 
           <Route path="/crm/tickets" element={crmRoute(<TicketDashboard />)} />
+
+          <Route path="/crm/testeos" element={crmRoute(<Testeos />)} />
 
           <Route
             path="/crm/tags"

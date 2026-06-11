@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { MultiValue, SingleValue } from "react-select";
@@ -61,9 +60,6 @@ export default function TicketDetail({
   const deleteTicket = useDeleteTicket(ticket.id);
   const updateTicket = useUpdateTicket(ticketEdit.id);
   const postCommentary = usePostCommentary();
-  useEffect(() => {
-    setTicketEdit(ticket);
-  }, [ticket]);
 
   const formCloseTicket = useForm<TicketResumenSchemaType>({
     defaultValues: {
@@ -73,6 +69,17 @@ export default function TicketDetail({
       notasInternas: "",
     },
   });
+
+  useEffect(() => {
+    setTicketEdit(ticket);
+
+    formCloseTicket.reset({
+      ticketId: ticket.id,
+      solucionId: null,
+      resueltoComo: "",
+      notasInternas: "",
+    });
+  }, [ticket.id]);
 
   const handleClose = () => setSelectedTicketId(null);
 
@@ -199,21 +206,33 @@ export default function TicketDetail({
   };
 
   const handleCloseTicket = async (data: TicketResumenSchemaType) => {
+    const payload: TicketResumenSchemaType = {
+      ...data,
+      ticketId: ticket.id,
+    };
+
     try {
-      await toast.promise(create_ticket_resumen.mutateAsync(data), {
+      console.log("Ticket visible:", ticket.id);
+      console.log("Ticket enviado a cerrar:", payload.ticketId);
+
+      await toast.promise(create_ticket_resumen.mutateAsync(payload), {
         loading: "Cerrando ticket...",
         success: "Ticket cerrado",
         error: (error) => getApiErrorMessageAxios(error),
       });
 
-      setSelectedTicketId(null);
+      await q.invalidateQueries({
+        queryKey: ticketsSoporteQkeys.search(query),
+      });
+
       setOpenClose(false);
+      setSelectedTicketId(null);
 
       formCloseTicket.reset({
-        notasInternas: "",
-        resueltoComo: "",
-        solucionId: null,
         ticketId: ticket.id,
+        solucionId: null,
+        resueltoComo: "",
+        notasInternas: "",
       });
     } catch {}
   };
