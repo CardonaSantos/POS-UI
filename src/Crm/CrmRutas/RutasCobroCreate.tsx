@@ -44,7 +44,10 @@ import { RowSelectionState } from "@tanstack/react-table";
 import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
 import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
 import { CreateRutaDto } from "../features/rutas/rutas.interfaces";
 
@@ -60,9 +63,7 @@ export function RutasCobroCreate() {
 
   const [openCreate, setOpenCreate] = useState<boolean>(false);
   const empresaId = useStoreCrm((s) => s.empresaId) ?? 0;
-  // ViewModel desde el hook (server-side filters/pagination)
   const vm = useRutasCreate(empresaId);
-  // UI local: datos del formulario de la ruta
   const [nuevaRuta, setNuevaRuta] = useState<CreateRutaDto>({
     nombreRuta: "",
     EmpresaId: empresaId,
@@ -71,9 +72,6 @@ export function RutasCobroCreate() {
     observaciones: "",
     clientesIds: [],
   });
-  console.log("La nueva ruta con los seleccionados es: ", nuevaRuta);
-
-  console.log("facturas seleccionadas son: ", vm.selected);
 
   useEffect(() => {
     const next: RowSelectionState = {};
@@ -81,7 +79,7 @@ export function RutasCobroCreate() {
       if (selectedClientIds.has(String(c.id))) next[String(c.id)] = true;
     });
     setRowSelection(next);
-  }, [vm.clientes, selectedClientIds]); //  👈 añade selectedClientIds
+  }, [vm.clientes, selectedClientIds]);
 
   const recomputeTotal = (factIds: Set<string>): number => {
     let sum = 0;
@@ -131,11 +129,6 @@ export function RutasCobroCreate() {
   const selectedCount = selectedClientIds.size; // clientes seleccionados
   const totalACobrar = totalSeleccionado; // suma de facturas seleccionadas
 
-  // Derivados desde selección actual (página actual)
-  const selectedClientes = vm.clientes.filter(
-    (c) => rowSelection[String(c.id)],
-  );
-
   // Handlers de formulario
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -156,17 +149,8 @@ export function RutasCobroCreate() {
     vm.setPage(1);
   };
 
-  const facturasIds = selectedClientes
-    .flatMap((c) => c.facturas ?? [])
-    .map((f) => String(f.id));
-  console.log("Las facturas son: ", facturasIds);
-
   const createRuta = async () => {
-    const facturasIds = Array.from(selectedFacturaIds);
     const clientesIds = Array.from(selectedClientIds);
-
-    console.log("Clientes seleccionados:", clientesIds);
-    console.log("Facturas seleccionadas:", facturasIds);
 
     try {
       await vm.create({
@@ -202,7 +186,6 @@ export function RutasCobroCreate() {
     await createRuta();
   };
 
-  console.log("Los clientes son: ", vm.clientes);
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Datos de la ruta */}
@@ -379,6 +362,40 @@ export function RutasCobroCreate() {
                     </SelectItem>
                     <SelectItem value={EstadoCliente.SUSPENDIDO}>
                       Suspendido
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Estado cobranza */}
+              <div className="space-y-2">
+                <Label htmlFor="estado-filter">Estado cobranza</Label>
+                <Select
+                  onValueChange={(value) => {
+                    vm.setEstadoCobranza(
+                      value as EstadoCobranzaCliente | "TODOS",
+                    );
+                    vm.setPage(1);
+                  }}
+                  value={vm.estadoCobranza}
+                >
+                  <SelectTrigger id="estado-filter">
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODOS">Todos</SelectItem>
+                    <SelectItem value={EstadoCobranzaCliente.AL_DIA}>
+                      AL DIA
+                    </SelectItem>
+                    <SelectItem value={EstadoCobranzaCliente.PAGO_PENDIENTE}>
+                      Pago Pendiente
+                    </SelectItem>
+
+                    <SelectItem value={EstadoCobranzaCliente.ATRASADO}>
+                      Atrasados
+                    </SelectItem>
+                    <SelectItem value={EstadoCobranzaCliente.MOROSO}>
+                      Morosos
                     </SelectItem>
                   </SelectContent>
                 </Select>

@@ -61,6 +61,8 @@ import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-
 import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
 import Testeos from "./components/testeos";
 
+// COMENTARIO DE ULTIMO COMMIT
+
 function App() {
   const { checkAuth } = useAuthStore();
   const { checkAuthCRM } = useAuthStoreCRM();
