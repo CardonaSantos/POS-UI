@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { Loader2 } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { appButtonVariants } from "../theme/app-button.variants";
+import { AppLoader } from "./app-loader";
 export interface AppButtonProps
   extends
     Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "disabled">,
@@ -41,14 +41,7 @@ const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 
     const content = (
       <>
-        {loading ? (
-          <Loader2
-            className="h-3.5 w-3.5 shrink-0 animate-spin"
-            aria-hidden="true"
-          />
-        ) : (
-          leftIcon
-        )}
+        {loading ? <AppLoader size="sm" tone="current" /> : leftIcon}
 
         {loading && loadingText ? loadingText : children}
 

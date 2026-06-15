@@ -76,6 +76,13 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
       value: <StatusBadge status={cliente.estadoCliente} />,
       icon: UserCheck,
     },
+
+    {
+      label: "Estado Cobranza",
+      value: <StatusBadge status={cliente.estadoCobranza} />,
+      icon: Wallet,
+    },
+
     {
       label: "Servicio Mikrotik",
       value: (
@@ -157,14 +164,14 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
     {
       label: "Plan",
       value: cliente.servicio?.nombre,
-      icon: Globe, // Un globo terráqueo representa mejor el acceso a "la red" que un paquete de envíos.
+      icon: Globe,
     },
     {
       label: "Precio Mensual",
       value: cliente.servicio?.precio
         ? formattMonedaGT(cliente.servicio.precio)
         : null,
-      icon: Wallet, // Mucho más claro para representar dinero/pagos que una etiqueta (Tag).
+      icon: Wallet,
     },
 
     {
@@ -172,18 +179,18 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
       value: cliente.fechaInstalacion
         ? format(new Date(cliente.fechaInstalacion), "PPP", { locale: es })
         : null,
-      icon: Wrench, // Una llave inglesa le da ese toque "técnico/físico" de que alguien fue a instalarlo. (CalendarCheck también es buena opción).
+      icon: Wrench,
       divider: true,
     },
     {
       label: "SSID Wi-Fi",
       value: cliente.ssidRouter,
-      icon: Router, // Un enrutador físico distingue bien la señal de red del aparato en sí. (Wifi también es perfecto si prefieres mantenerlo).
+      icon: Router,
     },
     {
       label: "Contraseña",
       value: cliente.contrasenaWifi,
-      icon: Key, // Una llave suele ser más directa para "credenciales" de acceso que un candado cerrado.
+      icon: Key,
     },
   ];
 
@@ -226,13 +233,13 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
     <div className="space-y-4 pb-4">
       {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-1">
-        {/* BLOQUE IZQUIERDO: Lo más urgente (Identidad, Estado Financiero, Facturación) */}
+        {/* BLOQUE IZQUIERDO: Lo más urgente  */}
         <div className="space-y-4 lg:space-y-1">
           <InfoCard
             title="Estado y Saldos"
             icon={Activity}
             items={estadoItems}
-            className="border-primary/20 bg-primary/5 dark:bg-primary/10" // Le damos un tinte ligero para resaltarlo
+            className="border-primary/20 bg-primary/5 dark:bg-primary/10"
             action={
               <Link to={`/crm/credito?clienteId=${cliente.id}`}>
                 <Button

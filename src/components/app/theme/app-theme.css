@@ -166,6 +166,144 @@
 
   --app-checkbox-indeterminate-bg: var(--app-primary);
   --app-checkbox-indeterminate-foreground: var(--app-primary-foreground);
+
+  /* BADGE ========================> */
+  /* =========================
+   INFO COLORS
+========================= */
+  --app-info: 217 91% 60%;
+  --app-info-hover: 217 91% 54%;
+  --app-info-foreground: 0 0% 100%;
+
+  /* =========================
+   SHADOWS
+   Por defecto no se usan, pero quedan disponibles.
+========================= */
+  --app-shadow-none: none;
+  --app-shadow-xs: 0 1px 1px rgb(0 0 0 / 0.04);
+  --app-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+
+  /* =========================
+   BADGE
+========================= */
+  --app-badge-height-xs: 1rem;
+  --app-badge-height-sm: 1.25rem;
+  --app-badge-height-md: 1.5rem;
+  --app-badge-height-lg: 1.75rem;
+
+  --app-badge-px-xs: 0.375rem;
+  --app-badge-px-sm: 0.5rem;
+  --app-badge-px-md: 0.625rem;
+  --app-badge-px-lg: 0.75rem;
+
+  --app-badge-gap: 0.25rem;
+
+  --app-badge-dot-xs: 0.375rem;
+  --app-badge-dot-sm: 0.425rem;
+  --app-badge-dot-md: 0.5rem;
+  --app-badge-dot-lg: 0.55rem;
+
+  /* Neutral badge */
+  --app-badge-neutral-bg: 210 40% 96%;
+  --app-badge-neutral-bg-hover: 210 40% 92%;
+  --app-badge-neutral-foreground: 222 47% 11%;
+  --app-badge-neutral-border: 214 32% 88%;
+
+  /* Soft backgrounds */
+  --app-badge-primary-soft-bg: 160 62% 92%;
+  --app-badge-primary-soft-foreground: 160 70% 26%;
+
+  --app-badge-success-soft-bg: 145 63% 92%;
+  --app-badge-success-soft-foreground: 145 70% 24%;
+
+  --app-badge-warning-soft-bg: 42 95% 90%;
+  --app-badge-warning-soft-foreground: 30 85% 25%;
+
+  --app-badge-danger-soft-bg: 0 72% 93%;
+  --app-badge-danger-soft-foreground: 0 72% 36%;
+
+  --app-badge-info-soft-bg: 217 91% 93%;
+  --app-badge-info-soft-foreground: 217 80% 35%;
+
+  /* ===== DOT BADGE ========> */
+  /* =========================
+   STATUS DOT
+========================= */
+  --app-status-dot-size-xs: 0.375rem;
+  --app-status-dot-size-sm: 0.5rem;
+  --app-status-dot-size-md: 0.625rem;
+  --app-status-dot-size-lg: 0.75rem;
+
+  --app-status-dot-ring-width: 0.1875rem;
+
+  --app-status-dot-neutral: var(--app-muted-foreground);
+  --app-status-dot-primary: var(--app-primary);
+  --app-status-dot-success: var(--app-success);
+  --app-status-dot-warning: var(--app-warning);
+  --app-status-dot-danger: var(--app-danger);
+  --app-status-dot-info: var(--app-info);
+
+  --app-status-dot-neutral-ring: 215 16% 47%;
+  --app-status-dot-primary-ring: 160 62% 43%;
+  --app-status-dot-success-ring: 145 63% 39%;
+  --app-status-dot-warning-ring: 38 92% 50%;
+  --app-status-dot-danger-ring: 0 72% 51%;
+  --app-status-dot-info-ring: 217 91% 60%;
+
+  /* ===== LOADER =====>  */
+  /* =========================
+   LOADER
+========================= */
+  --app-loader-size-xs: 0.75rem;
+  --app-loader-size-sm: 0.875rem;
+  --app-loader-size-md: 1rem;
+  --app-loader-size-lg: 1.25rem;
+  --app-loader-size-xl: 1.5rem;
+
+  --app-loader-stroke-xs: 2;
+  --app-loader-stroke-sm: 2;
+  --app-loader-stroke-md: 2.25;
+  --app-loader-stroke-lg: 2.5;
+  --app-loader-stroke-xl: 2.75;
+
+  --app-loader-primary: var(--app-primary);
+  --app-loader-neutral: var(--app-muted-foreground);
+  --app-loader-success: var(--app-success);
+  --app-loader-warning: var(--app-warning);
+  --app-loader-danger: var(--app-danger);
+  --app-loader-info: var(--app-info);
+
+  /* =========================
+   SELECT REACT SELECT
+========================= */
+  --app-select-menu-bg: 0 0% 100%;
+  --app-select-menu-border: 214 32% 91%;
+  --app-select-menu-shadow: var(--app-shadow-sm);
+  --app-select-menu-z-index: 80;
+  --app-select-menu-max-height: 15rem;
+
+  --app-select-option-bg: transparent;
+  --app-select-option-bg-focused: 210 40% 96%;
+  --app-select-option-bg-selected: var(--app-primary);
+  --app-select-option-bg-selected-hover: var(--app-primary-hover);
+
+  --app-select-option-foreground: var(--app-input-foreground);
+  --app-select-option-foreground-focused: var(--app-input-foreground);
+  --app-select-option-foreground-selected: var(--app-primary-foreground);
+
+  --app-select-value-foreground: var(--app-input-foreground);
+  --app-select-indicator: var(--app-input-placeholder);
+  --app-select-indicator-hover: var(--app-input-foreground);
+
+  /* =========================
+   SELECT MULTI VALUE
+========================= */
+  --app-select-multi-value-bg: 210 40% 96%;
+  --app-select-multi-value-foreground: 222 47% 11%;
+  --app-select-multi-value-border: 214 32% 88%;
+  --app-select-multi-value-remove: 215 16% 47%;
+  --app-select-multi-value-remove-hover: var(--app-danger);
+  --app-select-multi-value-remove-bg-hover: 0 72% 93%;
 }
 
 .dark {
@@ -233,4 +371,93 @@
 
   --app-checkbox-indeterminate-bg: var(--app-primary);
   --app-checkbox-indeterminate-foreground: var(--app-primary-foreground);
+
+  /* BADGE =====================> */
+  /* =========================
+   INFO COLORS - DARK
+========================= */
+  --app-info: 217 91% 64%;
+  --app-info-hover: 217 91% 58%;
+  --app-info-foreground: 0 0% 100%;
+
+  /* =========================
+   BADGE - DARK
+========================= */
+  --app-badge-neutral-bg: 217 33% 17%;
+  --app-badge-neutral-bg-hover: 217 33% 22%;
+  --app-badge-neutral-foreground: 210 40% 98%;
+  --app-badge-neutral-border: 217 33% 26%;
+
+  --app-badge-primary-soft-bg: 160 62% 16%;
+  --app-badge-primary-soft-foreground: 160 65% 72%;
+
+  --app-badge-success-soft-bg: 145 63% 16%;
+  --app-badge-success-soft-foreground: 145 65% 72%;
+
+  --app-badge-warning-soft-bg: 38 92% 16%;
+  --app-badge-warning-soft-foreground: 42 95% 72%;
+
+  --app-badge-danger-soft-bg: 0 72% 16%;
+  --app-badge-danger-soft-foreground: 0 72% 76%;
+
+  --app-badge-info-soft-bg: 217 91% 17%;
+  --app-badge-info-soft-foreground: 217 91% 76%;
+
+  /* ====== DOT BADGE ========> */
+  /* =========================
+   STATUS DOT - DARK
+========================= */
+  --app-status-dot-neutral: var(--app-muted-foreground);
+  --app-status-dot-primary: var(--app-primary);
+  --app-status-dot-success: var(--app-success);
+  --app-status-dot-warning: var(--app-warning);
+  --app-status-dot-danger: var(--app-danger);
+  --app-status-dot-info: var(--app-info);
+
+  --app-status-dot-neutral-ring: 215 20% 65%;
+  --app-status-dot-primary-ring: 160 62% 46%;
+  --app-status-dot-success-ring: 145 63% 45%;
+  --app-status-dot-warning-ring: 38 92% 56%;
+  --app-status-dot-danger-ring: 0 72% 58%;
+  --app-status-dot-info-ring: 217 91% 64%;
+
+  /* =========================
+   LOADER - DARK
+========================= */
+  --app-loader-primary: var(--app-primary);
+  --app-loader-neutral: var(--app-muted-foreground);
+  --app-loader-success: var(--app-success);
+  --app-loader-warning: var(--app-warning);
+  --app-loader-danger: var(--app-danger);
+  --app-loader-info: var(--app-info);
+
+  /* =========================
+   SELECT  REACT- DARK
+========================= */
+  --app-select-menu-bg: 222 47% 11%;
+  --app-select-menu-border: 217 33% 22%;
+  --app-select-menu-shadow: var(--app-shadow-sm);
+
+  --app-select-option-bg: transparent;
+  --app-select-option-bg-focused: 217 33% 17%;
+  --app-select-option-bg-selected: var(--app-primary);
+  --app-select-option-bg-selected-hover: var(--app-primary-hover);
+
+  --app-select-option-foreground: var(--app-input-foreground);
+  --app-select-option-foreground-focused: var(--app-input-foreground);
+  --app-select-option-foreground-selected: var(--app-primary-foreground);
+
+  --app-select-value-foreground: var(--app-input-foreground);
+  --app-select-indicator: var(--app-input-placeholder);
+  --app-select-indicator-hover: var(--app-input-foreground);
+
+  /* =========================
+   SELECT MULTI VALUE - DARK
+========================= */
+  --app-select-multi-value-bg: 217 33% 17%;
+  --app-select-multi-value-foreground: 210 40% 98%;
+  --app-select-multi-value-border: 217 33% 26%;
+  --app-select-multi-value-remove: 215 20% 65%;
+  --app-select-multi-value-remove-hover: var(--app-danger);
+  --app-select-multi-value-remove-bg-hover: 0 72% 16%;
 }

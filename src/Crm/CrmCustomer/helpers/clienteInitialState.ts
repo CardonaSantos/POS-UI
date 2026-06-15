@@ -1,5 +1,7 @@
 import {
   ClienteDetailsDto,
+  EstadoCliente,
+  EstadoCobranzaCliente,
   EstadoServicioMikrotik,
 } from "@/Crm/features/cliente-interfaces/cliente-types";
 
@@ -13,7 +15,8 @@ export const clienteInitialState: ClienteDetailsDto = {
   observaciones: "",
   contactoReferenciaNombre: "",
   contactoReferenciaTelefono: "",
-  estadoCliente: "",
+  estadoCliente: EstadoCliente.ACTIVO,
+  estadoCobranza: EstadoCobranzaCliente.PAGO_PENDIENTE,
   contrasenaWifi: "",
   ssidRouter: "",
   fechaInstalacion: "",

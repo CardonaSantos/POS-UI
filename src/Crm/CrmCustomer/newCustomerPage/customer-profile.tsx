@@ -91,10 +91,6 @@ export default function CustomerProfile() {
     usePlantillasContrato();
 
   const clienteSecure = cliente ? cliente : clienteInitialState;
-  console.log(
-    "En el main profile customer el cliente llegando es: ",
-    clienteSecure,
-  );
 
   useEffect(() => {
     if (plantillasData) {

@@ -12,12 +12,16 @@ export interface ClienteDetailsDto {
   observaciones: string;
   contactoReferenciaNombre: string;
   contactoReferenciaTelefono: string;
-  estadoCliente: string;
+  // estados operativos
+  estadoCliente: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
+  // estados operativos
+
   contrasenaWifi: string;
   ssidRouter: string;
-  fechaInstalacion: string; // ISO string
+  fechaInstalacion: string;
   asesor: Asesor | null;
-  servicio: Servicio | null; // Relación 1:1
+  servicio: Servicio | null;
   municipio: Municipio;
   sector: Sector;
   departamento: Departamentos;
