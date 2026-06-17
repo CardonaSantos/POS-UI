@@ -279,7 +279,7 @@ function AppMultiSelectInner<
     hideSelectedOptions = false,
     isDisabled,
     isLoading,
-    portalToBody = true,
+    portalToBody = false,
     menuPortalTarget,
     menuPosition,
     selectStyles,

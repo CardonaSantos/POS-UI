@@ -1,318 +1,729 @@
-import { useState } from "react";
-import {
-  Check,
-  Mail,
-  Phone,
-  Plus,
-  Save,
-  Search,
-  Trash2,
-  User,
-} from "lucide-react";
+import * as React from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Mail, Pencil, Trash2 } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppInput } from "@/components/app/primitives/app-input";
 import { AppTextarea } from "@/components/app/primitives/app-textarea";
+import { AppSwitch } from "@/components/app/primitives/app-switch";
+import { AppCheckbox } from "@/components/app/primitives/app-checkbox";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppMultiSelect } from "@/components/app/primitives/app-multi-select";
+import { AppDatePicker } from "@/components/app/primitives/app-date-picker";
+import { AppSearchInput } from "@/components/app/primitives/app-search-input";
 
-export default function Testeos() {
-  const [search, setSearch] = useState("");
-  const [phone, setPhone] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppSeparator } from "@/components/app/primitives/app-separator";
 
-  const applyGreenTheme = () => {
-    document.documentElement.style.setProperty("--app-primary", "160 62% 43%");
-    document.documentElement.style.setProperty(
-      "--app-primary-hover",
-      "160 64% 37%",
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+
+import { AppDataTable } from "@/components/app/table/app-data-table";
+import { AppTableBulkActions } from "@/components/app/table/app-table-bulk-actions";
+import { AppTableDensityToggle } from "@/components/app/table/app-table-density-toggle";
+import { AppTableExportButton } from "@/components/app/table/app-table-export-button";
+import { createAppSelectionColumn } from "@/components/app/table/app-table-selection-column";
+import { createAppRowActionsColumn } from "@/components/app/table/app-table-row-actions";
+import {
+  createAppBadgeColumn,
+  createAppDateColumn,
+  createAppTextColumn,
+} from "@/components/app/table/app-table-column-helpers";
+
+import {
+  useAppAsyncAction,
+  useAppConfirmHandler,
+  useAppFormHandlers,
+  useAppStateHandlers,
+  useAppTableHandlers,
+  normalizeAppPayload,
+} from "@/components/app/handlers";
+
+import {
+  AppForm,
+  AppFormInput,
+  AppFormTextarea,
+  AppFormSwitch,
+  AppFormCheckbox,
+  AppFormSingleSelect,
+  AppFormMultiSelect,
+  AppFormDatePicker,
+  AppFormDateRangePicker,
+  AppFormSubmit,
+} from "@/components/app/form";
+import { AppThemeSwitcher } from "./app/theme/app-theme-switcher";
+
+type ClienteEstado = "ACTIVO" | "MOROSO" | "SUSPENDIDO" | "ATRASADO";
+
+type Cliente = {
+  id: number;
+  nombre: string;
+  telefono: string;
+  servicioId: number;
+  etiquetas: number[];
+  estado: ClienteEstado;
+  activo: boolean;
+  creadoEn: string;
+};
+
+const clientesMock: Cliente[] = Array.from({ length: 80 }).map((_, index) => {
+  const id = index + 1;
+  const estados: ClienteEstado[] = [
+    "ACTIVO",
+    "MOROSO",
+    "SUSPENDIDO",
+    "ATRASADO",
+  ];
+
+  return {
+    id,
+    nombre: `Cliente ${id}`,
+    telefono: `5024001${String(7000 + id).slice(-4)}`,
+    servicioId: id % 3 === 0 ? 3 : id % 2 === 0 ? 2 : 1,
+    etiquetas: id % 2 === 0 ? [1, 3] : [2],
+    estado: estados[id % estados.length],
+    activo: estados[id % estados.length] === "ACTIVO",
+    creadoEn: `2026-06-${String((id % 28) + 1).padStart(2, "0")}`,
+  };
+});
+
+const serviciosOptions = [
+  { value: 1, label: "Residencial 10 Mbps" },
+  { value: 2, label: "Residencial 20 Mbps" },
+  { value: 3, label: "Empresarial 50 Mbps" },
+];
+
+const etiquetasOptions = [
+  { value: 1, label: "VIP" },
+  { value: 2, label: "Pendiente pago" },
+  { value: 3, label: "Router propio" },
+  { value: 4, label: "Requiere visita" },
+];
+
+function getEstadoTone(estado: ClienteEstado) {
+  if (estado === "ACTIVO") return "success";
+  if (estado === "MOROSO") return "danger";
+  if (estado === "ATRASADO") return "warning";
+  return "neutral";
+}
+
+const clienteSchema = z.object({
+  nombre: z.string().min(2, "El nombre es obligatorio"),
+  telefono: z.string().min(8, "Teléfono inválido"),
+  servicioId: z.number({
+    error: "Seleccione un servicio",
+  }),
+  etiquetas: z.array(z.number()).min(1, "Seleccione al menos una etiqueta"),
+  fechaInstalacion: z.string().nullable(),
+  rangoReporte: z.object({
+    start: z.string().nullable().optional(),
+    end: z.string().nullable().optional(),
+  }),
+  observaciones: z.string().optional(),
+  activo: z.boolean(),
+  aceptaNotificaciones: z.boolean(),
+});
+
+type ClienteFormValues = z.infer<typeof clienteSchema>;
+
+export default function AppHandlersShowcasePage() {
+  /**
+   * 1. Estado manual para primitivos
+   */
+  const manual = useAppStateHandlers({
+    nombre: "",
+    telefono: "",
+    observaciones: "",
+    activo: true,
+    aceptaNotificaciones: false,
+    servicioId: null as number | null,
+    etiquetas: [] as number[],
+    fechaInstalacion: "",
+    rangoReporte: {
+      start: "",
+      end: "",
+    },
+    search: "",
+    serverSearch: "",
+  });
+
+  /**
+   * 2. Tabla con handler dedicado
+   */
+  const table = useAppTableHandlers({
+    initialPageSize: 10,
+    initialSorting: [{ id: "id", desc: false }],
+    initialColumnPinning: {
+      left: ["__select"],
+      right: ["__actions"],
+    },
+  });
+
+  /**
+   * 3. Confirm dialog con target
+   */
+  const deleteDialog = useAppConfirmHandler<Cliente>();
+  const bulkDeleteDialog = useAppConfirmHandler<Cliente[]>();
+
+  /**
+   * 4. Botones async
+   */
+  const saveManualAction = useAppAsyncAction(async () => {
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
+
+    const payload = manual.toPayload({
+      trimStrings: true,
+      emptyStringToNull: true,
+      removeUndefined: true,
+    });
+
+    console.log("Payload manual:", payload);
+  });
+
+  const deleteAction = useAppAsyncAction(async (cliente: Cliente) => {
+    await new Promise((resolve) => window.setTimeout(resolve, 600));
+    console.log("Eliminar cliente:", cliente);
+  });
+
+  /**
+   * 5. React Hook Form + Zod + AppFormHandlers
+   */
+  const form = useForm<ClienteFormValues>({
+    resolver: zodResolver(clienteSchema),
+    defaultValues: {
+      nombre: "",
+      telefono: "",
+      servicioId: 1,
+      etiquetas: [],
+      fechaInstalacion: null,
+      rangoReporte: {
+        start: "",
+        end: "",
+      },
+      observaciones: "",
+      activo: true,
+      aceptaNotificaciones: false,
+    },
+    mode: "onSubmit",
+  });
+
+  const formHandlers = useAppFormHandlers(form);
+
+  const submitRHF = formHandlers.toSubmitHandler(
+    async (payload) => {
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      console.log("Payload RHF normalizado:", payload);
+    },
+    {
+      trimStrings: true,
+      emptyStringToNull: true,
+      removeUndefined: true,
+    },
+  );
+
+  const filteredClientes = React.useMemo(() => {
+    const search = table.serverSearch.trim().toLowerCase();
+
+    if (!search) return clientesMock;
+
+    return clientesMock.filter((cliente) =>
+      [
+        cliente.id,
+        cliente.nombre,
+        cliente.telefono,
+        cliente.estado,
+        cliente.creadoEn,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(search),
     );
-    document.documentElement.style.setProperty("--app-ring", "160 62% 43%");
-  };
+  }, [table.serverSearch]);
 
-  const applyBlueTheme = () => {
-    document.documentElement.style.setProperty("--app-primary", "221 83% 53%");
-    document.documentElement.style.setProperty(
-      "--app-primary-hover",
-      "221 83% 45%",
+  const paginatedClientes = React.useMemo(() => {
+    const start = table.pagination.pageIndex * table.pagination.pageSize;
+    return filteredClientes.slice(start, start + table.pagination.pageSize);
+  }, [filteredClientes, table.pagination.pageIndex, table.pagination.pageSize]);
+
+  const clientesColumns = React.useMemo<ColumnDef<Cliente, any>[]>(
+    () => [
+      createAppSelectionColumn<Cliente>(),
+
+      createAppTextColumn<Cliente>({
+        accessorKey: "id",
+        header: "ID",
+        size: 70,
+      }),
+
+      {
+        accessorKey: "nombre",
+        header: "Cliente",
+        size: 220,
+        enableSorting: true,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <p className="truncate font-medium">{row.original.nombre}</p>
+            <p className="truncate text-[11px] text-[hsl(var(--app-muted-foreground))]">
+              {row.original.telefono}
+            </p>
+          </div>
+        ),
+      },
+
+      createAppTextColumn<Cliente>({
+        accessorKey: "telefono",
+        header: "Teléfono",
+        size: 140,
+      }),
+
+      createAppBadgeColumn<Cliente, ClienteEstado>({
+        id: "estado",
+        header: "Estado",
+        size: 130,
+        getValue: (row) => row.estado,
+        getTone: getEstadoTone,
+      }),
+
+      createAppDateColumn<Cliente>({
+        id: "creadoEn",
+        header: "Creado",
+        size: 130,
+        getValue: (row) => row.creadoEn,
+      }),
+
+      createAppRowActionsColumn<Cliente>({
+        actions: (row) => [
+          {
+            label: "Editar",
+            icon: <Pencil className="h-3.5 w-3.5" />,
+            onClick: () => console.log("Editar", row.original),
+          },
+          {
+            label: "Enviar mensaje",
+            icon: <Mail className="h-3.5 w-3.5" />,
+            onClick: () => console.log("Enviar mensaje", row.original),
+          },
+          {
+            label: "Eliminar",
+            tone: "danger",
+            icon: <Trash2 className="h-3.5 w-3.5" />,
+            separatorBefore: true,
+            onClick: () => deleteDialog.open(row.original),
+          },
+        ],
+      }),
+    ],
+    [deleteDialog],
+  );
+
+  const selectedClientes = React.useMemo(() => {
+    const selectedIds = new Set(Object.keys(table.rowSelection));
+    return clientesMock.filter((cliente) =>
+      selectedIds.has(String(cliente.id)),
     );
-    document.documentElement.style.setProperty("--app-ring", "221 83% 53%");
-  };
-
-  const applyPurpleTheme = () => {
-    document.documentElement.style.setProperty("--app-primary", "262 83% 58%");
-    document.documentElement.style.setProperty(
-      "--app-primary-hover",
-      "262 83% 50%",
-    );
-    document.documentElement.style.setProperty("--app-ring", "262 83% 58%");
-  };
-
-  const toggleLoading = () => {
-    setLoading(true);
-
-    window.setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-  };
+  }, [table.rowSelection]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="space-y-1 border-b pb-4">
-          <h1 className="text-lg font-semibold">Test App Primitives</h1>
-          <p className="text-sm text-muted-foreground">
-            Página de prueba para AppButton, AppInput y AppTextarea.
-          </p>
-        </header>
+    <AppContainer size="2xl" paddingY="md">
+      <AppStack gap="lg">
+        <AppCard
+          title="Handlers App*"
+          description="Uso correcto de handlers con primitivos, tabla, dialogs, botones async y React Hook Form."
+        >
+          <AppAlert tone="info" title="Regla de uso">
+            `useAppStateHandlers` para estado manual. `useAppTableHandlers` para
+            tablas. `useAppConfirmHandler` para confirmaciones.
+            `useAppAsyncAction` para botones async. `useAppFormHandlers` para
+            RHF.
+          </AppAlert>
+        </AppCard>
 
-        {/* Theme runtime */}
-        <section className="space-y-3 rounded-md border p-3">
-          <div>
-            <h2 className="text-sm font-semibold">Theme runtime</h2>
-            <p className="text-xs text-muted-foreground">
-              Estos botones cambian variables CSS en tiempo real.
-            </p>
-          </div>
+        <AppGrid cols={{ base: 1, xl: 2 }} gap="md">
+          <AppCard
+            title="1. Primitivos con useAppStateHandlers"
+            description="Sin crear un handleChange por cada input."
+          >
+            <AppStack gap="sm">
+              <AppGrid cols={{ base: 1, md: 2 }} gap="sm">
+                <AppInput
+                  {...manual.inputProps("nombre")}
+                  placeholder="Nombre"
+                  clearable
+                  onClear={() => manual.clearField("nombre")}
+                />
 
-          <div className="flex flex-wrap gap-2">
-            <AppButton variant="primary" onClick={applyGreenTheme}>
-              Verde
-            </AppButton>
+                <AppInput
+                  {...manual.inputProps("telefono")}
+                  placeholder="Teléfono"
+                  clearable
+                  onClear={() => manual.clearField("telefono")}
+                />
 
-            <AppButton variant="primary" onClick={applyBlueTheme}>
-              Azul
-            </AppButton>
+                <AppSingleSelect<number>
+                  {...manual.singleSelectProps<"servicioId", number>(
+                    "servicioId",
+                  )}
+                  options={serviciosOptions}
+                  placeholder="Servicio"
+                />
 
-            <AppButton variant="primary" onClick={applyPurpleTheme}>
-              Morado
-            </AppButton>
-          </div>
-        </section>
+                <AppMultiSelect<number>
+                  {...manual.multiSelectProps<"etiquetas", number>("etiquetas")}
+                  options={etiquetasOptions}
+                  placeholder="Etiquetas"
+                />
 
-        {/* Buttons */}
-        <section className="space-y-3 rounded-md border p-3">
-          <div>
-            <h2 className="text-sm font-semibold">AppButton</h2>
-            <p className="text-xs text-muted-foreground">
-              Variantes, tamaños, iconos y loading.
-            </p>
-          </div>
+                <AppDatePicker
+                  mode="single"
+                  {...manual.datePickerSingleProps("fechaInstalacion")}
+                />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <AppButton leftIcon={<Plus className="h-3.5 w-3.5" />}>
-              Nuevo
-            </AppButton>
+                <AppDatePicker
+                  mode="range"
+                  {...manual.datePickerRangeProps("rangoReporte")}
+                />
+              </AppGrid>
 
-            <AppButton
-              variant="secondary"
-              leftIcon={<Save className="h-3.5 w-3.5" />}
-            >
-              Guardar
-            </AppButton>
+              <AppTextarea
+                {...manual.textareaProps("observaciones")}
+                placeholder="Observaciones"
+              />
 
-            <AppButton variant="outline">Cancelar</AppButton>
+              <AppInline gap="md" wrap>
+                <AppSwitch
+                  {...manual.switchProps("activo")}
+                  label="Cliente activo"
+                  description="Manejado con switchProps"
+                />
 
-            <AppButton variant="ghost">Ghost</AppButton>
+                <AppCheckbox
+                  {...manual.checkboxProps("aceptaNotificaciones")}
+                  label="Acepta notificaciones"
+                />
+              </AppInline>
 
-            <AppButton variant="muted">Muted</AppButton>
+              <AppSearchInput
+                {...manual.searchInputProps("search", {
+                  debouncedKey: "serverSearch",
+                })}
+                placeholder="Search local/debounced"
+              />
 
-            <AppButton
-              variant="success"
-              leftIcon={<Check className="h-3.5 w-3.5" />}
-            >
-              Confirmar
-            </AppButton>
+              <AppSeparator />
 
-            <AppButton variant="warning">Advertencia</AppButton>
+              <AppInline gap="xs" wrap>
+                <AppButton
+                  loading={saveManualAction.isLoading}
+                  loadingText="Guardando..."
+                  onClick={() => saveManualAction.run()}
+                >
+                  Guardar manual
+                </AppButton>
 
-            <AppButton
-              variant="danger"
-              leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-            >
-              Eliminar
-            </AppButton>
+                <AppButton variant="secondary" onClick={() => manual.reset()}>
+                  Reset manual
+                </AppButton>
 
-            <AppButton variant="link">Link button</AppButton>
-          </div>
+                <AppButton
+                  variant="ghost"
+                  onClick={() => {
+                    const payload = normalizeAppPayload(manual.state, {
+                      trimStrings: true,
+                      emptyStringToNull: true,
+                    });
 
-          <div className="flex flex-wrap items-center gap-2">
-            <AppButton size="xs">XS</AppButton>
-            <AppButton size="sm">SM default</AppButton>
-            <AppButton size="md">MD</AppButton>
-            <AppButton size="lg">LG</AppButton>
+                    console.log("normalizeAppPayload:", payload);
+                  }}
+                >
+                  Ver payload
+                </AppButton>
+              </AppInline>
 
-            <AppButton size="iconXs" aria-label="Crear">
-              <Plus className="h-3.5 w-3.5" />
-            </AppButton>
+              <pre className="max-h-72 overflow-auto rounded-md border border-[hsl(var(--app-border))] bg-[hsl(var(--app-muted))] p-3 text-xs">
+                {JSON.stringify(manual.state, null, 2)}
+              </pre>
+            </AppStack>
+          </AppCard>
 
-            <AppButton size="iconSm" aria-label="Guardar">
-              <Save className="h-3.5 w-3.5" />
-            </AppButton>
+          <AppCard
+            title="2. React Hook Form + Zod"
+            description="AppForm* maneja los campos. useAppFormHandlers maneja patch/reset/payload."
+          >
+            <AppForm form={form} onSubmit={submitRHF} className="space-y-3">
+              <AppGrid cols={{ base: 1, md: 2 }} gap="sm">
+                <AppFormInput<ClienteFormValues>
+                  name="nombre"
+                  label="Nombre"
+                  placeholder="Nombre del cliente"
+                  required
+                />
 
-            <AppButton size="iconMd" aria-label="Eliminar" variant="danger">
-              <Trash2 className="h-3.5 w-3.5" />
-            </AppButton>
-          </div>
+                <AppFormInput<ClienteFormValues>
+                  name="telefono"
+                  label="Teléfono"
+                  placeholder="50240017273"
+                  required
+                />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <AppButton
-              loading={loading}
-              loadingText="Guardando..."
-              onClick={toggleLoading}
-            >
-              Probar loading
-            </AppButton>
+                <AppFormSingleSelect<ClienteFormValues, number>
+                  name="servicioId"
+                  label="Servicio"
+                  options={serviciosOptions}
+                  required
+                />
 
-            <AppButton disabled>Deshabilitado</AppButton>
+                <AppFormMultiSelect<ClienteFormValues, number>
+                  name="etiquetas"
+                  label="Etiquetas"
+                  options={etiquetasOptions}
+                />
 
-            <AppButton width="full" variant="outline">
-              Botón full width
-            </AppButton>
-          </div>
-        </section>
+                <AppFormDatePicker<ClienteFormValues>
+                  name="fechaInstalacion"
+                  label="Fecha instalación"
+                />
 
-        {/* Inputs */}
-        <section className="space-y-3 rounded-md border p-3">
-          <div>
-            <h2 className="text-sm font-semibold">AppInput</h2>
-            <p className="text-xs text-muted-foreground">
-              Variantes, tamaños, iconos, clearable y estados.
-            </p>
-          </div>
+                <AppFormDateRangePicker<ClienteFormValues>
+                  name="rangoReporte"
+                  label="Rango reporte"
+                />
+              </AppGrid>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <AppInput
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onClear={() => setSearch("")}
-              clearable
-              leftIcon={<Search />}
-              placeholder="Buscar ticket..."
-            />
+              <AppFormTextarea<ClienteFormValues>
+                name="observaciones"
+                label="Observaciones"
+                placeholder="Observaciones internas..."
+              />
 
-            <AppInput
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              onClear={() => setPhone("")}
-              clearable
-              leftIcon={<Phone />}
-              type="tel"
-              placeholder="Teléfono temporal"
-            />
+              <AppInline gap="md" wrap>
+                <AppFormSwitch<ClienteFormValues>
+                  name="activo"
+                  fieldLabel="Estado"
+                  label="Cliente activo"
+                />
 
-            <AppInput leftIcon={<User />} placeholder="Nombre del cliente" />
+                <AppFormCheckbox<ClienteFormValues>
+                  name="aceptaNotificaciones"
+                  fieldLabel="Notificaciones"
+                  label="Acepta notificaciones"
+                />
+              </AppInline>
 
-            <AppInput
-              leftIcon={<Mail />}
-              type="email"
-              placeholder="correo@empresa.com"
-            />
+              <AppInline gap="xs" wrap>
+                <AppFormSubmit>Guardar RHF</AppFormSubmit>
 
-            <AppInput variant="filled" placeholder="Input filled" />
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    formHandlers.patch({
+                      nombre: "Cliente precargado",
+                      telefono: "50240017273",
+                      observaciones: "Valores insertados con patch().",
+                    })
+                  }
+                >
+                  Patch form
+                </AppButton>
 
-            <AppInput variant="ghost" placeholder="Input ghost" />
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    const payload = formHandlers.toPayload({
+                      trimStrings: true,
+                      emptyStringToNull: true,
+                    });
 
-            <AppInput variant="underline" placeholder="Input underline" />
+                    console.log("Payload RHF:", payload);
+                  }}
+                >
+                  Payload RHF
+                </AppButton>
+              </AppInline>
+            </AppForm>
+          </AppCard>
+        </AppGrid>
 
-            <AppInput invalid placeholder="Input con error" />
+        <AppCard
+          title="3. Tabla con useAppTableHandlers"
+          description="Paginación, selección, visibilidad, pinning, density y búsqueda server-side simulada."
+        >
+          <AppDataTable
+            data={paginatedClientes}
+            columns={clientesColumns}
+            getRowId={(row) => String(row.id)}
+            toolbar={
+              <AppSearchInput
+                value={table.search}
+                onValueChange={table.handleSearchChange}
+                onDebouncedChange={table.handleDebouncedSearch}
+                placeholder="Buscar cliente..."
+                minWidth="md"
+              />
+            }
+            rightToolbar={
+              <AppInline gap="xs" justify="end" wrap>
+                <AppTableDensityToggle
+                  value={table.density}
+                  onChange={table.setDensity}
+                />
 
-            <AppInput intent="success" placeholder="Input success" />
+                <AppTableExportButton
+                  filename="clientes-demo"
+                  rows={filteredClientes}
+                  columns={[
+                    { key: "id", label: "ID", getValue: (row) => row.id },
+                    {
+                      key: "nombre",
+                      label: "Cliente",
+                      getValue: (row) => row.nombre,
+                    },
+                    {
+                      key: "telefono",
+                      label: "Teléfono",
+                      getValue: (row) => row.telefono,
+                    },
+                    {
+                      key: "estado",
+                      label: "Estado",
+                      getValue: (row) => row.estado,
+                    },
+                  ]}
+                />
+              </AppInline>
+            }
+            bulkActions={
+              <AppTableBulkActions
+                selectedCount={table.selectedCount}
+                actions={[
+                  {
+                    label: "Mensaje",
+                    icon: <Mail className="h-3.5 w-3.5" />,
+                    onClick: () => console.log("Mensaje a:", selectedClientes),
+                  },
+                  {
+                    label: "Eliminar",
+                    tone: "danger",
+                    icon: <Trash2 className="h-3.5 w-3.5" />,
+                    onClick: () => bulkDeleteDialog.open(selectedClientes),
+                  },
+                ]}
+              />
+            }
+            paginationMode="server"
+            pagination={table.getPaginationConfig({
+              totalRows: filteredClientes.length,
+              pageSizeOptions: [10, 20, 50, 100],
+            })}
+            {...table.getDataTableStateProps()}
+            enableRowSelection
+            enableColumnVisibility
+            enableColumnPinning
+            enableVirtualization
+            stickyHeader
+            variant="card"
+            emptyTitle="No hay clientes"
+            emptyDescription="No se encontraron clientes con la búsqueda actual."
+            maxHeight="420px"
+            responsiveMode="cards"
+            renderMobileCard={(row) => (
+              <AppStack gap="xs">
+                <AppInline justify="between">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">
+                      {row.original.nombre}
+                    </p>
+                    <p className="truncate text-xs text-[hsl(var(--app-muted-foreground))]">
+                      {row.original.telefono}
+                    </p>
+                  </div>
 
-            <AppInput intent="warning" placeholder="Input warning" />
+                  <AppBadge size="xs" tone={getEstadoTone(row.original.estado)}>
+                    {row.original.estado}
+                  </AppBadge>
+                </AppInline>
+              </AppStack>
+            )}
+          />
+        </AppCard>
 
-            <AppInput disabled placeholder="Input disabled" />
-
-            <AppInput readOnly value="Solo lectura" />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <AppInput size="xs" fieldWidth="auto" placeholder="XS" />
-            <AppInput size="sm" fieldWidth="auto" placeholder="SM" />
-            <AppInput size="md" fieldWidth="auto" placeholder="MD" />
-            <AppInput size="lg" fieldWidth="auto" placeholder="LG" />
-          </div>
-        </section>
-
-        {/* Textareas */}
-        <section className="space-y-3 rounded-md border p-3">
-          <div>
-            <h2 className="text-sm font-semibold">AppTextarea</h2>
-            <p className="text-xs text-muted-foreground">
-              Multilínea, variantes, resize y estados.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <AppTextarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Descripción del problema..."
-            />
-
-            <AppTextarea
-              variant="filled"
-              placeholder="Observaciones internas..."
-            />
-
-            <AppTextarea variant="ghost" placeholder="Textarea ghost..." />
-
-            <AppTextarea
-              variant="underline"
-              placeholder="Textarea underline..."
-            />
-
-            <AppTextarea invalid placeholder="Textarea con error..." />
-
-            <AppTextarea resizeMode="none" placeholder="Sin resize manual..." />
-
-            <AppTextarea size="xs" placeholder="Textarea XS..." />
-
-            <AppTextarea size="lg" placeholder="Textarea LG..." />
-          </div>
-        </section>
-
-        {/* Form simulation */}
-        <section className="space-y-3 rounded-md border p-3">
-          <div>
-            <h2 className="text-sm font-semibold">Simulación de formulario</h2>
-            <p className="text-xs text-muted-foreground">
-              Esto todavía no usa React Hook Form, pero prueba compatibilidad
-              visual.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium">Título</label>
-              <AppInput placeholder="Título del ticket" />
+        <AppConfirmDialog
+          open={deleteDialog.isOpen}
+          onOpenChange={deleteDialog.setOpen}
+          preset="delete"
+          title="Eliminar cliente"
+          description="Esta acción elimina el cliente seleccionado."
+          confirmText="Eliminar"
+          loadingText="Eliminando..."
+          contentCard
+          onConfirm={() =>
+            deleteDialog.confirm(async (target) => {
+              await deleteAction.run(target);
+            })
+          }
+        >
+          {deleteDialog.target ? (
+            <div className="space-y-1 text-xs">
+              <p>
+                <strong>ID:</strong> {deleteDialog.target.id}
+              </p>
+              <p>
+                <strong>Cliente:</strong> {deleteDialog.target.nombre}
+              </p>
+              <p>
+                <strong>Estado:</strong> {deleteDialog.target.estado}
+              </p>
             </div>
+          ) : null}
+        </AppConfirmDialog>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium">Teléfono</label>
-              <AppInput type="tel" placeholder="12345678" />
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="text-xs font-medium">Descripción</label>
-              <AppTextarea placeholder="Describa el problema..." />
-            </div>
+        <AppConfirmDialog
+          open={bulkDeleteDialog.isOpen}
+          onOpenChange={bulkDeleteDialog.setOpen}
+          preset="delete"
+          title="Eliminar seleccionados"
+          description="Esta acción eliminaría los clientes seleccionados."
+          confirmText="Eliminar seleccionados"
+          contentCard
+          onConfirm={() =>
+            bulkDeleteDialog.confirm(async (targets) => {
+              await new Promise((resolve) => window.setTimeout(resolve, 600));
+              console.log("Eliminar bulk:", targets);
+              table.clearSelection();
+            })
+          }
+        >
+          <div className="space-y-1 text-xs">
+            <p>Seleccionados: {bulkDeleteDialog.target?.length ?? 0}</p>
+            <p>
+              IDs:{" "}
+              {bulkDeleteDialog.target
+                ?.map((cliente) => cliente.id)
+                .join(", ") ?? "ninguno"}
+            </p>
           </div>
+        </AppConfirmDialog>
+      </AppStack>
 
-          <div className="flex justify-end gap-2 border-t pt-3">
-            <AppButton variant="outline">Cancelar</AppButton>
-
-            <AppButton
-              loading={loading}
-              loadingText="Creando..."
-              onClick={toggleLoading}
-              leftIcon={<Save className="h-3.5 w-3.5" />}
-            >
-              Crear ticket
-            </AppButton>
-          </div>
-        </section>
-      </div>
-    </div>
+      <AppContainer size="xl" paddingY="md">
+        <AppStack gap="md">
+          <AppCard
+            title="Configuración"
+            description="Personalización visual del sistema."
+          >
+            <AppThemeSwitcher />
+          </AppCard>
+        </AppStack>
+      </AppContainer>
+    </AppContainer>
   );
 }
-// export default Testeos;

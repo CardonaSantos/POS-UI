@@ -101,6 +101,7 @@ export interface Sector {
   clientes?: ClienteDetailsDto[];
   creadoEn: string | Date;
   actualizadoEn: string | Date;
+  clientesCount?: number;
 }
 
 export interface Asesor {

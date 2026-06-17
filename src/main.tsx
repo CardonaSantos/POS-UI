@@ -14,6 +14,7 @@ import { getApiErrorMessageAxios } from "./utils/getApiAxiosMessage.ts";
 import { SocketProvider } from "./Crm/WEB/SocketProvider.tsx";
 import "./index.css";
 import "@/components/app/theme/app-theme.css";
+import { AppThemeProvider } from "./components/app/theme/app-theme-provider.tsx";
 
 const VITE_WS_URL = import.meta.env.VITE_WS_URL;
 const VITE_WS_NAMESPACE = "/ws";
@@ -47,7 +48,9 @@ createRoot(document.getElementById("root")!).render(
       >
         <GoogleMapsProvider>
           <QueryClientProvider client={queryClient}>
-            <App />
+            <AppThemeProvider>
+              <App />
+            </AppThemeProvider>
           </QueryClientProvider>
         </GoogleMapsProvider>
       </SocketProvider>

@@ -304,6 +304,500 @@
   --app-select-multi-value-remove: 215 16% 47%;
   --app-select-multi-value-remove-hover: var(--app-danger);
   --app-select-multi-value-remove-bg-hover: 0 72% 93%;
+
+  /* ==== CARD ====>  */
+  /* =========================
+   CARD
+========================= */
+  --app-card-bg: 0 0% 100%;
+  --app-card-foreground: 222 47% 11%;
+  --app-card-border: 214 32% 91%;
+  --app-card-border-strong: 215 20% 75%;
+
+  --app-card-muted-bg: 210 40% 98%;
+  --app-card-muted-foreground: 215 16% 47%;
+
+  --app-card-elevated-bg: 0 0% 100%;
+  --app-card-hover-bg: 210 40% 98%;
+
+  --app-card-selected-ring: var(--app-primary);
+
+  --app-card-danger-bg: 0 72% 97%;
+  --app-card-danger-border: 0 72% 86%;
+
+  --app-card-success-bg: 145 63% 97%;
+  --app-card-success-border: 145 63% 84%;
+
+  --app-card-warning-bg: 42 95% 96%;
+  --app-card-warning-border: 42 95% 82%;
+
+  --app-card-info-bg: 217 91% 97%;
+  --app-card-info-border: 217 91% 84%;
+
+  /* Card spacing - compacto */
+  --app-card-padding-xs: 0.5rem;
+  --app-card-padding-sm: 0.75rem;
+  --app-card-padding-md: 1rem;
+  --app-card-padding-lg: 1.25rem;
+  --app-card-padding-xl: 1.5rem;
+
+  --app-card-gap-xs: 0.375rem;
+  --app-card-gap-sm: 0.5rem;
+  --app-card-gap-md: 0.75rem;
+  --app-card-gap-lg: 1rem;
+  --app-card-gap-xl: 1.25rem;
+
+  /* Card title sizes */
+  --app-card-title-xs: 0.75rem;
+  --app-card-title-sm: 0.8125rem;
+  --app-card-title-md: 0.9375rem;
+  --app-card-title-lg: 1.0625rem;
+  --app-card-title-xl: 1.1875rem;
+
+  /* Card description sizes */
+  --app-card-description-xs: 0.6875rem;
+  --app-card-description-sm: 0.75rem;
+  --app-card-description-md: 0.8125rem;
+  --app-card-description-lg: 0.875rem;
+  --app-card-description-xl: 0.9375rem;
+
+  /* Card icon sizes */
+  --app-card-icon-box-xs: 1.375rem;
+  --app-card-icon-box-sm: 1.625rem;
+  --app-card-icon-box-md: 1.875rem;
+  --app-card-icon-box-lg: 2.125rem;
+  --app-card-icon-box-xl: 2.375rem;
+
+  --app-card-icon-xs: 0.75rem;
+  --app-card-icon-sm: 0.875rem;
+  --app-card-icon-md: 1rem;
+  --app-card-icon-lg: 1.125rem;
+  --app-card-icon-xl: 1.25rem;
+
+  /* Card shadows */
+  --app-card-shadow-none: none;
+  --app-card-shadow-xs: 0 1px 1px rgb(0 0 0 / 0.04);
+  --app-card-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --app-card-shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.1);
+
+  /* ==== FIELD ====>  */
+  /* =========================
+   FIELD
+========================= */
+  --app-field-gap-xs: 0.25rem;
+  --app-field-gap-sm: 0.375rem;
+  --app-field-gap-md: 0.5rem;
+  --app-field-gap-lg: 0.625rem;
+
+  --app-field-content-gap-xs: 0.25rem;
+  --app-field-content-gap-sm: 0.375rem;
+  --app-field-content-gap-md: 0.5rem;
+  --app-field-content-gap-lg: 0.625rem;
+
+  --app-field-label-size-xs: 0.6875rem;
+  --app-field-label-size-sm: 0.75rem;
+  --app-field-label-size-md: 0.8125rem;
+  --app-field-label-size-lg: 0.875rem;
+
+  --app-field-description-size-xs: 0.65625rem;
+  --app-field-description-size-sm: 0.6875rem;
+  --app-field-description-size-md: 0.75rem;
+  --app-field-description-size-lg: 0.8125rem;
+
+  --app-field-message-size-xs: 0.65625rem;
+  --app-field-message-size-sm: 0.6875rem;
+  --app-field-message-size-md: 0.75rem;
+  --app-field-message-size-lg: 0.8125rem;
+
+  --app-field-label-foreground: 222 47% 11%;
+  --app-field-description-foreground: var(--app-muted-foreground);
+  --app-field-hint-foreground: var(--app-muted-foreground);
+  --app-field-error-foreground: var(--app-danger);
+  --app-field-required-foreground: var(--app-danger);
+
+  --app-field-disabled-opacity: 0.6;
+
+  /* ===== SEPARATOR ====>  */
+  /* =========================
+   SEPARATOR
+========================= */
+  --app-separator-default: var(--app-border);
+  --app-separator-muted: 214 32% 94%;
+  --app-separator-strong: var(--app-border-strong);
+
+  --app-separator-primary: var(--app-primary);
+  --app-separator-success: var(--app-success);
+  --app-separator-warning: var(--app-warning);
+  --app-separator-danger: var(--app-danger);
+  --app-separator-info: var(--app-info);
+
+  --app-separator-spacing-xs: 0.375rem;
+  --app-separator-spacing-sm: 0.5rem;
+  --app-separator-spacing-md: 0.75rem;
+  --app-separator-spacing-lg: 1rem;
+
+  --app-separator-thickness-xs: 1px;
+  --app-separator-thickness-sm: 1px;
+  --app-separator-thickness-md: 2px;
+  --app-separator-thickness-lg: 3px;
+
+  /* ===== CONTENEDORES ======> */
+
+  /* =========================
+   CONTAINER
+========================= */
+  --app-container-max-xs: 24rem;
+  --app-container-max-sm: 36rem;
+  --app-container-max-md: 48rem;
+  --app-container-max-lg: 64rem;
+  --app-container-max-xl: 80rem;
+  --app-container-max-2xl: 96rem;
+
+  /* Padding horizontal responsive */
+  --app-container-padding-x-xs: clamp(0.5rem, 1vw, 0.75rem);
+  --app-container-padding-x-sm: clamp(0.75rem, 1.25vw, 1rem);
+  --app-container-padding-x-md: clamp(1rem, 1.5vw, 1.25rem);
+  --app-container-padding-x-lg: clamp(1.25rem, 2vw, 1.75rem);
+  --app-container-padding-x-xl: clamp(1.5rem, 2.5vw, 2rem);
+
+  /* Padding vertical compacto */
+  --app-container-padding-y-xs: 0.375rem;
+  --app-container-padding-y-sm: 0.5rem;
+  --app-container-padding-y-md: 0.75rem;
+  --app-container-padding-y-lg: 1rem;
+  --app-container-padding-y-xl: 1.25rem;
+
+  /* =========================
+   GRID / LAYOUT
+========================= */
+  --app-grid-gap-none: 0rem;
+  --app-grid-gap-xs: 0.375rem;
+  --app-grid-gap-sm: 0.5rem;
+  --app-grid-gap-md: 0.75rem;
+  --app-grid-gap-lg: 1rem;
+  --app-grid-gap-xl: 1.25rem;
+  --app-grid-gap-2xl: 1.5rem;
+
+  --app-grid-auto-min-xs: 8rem;
+  --app-grid-auto-min-sm: 10rem;
+  --app-grid-auto-min-md: 12rem;
+  --app-grid-auto-min-lg: 14rem;
+  --app-grid-auto-min-xl: 16rem;
+
+  /* =========================
+   LAYOUT
+========================= */
+  --app-layout-gap-none: 0rem;
+  --app-layout-gap-xs: 0.375rem;
+  --app-layout-gap-sm: 0.5rem;
+  --app-layout-gap-md: 0.75rem;
+  --app-layout-gap-lg: 1rem;
+  --app-layout-gap-xl: 1.25rem;
+  --app-layout-gap-2xl: 1.5rem;
+
+  --app-split-pane-min: 0rem;
+  --app-split-sticky-top: 0.75rem;
+
+  /* =========================
+   SKELETON
+========================= */
+  --app-skeleton-bg: 210 40% 92%;
+  --app-skeleton-bg-muted: 210 40% 95%;
+  --app-skeleton-bg-strong: 215 20% 82%;
+  --app-skeleton-highlight: 0 0% 100% / 0.45;
+
+  --app-skeleton-radius-xs: var(--app-radius-xs);
+  --app-skeleton-radius-sm: var(--app-radius-sm);
+  --app-skeleton-radius-md: var(--app-radius-md);
+  --app-skeleton-radius-lg: var(--app-radius-lg);
+  --app-skeleton-radius-full: var(--app-radius-full);
+
+  --app-skeleton-size-xs: 0.5rem;
+  --app-skeleton-size-sm: 0.75rem;
+  --app-skeleton-size-md: 1rem;
+  --app-skeleton-size-lg: 1.5rem;
+  --app-skeleton-size-xl: 2rem;
+  --app-skeleton-size-2xl: 2.5rem;
+
+  --app-skeleton-gap-xs: 0.25rem;
+  --app-skeleton-gap-sm: 0.375rem;
+  --app-skeleton-gap-md: 0.5rem;
+  --app-skeleton-gap-lg: 0.75rem;
+
+  --app-skeleton-card-padding-xs: 0.5rem;
+  --app-skeleton-card-padding-sm: 0.75rem;
+  --app-skeleton-card-padding-md: 1rem;
+
+  @keyframes app-skeleton-shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* =========================
+   ALERT
+========================= */
+  --app-alert-bg-neutral: 210 40% 98%;
+  --app-alert-border-neutral: 214 32% 88%;
+  --app-alert-foreground-neutral: 222 47% 11%;
+  --app-alert-icon-neutral: var(--app-muted-foreground);
+
+  --app-alert-bg-info: 217 91% 97%;
+  --app-alert-border-info: 217 91% 84%;
+  --app-alert-foreground-info: 217 80% 28%;
+  --app-alert-icon-info: var(--app-info);
+
+  --app-alert-bg-success: 145 63% 96%;
+  --app-alert-border-success: 145 63% 82%;
+  --app-alert-foreground-success: 145 70% 24%;
+  --app-alert-icon-success: var(--app-success);
+
+  --app-alert-bg-warning: 42 95% 95%;
+  --app-alert-border-warning: 42 95% 80%;
+  --app-alert-foreground-warning: 30 85% 24%;
+  --app-alert-icon-warning: var(--app-warning);
+
+  --app-alert-bg-danger: 0 72% 97%;
+  --app-alert-border-danger: 0 72% 84%;
+  --app-alert-foreground-danger: 0 72% 34%;
+  --app-alert-icon-danger: var(--app-danger);
+
+  --app-alert-padding-xs: 0.5rem;
+  --app-alert-padding-sm: 0.625rem;
+  --app-alert-padding-md: 0.75rem;
+  --app-alert-padding-lg: 1rem;
+
+  --app-alert-gap-xs: 0.375rem;
+  --app-alert-gap-sm: 0.5rem;
+  --app-alert-gap-md: 0.625rem;
+  --app-alert-gap-lg: 0.75rem;
+
+  --app-alert-title-xs: 0.75rem;
+  --app-alert-title-sm: 0.8125rem;
+  --app-alert-title-md: 0.875rem;
+  --app-alert-title-lg: 0.9375rem;
+
+  --app-alert-description-xs: 0.6875rem;
+  --app-alert-description-sm: 0.75rem;
+  --app-alert-description-md: 0.8125rem;
+  --app-alert-description-lg: 0.875rem;
+
+  --app-alert-icon-xs: 0.875rem;
+  --app-alert-icon-sm: 1rem;
+  --app-alert-icon-md: 1.125rem;
+  --app-alert-icon-lg: 1.25rem;
+
+  /* =========================
+   EMPTY STATE
+========================= */
+  --app-empty-bg: transparent;
+  --app-empty-border: var(--app-border);
+  --app-empty-foreground: 222 47% 11%;
+  --app-empty-muted-foreground: var(--app-muted-foreground);
+
+  --app-empty-icon-bg-neutral: 210 40% 96%;
+  --app-empty-icon-fg-neutral: var(--app-muted-foreground);
+
+  --app-empty-icon-bg-info: 217 91% 94%;
+  --app-empty-icon-fg-info: var(--app-info);
+
+  --app-empty-icon-bg-success: 145 63% 94%;
+  --app-empty-icon-fg-success: var(--app-success);
+
+  --app-empty-icon-bg-warning: 42 95% 92%;
+  --app-empty-icon-fg-warning: var(--app-warning);
+
+  --app-empty-icon-bg-danger: 0 72% 94%;
+  --app-empty-icon-fg-danger: var(--app-danger);
+
+  --app-empty-padding-xs: 1rem;
+  --app-empty-padding-sm: 1.25rem;
+  --app-empty-padding-md: 1.5rem;
+  --app-empty-padding-lg: 2rem;
+
+  --app-empty-gap-xs: 0.5rem;
+  --app-empty-gap-sm: 0.625rem;
+  --app-empty-gap-md: 0.75rem;
+  --app-empty-gap-lg: 1rem;
+
+  --app-empty-icon-box-xs: 2rem;
+  --app-empty-icon-box-sm: 2.5rem;
+  --app-empty-icon-box-md: 3rem;
+  --app-empty-icon-box-lg: 3.5rem;
+
+  --app-empty-icon-xs: 1rem;
+  --app-empty-icon-sm: 1.25rem;
+  --app-empty-icon-md: 1.5rem;
+  --app-empty-icon-lg: 1.75rem;
+
+  --app-empty-title-xs: 0.8125rem;
+  --app-empty-title-sm: 0.875rem;
+  --app-empty-title-md: 1rem;
+  --app-empty-title-lg: 1.125rem;
+
+  --app-empty-description-xs: 0.75rem;
+  --app-empty-description-sm: 0.8125rem;
+  --app-empty-description-md: 0.875rem;
+  --app-empty-description-lg: 0.9375rem;
+
+  --app-empty-max-xs: 18rem;
+  --app-empty-max-sm: 22rem;
+  --app-empty-max-md: 28rem;
+  --app-empty-max-lg: 34rem;
+
+  /* =========================
+   SEARCH INPUT
+========================= */
+  --app-search-icon: var(--app-input-placeholder);
+  --app-search-icon-active: var(--app-input-foreground);
+  --app-search-loading: var(--app-primary);
+
+  --app-search-min-width-xs: 10rem;
+  --app-search-min-width-sm: 12rem;
+  --app-search-min-width-md: 16rem;
+  --app-search-min-width-lg: 20rem;
+
+  /* =========================
+   DATA STATE
+========================= */
+  --app-data-state-bg: transparent;
+  --app-data-state-border: var(--app-border);
+
+  --app-data-state-padding-xs: 0.5rem;
+  --app-data-state-padding-sm: 0.75rem;
+  --app-data-state-padding-md: 1rem;
+  --app-data-state-padding-lg: 1.25rem;
+
+  --app-data-state-gap-xs: 0.5rem;
+  --app-data-state-gap-sm: 0.75rem;
+  --app-data-state-gap-md: 1rem;
+  --app-data-state-gap-lg: 1.25rem;
+
+  --app-data-state-min-height-xs: 6rem;
+  --app-data-state-min-height-sm: 10rem;
+  --app-data-state-min-height-md: 14rem;
+  --app-data-state-min-height-lg: 18rem;
+
+  /* =========================
+   CONFIRM DIALOG
+========================= */
+  --app-confirm-overlay-bg: 222 47% 4% / 0.52;
+
+  --app-confirm-bg: 0 0% 100%;
+  --app-confirm-foreground: 222 47% 11%;
+  --app-confirm-border: var(--app-border);
+  --app-confirm-muted-foreground: var(--app-muted-foreground);
+
+  --app-confirm-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.35);
+
+  --app-confirm-padding-xs: 0.75rem;
+  --app-confirm-padding-sm: 1rem;
+  --app-confirm-padding-md: 1.25rem;
+  --app-confirm-padding-lg: 1.5rem;
+
+  --app-confirm-gap-xs: 0.5rem;
+  --app-confirm-gap-sm: 0.625rem;
+  --app-confirm-gap-md: 0.75rem;
+  --app-confirm-gap-lg: 1rem;
+
+  --app-confirm-title-xs: 0.875rem;
+  --app-confirm-title-sm: 1rem;
+  --app-confirm-title-md: 1.125rem;
+  --app-confirm-title-lg: 1.25rem;
+
+  --app-confirm-description-xs: 0.75rem;
+  --app-confirm-description-sm: 0.8125rem;
+  --app-confirm-description-md: 0.875rem;
+  --app-confirm-description-lg: 0.9375rem;
+
+  --app-confirm-icon-box-xs: 2rem;
+  --app-confirm-icon-box-sm: 2.5rem;
+  --app-confirm-icon-box-md: 3rem;
+  --app-confirm-icon-box-lg: 3.5rem;
+
+  --app-confirm-icon-xs: 1rem;
+  --app-confirm-icon-sm: 1.25rem;
+  --app-confirm-icon-md: 1.5rem;
+  --app-confirm-icon-lg: 1.75rem;
+
+  --app-confirm-icon-bg-neutral: 210 40% 96%;
+  --app-confirm-icon-fg-neutral: var(--app-muted-foreground);
+
+  --app-confirm-icon-bg-info: 217 91% 94%;
+  --app-confirm-icon-fg-info: var(--app-info);
+
+  --app-confirm-icon-bg-success: 145 63% 94%;
+  --app-confirm-icon-fg-success: var(--app-success);
+
+  --app-confirm-icon-bg-warning: 42 95% 92%;
+  --app-confirm-icon-fg-warning: var(--app-warning);
+
+  --app-confirm-icon-bg-danger: 0 72% 94%;
+  --app-confirm-icon-fg-danger: var(--app-danger);
+
+  --app-confirm-content-card-bg: 210 40% 98%;
+  --app-confirm-content-card-border: var(--app-border);
+
+  /* =========================
+   DATA TABLE
+========================= */
+  --app-table-bg: 0 0% 100%;
+  --app-table-foreground: 222 47% 11%;
+  --app-table-border: var(--app-border);
+
+  --app-table-header-bg: 210 40% 98%;
+  --app-table-header-foreground: 215 16% 35%;
+
+  --app-table-row-bg: 0 0% 100%;
+  --app-table-row-hover-bg: 210 40% 98%;
+  --app-table-row-selected-bg: 217 91% 96%;
+
+  --app-table-pinned-bg: var(--app-table-row-bg);
+  --app-table-pinned-header-bg: var(--app-table-header-bg);
+  --app-table-pinned-shadow-left: 8px 0 10px -10px rgb(0 0 0 / 0.35);
+  --app-table-pinned-shadow-right: -8px 0 10px -10px rgb(0 0 0 / 0.35);
+
+  --app-table-cell-muted: var(--app-muted-foreground);
+  --app-table-ring: var(--app-ring);
+
+  --app-table-radius: var(--app-radius-md);
+
+  --app-table-cell-px-xs: 0.5rem;
+  --app-table-cell-px-sm: 0.625rem;
+  --app-table-cell-px-md: 0.75rem;
+
+  --app-table-cell-py-xs: 0.375rem;
+  --app-table-cell-py-sm: 0.5rem;
+  --app-table-cell-py-md: 0.625rem;
+
+  --app-table-font-xs: 0.75rem;
+  --app-table-font-sm: 0.8125rem;
+  --app-table-font-md: 0.875rem;
+
+  --app-table-header-height-xs: 2rem;
+  --app-table-header-height-sm: 2.25rem;
+  --app-table-header-height-md: 2.5rem;
+
+  --app-table-row-height-xs: 2.25rem;
+  --app-table-row-height-sm: 2.5rem;
+  --app-table-row-height-md: 2.875rem;
+
+  --app-table-toolbar-gap: 0.5rem;
+  --app-table-pagination-gap: 0.5rem;
+
+  --app-table-menu-bg: var(--app-card-bg);
+  --app-table-menu-border: var(--app-border);
+  --app-table-menu-foreground: var(--app-card-foreground);
+  --app-table-menu-hover-bg: var(--app-table-row-hover-bg);
+
+  --app-table-bulk-bg: 217 91% 96%;
+  --app-table-bulk-foreground: 217 91% 28%;
+  --app-table-bulk-border: 217 91% 88%;
+
+  --app-table-card-row-bg: var(--app-card-bg);
+  --app-table-card-row-border: var(--app-border);
+
+  --app-table-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
 }
 
 .dark {
@@ -460,4 +954,183 @@
   --app-select-multi-value-remove: 215 20% 65%;
   --app-select-multi-value-remove-hover: var(--app-danger);
   --app-select-multi-value-remove-bg-hover: 0 72% 16%;
+
+  /* ===== CARD =====>  */
+  /* =========================
+   CARD - DARK
+========================= */
+  --app-card-bg: 222 47% 11%;
+  --app-card-foreground: 210 40% 98%;
+  --app-card-border: 217 33% 22%;
+  --app-card-border-strong: 216 20% 35%;
+
+  --app-card-muted-bg: 217 33% 14%;
+  --app-card-muted-foreground: 215 20% 65%;
+
+  --app-card-elevated-bg: 222 47% 13%;
+  --app-card-hover-bg: 217 33% 17%;
+
+  --app-card-selected-ring: var(--app-primary);
+
+  --app-card-danger-bg: 0 72% 12%;
+  --app-card-danger-border: 0 72% 28%;
+
+  --app-card-success-bg: 145 63% 12%;
+  --app-card-success-border: 145 63% 28%;
+
+  --app-card-warning-bg: 38 92% 12%;
+  --app-card-warning-border: 38 92% 28%;
+
+  --app-card-info-bg: 217 91% 13%;
+  --app-card-info-border: 217 91% 30%;
+
+  /* ==== FIELD =====>  */
+  /* =========================
+   FIELD - DARK
+========================= */
+  --app-field-label-foreground: 210 40% 98%;
+  --app-field-description-foreground: var(--app-muted-foreground);
+  --app-field-hint-foreground: var(--app-muted-foreground);
+  --app-field-error-foreground: var(--app-danger);
+  --app-field-required-foreground: var(--app-danger);
+
+  /* ===== SEPARATOR =====>  */
+  /* =========================
+   SEPARATOR - DARK
+========================= */
+  --app-separator-default: var(--app-border);
+  --app-separator-muted: 217 33% 18%;
+  --app-separator-strong: var(--app-border-strong);
+
+  --app-separator-primary: var(--app-primary);
+  --app-separator-success: var(--app-success);
+  --app-separator-warning: var(--app-warning);
+  --app-separator-danger: var(--app-danger);
+  --app-separator-info: var(--app-info);
+
+  /* =========================
+   SKELETON - DARK
+========================= */
+  --app-skeleton-bg: 217 33% 20%;
+  --app-skeleton-bg-muted: 217 33% 16%;
+  --app-skeleton-bg-strong: 216 20% 32%;
+  --app-skeleton-highlight: 210 40% 98% / 0.08;
+
+  /* =========================
+   ALERT - DARK
+========================= */
+  --app-alert-bg-neutral: 217 33% 14%;
+  --app-alert-border-neutral: 217 33% 24%;
+  --app-alert-foreground-neutral: 210 40% 98%;
+  --app-alert-icon-neutral: var(--app-muted-foreground);
+
+  --app-alert-bg-info: 217 91% 13%;
+  --app-alert-border-info: 217 91% 30%;
+  --app-alert-foreground-info: 217 91% 78%;
+  --app-alert-icon-info: var(--app-info);
+
+  --app-alert-bg-success: 145 63% 12%;
+  --app-alert-border-success: 145 63% 28%;
+  --app-alert-foreground-success: 145 65% 76%;
+  --app-alert-icon-success: var(--app-success);
+
+  --app-alert-bg-warning: 38 92% 12%;
+  --app-alert-border-warning: 38 92% 28%;
+  --app-alert-foreground-warning: 42 95% 76%;
+  --app-alert-icon-warning: var(--app-warning);
+
+  --app-alert-bg-danger: 0 72% 12%;
+  --app-alert-border-danger: 0 72% 30%;
+  --app-alert-foreground-danger: 0 72% 78%;
+  --app-alert-icon-danger: var(--app-danger);
+
+  /* =========================
+   EMPTY STATE - DARK
+========================= */
+  --app-empty-bg: transparent;
+  --app-empty-border: var(--app-border);
+  --app-empty-foreground: 210 40% 98%;
+  --app-empty-muted-foreground: var(--app-muted-foreground);
+
+  --app-empty-icon-bg-neutral: 217 33% 17%;
+  --app-empty-icon-fg-neutral: var(--app-muted-foreground);
+
+  --app-empty-icon-bg-info: 217 91% 14%;
+  --app-empty-icon-fg-info: var(--app-info);
+
+  --app-empty-icon-bg-success: 145 63% 14%;
+  --app-empty-icon-fg-success: var(--app-success);
+
+  --app-empty-icon-bg-warning: 38 92% 14%;
+  --app-empty-icon-fg-warning: var(--app-warning);
+
+  --app-empty-icon-bg-danger: 0 72% 14%;
+  --app-empty-icon-fg-danger: var(--app-danger);
+
+  /* =========================
+   DATA STATE - DARK
+========================= */
+  --app-data-state-bg: transparent;
+  --app-data-state-border: var(--app-border);
+
+  /* =========================
+   CONFIRM DIALOG - DARK
+========================= */
+  --app-confirm-overlay-bg: 222 47% 4% / 0.72;
+
+  --app-confirm-bg: 222 47% 11%;
+  --app-confirm-foreground: 210 40% 98%;
+  --app-confirm-border: var(--app-border);
+  --app-confirm-muted-foreground: var(--app-muted-foreground);
+
+  --app-confirm-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.65);
+
+  --app-confirm-icon-bg-neutral: 217 33% 17%;
+  --app-confirm-icon-fg-neutral: var(--app-muted-foreground);
+
+  --app-confirm-icon-bg-info: 217 91% 14%;
+  --app-confirm-icon-fg-info: var(--app-info);
+
+  --app-confirm-icon-bg-success: 145 63% 14%;
+  --app-confirm-icon-fg-success: var(--app-success);
+
+  --app-confirm-icon-bg-warning: 38 92% 14%;
+  --app-confirm-icon-fg-warning: var(--app-warning);
+
+  --app-confirm-icon-bg-danger: 0 72% 14%;
+  --app-confirm-icon-fg-danger: var(--app-danger);
+
+  --app-confirm-content-card-bg: 217 33% 14%;
+  --app-confirm-content-card-border: var(--app-border);
+
+  /* =========================
+   DATA TABLE - DARK
+========================= */
+  --app-table-bg: 222 47% 11%;
+  --app-table-foreground: 210 40% 98%;
+  --app-table-border: var(--app-border);
+
+  --app-table-header-bg: 217 33% 14%;
+  --app-table-header-foreground: 215 20% 75%;
+
+  --app-table-row-bg: 222 47% 11%;
+  --app-table-row-hover-bg: 217 33% 16%;
+  --app-table-row-selected-bg: 217 91% 16%;
+
+  --app-table-pinned-bg: var(--app-table-row-bg);
+  --app-table-pinned-header-bg: var(--app-table-header-bg);
+
+  --app-table-menu-bg: var(--app-card-bg);
+  --app-table-menu-border: var(--app-border);
+  --app-table-menu-foreground: var(--app-card-foreground);
+  --app-table-menu-hover-bg: var(--app-table-row-hover-bg);
+
+  --app-table-bulk-bg: 217 91% 16%;
+  --app-table-bulk-foreground: 217 91% 82%;
+  --app-table-bulk-border: 217 91% 24%;
+
+  --app-table-card-row-bg: var(--app-card-bg);
+  --app-table-card-row-border: var(--app-border);
+
+  --app-table-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }

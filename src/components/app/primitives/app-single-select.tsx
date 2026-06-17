@@ -20,6 +20,7 @@ import {
   appSelectTextVariants,
   appSelectValueContainerVariants,
 } from "../theme/app-react-select.variants";
+import { useAppSelectPortalTarget } from "./app-select-portal-context";
 
 export type AppSelectValue = string | number;
 
@@ -85,7 +86,17 @@ export interface AppSingleSelectProps<
   optionClassName?: string;
   noOptionsText?: string;
   loadingText?: string;
+
+  /**
+   * true:
+   * - fuera de dialogs: portal a document.body
+   * - dentro de AppConfirmDialog: se desactiva portal automáticamente
+   *
+   * false:
+   * - renderiza el menú dentro del flujo normal.
+   */
   portalToBody?: boolean;
+
   selectStyles?: StylesConfig<
     AppSelectOption<TValue, TMeta>,
     false,
@@ -198,6 +209,8 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         }),
       ),
 
+    menuPortal: () => "app-select-menu-portal",
+
     menu: () =>
       cn(
         appSelectMenuVariants({
@@ -270,6 +283,9 @@ function AppSingleSelectInner<
     menuPortalTarget,
     menuPosition,
     selectStyles,
+    menuShouldBlockScroll = false,
+    closeMenuOnScroll = false,
+    menuShouldScrollIntoView = false,
     ...props
   }: AppSingleSelectProps<TValue, TMeta>,
   ref: React.ForwardedRef<
@@ -280,6 +296,17 @@ function AppSingleSelectInner<
     >
   >,
 ) {
+  const contextMenuPortalTarget = useAppSelectPortalTarget();
+
+  /**
+   * undefined = no hay AppConfirmDialog provider.
+   * null / HTMLElement = sí estamos dentro de AppConfirmDialog.
+   *
+   * Dentro del dialog NO portaleamos el menú.
+   * ReactSelect + portal a AlertDialog.Content + fixed puede calcular mal posición.
+   */
+  const isInsideAppDialog = contextMenuPortalTarget !== undefined;
+
   const selected = React.useMemo(() => {
     if (value === null || value === undefined) return null;
 
@@ -320,9 +347,12 @@ function AppSingleSelectInner<
 
   const resolvedMenuPortalTarget =
     menuPortalTarget ??
-    (portalToBody && typeof document !== "undefined"
+    (!isInsideAppDialog && portalToBody && typeof document !== "undefined"
       ? document.body
       : undefined);
+
+  const resolvedMenuPosition =
+    menuPosition ?? (resolvedMenuPortalTarget ? "fixed" : "absolute");
 
   const handleChange = (
     newValue: SingleValue<AppSelectOption<TValue, TMeta>>,
@@ -350,11 +380,14 @@ function AppSingleSelectInner<
       placeholder={placeholder}
       classNames={classNames}
       menuPortalTarget={resolvedMenuPortalTarget}
-      menuPosition={resolvedMenuPortalTarget ? "fixed" : menuPosition}
+      menuPosition={resolvedMenuPosition}
+      menuShouldBlockScroll={menuShouldBlockScroll}
+      closeMenuOnScroll={closeMenuOnScroll}
+      menuShouldScrollIntoView={menuShouldScrollIntoView}
       styles={{
         menuPortal: (base) => ({
           ...base,
-          zIndex: "var(--app-select-menu-z-index)",
+          zIndex: "var(--app-select-menu-z-index, 9999)",
         }),
         ...selectStyles,
       }}
