@@ -1,482 +1,469 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-// UI
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-// Icons
-import {
-  Users,
-  MapPin,
-  Search,
-  Loader2,
-  AlertCircle,
-  DollarSign,
-} from "lucide-react";
-// Componentes auxiliares que ya tienes
-import { SelectCobradores } from "./SelectCobradores";
-import { SelectZonaFacturacion } from "./SelectZonaFacturacion";
-import { SelectSectoresMulti } from "./SelectSectores";
-// Tipos
-import { useRutasCreate } from "../CrmHooks/hooks/useRutasCreate";
-import { TableBaseGeneric } from "../Utils/Components/TableBaseTanstakGeneric";
-import { columnsClientesRutaCreate } from "./_table_clientes_create/columns_create_ruta";
-import { RowSelectionState } from "@tanstack/react-table";
-import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
+import * as React from "react";
+import type { RowSelectionState, SortingState } from "@tanstack/react-table";
 import { toast } from "sonner";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppDataTable } from "@/components/app/table/app-data-table";
+import {
+  normalizeAppPayload,
+  useAppDisclosure,
+  useAppStateHandlers,
+} from "@/components/app/handlers";
+
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
+import { useRutasCreate } from "../CrmHooks/hooks/useRutasCreate";
+import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
+
+import type { ClienteInternetFromCreateRuta } from "../features/rutas/rutas.interfaces";
 import {
   EstadoCliente,
   EstadoCobranzaCliente,
 } from "../features/cliente-interfaces/cliente-types";
-import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
-import { CreateRutaDto } from "../features/rutas/rutas.interfaces";
+import type { SortDir, SortField } from "../CrmRutas/types/types";
+
+import {
+  RutasCreateFilters,
+  type RutasCreateFiltersState,
+} from "./_components/rutas-create-filters";
+import {
+  RutasCreateFormCard,
+  type RutaCreateFormState,
+} from "./_components/rutas-create-form-card";
+import { createRutasClientesColumns } from "./_components/rutas-create.columns";
+import { AppOption } from "../CrmCustomers/customer-table.constants";
+import { formattMonedaGT } from "../Utils/formattMonedaGT";
+import {
+  INITIAL_RUTAS_COLUMN_VISIBILITY,
+  RUTAS_PAGE_SIZE_OPTIONS,
+} from "./_components/rutas_create_constants";
+
+function getClienteAmount(cliente: ClienteInternetFromCreateRuta) {
+  const facturasTotal = (cliente.facturas ?? []).reduce(
+    (sum, factura) => sum + Number(factura.montoFactura ?? 0),
+    0,
+  );
+
+  return facturasTotal || Number(cliente.saldoPendiente ?? 0);
+}
+
+function toOptionList<T extends { id: number; nombre: string }>(
+  items: T[] | undefined,
+  options?: {
+    withCount?: boolean;
+    getCount?: (item: T) => number | undefined;
+  },
+): AppOption[] {
+  return (items ?? []).map((item) => {
+    const count = options?.getCount?.(item);
+
+    return {
+      value: String(item.id),
+      label:
+        options?.withCount && typeof count === "number"
+          ? `${item.nombre} (${count})`
+          : item.nombre,
+    };
+  });
+}
 
 export function RutasCobroCreate() {
-  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [selectedFacturaIds, setSelectedFacturaIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [totalSeleccionado, setTotalSeleccionado] = useState<number>(0);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-
-  const [openCreate, setOpenCreate] = useState<boolean>(false);
-  const empresaId = useStoreCrm((s) => s.empresaId) ?? 0;
+  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
   const vm = useRutasCreate(empresaId);
-  const [nuevaRuta, setNuevaRuta] = useState<CreateRutaDto>({
+
+  const confirmDialog = useAppDisclosure();
+
+  const routeForm = useAppStateHandlers<RutaCreateFormState>({
     nombreRuta: "",
-    EmpresaId: empresaId,
-    facturasIds: [],
-    cobradorId: "",
+    cobradorId: null,
     observaciones: "",
-    clientesIds: [],
   });
 
-  useEffect(() => {
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [selectedClientIds, setSelectedClientIds] = React.useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectedClientAmounts, setSelectedClientAmounts] = React.useState<
+    Record<string, number>
+  >({});
+
+  const [columnVisibility, setColumnVisibility] = React.useState(
+    INITIAL_RUTAS_COLUMN_VISIBILITY,
+  );
+
+  const { data: rawUsers = [] } = useGetUsersToSelect();
+
+  const columns = React.useMemo(() => createRutasClientesColumns(), []);
+
+  const cobradorOptions = React.useMemo<AppOption[]>(
+    () =>
+      rawUsers.map((user) => ({
+        value: String(user.id),
+        label: user.nombre,
+      })),
+    [rawUsers],
+  );
+
+  const zonaOptions = React.useMemo<AppOption[]>(
+    () =>
+      toOptionList(vm.zonas as any[], {
+        withCount: true,
+        getCount: (zona: any) => zona.clientesCount,
+      }),
+    [vm.zonas],
+  );
+
+  const sectorOptions = React.useMemo<AppOption[]>(
+    () =>
+      toOptionList(vm.sectores as any[], {
+        withCount: true,
+        getCount: (sector: any) => sector.clientesCount,
+      }),
+    [vm.sectores],
+  );
+
+  const selectedCount = selectedClientIds.size;
+
+  const totalACobrar = React.useMemo(
+    () =>
+      Object.values(selectedClientAmounts).reduce(
+        (sum, amount) => sum + Number(amount || 0),
+        0,
+      ),
+    [selectedClientAmounts],
+  );
+
+  const canCreate =
+    routeForm.state.nombreRuta.trim().length > 0 &&
+    selectedCount > 0 &&
+    !vm.isSubmitting;
+
+  const filterState: RutasCreateFiltersState = React.useMemo(
+    () => ({
+      search: vm.search,
+      estado: vm.estado,
+      estadoCobranza: vm.estadoCobranza,
+      zonasFacturacionIDs: vm.zonasFacturacionIDs,
+      sectorIDs: vm.sectorIDs,
+      sort: `${vm.sortBy}-${vm.sortDir}`,
+    }),
+    [
+      vm.search,
+      vm.estado,
+      vm.estadoCobranza,
+      vm.zonasFacturacionIDs,
+      vm.sectorIDs,
+      vm.sortBy,
+      vm.sortDir,
+    ],
+  );
+
+  const sorting: SortingState = React.useMemo(
+    () => [
+      {
+        id: vm.sortBy,
+        desc: vm.sortDir === "desc",
+      },
+    ],
+    [vm.sortBy, vm.sortDir],
+  );
+
+  React.useEffect(() => {
     const next: RowSelectionState = {};
-    vm.clientes.forEach((c) => {
-      if (selectedClientIds.has(String(c.id))) next[String(c.id)] = true;
+
+    vm.clientes.forEach((cliente) => {
+      if (selectedClientIds.has(String(cliente.id))) {
+        next[String(cliente.id)] = true;
+      }
     });
+
     setRowSelection(next);
   }, [vm.clientes, selectedClientIds]);
 
-  const recomputeTotal = (factIds: Set<string>): number => {
-    let sum = 0;
-    vm.clientes.forEach((c) => {
-      (c.facturas ?? []).forEach(
-        (f: { id: string | number; montoFactura?: number | string }) => {
-          if (factIds.has(String(f.id))) sum += Number(f.montoFactura || 0);
-        },
-      );
-    });
-    return sum;
+  const handleResetPage = () => {
+    vm.setPage(1);
   };
 
-  const handleRowSelectionChange = (
-    upd: RowSelectionState | ((old: RowSelectionState) => RowSelectionState),
-  ) => {
-    const next = typeof upd === "function" ? upd(rowSelection) : upd;
+  const handleSearchChange = (value: string) => {
+    vm.setSearch(value);
+  };
 
+  const handleDebouncedSearchChange = (value: string) => {
+    vm.setSearch(value);
+    handleResetPage();
+  };
+
+  const handleEstadoChange = (value: string | null) => {
+    vm.setEstado((value ?? "TODOS") as EstadoCliente | "TODOS");
+    handleResetPage();
+  };
+
+  const handleEstadoCobranzaChange = (value: string | null) => {
+    vm.setEstadoCobranza((value ?? "TODOS") as EstadoCobranzaCliente | "TODOS");
+    handleResetPage();
+  };
+
+  const handleZonasChange = (values: string[]) => {
+    vm.setZonasFacturacionIDs(values);
+    handleResetPage();
+  };
+
+  const handleSectoresChange = (values: string[]) => {
+    vm.setSectorIDs(values);
+    handleResetPage();
+  };
+
+  const handleSortChange = (value: string | null) => {
+    if (!value) {
+      vm.setSortBy("nombre" as SortField);
+      vm.setSortDir("asc" as SortDir);
+      handleResetPage();
+      return;
+    }
+
+    const [field, direction] = value.split("-");
+
+    vm.setSortBy(field as SortField);
+    vm.setSortDir((direction === "desc" ? "desc" : "asc") as SortDir);
+    handleResetPage();
+  };
+
+  const handleClearFilters = () => {
+    vm.setSearch("");
+    vm.setEstado("TODOS");
+    vm.setEstadoCobranza("TODOS");
+    vm.setZonasFacturacionIDs([]);
+    vm.setSectorIDs([]);
+    vm.setSortBy("nombre" as SortField);
+    vm.setSortDir("asc" as SortDir);
+    vm.setPage(1);
+  };
+
+  const handleSortingChange = (nextSorting: SortingState) => {
+    const first = nextSorting[0];
+
+    if (!first) {
+      vm.setSortBy("nombre" as SortField);
+      vm.setSortDir("asc" as SortDir);
+      handleResetPage();
+      return;
+    }
+
+    vm.setSortBy(first.id as SortField);
+    vm.setSortDir((first.desc ? "desc" : "asc") as SortDir);
+    handleResetPage();
+  };
+
+  const handleRowSelectionChange = (next: RowSelectionState) => {
     const nextClients = new Set(selectedClientIds);
-    const nextFacts = new Set(selectedFacturaIds);
+    const nextAmounts = { ...selectedClientAmounts };
 
-    vm.clientes.forEach((c) => {
-      const id = String(c.id);
-      const isNow = !!next[id];
-      const was = nextClients.has(id);
+    vm.clientes.forEach((cliente) => {
+      const id = String(cliente.id);
+      const isNowSelected = Boolean(next[id]);
+      const wasSelected = nextClients.has(id);
 
-      if (isNow && !was) {
+      if (isNowSelected && !wasSelected) {
         nextClients.add(id);
-        (c.facturas ?? []).forEach((fx: { id: string | number }) =>
-          nextFacts.add(String(fx.id)),
-        );
+        nextAmounts[id] = getClienteAmount(cliente);
       }
-      if (!isNow && was) {
+
+      if (!isNowSelected && wasSelected) {
         nextClients.delete(id);
-        (c.facturas ?? []).forEach((fx: { id: string | number }) =>
-          nextFacts.delete(String(fx.id)),
-        );
+        delete nextAmounts[id];
       }
     });
 
     setSelectedClientIds(nextClients);
-    setSelectedFacturaIds(nextFacts);
+    setSelectedClientAmounts(nextAmounts);
     setRowSelection(next);
-    setTotalSeleccionado(recomputeTotal(nextFacts));
   };
 
-  const selectedCount = selectedClientIds.size; // clientes seleccionados
-  const totalACobrar = totalSeleccionado; // suma de facturas seleccionadas
-
-  // Handlers de formulario
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setNuevaRuta((prev) => ({ ...prev, [name]: value }));
+  const handleClearSelection = () => {
+    setSelectedClientIds(new Set());
+    setSelectedClientAmounts({});
+    setRowSelection({});
   };
 
-  const handleSelecZona = (options: OptionSelected[]) => {
-    const nuevosIds = options.map((o) => o.value); // ← string[]
-    vm.setZonasFacturacionIDs(nuevosIds);
-    vm.setPage(1);
-  };
-
-  const handleSelecSectores = (options: OptionSelected[]) => {
-    const nuevosIds = options.map((o) => o.value); // ← string[]
-    vm.setSectorIDs(nuevosIds);
-    vm.setPage(1);
-  };
-
-  const createRuta = async () => {
-    const clientesIds = Array.from(selectedClientIds);
-
+  const handleCreateRuta = async () => {
     try {
-      await vm.create({
-        nombreRuta: nuevaRuta.nombreRuta,
-        cobradorId: nuevaRuta.cobradorId,
-        observaciones: nuevaRuta.observaciones,
-        clientesIds,
+      const clientesIds = Array.from(selectedClientIds);
+
+      const payload = normalizeAppPayload(
+        {
+          nombreRuta: routeForm.state.nombreRuta,
+          cobradorId: routeForm.state.cobradorId,
+          observaciones: routeForm.state.observaciones,
+          clientesIds,
+        },
+        {
+          trimStrings: true,
+          emptyStringToUndefined: true,
+          removeUndefined: true,
+        },
+      ) as {
+        nombreRuta: string;
+        cobradorId?: string | number | null;
+        observaciones?: string;
+        clientesIds: string[];
+      };
+
+      await vm.create(payload);
+
+      routeForm.patch({
+        nombreRuta: "",
+        cobradorId: null,
+        observaciones: "",
       });
 
-      // limpia UI local
-      setNuevaRuta({
-        nombreRuta: "",
-        EmpresaId: empresaId,
-        cobradorId: "",
-        observaciones: "",
-        clientesIds: [],
-        facturasIds: [],
-      });
-      setSelectedClientIds(new Set());
-      setSelectedFacturaIds(new Set());
-      setTotalSeleccionado(0);
-      setRowSelection({});
-      setOpenCreate(false);
+      handleClearSelection();
+      confirmDialog.close();
+
       toast.success("Ruta creada exitosamente");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(getApiErrorMessageAxios(err));
+    } catch (error) {
+      console.error(error);
+      toast.error(getApiErrorMessageAxios(error));
     }
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createRuta();
-  };
-
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      {/* Datos de la ruta */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary dark:text-white" />
-            Datos de la Ruta
-          </CardTitle>
-        </CardHeader>
+    <>
+      <AppContainer size="full" paddingY="none" paddingX="none">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <AppBadge tone="info" appearance="soft">
+              {vm.total} clientes encontrados
+            </AppBadge>
 
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Nombre */}
-          <div className="space-y-2">
-            <Label htmlFor="nombreRuta" className="text-base">
-              Nombre de la Ruta <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="nombreRuta"
-              name="nombreRuta"
-              placeholder="Ej: Ruta Centro"
-              value={nuevaRuta.nombreRuta}
-              onChange={handleInputChange}
-              className="text-base"
-              required
-            />
+            <AppBadge tone="success" appearance="soft">
+              {selectedCount} seleccionados
+            </AppBadge>
+
+            <AppBadge tone="warning" appearance="soft">
+              {formattMonedaGT(totalACobrar)} a cobrar
+            </AppBadge>
           </div>
 
-          {/* Cobrador */}
-          <div className="space-y-2">
-            <Label htmlFor="cobrador" className="text-base">
-              Cobrador Asignado
-            </Label>
-            <SelectCobradores
-              value={nuevaRuta.cobradorId}
-              onChange={(value) =>
-                setNuevaRuta((prev) => ({ ...prev, cobradorId: value }))
-              }
-            />
-          </div>
-
-          {/* Observaciones */}
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="observaciones" className="text-base">
-              Observaciones
-            </Label>
-            <Textarea
-              id="observaciones"
-              name="observaciones"
-              value={nuevaRuta.observaciones || ""}
-              onChange={handleInputChange}
-              rows={3}
-              className="resize-none text-base"
-            />
-          </div>
-
-          {/* Resumen selección */}
-          <Card className="md:col-span-2 bg-muted/40">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                Resumen de la selección
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>Clientes seleccionados</span>
-                </div>
-                <Badge variant="outline">{selectedCount}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
-                  <span>Total a cobrar</span>
-                </div>
-                <span className="font-semibold">
-                  Q{totalACobrar.toFixed(2)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </CardContent>
-
-        <CardFooter className="flex flex-col gap-4">
-          <Button
-            onClick={() => setOpenCreate(true)}
-            type="button"
-            variant="outline"
-            className="w-full md:max-w-lg"
-          >
-            {vm.isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              <>Crear Ruta de Cobro</>
-            )}
-          </Button>
-
-          {(selectedCount === 0 || !nuevaRuta.nombreRuta) && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900/30 text-sm">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  {!nuevaRuta.nombreRuta && (
-                    <p>Debe ingresar un nombre para la ruta.</p>
-                  )}
-                  {selectedCount === 0 && (
-                    <p>Debe seleccionar al menos un cliente.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </CardFooter>
-      </Card>
-
-      {/* Selección de clientes */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
-            <div className="flex flex-wrap items-center gap-2 w-full">
-              {/* Buscar (server-side) */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar clientes..."
-                  className="pl-8 w-full"
-                  value={vm.search}
-                  onChange={(e) => {
-                    vm.setSearch(e.target.value);
-                    vm.setPage(1);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Filtros (server-side) */}
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Estado */}
-              <div className="space-y-2">
-                <Label htmlFor="estado-filter">Estado del cliente</Label>
-                <Select
-                  onValueChange={(value) => {
-                    vm.setEstado(value as EstadoCliente | "TODOS");
-                    vm.setPage(1);
-                  }}
-                  value={vm.estado}
-                >
-                  <SelectTrigger id="estado-filter">
-                    <SelectValue placeholder="Todos los estados" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TODOS">Todos</SelectItem>
-                    <SelectItem value={EstadoCliente.ACTIVO}>
-                      Activos
-                    </SelectItem>
-                    <SelectItem value={EstadoCliente.ATRASADO}>
-                      Atrasados
-                    </SelectItem>
-                    <SelectItem value={EstadoCliente.MOROSO}>
-                      Morosos
-                    </SelectItem>
-                    <SelectItem value={EstadoCliente.PAGO_PENDIENTE}>
-                      Pago Pendiente
-                    </SelectItem>
-                    <SelectItem value={EstadoCliente.PENDIENTE_ACTIVO}>
-                      Pendiente Activo
-                    </SelectItem>
-                    <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                      Suspendido
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Estado cobranza */}
-              <div className="space-y-2">
-                <Label htmlFor="estado-filter">Estado cobranza</Label>
-                <Select
-                  onValueChange={(value) => {
-                    vm.setEstadoCobranza(
-                      value as EstadoCobranzaCliente | "TODOS",
-                    );
-                    vm.setPage(1);
-                  }}
-                  value={vm.estadoCobranza}
-                >
-                  <SelectTrigger id="estado-filter">
-                    <SelectValue placeholder="Todos los estados" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TODOS">Todos</SelectItem>
-                    <SelectItem value={EstadoCobranzaCliente.AL_DIA}>
-                      AL DIA
-                    </SelectItem>
-                    <SelectItem value={EstadoCobranzaCliente.PAGO_PENDIENTE}>
-                      Pago Pendiente
-                    </SelectItem>
-
-                    <SelectItem value={EstadoCobranzaCliente.ATRASADO}>
-                      Atrasados
-                    </SelectItem>
-                    <SelectItem value={EstadoCobranzaCliente.MOROSO}>
-                      Morosos
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Zona de facturación */}
-              <div className="space-y-2">
-                <Label htmlFor="zona-filter">Zona de facturación</Label>
-                <SelectZonaFacturacion
-                  zonas={vm.zonas}
-                  value={vm.zonasFacturacionIDs} // string[]
-                  onChange={handleSelecZona}
-                />
-              </div>
-
-              {/* Sectores */}
-              <div className="space-y-2">
-                <Label htmlFor="sector-filter">Sectores</Label>
-                <SelectSectoresMulti
-                  sectores={vm.sectores}
-                  value={vm.sectorIDs} // string[]
-                  onChange={handleSelecSectores}
-                />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <TableBaseGeneric
-            tableLayout="fixed"
-            density="compact"
-            stickyHeader={false}
-            onRefetch={vm.refetchClientes}
-            isFetching={vm.isFetchingClientes}
-            isLoading={vm.isInitialClientes}
-            columns={columnsClientesRutaCreate}
-            data={vm.clientes}
-            serverPagination
-            total={vm.total}
-            pageIndex={vm.page - 1}
-            pageSize={vm.perPage}
-            onPageChange={(pi, ps) => {
-              if (ps !== vm.perPage) {
-                vm.setPerPage(ps);
-                vm.setPage(1);
-                return;
-              }
-              vm.setPage(pi + 1);
-            }}
-            getRowId={(r) => String(r.id)}
-            enableRowSelection
-            rowSelection={rowSelection}
-            onRowSelectionChange={handleRowSelectionChange}
-            // getRowCanSelect={(row) =>
-            //   ((row.facturasPendientes ?? row.facturas?.length) || 0) > 0
-            // }
+          <RutasCreateFormCard
+            form={routeForm.state}
+            cobradorOptions={cobradorOptions}
+            selectedCount={selectedCount}
+            totalACobrar={totalACobrar}
+            isSubmitting={vm.isSubmitting}
+            canCreate={canCreate}
+            onFieldChange={(field, value) => routeForm.setField(field, value)}
+            onOpenConfirm={confirmDialog.open}
           />
-        </CardContent>
-      </Card>
 
-      <AdvancedDialogCRM
-        type="confirmation"
-        title="Confirmar creación de la ruta de cobro"
-        description="¿Deseas crear esta ruta de cobro con la información ingresada? Podrás editarla más adelante desde el módulo de rutas."
-        onOpenChange={setOpenCreate}
-        open={openCreate}
-        confirmButton={{
-          label: "Sí, crear ruta",
-          disabled: vm.isSubmitting,
-          loading: vm.isSubmitting,
-          loadingText: "Creando ruta...",
-          onClick: () => createRuta(),
-        }}
-        cancelButton={{
-          label: "Cancelar",
-          disabled: vm.isSubmitting,
-          loadingText: "Cancelando...",
-          onClick: () => setOpenCreate(false),
-        }}
-      />
-    </form>
+          <RutasCreateFilters
+            filters={filterState}
+            options={{
+              zonas: zonaOptions,
+              sectores: sectorOptions,
+            }}
+            isFetching={vm.isFetchingAny}
+            onSearchChange={handleSearchChange}
+            onSearchDebouncedChange={handleDebouncedSearchChange}
+            onEstadoChange={handleEstadoChange}
+            onEstadoCobranzaChange={handleEstadoCobranzaChange}
+            onZonasChange={handleZonasChange}
+            onSectoresChange={handleSectoresChange}
+            onSortChange={handleSortChange}
+            onClearFilters={handleClearFilters}
+            onRefetch={vm.refetchAll}
+          />
+
+          <AppCard variant="outline" size="xs" radius="md">
+            <AppDataTable<ClienteInternetFromCreateRuta>
+              data={vm.clientes}
+              columns={columns}
+              getRowId={(row) => String(row.id)}
+              isLoading={vm.isInitialClientes}
+              isFetching={vm.isFetchingClientes}
+              error={vm.errors?.[0]}
+              onRetry={vm.refetchAll}
+              paginationMode="server"
+              pagination={{
+                pageIndex: vm.page - 1,
+                pageSize: vm.perPage,
+                totalRows: vm.total,
+                pageSizeOptions: RUTAS_PAGE_SIZE_OPTIONS,
+                onPaginationChange: (pagination) => {
+                  if (pagination.pageSize !== vm.perPage) {
+                    vm.setPerPage(pagination.pageSize);
+                    vm.setPage(1);
+                    return;
+                  }
+
+                  vm.setPage(pagination.pageIndex + 1);
+                },
+              }}
+              sorting={sorting}
+              onSortingChange={handleSortingChange}
+              rowSelection={rowSelection}
+              onRowSelectionChange={handleRowSelectionChange}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              enableRowSelection
+              enableColumnVisibility
+              enableColumnPinning={false}
+              enableVirtualization
+              stickyHeader
+              density="xs"
+              maxHeight="62vh"
+              emptyTitle="Sin clientes"
+              emptyDescription="No hay clientes que coincidan con los filtros actuales."
+            />
+          </AppCard>
+        </div>
+      </AppContainer>
+
+      <AppConfirmDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={confirmDialog.setOpen}
+        preset="confirm"
+        tone="info"
+        title="Confirmar creación de la ruta"
+        description="Se creará una ruta de cobro con los clientes seleccionados."
+        confirmText="Sí, crear ruta"
+        cancelText="Cancelar"
+        loadingText="Creando ruta..."
+        isLoading={vm.isSubmitting}
+        disabled={!canCreate}
+        preventClose={vm.isSubmitting}
+        closeOnConfirm={false}
+        onConfirm={handleCreateRuta}
+        size="sm"
+        footerAlign="between"
+      >
+        <div className="space-y-2 text-xs text-[hsl(var(--app-muted-foreground))]">
+          <div className="flex items-center justify-between gap-3">
+            <span>Nombre</span>
+            <span className="font-medium text-[hsl(var(--app-foreground))]">
+              {routeForm.state.nombreRuta || "Sin nombre"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span>Clientes</span>
+            <span className="font-medium text-[hsl(var(--app-foreground))]">
+              {selectedCount}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span>Total estimado</span>
+            <span className="font-medium text-[hsl(var(--app-foreground))]">
+              {formattMonedaGT(totalACobrar)}
+            </span>
+          </div>
+        </div>
+      </AppConfirmDialog>
+    </>
   );
 }

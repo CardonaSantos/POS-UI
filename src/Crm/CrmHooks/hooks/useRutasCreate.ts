@@ -37,7 +37,6 @@ export function useRutasCreate(empresaId: number) {
   const [perPage, setPerPage] = useState(ITEMS_PER_PAGE);
   const toNumArray = (arr: string[]) =>
     arr.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0); // evita 0/NaN (ajusta si 0 fuese válido)
-  // ---- Params para el server ----
   const params = useMemo(
     () => ({
       empresaId, // si el backend lo necesita

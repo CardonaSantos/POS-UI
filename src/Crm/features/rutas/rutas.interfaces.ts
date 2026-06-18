@@ -1,4 +1,7 @@
-import { EstadoCliente } from "../cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../cliente-interfaces/cliente-types";
 
 // Enums
 export enum EstadoRuta {
@@ -43,6 +46,7 @@ export interface ClienteInternetFromCreateRuta {
   direccion?: string;
   dpi?: string;
   estadoCliente: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
   empresaId?: number;
   empresa?: Empresa;
   ubicacion?: Ubicacion;

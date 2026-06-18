@@ -16,7 +16,10 @@ import {
   ESTADO_CLIENTE_COBRANZA_LABELS,
   ESTADO_CLIENTE_LABELS,
 } from "../customer-table.constants";
-import { EstadoCobranzaCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 
 type AppBadgeTone =
   | "neutral"
@@ -33,7 +36,7 @@ export type ClienteTableColumnActions = {
   onEditCliente: (clienteId: number) => void;
 };
 
-function getEstadoTone(estado?: string): AppBadgeTone {
+export function getEstadoTone(estado?: EstadoCliente): AppBadgeTone {
   if (estado === "ACTIVO") return "success";
   if (estado === "PENDIENTE_ACTIVO") return "warning";
   if (estado === "PAGO_PENDIENTE") return "info";
@@ -43,7 +46,9 @@ function getEstadoTone(estado?: string): AppBadgeTone {
   return "neutral";
 }
 
-function getEstadoToneCobranza(estado?: EstadoCobranzaCliente): AppBadgeTone {
+export function getEstadoToneCobranza(
+  estado?: EstadoCobranzaCliente,
+): AppBadgeTone {
   if (estado === EstadoCobranzaCliente.AL_DIA) return "success";
   if (estado === EstadoCobranzaCliente.PAGO_PENDIENTE) return "info";
   if (estado === EstadoCobranzaCliente.ATRASADO) return "warning";
@@ -51,7 +56,7 @@ function getEstadoToneCobranza(estado?: EstadoCobranzaCliente): AppBadgeTone {
   return "neutral";
 }
 
-function getClasificacionTone(
+export function getClasificacionTone(
   clasificacion?: ClasificacionCliente,
 ): AppBadgeTone {
   if (clasificacion === "CONFIABLE") return "success";

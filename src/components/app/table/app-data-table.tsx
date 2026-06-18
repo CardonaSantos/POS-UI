@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  ColumnPinningState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -184,9 +185,17 @@ export function AppDataTable<TData>({
       pageSize: pagination?.pageSize ?? 10,
     });
 
+  const [internalColumnPinning, setInternalColumnPinning] =
+    React.useState<ColumnPinningState>({
+      left: [],
+      right: [],
+    });
+
   const currentSorting = sorting ?? internalSorting;
   const currentRowSelection = rowSelection ?? internalRowSelection;
   const currentColumnVisibility = columnVisibility ?? internalColumnVisibility;
+
+  const currentColumnPinning = columnPinning ?? internalColumnPinning;
 
   const currentPagination: PaginationState = pagination
     ? {
@@ -265,6 +274,22 @@ export function AppDataTable<TData>({
     [currentPagination, pagination],
   );
 
+  const handleColumnPinningChange = React.useCallback(
+    (updater: unknown) => {
+      const next = resolveUpdater(
+        updater as Parameters<typeof setInternalColumnPinning>[0],
+        currentColumnPinning,
+      );
+
+      if (columnPinning === undefined) {
+        setInternalColumnPinning(next);
+      }
+
+      onColumnPinningChange?.(next);
+    },
+    [columnPinning, currentColumnPinning, onColumnPinningChange],
+  );
+
   const table = useReactTable({
     data,
     columns,
@@ -276,7 +301,7 @@ export function AppDataTable<TData>({
       pagination: currentPagination,
       columnFilters,
       columnOrder,
-      columnPinning,
+      columnPinning: currentColumnPinning,
     },
     defaultColumn: {
       minSize: 80,
@@ -306,12 +331,7 @@ export function AppDataTable<TData>({
           onColumnOrderChange(next);
         }
       : undefined,
-    onColumnPinningChange: onColumnPinningChange
-      ? (updater) => {
-          const next = resolveUpdater(updater, columnPinning ?? {});
-          onColumnPinningChange(next);
-        }
-      : undefined,
+    onColumnPinningChange: handleColumnPinningChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel:
       paginationMode === "server" || manualSorting

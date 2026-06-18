@@ -1,527 +1,355 @@
 "use client";
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Search,
-  Calendar,
-  MapPinned,
-  UserCheck,
-  Phone,
-  Info,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import * as React from "react";
 import { toast } from "sonner";
-import { RutasSkeleton } from "./RutasSkeleton";
-import { downloadExcelRutaCobro } from "./api";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppDataTable } from "@/components/app/table/app-data-table";
+import {
+  normalizeAppPayload,
+  useAppConfirmHandler,
+  useAppDisclosure,
+  useAppStateHandlers,
+  useAppTableHandlers,
+} from "@/components/app/handlers";
 
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-import { getEstadoBadgeColorRutaList } from "./_Utils/utilsBadge";
-import { getEstadoIconRutaList } from "./_Utils/getEstadoIconRutaList";
-import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
-import { formattShortFecha } from "@/utils/formattFechas";
-import MiniPerfilClienteCard from "./_subcomponents/MiniPerfilClienteCard";
-import { EstadoRuta, Ruta } from "../features/rutas/rutas.interfaces";
+import { downloadExcelRutaCobro } from "./api";
+import { EstadoRuta, type Ruta } from "../features/rutas/rutas.interfaces";
 import {
   useCloseRuta,
   useDeleteRuta,
   useGetRutas,
 } from "../CrmHooks/hooks/use-rutas/use-rutas";
-import { QueryRutasDto } from "../CrmHooks/hooks/use-rutas/Qk";
-import DataTable from "../_Utils/components/table/data-table";
-import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { getRutasColumns } from "./table/columns";
-import { useDebounce } from "use-debounce";
-import { TablePagination } from "../_Utils/components/table/table-pagination";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { QueryRutasDto } from "../CrmHooks/hooks/use-rutas/Qk";
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
-import { OptionSelectedStrings } from "../features/OptionSelected/OptionSelected";
-import ReactSelectComponent from "react-select";
-export function RutasCobroList() {
-  const [{ pageIndex, pageSize }, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-  const [searchRuta, setSearchRuta] = useState("");
-  const [selectedRuta, setSelectedRuta] = useState<Ruta | null>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [rutaToDelete, setRutaToDelete] = useState<number | null>(null);
-  // const [rowSelection, setRowSelection] = useState({});
-  const [rutaClose, setRutaClose] = useState<number | null>(null);
-  const [openCloseRuta, setOpenCloseRuta] = useState(false);
+import {
+  RutasListFilters,
+  RutasListFiltersState,
+} from "./_components/regists/rutas-list-filters";
+import {
+  INITIAL_RUTAS_LIST_COLUMN_VISIBILITY,
+  RUTAS_LIST_PAGE_SIZE_OPTIONS,
+} from "./_components/regists/rutas_list_consts_";
+import { AppOption } from "../CrmCustomers/customer-table.constants";
+import { createRutasListColumns } from "./_components/regists/rutas-list.columns";
+import { RutasDetailDialog } from "./_components/regists/rutas-detail-dialog";
 
-  const [debouncedSearch] = useDebounce(searchRuta, 500);
-
-  const [cobradorSelected, setCobradorSelected] = useState<number | null>(null);
-
-  const [estadoRuta, setEstadoRuta] = useState<EstadoRuta | null>(null);
-
-  const queryDto: QueryRutasDto = useMemo(
-    () => ({
-      page: pageIndex + 1,
-      limit: pageSize,
-      nombreRuta: debouncedSearch || undefined,
-      cobrador: cobradorSelected ?? undefined,
-      estado: estadoRuta,
-    }),
-    [pageIndex, pageSize, debouncedSearch, cobradorSelected, estadoRuta],
-  );
-
-  const handleSelectCobrador = (option: OptionSelectedStrings | null) => {
-    setCobradorSelected(option ? Number(option.value) : null);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+type RutasResponse = {
+  data: Ruta[];
+  meta: {
+    currentPage: number;
+    pageCount: number;
+    pageSize: number;
+    totalCount: number;
   };
+};
 
-  const {
-    data: rawRutasResponse = {
-      data: [],
+function normalizeRutasResponse(raw: unknown): RutasResponse {
+  if (
+    raw &&
+    typeof raw === "object" &&
+    Array.isArray((raw as any).data) &&
+    (raw as any).meta
+  ) {
+    return raw as RutasResponse;
+  }
+
+  if (Array.isArray(raw)) {
+    return {
+      data: raw as Ruta[],
       meta: {
         currentPage: 1,
         pageCount: 1,
-        pageSize: 1,
-        totalCount: 1,
+        pageSize: raw.length || 10,
+        totalCount: raw.length,
       },
+    };
+  }
+
+  return {
+    data: [],
+    meta: {
+      currentPage: 1,
+      pageCount: 1,
+      pageSize: 10,
+      totalCount: 0,
     },
-    isFetching: isLoadingRutas,
-  } = useGetRutas(queryDto);
+  };
+}
 
-  const list = Array.isArray(rawRutasResponse?.data)
-    ? rawRutasResponse.data
-    : Array.isArray(rawRutasResponse)
-      ? rawRutasResponse
-      : [];
-  const meta = rawRutasResponse.meta;
-  const closeRuta = useCloseRuta(rutaClose ?? 0);
-  const deleteRuta = useDeleteRuta(rutaToDelete ?? 0);
+export function RutasCobroList() {
+  const filters = useAppStateHandlers<RutasListFiltersState>({
+    search: "",
+    serverSearch: "",
+    estadoRuta: "TODOS",
+    cobradorId: null,
+  });
 
-  const { data: rawUsers } = useGetUsersToSelect();
-  const users = rawUsers ? rawUsers : [];
+  const table = useAppTableHandlers({
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialDensity: "xs",
+    initialColumnVisibility: INITIAL_RUTAS_LIST_COLUMN_VISIBILITY,
+  });
 
-  const options: Array<OptionSelectedStrings> = useMemo(
+  const detailDialog = useAppDisclosure();
+  const deleteDialog = useAppConfirmHandler<Ruta>();
+  const closeDialog = useAppConfirmHandler<Ruta>();
+
+  const [selectedRuta, setSelectedRuta] = React.useState<Ruta | null>(null);
+
+  const queryDto: QueryRutasDto = React.useMemo(
     () =>
-      users.map((d) => ({
-        value: d.id.toString(),
-        label: d.nombre,
-      })),
-    [users],
+      normalizeAppPayload(
+        {
+          page: table.pagination.pageIndex + 1,
+          limit: table.pagination.pageSize,
+          nombreRuta: filters.state.serverSearch || undefined,
+          cobrador: filters.state.cobradorId
+            ? Number(filters.state.cobradorId)
+            : undefined,
+          estado:
+            filters.state.estadoRuta && filters.state.estadoRuta !== "TODOS"
+              ? (filters.state.estadoRuta as EstadoRuta)
+              : undefined,
+        },
+        {
+          removeUndefined: true,
+          emptyStringToUndefined: true,
+        },
+      ) as QueryRutasDto,
+    [
+      table.pagination.pageIndex,
+      table.pagination.pageSize,
+      filters.state.serverSearch,
+      filters.state.cobradorId,
+      filters.state.estadoRuta,
+    ],
   );
 
-  const handleViewRuta = (ruta: Ruta) => {
-    setSelectedRuta(ruta);
-    setIsViewDialogOpen(true);
-  };
+  const rutasQuery = useGetRutas(queryDto);
+  const rutasResponse = React.useMemo(
+    () => normalizeRutasResponse(rutasQuery.data),
+    [rutasQuery.data],
+  );
 
-  const handleDeleteClick = (rutaId: number) => {
-    setRutaToDelete(rutaId);
-    setIsDeleteDialogOpen(true);
-  };
+  const rutas = rutasResponse.data;
+  const meta = rutasResponse.meta;
 
-  const handleCloseRuta = (rutaId: number) => {
-    setRutaClose(rutaId);
-    setOpenCloseRuta(true);
-  };
+  const { data: rawUsers = [] } = useGetUsersToSelect();
 
-  const handleCloseRutaCobro = async () => {
-    if (!rutaClose) {
-      toast.info("Seleccione una ruta a cerrar");
-      return;
-    }
+  const closeRutaMutation = useCloseRuta(closeDialog.target?.id ?? 0);
+  const deleteRutaMutation = useDeleteRuta(deleteDialog.target?.id ?? 0);
+
+  const cobradorOptions = React.useMemo<AppOption[]>(
+    () =>
+      rawUsers.map((user) => ({
+        value: String(user.id),
+        label: user.nombre,
+      })),
+    [rawUsers],
+  );
+
+  const handleViewRuta = React.useCallback(
+    (ruta: Ruta) => {
+      setSelectedRuta(ruta);
+      detailDialog.open();
+    },
+    [detailDialog],
+  );
+
+  const handleDownloadExcelRutaCobro = React.useCallback(async (ruta: Ruta) => {
     try {
-      toast.promise(closeRuta.mutateAsync(), {
-        loading: "Cerrando ruta...",
-        success: () => {
-          setRutaClose(null);
-          setOpenCloseRuta(false);
-          return "Ruta cerrada";
-        },
-        error: (error) => getApiErrorMessageAxios(error),
-      });
-    } catch (error) {
-      console.log("Error generado en close ruta: ", error);
-      toast.error(getApiErrorMessageAxios(error));
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!rutaToDelete) {
-      toast.warning("Ruta para eliminar no válida");
-      return;
-    }
-    try {
-      toast.promise(deleteRuta.mutateAsync(), {
-        loading: "Eliminando ruta...",
-        success: () => {
-          setRutaToDelete(null);
-          setIsDeleteDialogOpen(false);
-          return "Registro eliminado";
-        },
-        error: (error) => getApiErrorMessageAxios(error),
-      });
-    } catch (error) {
-      console.log("Error generado en delete ruta: ", error);
-      toast.error(getApiErrorMessageAxios(error));
-    }
-  };
-
-  const isDeleting = deleteRuta.isPending;
-  const isClosing = closeRuta.isPending;
-
-  const handleDownloadExcelRutaCobro = async (rutaId: number) => {
-    try {
-      const response = await downloadExcelRutaCobro(rutaId);
+      const response = await downloadExcelRutaCobro(ruta.id);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
+
       link.href = url;
-      link.setAttribute("download", `ruta_${rutaId}.xlsx`);
+      link.setAttribute("download", `ruta_${ruta.id}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
 
-      toast.success("¡Descarga exitosa!");
+      toast.success("Descarga exitosa");
     } catch (error) {
-      toast.error(getApiErrorMessageAxios(error));
       console.error(error);
+      toast.error(getApiErrorMessageAxios(error));
     }
-  };
+  }, []);
 
-  const tableData = useMemo(() => {
-    if (Array.isArray(rawRutasResponse?.data)) return rawRutasResponse.data;
-    if (Array.isArray(rawRutasResponse)) return rawRutasResponse;
-    return [];
-  }, [rawRutasResponse]);
+  const handleDeleteRuta = React.useCallback(async () => {
+    await deleteDialog.confirm(async () => {
+      await toast.promise(deleteRutaMutation.mutateAsync(), {
+        loading: "Eliminando ruta...",
+        success: () => "Registro eliminado",
+        error: (error) => getApiErrorMessageAxios(error),
+      });
+    });
+  }, [deleteDialog, deleteRutaMutation]);
 
-  const columns = useMemo(
+  const handleCloseRuta = React.useCallback(async () => {
+    await closeDialog.confirm(async () => {
+      await toast.promise(closeRutaMutation.mutateAsync(), {
+        loading: "Cerrando ruta...",
+        success: () => "Ruta cerrada",
+        error: (error) => getApiErrorMessageAxios(error),
+      });
+    });
+  }, [closeDialog, closeRutaMutation]);
+
+  const columns = React.useMemo(
     () =>
-      getRutasColumns({
-        handleViewRuta,
-        handleDeleteClick,
-        handleCloseRuta,
-        handleDownloadExcelRutaCobro,
+      createRutasListColumns({
+        onView: handleViewRuta,
+        onDelete: deleteDialog.open,
+        onClose: closeDialog.open,
+        onDownloadExcel: handleDownloadExcelRutaCobro,
       }),
-    [],
+    [
+      handleViewRuta,
+      deleteDialog.open,
+      closeDialog.open,
+      handleDownloadExcelRutaCobro,
+    ],
   );
 
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    manualPagination: true,
-    pageCount: meta.pageCount,
-    state: {
-      // rowSelection,
-      pagination: { pageIndex, pageSize },
-    },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => row.id.toString(),
-    enableRowSelection: true,
-  });
+  const resetPage = () => {
+    table.resetPage();
+  };
 
-  const handleSelecEstado = (value: EstadoRuta) => {
-    setEstadoRuta(value);
+  const handleSearchChange = (value: string) => {
+    filters.setField("search", value);
+  };
+
+  const handleSearchDebouncedChange = (value: string) => {
+    filters.setField("serverSearch", value);
+    resetPage();
+  };
+
+  const handleEstadoChange = (value: string | null) => {
+    filters.setField("estadoRuta", value ?? "TODOS");
+    resetPage();
+  };
+
+  const handleCobradorChange = (value: string | null) => {
+    filters.setField("cobradorId", value);
+    resetPage();
+  };
+
+  const handleClearFilters = () => {
+    filters.patch({
+      search: "",
+      serverSearch: "",
+      estadoRuta: "TODOS",
+      cobradorId: null,
+    });
+
+    resetPage();
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar rutas..."
-              className="pl-8 w-full sm:w-[250px]"
-              value={searchRuta}
-              onChange={(e) => setSearchRuta(e.target.value)}
-            />
-          </div>
+    <>
+      <AppContainer size="full" paddingY="none" paddingX="none">
+        <div className="space-y-3">
+          <RutasListFilters
+            filters={filters.state}
+            cobradorOptions={cobradorOptions}
+            isFetching={rutasQuery.isFetching}
+            onSearchChange={handleSearchChange}
+            onSearchDebouncedChange={handleSearchDebouncedChange}
+            onEstadoChange={handleEstadoChange}
+            onCobradorChange={handleCobradorChange}
+            onClearFilters={handleClearFilters}
+          />
 
-          <div className="">
-            <Select onValueChange={handleSelecEstado}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Estado ruta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {Object.values(EstadoRuta).map((estado) => (
-                    <SelectItem value={estado}>{estado}</SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className=" ">
-            <ReactSelectComponent
-              options={options}
-              isClearable
-              onChange={handleSelectCobrador}
-              value={
-                cobradorSelected
-                  ? options.find(
-                      (opt) =>
-                        opt.value.toString() === cobradorSelected.toString(),
-                    )
-                  : null
+          <AppCard variant="outline" size="xs" radius="md">
+            <AppDataTable<Ruta>
+              data={rutas}
+              columns={columns}
+              getRowId={(row) => String(row.id)}
+              isLoading={rutasQuery.isLoading}
+              isFetching={rutasQuery.isFetching}
+              error={rutasQuery.error}
+              onRetry={() => rutasQuery.refetch()}
+              paginationMode="server"
+              pagination={table.getPaginationConfig({
+                totalRows: meta.totalCount,
+                pageSizeOptions: RUTAS_LIST_PAGE_SIZE_OPTIONS,
+              })}
+              {...table.getDataTableStateProps()}
+              enableRowSelection={false}
+              enableColumnVisibility
+              enableColumnPinning={false}
+              enableVirtualization
+              stickyHeader
+              density={table.density}
+              maxHeight="68vh"
+              emptyTitle="Sin rutas"
+              emptyDescription={
+                filters.state.serverSearch
+                  ? `No se encontraron resultados para "${filters.state.serverSearch}".`
+                  : "No hay rutas de cobro registradas."
               }
-              className="w-40"
             />
-          </div>
+          </AppCard>
         </div>
-      </CardHeader>
-      <CardContent>
-        {isLoadingRutas ? (
-          <RutasSkeleton />
-        ) : list.length === 0 ? (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertTitle>Sin rutas</AlertTitle>
-            <AlertDescription>
-              {searchRuta
-                ? `No se encontraron resultados para "${searchRuta}"`
-                : "No hay rutas de cobro registradas."}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <>
-            <DataTable
-              table={table}
-              headerExtra={
-                <div className="w-[80px]">
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={(value) =>
-                      setPagination((prev) => ({
-                        ...prev,
-                        pageSize: Number(value),
-                        pageIndex: 0,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-xs  border-gray-300">
-                      <SelectValue placeholder="Items" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 filas</SelectItem>
-                      <SelectItem value="10">10 filas</SelectItem>
-                      <SelectItem value="20">20 filas</SelectItem>
-                      <SelectItem value="50">50 filas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              }
-            />
+      </AppContainer>
 
-            <TablePagination table={table} totalCount={meta.totalCount} />
-          </>
-        )}
-      </CardContent>
-
-      {/* Diálogo de detalles de ruta */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MapPinned className="h-5 w-5 text-primary dark:text-white" />
-              {selectedRuta?.nombreRuta}
-            </DialogTitle>
-            <DialogDescription>Detalles de la ruta de cobro</DialogDescription>
-          </DialogHeader>
-          {selectedRuta && (
-            <div className="py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Información General
-                    </h3>
-                    <div className="mt-2 space-y-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`${getEstadoBadgeColorRutaList(
-                            selectedRuta.estadoRuta,
-                          )} flex items-center`}
-                        >
-                          {getEstadoIconRutaList(selectedRuta.estadoRuta)}
-                          {selectedRuta.estadoRuta}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary dark:text-white" />
-                        <span>
-                          Creada:{" "}
-                          {formattShortFecha(selectedRuta.fechaCreacion)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary dark:text-white" />
-                        <span>
-                          Actualizada:{" "}
-                          {formattShortFecha(selectedRuta.fechaActualizacion)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Cobrador Asignado
-                    </h3>
-                    {selectedRuta.cobrador ? (
-                      <div className="mt-2 p-3 bg-muted rounded-md">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="h-4 w-4 text-primary dark:text-white" />
-                          <span className="text-xs">
-                            {selectedRuta.cobrador.nombre}{" "}
-                            {selectedRuta.cobrador.apellidos || ""}
-                          </span>
-                        </div>
-                        {selectedRuta.cobrador.telefono && (
-                          <div className="flex items-center gap-2 mt-1 text-sm">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground dark:text-white " />
-                            <span>{selectedRuta.cobrador.telefono}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mt-1 text-sm">
-                          <Info className="h-3.5 w-3.5 text-muted-foreground dark:text-white" />
-                          <span>{selectedRuta.cobrador.email}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2 text-muted-foreground">
-                        No hay cobrador asignado a esta ruta
-                      </div>
-                    )}
-                  </div>
-
-                  {selectedRuta.observaciones && (
-                    <>
-                      <Separator />
-
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">
-                          Observaciones
-                        </h3>
-                        <div className="mt-2 p-3 bg-muted rounded-md text-sm">
-                          {selectedRuta.observaciones}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <ScrollArea className="h-[300px] rounded-md border">
-                    <div className="p-4 space-y-4">
-                      {selectedRuta.clientes.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-4">
-                          No hay clientes en esta ruta
-                        </div>
-                      ) : (
-                        selectedRuta.clientes.map((cliente, index) => (
-                          <MiniPerfilClienteCard
-                            cliente={cliente}
-                            key={index}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setIsViewDialogOpen(false)}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AdvancedDialogCRM
-        type="warning"
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        title="Confirmar eliminación de ruta"
-        description="¿Está seguro que desea eliminar esta ruta de cobro? Esta acción no
-              se puede deshacer."
-        confirmButton={{
-          label: "Si, continuar y eliminar ruta",
-          loading: isDeleting,
-          loadingText: "Eliminando...",
-          disabled: isDeleting,
-          onClick: () => handleConfirmDelete(),
-          variant: "destructive",
-        }}
-        cancelButton={{
-          label: "Cancelar",
-          disabled: isDeleting,
-          loadingText: "Cancelando...",
-          variant: "outline",
-        }}
+      <RutasDetailDialog
+        open={detailDialog.isOpen}
+        ruta={selectedRuta}
+        onOpenChange={detailDialog.setOpen}
       />
 
-      {/* DIALOG DE CIERRE DE RUTA */}
-      <Dialog open={openCloseRuta} onOpenChange={setOpenCloseRuta}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar Cierre de Ruta</DialogTitle>
-            <DialogDescription>
-              ¿Está seguro que desea cerrar esta ruta de cobro? Una vez cerrada,
-              ya no estará disponible para realizar más cobros.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Advertencia</AlertTitle>
-              <AlertDescription>
-                Esta acción cerrará la ruta. No se eliminarán los registros
-                históricos, pero no podrá reactivarse para cobros futuros.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenCloseRuta(false)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCloseRutaCobro}
-              disabled={isClosing}
-            >
-              {isClosing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cerrando...
-                </>
-              ) : (
-                "Cerrar Ruta"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Card>
+      <AppConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
+        preset="delete"
+        tone="danger"
+        title="Confirmar eliminación de ruta"
+        description="Esta acción no se puede deshacer."
+        confirmText="Sí, eliminar ruta"
+        cancelText="Cancelar"
+        loadingText="Eliminando..."
+        isLoading={deleteRutaMutation.isPending}
+        preventClose={deleteRutaMutation.isPending}
+        closeOnConfirm={false}
+        onConfirm={handleDeleteRuta}
+        size="sm"
+        footerAlign="between"
+      >
+        <p className="text-xs text-[hsl(var(--app-muted-foreground))]">
+          Ruta seleccionada:{" "}
+          <span className="font-semibold text-[hsl(var(--app-foreground))]">
+            {deleteDialog.target?.nombreRuta ?? "Sin nombre"}
+          </span>
+        </p>
+      </AppConfirmDialog>
+
+      <AppConfirmDialog
+        open={closeDialog.isOpen}
+        onOpenChange={closeDialog.setOpen}
+        preset="warning"
+        tone="warning"
+        title="Confirmar cierre de ruta"
+        description="Una vez cerrada, la ruta ya no estará disponible para realizar más cobros."
+        confirmText="Cerrar ruta"
+        cancelText="Cancelar"
+        loadingText="Cerrando..."
+        isLoading={closeRutaMutation.isPending}
+        preventClose={closeRutaMutation.isPending}
+        closeOnConfirm={false}
+        onConfirm={handleCloseRuta}
+        size="sm"
+        footerAlign="between"
+      >
+        <p className="text-xs text-[hsl(var(--app-muted-foreground))]">
+          No se eliminarán los registros históricos, pero la ruta quedará
+          cerrada.
+        </p>
+      </AppConfirmDialog>
+    </>
   );
 }
