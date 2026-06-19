@@ -36,24 +36,22 @@ const queryClient = new QueryClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-    <StrictMode>
-      <SocketProvider
-        baseUrl={VITE_WS_URL}
-        namespace={VITE_WS_NAMESPACE}
-        path={VITE_WS_PATH}
-        getToken={getToken}
-        debug={import.meta.env.DEV}
-        withCredentials={false}
-      >
-        <GoogleMapsProvider>
-          <QueryClientProvider client={queryClient}>
-            <AppThemeProvider>
-              <App />
-            </AppThemeProvider>
-          </QueryClientProvider>
-        </GoogleMapsProvider>
-      </SocketProvider>
-    </StrictMode>
-  </ThemeProvider>,
+  <StrictMode>
+    <SocketProvider
+      baseUrl={VITE_WS_URL}
+      namespace={VITE_WS_NAMESPACE}
+      path={VITE_WS_PATH}
+      getToken={getToken}
+      debug={import.meta.env.DEV}
+      withCredentials={false}
+    >
+      <GoogleMapsProvider>
+        <QueryClientProvider client={queryClient}>
+          <AppThemeProvider>
+            <App />
+          </AppThemeProvider>
+        </QueryClientProvider>
+      </GoogleMapsProvider>
+    </SocketProvider>
+  </StrictMode>,
 );

@@ -20,7 +20,7 @@ import { AdvancedDialogCRM } from "../_Utils/components/AdvancedDialogCrm/Advanc
 import { useDeleteCustomer } from "../CrmHooks/hooks/useDeleteCustomer/useDeleteCustomer";
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
 import { ReusableTabs } from "../Utils/Components/tabs/reusable-tabs";
-import ImagesCustomer from "../CrmCustomer/newCustomerPage/ImagesCustomer";
+import ImagesCustomer from "../CrmCustomer/newCustomerPage/_components/images-customer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";

@@ -1,4 +1,3 @@
-// src/Crm/features/CrmCustomer/components/ImagesCustomer.tsx
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildMediaFormData } from "@/Crm/Helpers/media.utils";
@@ -6,8 +5,8 @@ import ImagesCropper from "@/Crm/Helpers/CutterImages/ImageCropper";
 import {
   MediaUploadItem,
   SubirMediaBatchPayload,
-} from "../API/payload.interfaces";
-import { useUploadMediaBatch } from "../API/customer-profile.queries";
+} from "../../API/payload.interfaces";
+import { useUploadMediaBatch } from "../../API/customer-profile.queries";
 import { Button } from "@/components/ui/button";
 import { Cloud, X } from "lucide-react";
 import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
@@ -21,7 +20,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Label } from "@/components/ui/label";
-import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
+import { CustomerImagesGallery } from "../CrmCustomerGalery/CustomerGaleryMain";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
@@ -43,7 +42,7 @@ function ImagesCustomer({ clienteId, empresaId, imagenesCliente }: Props) {
   const uploadMediaBatch = useUploadMediaBatch(clienteId);
   const handleDeletFromItems = (item: MediaUploadItem) => {
     setItems((previa) =>
-      previa.filter((it) => it.custom_Id !== item.custom_Id)
+      previa.filter((it) => it.custom_Id !== item.custom_Id),
     );
   };
   // cuando el usuario selecciona imágenes desde un input
