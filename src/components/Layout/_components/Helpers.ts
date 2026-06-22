@@ -4,7 +4,7 @@ import { POS_ROUTES } from "./RoutesPOS";
 export function selectRoutes(
   isCrm: boolean,
   crmRole: string,
-  posRole: string
+  posRole: string,
 ): Route[] {
   if (isCrm) {
     return CRM_ROUTES[crmRole] ?? CRM_ROUTES.DEFAULT;

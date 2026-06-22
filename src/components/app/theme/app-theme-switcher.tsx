@@ -1,3 +1,8 @@
+"use client";
+
+import { Check, RotateCcw } from "lucide-react";
+
+import { AppBadge } from "../primitives/app-badge";
 import { AppButton } from "../primitives/app-button";
 import { AppCard } from "../primitives/app-card";
 import { AppInput } from "../primitives/app-input";
@@ -22,53 +27,87 @@ export function AppThemeSwitcher() {
     resetAccentColor,
   } = useAppTheme();
 
+  const isDark = appearance === "dark";
+
   return (
     <AppCard
-      title="Theme"
-      description="Personaliza el color principal y el modo de apariencia."
+      title="Apariencia"
+      description="Personaliza el color principal y el modo visual del sistema."
+      variant="outline"
+      size="sm"
     >
-      <AppStack gap="sm">
-        <AppInline gap="xs" wrap>
-          {PRESET_COLORS.map((color) => (
-            <AppButton
-              key={color.value}
+      <AppStack gap="md">
+        <AppStack gap="xs">
+          <AppInline align="center" justify="between" gap="sm">
+            <span className="text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+              Color principal
+            </span>
+
+            <AppBadge tone="neutral" appearance="outline" size="xs">
+              {accentColor}
+            </AppBadge>
+          </AppInline>
+
+          <AppInline gap="xs" wrap>
+            {PRESET_COLORS.map((color) => {
+              const isActive = accentColor.toLowerCase() === color.value;
+
+              return (
+                <AppButton
+                  key={color.value}
+                  type="button"
+                  size="xs"
+                  variant={isActive ? "primary" : "secondary"}
+                  width="auto"
+                  leftIcon={isActive ? <Check size={13} /> : undefined}
+                  onClick={() => setAccentColor(color.value)}
+                >
+                  {color.label}
+                </AppButton>
+              );
+            })}
+          </AppInline>
+
+          <AppInline gap="xs" align="center" wrap>
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(event) => setAccentColor(event.target.value)}
+              className="h-8 w-12 cursor-pointer rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-transparent p-1"
+              aria-label="Color principal"
+            />
+
+            <AppInput
               size="xs"
-              variant={accentColor === color.value ? "primary" : "secondary"}
-              onClick={() => setAccentColor(color.value)}
+              value={accentColor}
+              onChange={(event) => setAccentColor(event.target.value)}
+              className="max-w-32"
+              fieldWidth="auto"
+            />
+
+            <AppButton
+              type="button"
+              size="xs"
+              variant="secondary"
+              width="auto"
+              leftIcon={<RotateCcw size={13} />}
+              onClick={resetAccentColor}
             >
-              {color.label}
+              Reset
             </AppButton>
-          ))}
-        </AppInline>
+          </AppInline>
+        </AppStack>
 
-        <AppInline gap="xs" wrap>
-          <input
-            type="color"
-            value={accentColor}
-            onChange={(event) => setAccentColor(event.target.value)}
-            className="h-8 w-12 cursor-pointer rounded-md border border-[hsl(var(--app-border))] bg-transparent"
+        <div className="rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.18)] px-3 py-2">
+          <AppSwitch
+            checked={isDark}
+            onCheckedChange={(checked) => {
+              setAppearance(checked ? "dark" : "light");
+            }}
+            label="Modo oscuro"
+            description="Persiste entre recargas. Para modo automático usa el selector compacto."
           />
-
-          <AppInput
-            size="xs"
-            value={accentColor}
-            onChange={(event) => setAccentColor(event.target.value)}
-            className="max-w-32"
-          />
-
-          <AppButton size="xs" variant="secondary" onClick={resetAccentColor}>
-            Reset
-          </AppButton>
-        </AppInline>
-
-        <AppSwitch
-          checked={appearance === "dark"}
-          onCheckedChange={(checked) => {
-            setAppearance(checked ? "dark" : "light");
-          }}
-          label="Modo oscuro"
-          description="Persiste entre recargas."
-        />
+        </div>
       </AppStack>
     </AppCard>
   );

@@ -1,59 +1,54 @@
+"use client";
+
 import {
-  X,
   Ellipsis,
-  TicketSlash,
-  RotateCcw,
   FileText,
-  Sticker,
   Pin,
+  RotateCcw,
+  Sticker,
+  TicketSlash,
+  X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Ticket } from "../ticketTypes";
-import { BadgeProps } from "./ticket-detail.types";
 import { Link } from "react-router-dom";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import {
+  AppDropdownMenu,
+  AppDropdownMenuContent,
+  AppDropdownMenuItem,
+  AppDropdownMenuSeparator,
+  AppDropdownMenuTrigger,
+} from "@/components/app/primitives/app-dropdown-menu";
+
+import type { Ticket } from "../ticketTypes";
+import {
+  deferTicketDetailAction,
+  getTicketCustomerInitials,
+} from "../_components/ticket-detail.helpers";
+import { getTicketPriorityTone } from "../_components/ticket-list.helpers";
 
 interface TicketHeaderProps {
   ticket: Ticket;
-  badgeProps: BadgeProps;
   onCloseView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onCloseTicket: () => void;
 }
 
-/** Initials avatar — no external deps */
-function InitialsAvatar({
-  name,
-  className,
-}: {
-  name: string;
-  className?: string;
-}) {
-  const initials = name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+const menuItemClassName =
+  "flex h-6 items-center justify-between gap-2 px-2 py-0 text-[10px] leading-none";
+
+function InitialsAvatar({ ticket }: { ticket: Ticket }) {
   return (
-    <span
-      className={`inline-flex items-center justify-center rounded-full bg-emerald-500 text-white font-bold ${className}`}
-    >
-      {initials || "?"}
+    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--app-primary))] text-[8px] font-bold leading-none text-[hsl(var(--app-primary-foreground,var(--primary-foreground)))]">
+      {getTicketCustomerInitials(ticket)}
     </span>
   );
 }
 
 export function TicketHeader({
   ticket,
-  badgeProps,
   onCloseView,
   onEdit,
   onDelete,
@@ -61,118 +56,145 @@ export function TicketHeader({
 }: TicketHeaderProps) {
   const customerName = ticket.customer?.name ?? null;
   const customerId = ticket.customer?.id ?? null;
-
   const assigneeName = ticket.assignee?.name ?? null;
 
   return (
-    <div className="px-3 pt-2 pb-2 border-b sticky top-0 z-10">
-      {/* Row 1: avatar + customer + actions */}
-      <div className="flex items-center justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <InitialsAvatar
-            name={customerName ?? "NA"}
-            className="w-6 h-6 text-[9px] shrink-0"
-          />
-          <div className="flex flex-col leading-none min-w-0">
-            <span
-              className={`text-xs font-semibold truncate ${
-                customerName ? "text-blue-600" : "text-gray-400 italic"
-              }`}
-            >
-              {customerId ? (
-                <Link to={`/crm/cliente/${customerId}`}>
-                  {customerName ?? "Sin cliente"}
-                </Link>
-              ) : (
-                "Sin cliente"
-              )}
-            </span>
-            <span className="text-[10px] text-gray-400 truncate">
+    <div className="sticky top-0 z-10 shrink-0 border-b border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-background,var(--background)))] px-3 py-2">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <div className="flex min-w-0 items-start gap-1.5">
+          <div className="pt-[1px]">
+            <InitialsAvatar ticket={ticket} />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="min-w-0 truncate text-[11px] font-semibold leading-4">
+                {customerId ? (
+                  <Link
+                    to={`/crm/cliente/${customerId}`}
+                    className="truncate text-[hsl(var(--app-primary))] hover:underline"
+                  >
+                    {customerName ?? "Sin cliente"}
+                  </Link>
+                ) : (
+                  <span className="italic text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                    Sin cliente
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div className="truncate text-[9px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
               {assigneeName ? `Téc: ${assigneeName}` : "Sin técnico"}
-            </span>
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 shrink-0">
-          {/* Priority badge */}
-          <span
-            className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${badgeProps.bgColor} ${badgeProps.textColor}`}
+        <div className="flex shrink-0 items-center gap-0.5">
+          <AppBadge
+            tone={getTicketPriorityTone(ticket.priority)}
+            appearance="soft"
+            size="xs"
+            radius="sm"
+            className="h-4 px-1 text-[8.5px] uppercase leading-none"
           >
-            {badgeProps.text}
-          </span>
+            {ticket.priority}
+          </AppBadge>
 
-          {ticket.fixed && (
+          {ticket.fixed ? (
             <Pin
-              className="w-3 h-3 text-amber-500 ml-0.5"
+              size={12}
+              className="mx-0.5 shrink-0 text-[hsl(var(--app-warning))]"
               aria-label="Fijado"
             />
-          )}
+          ) : null}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-gray-400"
-              >
-                <Ellipsis className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 text-xs">
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-red-600 focus:text-red-600 focus:bg-red-50 justify-between text-xs cursor-pointer"
-              >
-                Eliminar <TicketSlash className="w-3.5 h-3.5" />
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={onEdit}
-                className="justify-between text-xs cursor-pointer"
-              >
-                Editar <RotateCcw className="w-3.5 h-3.5 text-gray-400" />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="justify-between text-xs cursor-pointer">
-                <a
-                  href={`/crm-boleta-ticket-soporte/${ticket.id}`}
-                  className="flex w-full justify-between items-center"
-                >
-                  Boleta <FileText className="w-3.5 h-3.5 text-gray-400" />
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onCloseTicket}
-                className="justify-between text-xs cursor-pointer"
-              >
-                Cerrar Ticket <Sticker className="w-3.5 h-3.5 text-gray-400" />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AppDropdownMenu>
+            <AppDropdownMenuTrigger
+              className={[
+                "inline-flex h-6 w-6 items-center justify-center rounded-[var(--app-radius-sm)]",
+                "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+                "transition-colors hover:bg-[hsl(var(--app-muted,var(--muted))/0.65)]",
+                "hover:text-[hsl(var(--app-foreground,var(--foreground)))]",
+                "focus-visible:outline-none focus-visible:ring-2",
+                "focus-visible:ring-[hsl(var(--app-ring,var(--ring)))]",
+              ].join(" ")}
+              aria-label="Opciones del ticket"
+            >
+              <Ellipsis size={14} />
+            </AppDropdownMenuTrigger>
 
-          <Button
-            onClick={onCloseView}
+            <AppDropdownMenuContent
+              align="end"
+              width="sm"
+              size="xs"
+              className="w-36 p-1"
+            >
+              <AppDropdownMenuItem
+                className={`${menuItemClassName} text-[hsl(var(--app-danger))]`}
+                onSelect={() => deferTicketDetailAction(onDelete)}
+              >
+                <span>Eliminar</span>
+                <TicketSlash size={12} />
+              </AppDropdownMenuItem>
+
+              <AppDropdownMenuSeparator className="my-1" />
+
+              <AppDropdownMenuItem
+                className={menuItemClassName}
+                onSelect={() => deferTicketDetailAction(onEdit)}
+              >
+                <span>Editar</span>
+                <RotateCcw size={12} />
+              </AppDropdownMenuItem>
+
+              <AppDropdownMenuItem
+                className={menuItemClassName}
+                onSelect={() => {
+                  window.location.href = `/crm-boleta-ticket-soporte/${ticket.id}`;
+                }}
+              >
+                <span>Boleta</span>
+                <FileText size={12} />
+              </AppDropdownMenuItem>
+
+              <AppDropdownMenuItem
+                className={menuItemClassName}
+                onSelect={() => deferTicketDetailAction(onCloseTicket)}
+              >
+                <span>Cerrar ticket</span>
+                <Sticker size={12} />
+              </AppDropdownMenuItem>
+            </AppDropdownMenuContent>
+          </AppDropdownMenu>
+
+          <AppButton
+            type="button"
             variant="ghost"
-            size="icon"
-            className="h-6 w-6 hover:bg-red-50 hover:text-red-500 text-gray-400"
+            size="xs"
+            width="auto"
+            onClick={onCloseView}
+            className="h-6 w-6 p-0 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))] hover:text-[hsl(var(--app-danger))]"
             aria-label="Cerrar detalle"
           >
-            <X className="w-3.5 h-3.5" />
-          </Button>
+            <X size={14} />
+          </AppButton>
         </div>
       </div>
 
-      {/* Row 2: title + description */}
-      <div className="mt-1.5 min-w-0">
-        <p className="text-xs font-semibold leading-tight truncate text-gray-800 dark:text-white ">
-          <span className="text-gray-400 font-normal mr-1">#{ticket.id}</span>
+      <div className="mt-1 min-w-0 pl-[26px]">
+        <p className="truncate text-[11px] font-semibold leading-4 text-[hsl(var(--app-foreground,var(--foreground)))]">
+          <span className="mr-1 font-normal text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            #{ticket.id}
+          </span>
           {ticket.title}
         </p>
-        {ticket.description && (
-          <p className="text-[10px] text-gray-400 truncate mt-0.5">
+
+        {ticket.description ? (
+          <p className="truncate text-[9.5px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
             {ticket.description}
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );

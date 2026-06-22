@@ -1,27 +1,29 @@
-import { Loader2 } from "lucide-react";
-import SelectComponent, { SingleValue } from "react-select";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
-import type { UseFormReturn } from "react-hook-form";
-import type { SelectOption } from "../ticket-detail.types";
-import { SolucionTicketItem } from "@/Crm/features/ticket-soluciones/ticket-soluciones.interface";
+"use client";
 
-/** Schema type — mirrors what the parent defines via zod */
+import * as React from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
+import { CheckCircle2, Save, X } from "lucide-react";
+
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppButton } from "@/components/app/primitives/app-button";
+import {
+  AppDialog,
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogFooter,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+
+import type { AppSelectOption } from "@/components/app/primitives/app-single-select";
+import type { SolucionTicketItem } from "@/Crm/features/ticket-soluciones/ticket-soluciones.interface";
+
 export interface TicketResumenSchemaType {
   ticketId: number;
   solucionId: number | null;
@@ -39,167 +41,200 @@ interface DialogCloseTicketProps {
   onSubmit: (data: TicketResumenSchemaType) => void;
 }
 
-const compactSelectStyles = {
-  control: (base: object) => ({
-    ...base,
-    minHeight: "30px",
-    fontSize: "12px",
-    borderRadius: "6px",
-  }),
-  dropdownIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
-  clearIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
-  valueContainer: (base: object) => ({ ...base, padding: "0 6px" }),
-  option: (base: object) => ({
-    ...base,
-    fontSize: "12px",
-    padding: "5px 10px",
-  }),
-  menuPortal: (base: object) => ({ ...base, zIndex: 9999 }),
-};
+function getFieldError(error: { message?: unknown } | undefined) {
+  return typeof error?.message === "string" ? error.message : undefined;
+}
 
 export function DialogCloseTicket({
   open,
   ticketId,
   soluciones,
   form,
-  isPending,
+  isPending = false,
   onOpenChange,
   onSubmit,
 }: DialogCloseTicketProps) {
-  const optionsSoluciones: SelectOption[] = soluciones.map((s) => ({
-    label: s.solucion,
-    value: s.id.toString(),
-  }));
+  const errors = form.formState.errors;
+
+  const optionsSoluciones = React.useMemo<Array<AppSelectOption<number>>>(
+    () =>
+      soluciones.map((solucion) => ({
+        label: solucion.solucion,
+        value: solucion.id,
+      })),
+    [soluciones],
+  );
+
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (isPending) return;
+      onOpenChange(nextOpen);
+    },
+    [isPending, onOpenChange],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-sm">
-            Cerrar Ticket #{ticketId}
-          </DialogTitle>
-        </DialogHeader>
+    <AppDialog open={open} onOpenChange={handleOpenChange}>
+      <AppDialogContent size="md" viewport="default" padding="none">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <AppDialogHeader divider className="px-4 py-3">
+            <AppDialogTitle className="flex items-center gap-2 text-sm">
+              <CheckCircle2 size={16} />
+              Cerrar ticket #{ticketId}
+            </AppDialogTitle>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-3 pt-1"
+            <AppDialogDescription>
+              Registre la solución aplicada y las notas finales del ticket.
+            </AppDialogDescription>
+          </AppDialogHeader>
+
+          <AppDialogBody
+            padding="none"
+            className="min-h-0 flex-1 overflow-y-auto"
           >
-            <input
-              type="hidden"
-              {...form.register("ticketId", { valueAsNumber: true })}
-            />
+            <AppStack gap="sm" className="px-4 py-3">
+              <input
+                type="hidden"
+                {...form.register("ticketId", { valueAsNumber: true })}
+              />
 
-            {/* Tipo de solución */}
-            <FormField
-              control={form.control}
-              name="solucionId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-gray-400 uppercase">
-                    Tipo de Solución
-                  </FormLabel>
-                  <FormControl>
-                    <SelectComponent
-                      className="text-black text-sm"
-                      placeholder="Selecciona una solución…"
-                      options={optionsSoluciones}
-                      isClearable
-                      value={
-                        field.value
-                          ? (optionsSoluciones.find(
-                              (o) => Number(o.value) === field.value,
-                            ) ?? null)
-                          : null
-                      }
-                      onChange={(opt: SingleValue<SelectOption>) =>
-                        field.onChange(opt ? Number(opt.value) : null)
-                      }
-                      styles={compactSelectStyles}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[10px]" />
-                </FormItem>
-              )}
-            />
+              <AppAlert
+                tone="info"
+                size="sm"
+                icon={<CheckCircle2 size={15} />}
+                title="Cierre de ticket"
+              >
+                Al confirmar, el ticket quedará registrado como cerrado con el
+                resumen de solución indicado.
+              </AppAlert>
 
-            {/* Resumen de solución */}
-            <FormField
-              control={form.control}
-              name="resueltoComo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-gray-400 uppercase">
-                    Resumen de Solución
-                    <span className="normal-case font-normal text-gray-300 ml-1">
-                      (opcional)
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <textarea
-                      rows={3}
-                      placeholder="Ej: Se reinició el router y se validó la IP…"
-                      className="w-full resize-none text-black  text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300 "
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormDescription className="text-[10px] text-gray-400">
-                    Visible en el reporte final.
-                  </FormDescription>
-                  <FormMessage className="text-[10px]" />
-                </FormItem>
-              )}
-            />
+              <Controller
+                control={form.control}
+                name="solucionId"
+                render={({ field }) => (
+                  <AppField
+                    label="Tipo de solución"
+                    error={getFieldError(errors.solucionId)}
+                  >
+                    {(appField) => (
+                      <AppSingleSelect<number>
+                        inputId={appField.id}
+                        value={field.value ?? null}
+                        options={optionsSoluciones}
+                        onChange={(value) => field.onChange(value)}
+                        onBlur={field.onBlur}
+                        placeholder="Selecciona una solución…"
+                        isClearable
+                        isSearchable
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={appField.invalid}
+                        isDisabled={isPending}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
+                      />
+                    )}
+                  </AppField>
+                )}
+              />
 
-            {/* Notas internas */}
-            <FormField
-              control={form.control}
-              name="notasInternas"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-gray-400 uppercase">
-                    Notas Internas
-                    <span className="normal-case font-normal text-gray-300 ml-1">
-                      (opcional)
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <textarea
-                      rows={2}
-                      placeholder="Detalles técnicos solo para el equipo…"
-                      className="w-full resize-none text-black text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
-                      {...field}
-                      value={field.value ?? ""}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[10px]" />
-                </FormItem>
-              )}
-            />
+              <Controller
+                control={form.control}
+                name="resueltoComo"
+                render={({ field }) => (
+                  <AppField
+                    label="Resumen de solución"
+                    description="Visible en el reporte final."
+                    error={getFieldError(errors.resueltoComo)}
+                  >
+                    {(appField) => (
+                      <AppTextarea
+                        id={appField.id}
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        rows={3}
+                        placeholder="Ej: Se reinició el router y se validó la IP…"
+                        size="xs"
+                        fieldWidth="full"
+                        invalid={appField.invalid}
+                        aria-invalid={appField.invalid}
+                        aria-describedby={appField.describedBy}
+                        disabled={isPending}
+                        className="resize-none"
+                      />
+                    )}
+                  </AppField>
+                )}
+              />
 
-            <DialogFooter className="gap-2 pt-1">
-              <Button
+              <Controller
+                control={form.control}
+                name="notasInternas"
+                render={({ field }) => (
+                  <AppField
+                    label="Notas internas"
+                    description="Información técnica solo para el equipo."
+                    error={getFieldError(errors.notasInternas)}
+                  >
+                    {(appField) => (
+                      <AppTextarea
+                        id={appField.id}
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        rows={2}
+                        placeholder="Detalles técnicos solo para el equipo…"
+                        size="xs"
+                        fieldWidth="full"
+                        invalid={appField.invalid}
+                        aria-invalid={appField.invalid}
+                        aria-describedby={appField.describedBy}
+                        disabled={isPending}
+                        className="resize-none"
+                      />
+                    )}
+                  </AppField>
+                )}
+              />
+            </AppStack>
+          </AppDialogBody>
+
+          <AppDialogFooter divider className="px-4 py-2.5">
+            <AppInline justify="end" gap="xs" className="w-full">
+              <AppButton
                 type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                variant="secondary"
+                size="xs"
+                width="auto"
+                leftIcon={<X size={14} />}
                 disabled={isPending}
-                className="h-7 text-xs px-3"
+                onClick={() => onOpenChange(false)}
               >
                 Cancelar
-              </Button>
-              <Button
+              </AppButton>
+
+              <AppButton
                 type="submit"
-                disabled={isPending}
-                className="h-7 text-xs px-4 bg-emerald-600 hover:bg-emerald-700"
+                variant="primary"
+                size="xs"
+                width="auto"
+                leftIcon={<Save size={14} />}
+                loading={isPending}
+                loadingText="Cerrando..."
               >
-                {isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                Confirmar Cierre
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                Confirmar cierre
+              </AppButton>
+            </AppInline>
+          </AppDialogFooter>
+        </form>
+      </AppDialogContent>
+    </AppDialog>
   );
 }

@@ -1,4 +1,8 @@
+"use client";
+
 import { Inbox } from "lucide-react";
+
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
 
 interface TicketEmptyStateProps {
   title: string;
@@ -10,12 +14,16 @@ export function TicketEmptyState({
   description,
 }: TicketEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 py-10 px-4 text-center">
-      <Inbox className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground/60 max-w-[180px]">
-        {description}
-      </p>
-    </div>
+    <AppEmptyState
+      preset="empty"
+      variant="plain"
+      size="sm"
+      align="center"
+      fullHeight
+      icon={<Inbox size={30} strokeWidth={1.5} />}
+      title={title}
+      description={description}
+      className="px-4 py-10"
+    />
   );
 }

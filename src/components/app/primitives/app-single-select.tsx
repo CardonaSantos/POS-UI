@@ -35,6 +35,8 @@ export interface AppSelectOption<
   meta?: TMeta;
 }
 
+type AppSelectDensity = "default" | "compact" | "dense";
+
 type AppSelectControlVariantProps = VariantProps<
   typeof appSelectControlVariants
 >;
@@ -45,6 +47,18 @@ interface AppSelectVisualProps {
   radius?: AppSelectControlVariantProps["radius"];
   intent?: AppSelectControlVariantProps["intent"];
   fieldWidth?: AppSelectControlVariantProps["fieldWidth"];
+
+  /**
+   * Comprime texto, padding, control, opciones e indicadores.
+   * Útil para barras de filtros densas.
+   */
+  density?: AppSelectDensity;
+
+  /**
+   * Alias temporal para compatibilidad si ya usaste menuDensity.
+   * Preferir density.
+   */
+  menuDensity?: AppSelectDensity;
 }
 
 export interface AppSingleSelectProps<
@@ -103,6 +117,89 @@ export interface AppSingleSelectProps<
     GroupBase<AppSelectOption<TValue, TMeta>>
   >;
 }
+function getSelectControlDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "h-[30px] min-h-[30px] text-[10px]";
+  }
+
+  if (density === "compact") {
+    return "h-[30px] min-h-[30px] text-[10px]";
+  }
+
+  return "";
+}
+
+function getSelectValueContainerDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-1 py-0";
+  }
+
+  if (density === "compact") {
+    return "px-1 py-0";
+  }
+
+  return "";
+}
+
+function getSelectTextDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "!text-[9.5px] !leading-[12px]";
+  }
+
+  if (density === "compact") {
+    return "!text-[9.5px] !leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectIndicatorDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-0.5 py-0 [&>svg]:h-3 [&>svg]:w-3";
+  }
+
+  if (density === "compact") {
+    return "px-0.5 py-0 [&>svg]:h-3 [&>svg]:w-3";
+  }
+
+  return "";
+}
+
+function getSelectMenuListDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "max-h-52 py-0.5";
+  }
+
+  if (density === "compact") {
+    return "max-h-56 py-0.5";
+  }
+
+  return "py-1 max-h-[var(--app-select-menu-max-height)]";
+}
+
+function getSelectOptionDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-1.5 py-1 !text-[9px] !leading-[11px] [&_*]:!text-[9px] [&_*]:!leading-[11px]";
+  }
+
+  if (density === "compact") {
+    return "px-1.5 py-1 !text-[9.5px] !leading-[12px] [&_*]:!text-[9.5px] [&_*]:!leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectMessageDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-2 py-1 !text-[9px]";
+  }
+
+  if (density === "compact") {
+    return "px-2 py-1 !text-[9.5px]";
+  }
+
+  return "";
+}
 
 function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
   variant,
@@ -110,6 +207,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
   radius,
   intent,
   fieldWidth,
+  density = "default",
   invalid,
   containerClassName,
   controlClassName,
@@ -121,6 +219,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
   radius?: AppSelectVisualProps["radius"];
   intent?: AppSelectVisualProps["intent"];
   fieldWidth?: AppSelectVisualProps["fieldWidth"];
+  density?: AppSelectDensity;
   invalid?: boolean;
   containerClassName?: string;
   controlClassName?: string;
@@ -148,6 +247,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
           isFocused,
           isDisabled,
         }),
+        getSelectControlDensityClass(density),
         controlClassName,
       ),
 
@@ -156,6 +256,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectValueContainerVariants({
           size,
         }),
+        getSelectValueContainerDensityClass(density),
       ),
 
     input: () =>
@@ -164,6 +265,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           tone: "value",
         }),
+        getSelectTextDensityClass(density),
         "m-0 p-0",
       ),
 
@@ -173,6 +275,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           tone: "placeholder",
         }),
+        getSelectTextDensityClass(density),
       ),
 
     singleValue: () =>
@@ -181,6 +284,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           tone: "value",
         }),
+        getSelectTextDensityClass(density),
       ),
 
     indicatorsContainer: () => "h-full",
@@ -192,6 +296,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
         selectProps.menuIsOpen && "rotate-180",
       ),
 
@@ -200,6 +305,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
       ),
 
     loadingIndicator: () =>
@@ -207,6 +313,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
       ),
 
     menuPortal: () => "app-select-menu-portal",
@@ -220,11 +327,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
       ),
 
     menuList: () =>
-      cn(
-        "py-1",
-        "max-h-[var(--app-select-menu-max-height)]",
-        "overflow-y-auto",
-      ),
+      cn("overflow-y-auto", getSelectMenuListDensityClass(density)),
 
     option: ({ isFocused, isSelected, isDisabled }) =>
       cn(
@@ -234,6 +337,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
           isSelected,
           isDisabled,
         }),
+        getSelectOptionDensityClass(density),
         optionClassName,
       ),
 
@@ -242,6 +346,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMessageVariants({
           size,
         }),
+        getSelectMessageDensityClass(density),
       ),
 
     loadingMessage: () =>
@@ -249,6 +354,7 @@ function buildAppSingleSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMessageVariants({
           size,
         }),
+        getSelectMessageDensityClass(density),
       ),
   };
 }
@@ -268,6 +374,8 @@ function AppSingleSelectInner<
     radius,
     intent,
     fieldWidth,
+    density,
+    menuDensity,
     containerClassName,
     controlClassName,
     menuClassName,
@@ -298,6 +406,8 @@ function AppSingleSelectInner<
 ) {
   const contextMenuPortalTarget = useAppSelectPortalTarget();
 
+  const resolvedDensity = density ?? menuDensity ?? "default";
+
   /**
    * undefined = no hay AppConfirmDialog provider.
    * null / HTMLElement = sí estamos dentro de AppConfirmDialog.
@@ -305,7 +415,7 @@ function AppSingleSelectInner<
    * Dentro del dialog NO portaleamos el menú.
    * ReactSelect + portal a AlertDialog.Content + fixed puede calcular mal posición.
    */
-  const isInsideAppDialog = contextMenuPortalTarget !== undefined;
+  // const isInsideAppDialog = contextMenuPortalTarget !== undefined;
 
   const selected = React.useMemo(() => {
     if (value === null || value === undefined) return null;
@@ -325,6 +435,7 @@ function AppSingleSelectInner<
         radius,
         intent,
         fieldWidth,
+        density: resolvedDensity,
         invalid,
         containerClassName,
         controlClassName,
@@ -337,6 +448,7 @@ function AppSingleSelectInner<
       radius,
       intent,
       fieldWidth,
+      resolvedDensity,
       invalid,
       containerClassName,
       controlClassName,
@@ -345,10 +457,16 @@ function AppSingleSelectInner<
     ],
   );
 
+  const hasPortalContext = contextMenuPortalTarget !== undefined;
+
   const resolvedMenuPortalTarget =
     menuPortalTarget ??
-    (!isInsideAppDialog && portalToBody && typeof document !== "undefined"
-      ? document.body
+    (portalToBody
+      ? hasPortalContext
+        ? (contextMenuPortalTarget ?? undefined)
+        : typeof document !== "undefined"
+          ? document.body
+          : undefined
       : undefined);
 
   const resolvedMenuPosition =
@@ -384,10 +502,23 @@ function AppSingleSelectInner<
       menuShouldBlockScroll={menuShouldBlockScroll}
       closeMenuOnScroll={closeMenuOnScroll}
       menuShouldScrollIntoView={menuShouldScrollIntoView}
+      // styles={{
+      //   menuPortal: (base) => ({
+      //     ...base,
+      //     zIndex: "var(--app-select-menu-z-index, 9999)",
+      //   }),
+      //   ...selectStyles,
+      // }}
       styles={{
         menuPortal: (base) => ({
           ...base,
-          zIndex: "var(--app-select-menu-z-index, 9999)",
+          zIndex: "var(--app-select-menu-z-index, 2147483647)",
+          pointerEvents: "auto",
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: "var(--app-select-menu-z-index, 2147483647)",
+          pointerEvents: "auto",
         }),
         ...selectStyles,
       }}

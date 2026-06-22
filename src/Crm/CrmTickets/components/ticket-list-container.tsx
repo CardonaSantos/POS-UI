@@ -1,28 +1,27 @@
-import { Ticket } from "../ticketTypes";
+"use client";
+
+import type { Ticket } from "../ticketTypes";
 import { TicketEmptyState } from "./ticket-empty-state";
 import { TicketItem } from "./ticket-item";
-
-interface EmptyMessage {
-  title: string;
-  description: string;
-}
+import { getTicketAvatarStyle } from "../_components/ticket-list.helpers";
 
 interface TicketsListContainerProps {
   tickets: Ticket[];
   selectedTicketId: number | null;
   onSelectTicket: (ticket: Ticket) => void;
-  colorMap: Record<number, string>;
-  emptyMessage: EmptyMessage;
+  emptyMessage: {
+    title: string;
+    description: string;
+  };
 }
 
 export function TicketsListContainer({
   tickets,
   selectedTicketId,
   onSelectTicket,
-  colorMap,
   emptyMessage,
 }: TicketsListContainerProps) {
-  if (tickets.length === 0) {
+  if (!tickets.length) {
     return (
       <TicketEmptyState
         title={emptyMessage.title}
@@ -32,14 +31,14 @@ export function TicketsListContainer({
   }
 
   return (
-    <div className="flex flex-col overflow-y-auto">
+    <div className="min-h-full">
       {tickets.map((ticket) => (
         <TicketItem
           key={ticket.id}
           ticket={ticket}
-          isSelected={Number(selectedTicketId) === Number(ticket.id)}
+          isSelected={ticket.id === selectedTicketId}
           onSelect={onSelectTicket}
-          avatarColor={colorMap[ticket.id] ?? "bg-gray-400"}
+          avatarStyle={getTicketAvatarStyle(ticket.id)}
         />
       ))}
     </div>

@@ -1,98 +1,173 @@
 "use client";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { User } from "lucide-react";
+
+import * as React from "react";
+import { IdCard, MapPinned, Phone, User } from "lucide-react";
+
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+
 import type { PersonalInfoSectionProps } from "./customer-form-types";
+
+function PersonalSectionHeader() {
+  return (
+    <AppInline
+      align="center"
+      gap="xs"
+      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-2"
+    >
+      <User size={15} className="text-[hsl(var(--app-primary))]" />
+
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+          Información personal
+        </h3>
+        <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Datos principales de identificación y contacto.
+        </p>
+      </div>
+    </AppInline>
+  );
+}
 
 export function PersonalInfoSection({
   formData,
   onChangeForm,
 }: PersonalInfoSectionProps) {
+  const handleInputChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChangeForm(event);
+    },
+    [onChangeForm],
+  );
+
+  const handleTextareaChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChangeForm(event);
+    },
+    [onChangeForm],
+  );
+
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium flex items-center gap-2 text-sm text-foreground/90 border-b pb-2">
-        <User className="h-4 w-4 " />
-        Información Personal
-      </h3>
+    <AppStack gap="sm">
+      <PersonalSectionHeader />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Nombres y Apellidos */}
-        <div className="space-y-1">
-          <Label htmlFor="nombre-all" className="text-xs">
-            Nombres <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="nombre-all"
-            name="nombre"
-            value={formData.nombre}
-            onChange={onChangeForm}
-            placeholder="Nombres"
-            required
-            className="h-8 text-xs"
-          />
+      <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
+        <AppField label="Nombres" required>
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleInputChange}
+              placeholder="Nombres"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<User size={13} />}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              autoComplete="given-name"
+            />
+          )}
+        </AppField>
+
+        <AppField label="Apellidos" required>
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="apellidos"
+              value={formData.apellidos}
+              onChange={handleInputChange}
+              placeholder="Apellidos"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<User size={13} />}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              autoComplete="family-name"
+            />
+          )}
+        </AppField>
+
+        <AppField label="Teléfono">
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleInputChange}
+              placeholder="Teléfono"
+              type="tel"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<Phone size={13} />}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              autoComplete="tel"
+            />
+          )}
+        </AppField>
+
+        <AppField label="DPI">
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="dpi"
+              value={formData.dpi}
+              onChange={handleInputChange}
+              placeholder="DPI"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<IdCard size={13} />}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              inputMode="numeric"
+            />
+          )}
+        </AppField>
+
+        <div className="sm:col-span-2">
+          <AppField label="Dirección">
+            {(field) => (
+              <AppTextarea
+                id={field.id}
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleTextareaChange}
+                placeholder="Dirección completa"
+                rows={2}
+                size="xs"
+                fieldWidth="full"
+                invalid={field.invalid}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+                className="min-h-[58px] resize-none"
+              />
+            )}
+          </AppField>
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="apellidos-all" className="text-xs">
-            Apellidos <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="apellidos-all"
-            name="apellidos"
-            value={formData.apellidos}
-            onChange={onChangeForm}
-            placeholder="Apellidos"
-            required
-            className="h-8 text-xs"
-          />
+        <div className="sm:col-span-2 rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.16)] px-3 py-2">
+          <AppInline
+            align="center"
+            gap="xs"
+            className="text-[10.5px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+          >
+            <MapPinned size={13} className="shrink-0" />
+            <span>
+              La dirección se complementará con coordenadas, sector y referencia
+              en la sección de ubicación.
+            </span>
+          </AppInline>
         </div>
-
-        {/* Teléfono y DPI */}
-        <div className="space-y-1">
-          <Label htmlFor="telefono-all" className="text-xs">
-            Teléfono
-          </Label>
-          <Input
-            id="telefono-all"
-            name="telefono"
-            value={formData.telefono}
-            onChange={onChangeForm}
-            placeholder="Teléfono"
-            className="h-8 text-xs"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="dpi-all" className="text-xs">
-            DPI
-          </Label>
-          <Input
-            id="dpi-all"
-            name="dpi"
-            value={formData.dpi}
-            onChange={onChangeForm}
-            placeholder="DPI"
-            className="h-8 text-xs"
-          />
-        </div>
-
-        {/* Dirección (Full Width) */}
-        <div className="space-y-1 sm:col-span-2">
-          <Label htmlFor="direccion-all" className="text-xs">
-            Dirección
-          </Label>
-          <Textarea
-            id="direccion-all"
-            name="direccion"
-            value={formData.direccion}
-            onChange={onChangeForm}
-            placeholder="Dirección completa"
-            rows={2}
-            className="text-xs min-h-[60px] resize-none"
-          />
-        </div>
-      </div>
-    </div>
+      </AppGrid>
+    </AppStack>
   );
 }

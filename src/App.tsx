@@ -7,7 +7,7 @@ import {
 import { Toaster } from "sonner";
 import RegisterView from "./Pages/Auth/Register";
 import NotFoundPage from "./Pages/NotFount/NotFoundPage";
-import Layout2 from "./components/Layout/Layout";
+import Layout2 from "./components/Layout/layout-crm";
 import { ProtectRouteAdmin } from "./components/Auth/ProtectRouteAdmin";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";

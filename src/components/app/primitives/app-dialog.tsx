@@ -15,6 +15,7 @@ import {
   appDialogOverlayVariants,
   appDialogTitleVariants,
 } from "../theme/app-dialog.variants";
+import { AppSelectPortalProvider } from "./app-select-portal-context";
 
 type AppDialogProps = React.ComponentPropsWithoutRef<
   typeof DialogPrimitive.Root
@@ -112,6 +113,10 @@ export interface AppDialogContentProps
   showCloseButton?: boolean;
 }
 
+type AppDialogContentPrimitiveProps = React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+>;
+
 const AppDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   AppDialogContentProps
@@ -127,52 +132,99 @@ const AppDialogContent = React.forwardRef<
       padding,
       showCloseButton = true,
       onCloseAutoFocus,
+      onPointerDownOutside,
+      onInteractOutside,
       ...props
     },
     ref,
   ) => {
     const resolvedSize = size ?? width;
 
+    const [selectPortalTarget, setSelectPortalTarget] =
+      React.useState<HTMLDivElement | null>(null);
+
+    const handlePointerDownOutside = React.useCallback<
+      NonNullable<AppDialogContentPrimitiveProps["onPointerDownOutside"]>
+    >(
+      (event) => {
+        const target = event.target as HTMLElement | null;
+
+        if (target?.closest("[data-app-select-menu-portal-root]")) {
+          event.preventDefault();
+          return;
+        }
+
+        onPointerDownOutside?.(event);
+      },
+      [onPointerDownOutside],
+    );
+
+    const handleInteractOutside = React.useCallback<
+      NonNullable<AppDialogContentPrimitiveProps["onInteractOutside"]>
+    >(
+      (event) => {
+        const target = event.target as HTMLElement | null;
+
+        if (target?.closest("[data-app-select-menu-portal-root]")) {
+          event.preventDefault();
+          return;
+        }
+
+        onInteractOutside?.(event);
+      },
+      [onInteractOutside],
+    );
+
     return (
       <AppDialogPortal>
         <AppDialogOverlay />
 
-        <DialogPrimitive.Content
-          ref={ref}
-          data-app-dialog-content
-          className={cn(
-            appDialogContentVariants({
-              size: resolvedSize,
-              viewport,
-              radius,
-              padding,
-            }),
-            className,
-          )}
-          onCloseAutoFocus={(event) => {
-            onCloseAutoFocus?.(event);
-            cleanupDialogPointerLock();
-          }}
-          {...props}
-        >
-          {children}
+        <AppSelectPortalProvider target={selectPortalTarget}>
+          <DialogPrimitive.Content
+            ref={ref}
+            data-app-dialog-content
+            className={cn(
+              appDialogContentVariants({
+                size: resolvedSize,
+                viewport,
+                radius,
+                padding,
+              }),
+              className,
+            )}
+            onCloseAutoFocus={(event) => {
+              onCloseAutoFocus?.(event);
+              cleanupDialogPointerLock();
+            }}
+            onPointerDownOutside={handlePointerDownOutside}
+            onInteractOutside={handleInteractOutside}
+            {...props}
+          >
+            {children}
 
-          {showCloseButton ? (
-            <DialogPrimitive.Close
-              className={cn(
-                "absolute right-3 top-3 z-10 rounded-[var(--app-radius-sm)]",
-                "p-1 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
-                "transition-colors hover:bg-[hsl(var(--app-muted,var(--muted)))]",
-                "hover:text-[hsl(var(--app-foreground,var(--foreground)))]",
-                "focus-visible:outline-none focus-visible:ring-2",
-                "focus-visible:ring-[hsl(var(--app-ring,var(--ring)))]",
-              )}
-            >
-              <X size={15} />
-              <span className="sr-only">Cerrar</span>
-            </DialogPrimitive.Close>
-          ) : null}
-        </DialogPrimitive.Content>
+            {showCloseButton ? (
+              <DialogPrimitive.Close
+                className={cn(
+                  "absolute right-3 top-3 z-10 rounded-[var(--app-radius-sm)]",
+                  "p-1 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+                  "transition-colors hover:bg-[hsl(var(--app-muted,var(--muted)))]",
+                  "hover:text-[hsl(var(--app-foreground,var(--foreground)))]",
+                  "focus-visible:outline-none focus-visible:ring-2",
+                  "focus-visible:ring-[hsl(var(--app-ring,var(--ring)))]",
+                )}
+              >
+                <X size={15} />
+                <span className="sr-only">Cerrar</span>
+              </DialogPrimitive.Close>
+            ) : null}
+          </DialogPrimitive.Content>
+
+          <div
+            ref={setSelectPortalTarget}
+            data-app-select-menu-portal-root
+            className="fixed inset-0 z-[2147483647] pointer-events-none"
+          />
+        </AppSelectPortalProvider>
       </AppDialogPortal>
     );
   },

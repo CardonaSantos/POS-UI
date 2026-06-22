@@ -1,152 +1,269 @@
 "use client";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
+import * as React from "react";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CalendarIcon, MessageSquare, Smartphone } from "lucide-react";
-import ReactSelectComponent from "react-select";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { type StatusBillingSectionProps } from "./customer-form-types";
+  CalendarClock,
+  CircleDot,
+  MessageSquare,
+  Smartphone,
+  WalletCards,
+} from "lucide-react";
+
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppSwitch } from "@/components/app/primitives/app-switch";
+import type { AppSelectOption } from "@/components/app/primitives/app-single-select";
+
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import type { StatusBillingSectionProps } from "./customer-form-types";
+
+function toDateTimeLocalValue(value: Date | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  const localDate = new Date(date.getTime() - offsetMs);
+
+  return localDate.toISOString().slice(0, 16);
+}
+
+function fromDateTimeLocalValue(value: string) {
+  if (!value) return null;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date;
+}
+
+function formatEstadoClienteLabel(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function normalizeOptions(
+  options: StatusBillingSectionProps["optionsZonasFacturacion"],
+): Array<AppSelectOption<number>> {
+  return options.map((option) => ({
+    value: Number(option.value),
+    label: option.label,
+  }));
+}
+
+const ESTADO_CLIENTE_OPTIONS: Array<AppSelectOption<EstadoCliente>> =
+  Object.values(EstadoCliente).map((estado) => ({
+    value: estado,
+    label: formatEstadoClienteLabel(estado),
+  }));
+
+function StatusBillingSectionHeader() {
+  return (
+    <AppInline
+      align="center"
+      gap="xs"
+      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-2"
+    >
+      <MessageSquare size={15} className="text-[hsl(var(--app-primary))]" />
+
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+          Estado, notificaciones y facturación
+        </h3>
+        <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Estado inicial, fecha de instalación y zona de cobro.
+        </p>
+      </div>
+    </AppInline>
+  );
+}
+
+function WhatsAppReminderPanel({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="h-full rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.16)] px-3 py-2">
+      <AppInline align="center" justify="between" gap="sm" className="h-full">
+        <AppInline align="center" gap="xs" className="min-w-0">
+          <Smartphone
+            size={14}
+            className="shrink-0 text-[hsl(var(--app-primary))]"
+          />
+
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+              Notificar por WhatsApp
+            </p>
+            <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              Enviar recordatorio automático.
+            </p>
+          </div>
+        </AppInline>
+
+        <AppSwitch
+          checked={checked}
+          onCheckedChange={onChange}
+          size="sm"
+          aria-label="Notificar por WhatsApp"
+        />
+      </AppInline>
+    </div>
+  );
+}
 
 export function StatusBillingSection({
   formData,
   fechaInstalacion,
   zonasFacturacionSelected,
   optionsZonasFacturacion,
-  secureZonasFacturacion,
   onSelectEstadoCliente,
   onEnviarRecordatorioChange,
   onSelectZonaFacturacion,
   onChangeFechaInstalacion,
 }: StatusBillingSectionProps) {
-  const compactSelectStyles = {
-    control: (base: any) => ({
-      ...base,
-      minHeight: "32px",
-      fontSize: "12px",
-      borderRadius: "var(--radius)",
-      borderColor: "hsl(var(--input))",
-      boxShadow: "none",
-      "&:hover": { borderColor: "hsl(var(--ring))" },
-    }),
-    valueContainer: (base: any) => ({ ...base, padding: "0 8px" }),
-    input: (base: any) => ({ ...base, margin: 0, padding: 0 }),
-    indicatorsContainer: (base: any) => ({ ...base, height: "30px" }),
-  };
+  const zonaFacturacionOptions = React.useMemo(
+    () => normalizeOptions(optionsZonasFacturacion),
+    [optionsZonasFacturacion],
+  );
+
+  const fechaInstalacionValue = React.useMemo(
+    () => toDateTimeLocalValue(fechaInstalacion),
+    [fechaInstalacion],
+  );
+
+  const handleEstadoChange = React.useCallback(
+    (value: EstadoCliente | null) => {
+      if (!value) return;
+      onSelectEstadoCliente(value);
+    },
+    [onSelectEstadoCliente],
+  );
+
+  const handleZonaFacturacionChange = React.useCallback(
+    (_value: number | null, option: AppSelectOption<number> | null) => {
+      onSelectZonaFacturacion(option ? { ...option } : null);
+    },
+    [onSelectZonaFacturacion],
+  );
+
+  const handleFechaInstalacionChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChangeFechaInstalacion(fromDateTimeLocalValue(event.target.value));
+    },
+    [onChangeFechaInstalacion],
+  );
+
+  const hasZonaFacturacion = Boolean(zonasFacturacionSelected);
 
   return (
-    <section aria-labelledby="section-estado" className="space-y-4">
-      {/* HEADER */}
-      <h3
-        id="section-estado"
-        className="font-medium flex items-center gap-2 text-sm border-b pb-2"
-      >
-        <MessageSquare className="h-4 w-4 " />
-        Estado, Notificaciones y Facturación
-      </h3>
+    <AppStack gap="sm">
+      <StatusBillingSectionHeader />
 
-      {/* GRID PRINCIPAL */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* 1. Estado del Cliente */}
-        <div className="space-y-1">
-          <Label htmlFor="estadoCliente" className="text-xs">
-            Estado del cliente
-          </Label>
-          <Select
-            value={formData.estado}
-            onValueChange={(val) => onSelectEstadoCliente(val as EstadoCliente)}
-          >
-            <SelectTrigger id="estadoCliente" className="w-full h-8 text-xs">
-              <SelectValue placeholder="Seleccionar..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel className="text-xs">Estados</SelectLabel>
-                {Object.values(EstadoCliente).map((estado) => (
-                  <SelectItem key={estado} value={estado} className="text-xs">
-                    {estado.replace(/_/g, " ")}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+      <AppGrid cols={{ base: 1, md: 2, xl: 4 }} gap="sm">
+        <AppField label="Estado del cliente">
+          {(field) => (
+            <AppSingleSelect<EstadoCliente>
+              inputId={field.id}
+              value={formData.estado}
+              options={ESTADO_CLIENTE_OPTIONS}
+              onChange={handleEstadoChange}
+              placeholder="Seleccionar estado..."
+              isClearable={false}
+              isSearchable={false}
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              invalid={field.invalid}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+            />
+          )}
+        </AppField>
 
-        {/* 2. Zona de Facturación */}
-        <div className="space-y-1">
-          <Label htmlFor="zonasFacturacion-all" className="text-xs">
-            Zona de Facturación <span className="text-destructive">*</span>
-          </Label>
-          <ReactSelectComponent
-            options={optionsZonasFacturacion}
-            onChange={onSelectZonaFacturacion}
-            value={
-              zonasFacturacionSelected
-                ? {
-                    value: zonasFacturacionSelected,
-                    label:
-                      secureZonasFacturacion.find(
-                        (s) => s.id === zonasFacturacionSelected,
-                      )?.nombre || "",
-                  }
-                : null
-            }
-            className="text-xs text-black"
-            placeholder="Seleccionar zona..."
-            styles={compactSelectStyles}
+        <AppField
+          label="Zona de facturación"
+          required
+          description="Zona o ruta de cobro asignada."
+        >
+          {(field) => (
+            <AppSingleSelect<number>
+              inputId={field.id}
+              value={zonasFacturacionSelected}
+              options={zonaFacturacionOptions}
+              onChange={handleZonaFacturacionChange}
+              placeholder="Seleccionar zona..."
+              isClearable
+              isSearchable
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              invalid={field.invalid}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+            />
+          )}
+        </AppField>
+
+        <AppField label="Fecha instalación">
+          {(field) => (
+            <AppInput
+              id={field.id}
+              type="datetime-local"
+              value={fechaInstalacionValue}
+              onChange={handleFechaInstalacionChange}
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<CalendarClock size={13} />}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
+
+        <div className="flex min-h-[58px] items-end">
+          <WhatsAppReminderPanel
+            checked={Boolean(formData.enviarRecordatorio)}
+            onChange={onEnviarRecordatorioChange}
           />
         </div>
+      </AppGrid>
 
-        {/* 3. Fecha Instalación */}
-        <div className="space-y-1">
-          <Label
-            htmlFor="fechaInstalacion-all"
-            className="text-xs flex items-center gap-1"
-          >
-            Fecha Instalación
-          </Label>
-          <div className="relative">
-            <DatePicker
-              id="fechaInstalacion-all"
-              selected={fechaInstalacion}
-              onChange={(date) => onChangeFechaInstalacion(date)}
-              showTimeSelect
-              dateFormat="Pp"
-              className="w-full h-8 px-3 py-1 rounded-md border border-input bg-background text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              wrapperClassName="w-full"
-            />
-            <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 opacity-50 pointer-events-none" />
-          </div>
-        </div>
-
-        {/* 4. Toggle WhatsApp (Con diseño de tarjeta compacta) */}
-        <div className="flex items-end">
-          <div className="w-full h-8 flex items-center justify-between rounded-md border px-3 bg-card">
-            <Label
-              htmlFor="whatsapp"
-              className="flex items-center gap-2 cursor-pointer text-xs"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              Notificar por WhatsApp
-            </Label>
-            <Switch
-              id="whatsapp"
-              checked={formData.enviarRecordatorio}
-              onCheckedChange={onEnviarRecordatorioChange}
-              className="scale-75 origin-right" // Hacemos el switch un poco más pequeño para que quepa bien en h-8
-            />
-          </div>
-        </div>
-      </div>
-    </section>
+      <AppAlert
+        tone={hasZonaFacturacion ? "success" : "warning"}
+        size="xs"
+        icon={
+          hasZonaFacturacion ? (
+            <WalletCards size={14} />
+          ) : (
+            <CircleDot size={14} />
+          )
+        }
+        title={
+          hasZonaFacturacion
+            ? "Facturación configurada"
+            : "Zona de facturación pendiente"
+        }
+        description={
+          hasZonaFacturacion
+            ? "El cliente quedará asociado a una zona de cobro."
+            : "Seleccione una zona antes de crear el cliente."
+        }
+      />
+    </AppStack>
   );
 }

@@ -24,6 +24,9 @@ import {
   appSelectValueContainerVariants,
 } from "../theme/app-react-select.variants";
 import type { AppSelectOption, AppSelectValue } from "./app-single-select";
+import { useAppSelectPortalTarget } from "./app-select-portal-context";
+
+type AppSelectDensity = "default" | "compact" | "dense";
 
 type AppSelectControlVariantProps = VariantProps<
   typeof appSelectControlVariants
@@ -35,6 +38,18 @@ interface AppMultiSelectVisualProps {
   radius?: AppSelectControlVariantProps["radius"];
   intent?: AppSelectControlVariantProps["intent"];
   fieldWidth?: AppSelectControlVariantProps["fieldWidth"];
+
+  /**
+   * Comprime texto, padding, control, chips, opciones e indicadores.
+   * Útil para barras de filtros densas.
+   */
+  density?: AppSelectDensity;
+
+  /**
+   * Alias temporal por compatibilidad.
+   * Preferir density.
+   */
+  menuDensity?: AppSelectDensity;
 }
 
 export interface AppMultiSelectProps<
@@ -85,12 +100,133 @@ export interface AppMultiSelectProps<
   >;
 }
 
+function getSelectControlDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "min-h-[30px] text-[10px]";
+  }
+
+  if (density === "compact") {
+    return "min-h-[30px] text-[10px]";
+  }
+
+  return "";
+}
+
+function getSelectValueContainerDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "gap-0.5 px-1 py-0";
+  }
+
+  if (density === "compact") {
+    return "gap-0.5 px-1 py-0";
+  }
+
+  return "gap-1";
+}
+
+function getSelectTextDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "!text-[9.5px] !leading-[12px]";
+  }
+
+  if (density === "compact") {
+    return "!text-[9.5px] !leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectIndicatorDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-0.5 py-0 [&>svg]:h-3 [&>svg]:w-3";
+  }
+
+  if (density === "compact") {
+    return "px-0.5 py-0 [&>svg]:h-3 [&>svg]:w-3";
+  }
+
+  return "";
+}
+
+function getSelectMenuListDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "max-h-52 py-0.5";
+  }
+
+  if (density === "compact") {
+    return "max-h-56 py-0.5";
+  }
+
+  return "py-1 max-h-[var(--app-select-menu-max-height)]";
+}
+
+function getSelectOptionDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-1.5 py-1 !text-[9px] !leading-[11px] [&_*]:!text-[9px] [&_*]:!leading-[11px]";
+  }
+
+  if (density === "compact") {
+    return "px-1.5 py-1 !text-[9.5px] !leading-[12px] [&_*]:!text-[9.5px] [&_*]:!leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectMessageDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-2 py-1 !text-[9px]";
+  }
+
+  if (density === "compact") {
+    return "px-2 py-1 !text-[9.5px]";
+  }
+
+  return "";
+}
+
+function getSelectMultiValueDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "my-0 max-w-[70px] text-[9px] leading-[11px]";
+  }
+
+  if (density === "compact") {
+    return "my-0 max-w-[82px] text-[9.5px] leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectMultiValueLabelDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "truncate px-1 py-0 !text-[9px] !leading-[11px]";
+  }
+
+  if (density === "compact") {
+    return "truncate px-1 py-0 !text-[9.5px] !leading-[12px]";
+  }
+
+  return "";
+}
+
+function getSelectMultiValueRemoveDensityClass(density: AppSelectDensity) {
+  if (density === "dense") {
+    return "px-0.5 py-0 [&>svg]:h-2.5 [&>svg]:w-2.5";
+  }
+
+  if (density === "compact") {
+    return "px-0.5 py-0 [&>svg]:h-3 [&>svg]:w-3";
+  }
+
+  return "";
+}
+
 function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
   variant,
   size,
   radius,
   intent,
   fieldWidth,
+  density = "default",
   invalid,
   containerClassName,
   controlClassName,
@@ -103,6 +239,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
   radius?: AppMultiSelectVisualProps["radius"];
   intent?: AppMultiSelectVisualProps["intent"];
   fieldWidth?: AppMultiSelectVisualProps["fieldWidth"];
+  density?: AppSelectDensity;
   invalid?: boolean;
   containerClassName?: string;
   controlClassName?: string;
@@ -131,6 +268,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
           isFocused,
           isDisabled,
         }),
+        getSelectControlDensityClass(density),
         controlClassName,
       ),
 
@@ -139,7 +277,8 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectValueContainerVariants({
           size,
         }),
-        "gap-1 flex-wrap",
+        "flex-wrap",
+        getSelectValueContainerDensityClass(density),
       ),
 
     input: () =>
@@ -148,6 +287,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           tone: "value",
         }),
+        getSelectTextDensityClass(density),
         "m-0 p-0",
       ),
 
@@ -157,6 +297,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           tone: "placeholder",
         }),
+        getSelectTextDensityClass(density),
       ),
 
     multiValue: () =>
@@ -165,6 +306,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
           size,
           radius,
         }),
+        getSelectMultiValueDensityClass(density),
         multiValueClassName,
       ),
 
@@ -173,6 +315,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMultiValueLabelVariants({
           size,
         }),
+        getSelectMultiValueLabelDensityClass(density),
       ),
 
     multiValueRemove: () =>
@@ -180,6 +323,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMultiValueRemoveVariants({
           size,
         }),
+        getSelectMultiValueRemoveDensityClass(density),
       ),
 
     indicatorsContainer: () => "h-full",
@@ -191,6 +335,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
         selectProps.menuIsOpen && "rotate-180",
       ),
 
@@ -199,6 +344,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
       ),
 
     loadingIndicator: () =>
@@ -206,7 +352,10 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectIndicatorVariants({
           size,
         }),
+        getSelectIndicatorDensityClass(density),
       ),
+
+    menuPortal: () => "app-select-menu-portal",
 
     menu: () =>
       cn(
@@ -217,11 +366,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
       ),
 
     menuList: () =>
-      cn(
-        "py-1",
-        "max-h-[var(--app-select-menu-max-height)]",
-        "overflow-y-auto",
-      ),
+      cn("overflow-y-auto", getSelectMenuListDensityClass(density)),
 
     option: ({ isFocused, isSelected, isDisabled }) =>
       cn(
@@ -231,6 +376,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
           isSelected,
           isDisabled,
         }),
+        getSelectOptionDensityClass(density),
         optionClassName,
       ),
 
@@ -239,6 +385,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMessageVariants({
           size,
         }),
+        getSelectMessageDensityClass(density),
       ),
 
     loadingMessage: () =>
@@ -246,6 +393,7 @@ function buildAppMultiSelectClassNames<TValue extends AppSelectValue, TMeta>({
         appSelectMessageVariants({
           size,
         }),
+        getSelectMessageDensityClass(density),
       ),
   };
 }
@@ -265,6 +413,8 @@ function AppMultiSelectInner<
     radius,
     intent,
     fieldWidth,
+    density,
+    menuDensity,
     containerClassName,
     controlClassName,
     menuClassName,
@@ -279,10 +429,13 @@ function AppMultiSelectInner<
     hideSelectedOptions = false,
     isDisabled,
     isLoading,
-    portalToBody = false,
+    portalToBody = true,
     menuPortalTarget,
     menuPosition,
     selectStyles,
+    menuShouldBlockScroll = false,
+    closeMenuOnScroll = false,
+    menuShouldScrollIntoView = false,
     ...props
   }: AppMultiSelectProps<TValue, TMeta>,
   ref: React.ForwardedRef<
@@ -293,6 +446,10 @@ function AppMultiSelectInner<
     >
   >,
 ) {
+  const contextMenuPortalTarget = useAppSelectPortalTarget();
+
+  const resolvedDensity = density ?? menuDensity ?? "default";
+
   const selected = React.useMemo(() => {
     if (selectedOptions?.length) {
       return selectedOptions;
@@ -315,6 +472,7 @@ function AppMultiSelectInner<
         radius,
         intent,
         fieldWidth,
+        density: resolvedDensity,
         invalid,
         containerClassName,
         controlClassName,
@@ -328,6 +486,7 @@ function AppMultiSelectInner<
       radius,
       intent,
       fieldWidth,
+      resolvedDensity,
       invalid,
       containerClassName,
       controlClassName,
@@ -337,11 +496,20 @@ function AppMultiSelectInner<
     ],
   );
 
+  const hasPortalContext = contextMenuPortalTarget !== undefined;
+
   const resolvedMenuPortalTarget =
     menuPortalTarget ??
-    (portalToBody && typeof document !== "undefined"
-      ? document.body
+    (portalToBody
+      ? hasPortalContext
+        ? (contextMenuPortalTarget ?? undefined)
+        : typeof document !== "undefined"
+          ? document.body
+          : undefined
       : undefined);
+
+  const resolvedMenuPosition =
+    menuPosition ?? (resolvedMenuPortalTarget ? "fixed" : "absolute");
 
   const handleChange = (
     newValue: MultiValue<AppSelectOption<TValue, TMeta>>,
@@ -374,11 +542,27 @@ function AppMultiSelectInner<
       placeholder={placeholder}
       classNames={classNames}
       menuPortalTarget={resolvedMenuPortalTarget}
-      menuPosition={resolvedMenuPortalTarget ? "fixed" : menuPosition}
+      menuPosition={resolvedMenuPosition}
+      menuShouldBlockScroll={menuShouldBlockScroll}
+      closeMenuOnScroll={closeMenuOnScroll}
+      menuShouldScrollIntoView={menuShouldScrollIntoView}
+      // styles={{
+      //   menuPortal: (base) => ({
+      //     ...base,
+      //     zIndex: "var(--app-select-menu-z-index, 9999)",
+      //   }),
+      //   ...selectStyles,
+      // }}
       styles={{
         menuPortal: (base) => ({
           ...base,
-          zIndex: "var(--app-select-menu-z-index)",
+          zIndex: "var(--app-select-menu-z-index, 2147483647)",
+          pointerEvents: "auto",
+        }),
+        menu: (base) => ({
+          ...base,
+          zIndex: "var(--app-select-menu-z-index, 2147483647)",
+          pointerEvents: "auto",
         }),
         ...selectStyles,
       }}

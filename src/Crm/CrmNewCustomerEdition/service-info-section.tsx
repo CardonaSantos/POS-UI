@@ -1,119 +1,155 @@
 "use client";
 
-// import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Wifi } from "lucide-react";
-import ReactSelectComponent from "react-select";
+import * as React from "react";
+import { BadgeCheck, Wifi } from "lucide-react";
+
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppMultiSelect } from "@/components/app/primitives/app-multi-select";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import type { AppSelectOption } from "@/components/app/primitives/app-single-select";
+
 import type { ServiceInfoSectionProps } from "./customer-form-types";
 
+function ServiceSectionHeader() {
+  return (
+    <AppInline
+      align="center"
+      gap="xs"
+      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-2"
+    >
+      <Wifi size={15} className="text-[hsl(var(--app-primary))]" />
+
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+          Información del servicio
+        </h3>
+        <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Plan principal de internet y servicios adicionales.
+        </p>
+      </div>
+    </AppInline>
+  );
+}
+
+function normalizeOptions(
+  options: ServiceInfoSectionProps["optionsServices"],
+): Array<AppSelectOption<number>> {
+  return options.map((option) => ({
+    value: Number(option.value),
+    label: option.label,
+  }));
+}
+
 export function ServiceInfoSection({
-  // formData,
   serviceSelected,
   serviceWifiSelected,
   optionsServices,
   optionsServicesWifi,
-  secureServiciosWifi,
-  // onChangeForm,
   onSelectService,
   onSelectServiceWifi,
 }: ServiceInfoSectionProps) {
-  const compactSelectStyles = {
-    control: (base: any) => ({
-      ...base,
-      minHeight: "32px",
-      fontSize: "12px",
-      borderRadius: "var(--radius)",
-      borderColor: "hsl(var(--input))",
-      boxShadow: "none",
-      "&:hover": { borderColor: "hsl(var(--ring))" },
-    }),
-    valueContainer: (base: any) => ({ ...base, padding: "0 8px" }),
-    input: (base: any) => ({ ...base, margin: 0, padding: 0 }),
-    indicatorsContainer: (base: any) => ({ ...base, height: "30px" }),
-  };
+  const mainServiceOptions = React.useMemo(
+    () => normalizeOptions(optionsServicesWifi),
+    [optionsServicesWifi],
+  );
+
+  const additionalServiceOptions = React.useMemo(
+    () => normalizeOptions(optionsServices),
+    [optionsServices],
+  );
+
+  const handleMainServiceChange = React.useCallback(
+    (_value: number | null, option: AppSelectOption<number> | null) => {
+      onSelectServiceWifi(option ? { ...option } : null);
+    },
+    [onSelectServiceWifi],
+  );
+
+  const handleAdditionalServicesChange = React.useCallback(
+    (_values: number[], selectedOptions: Array<AppSelectOption<number>>) => {
+      onSelectService(selectedOptions.map((option) => ({ ...option })));
+    },
+    [onSelectService],
+  );
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium flex items-center gap-2 text-sm text-foreground/90 border-b pb-2">
-        <Wifi className="h-4 w-4 " />
-        Información del Servicio
-      </h3>
+    <AppStack gap="sm">
+      <ServiceSectionHeader />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Plan de Internet */}
-        <div className="space-y-1">
-          <Label htmlFor="servicioWifiId-all" className="text-xs">
-            Servicio Principal <span className="text-destructive">*</span>
-          </Label>
-          <ReactSelectComponent
-            options={optionsServicesWifi}
-            onChange={onSelectServiceWifi}
-            value={
-              serviceWifiSelected !== null
-                ? {
-                    value: serviceWifiSelected,
-                    label:
-                      secureServiciosWifi.find(
-                        (s) => s.id === serviceWifiSelected,
-                      )?.nombre || "",
-                  }
-                : null
+      <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
+        <AppField
+          label="Servicio principal"
+          required
+          description="Plan base de internet del cliente."
+        >
+          {(field) => (
+            <AppSingleSelect<number>
+              inputId={field.id}
+              value={serviceWifiSelected}
+              options={mainServiceOptions}
+              onChange={handleMainServiceChange}
+              placeholder="Seleccionar plan..."
+              isClearable
+              isSearchable
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              invalid={field.invalid}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+            />
+          )}
+        </AppField>
+
+        <AppField
+          label="Servicios adicionales"
+          description="Servicios extra asociados al cliente."
+        >
+          {(field) => (
+            <AppMultiSelect<number>
+              inputId={field.id}
+              value={serviceSelected}
+              options={additionalServiceOptions}
+              onChange={handleAdditionalServicesChange}
+              placeholder="Seleccionar servicios..."
+              isClearable
+              isSearchable
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              invalid={field.invalid}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+            />
+          )}
+        </AppField>
+
+        <div className="sm:col-span-2">
+          <AppAlert
+            tone={serviceWifiSelected ? "success" : "warning"}
+            size="xs"
+            title={
+              serviceWifiSelected
+                ? "Servicio principal seleccionado"
+                : "Servicio principal pendiente"
             }
-            placeholder="Seleccionar plan..."
-            className="text-xs text-black"
-            styles={compactSelectStyles}
+            description={
+              serviceWifiSelected
+                ? `Servicios adicionales seleccionados: ${serviceSelected.length}.`
+                : "Seleccione un plan principal antes de crear el cliente."
+            }
+            icon={<BadgeCheck size={14} />}
           />
         </div>
-
-        {/* Otros Servicios (Multi) */}
-        <div className="space-y-1">
-          <Label htmlFor="servicioId-all" className="text-xs">
-            Servicios Adicionales <span className="text-destructive">*</span>
-          </Label>
-          <ReactSelectComponent
-            isMulti
-            options={optionsServices}
-            onChange={onSelectService}
-            value={optionsServices.filter((option) =>
-              serviceSelected.includes(option.value),
-            )}
-            placeholder="Seleccionar..."
-            className="text-xs text-black"
-            styles={compactSelectStyles}
-          />
-        </div>
-
-        {/* Contraseña WiFi */}
-        {/* <div className="space-y-1">
-          <Label htmlFor="contrasenaWifi-all" className="text-xs">
-            Contraseña Router <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="contrasenaWifi-all"
-            name="contrasenaWifi"
-            value={formData.contrasenaWifi}
-            onChange={onChangeForm}
-            placeholder="Clave WPA2/WPA3"
-            required
-            className="h-8 text-xs"
-          />
-        </div> */}
-
-        {/* SSID */}
-        {/* <div className="space-y-1">
-          <Label htmlFor="ssidRouter-all" className="text-xs">
-            Nombre Red (SSID)
-          </Label>
-          <Input
-            id="ssidRouter-all"
-            name="ssidRouter"
-            value={formData.ssidRouter}
-            onChange={onChangeForm}
-            placeholder="Nombre de la red WiFi"
-            className="h-8 text-xs"
-          />
-        </div> */}
-      </div>
-    </div>
+      </AppGrid>
+    </AppStack>
   );
 }

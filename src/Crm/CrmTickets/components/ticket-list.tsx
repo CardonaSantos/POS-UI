@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Ticket } from "../ticketTypes";
-import { TicketsData } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketsSoporte";
-import { AVATAR_COLORS } from "./ticket-badge-helper";
+import * as React from "react";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
+import type { TicketsData } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketsSoporte";
+import type { Ticket } from "../ticketTypes";
+
 import { TicketsListContainer } from "./ticket-list-container";
+import {
+  getTicketTabCount,
+  TICKET_LIST_TABS,
+  TicketListTabValue,
+} from "../_components/ticket-list.helpers";
 
 interface TicketListProps {
   tickets: Ticket[];
@@ -16,36 +25,6 @@ interface TicketListProps {
   onTabChange: (value: string) => void;
 }
 
-const TABS = [
-  {
-    value: "inbox",
-    label: "Todos",
-    countKey: "ticketsDisponibles" as const,
-    emptyMessage: {
-      title: "Todo al día",
-      description: "No hay tickets pendientes.",
-    },
-  },
-  {
-    value: "enProceso",
-    label: "En proceso",
-    countKey: "ticketEnProceso" as const,
-    emptyMessage: {
-      title: "Sin actividad",
-      description: "No hay tickets en proceso.",
-    },
-  },
-  {
-    value: "lista",
-    label: "Resueltos",
-    countKey: "ticketsResueltos" as const,
-    emptyMessage: {
-      title: "Sin resueltos",
-      description: "Aún no hay tickets resueltos.",
-    },
-  },
-] as const;
-
 export default function TicketList({
   tickets,
   ticketsData,
@@ -54,67 +33,61 @@ export default function TicketList({
   activeTab,
   onTabChange,
 }: TicketListProps) {
-  const [colorMap, setColorMap] = useState<Record<number, string>>({});
+  const resolvedActiveTab = React.useMemo<TicketListTabValue>(() => {
+    const exists = TICKET_LIST_TABS.some((tab) => tab.value === activeTab);
 
-  useEffect(() => {
-    setColorMap((prev) => {
-      const next = { ...prev };
-      let changed = false;
-      tickets.forEach((t) => {
-        if (!(t.id in next)) {
-          next[t.id] =
-            AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
-    });
-  }, [tickets]);
+    return exists ? (activeTab as TicketListTabValue) : "inbox";
+  }, [activeTab]);
+
+  const activeTabData =
+    TICKET_LIST_TABS.find((tab) => tab.value === resolvedActiveTab) ??
+    TICKET_LIST_TABS[0];
 
   return (
-    <div className="flex flex-col h-full border-r border-border overflow-hidden">
-      <Tabs
-        value={activeTab}
-        onValueChange={onTabChange}
-        className="flex flex-col h-full"
-      >
-        {/* Tab header */}
-        <div className="border-b border-border px-2 py-1.5 shrink-0">
-          <TabsList className="w-full h-7 bg-muted/50 p-0.5 grid grid-cols-3">
-            {TABS.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="text-[10px] h-full data-[state=active]:bg-background data-[state=active]:shadow-none px-1"
-              >
-                {tab.label}
-                <span className="ml-1 text-[9px] text-muted-foreground">
-                  ({ticketsData[tab.countKey]})
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+    <AppStack
+      gap="none"
+      className="h-full overflow-hidden border-r border-[hsl(var(--app-border,var(--border)))]"
+    >
+      <div className="shrink-0 border-b border-[hsl(var(--app-border,var(--border)))] px-2 py-1.5">
+        <div className="rounded-[var(--app-radius-md)] bg-[hsl(var(--app-muted,var(--muted))/0.45)] p-0.5">
+          <AppInline gap="none" align="center" className="grid grid-cols-3">
+            {TICKET_LIST_TABS.map((tab) => {
+              const isActive = tab.value === resolvedActiveTab;
+              const count = getTicketTabCount(ticketsData, tab.countKey);
 
-        {/* Tab panels */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          {TABS.map((tab) => (
-            <TabsContent
-              key={tab.value}
-              value={tab.value}
-              className="m-0 h-full data-[state=active]:flex data-[state=active]:flex-col overflow-y-auto"
-            >
-              <TicketsListContainer
-                tickets={tickets}
-                selectedTicketId={selectedTicketId}
-                onSelectTicket={onSelectTicket}
-                colorMap={colorMap}
-                emptyMessage={tab.emptyMessage}
-              />
-            </TabsContent>
-          ))}
+              return (
+                <AppButton
+                  key={tab.value}
+                  type="button"
+                  variant={isActive ? "secondary" : "ghost"}
+                  size="xs"
+                  width="full"
+                  className={[
+                    "h-6 justify-center rounded-[var(--app-radius-sm)] px-1",
+                    "text-[10px] font-medium",
+                    isActive
+                      ? "bg-[hsl(var(--app-background,var(--background)))] text-[hsl(var(--app-foreground,var(--foreground)))]"
+                      : "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+                  ].join(" ")}
+                  onClick={() => onTabChange(tab.value)}
+                >
+                  <span className="truncate">{tab.label}</span>
+                  <span className="ml-1 text-[9px] opacity-70">({count})</span>
+                </AppButton>
+              );
+            })}
+          </AppInline>
         </div>
-      </Tabs>
-    </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <TicketsListContainer
+          tickets={tickets}
+          selectedTicketId={selectedTicketId}
+          onSelectTicket={onSelectTicket}
+          emptyMessage={activeTabData.emptyMessage}
+        />
+      </div>
+    </AppStack>
   );
 }

@@ -1,115 +1,151 @@
 "use client";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+
+import * as React from "react";
 import { Bell, Trash2 } from "lucide-react";
-import NotificationList from "./NotificationList";
-import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
-import React from "react";
-import { ReusableTabs } from "@/Crm/Utils/Components/tabs/reusable-tabs";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  AppDrawer,
+  AppDrawerBody,
+  AppDrawerContent,
+  AppDrawerDescription,
+  AppDrawerHeader,
+  AppDrawerTitle,
+  AppDrawerTrigger,
+} from "@/components/app/primitives/app-drawer";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { useAppDisclosure } from "@/components/app/handlers";
+
+import type { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
+import NotificationList from "./NotificationList";
 
 interface Props {
   icon?: React.ReactNode;
   tooltipText?: string;
-
   notifications: UiNotificacion[];
   isLoading?: boolean;
   onDelete?: (id: number) => void | Promise<void>;
   countBadge?: number;
   deleteAllNotis: () => Promise<void>;
-  setOpenDeleteAllNoti: React.Dispatch<React.SetStateAction<boolean>>;
   openDeleteAllNoti: boolean;
   selectNoti: (noti: UiNotificacion) => void;
+  setOpenDeleteAllNoti: (open: boolean) => void;
 }
 
 export default function NotificationsSheet({
   notifications,
   isLoading,
   onDelete,
-  countBadge,
+  countBadge = 0,
   setOpenDeleteAllNoti,
   icon,
   tooltipText,
   selectNoti,
 }: Props) {
-  const hasNotis = (countBadge ?? 0) > 0;
+  const drawer = useAppDisclosure();
+  const hasNotifications = countBadge > 0;
 
-  ReusableTabs;
+  const handleRequestDeleteAll = React.useCallback(() => {
+    drawer.close();
+
+    window.setTimeout(() => {
+      setOpenDeleteAllNoti(true);
+    }, 160);
+  }, [drawer, setOpenDeleteAllNoti]);
+
+  const handleSelectNotification = React.useCallback(
+    (notification: UiNotificacion) => {
+      drawer.close();
+
+      window.setTimeout(() => {
+        selectNoti(notification);
+      }, 120);
+    },
+    [drawer, selectNoti],
+  );
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <div className="relative">
-          <Button variant="outline" size="icon">
-            <Tooltip delayDuration={1100}>
-              <TooltipTrigger>
-                {icon ? icon : <Bell className="h-6 w-6" />}
-              </TooltipTrigger>
-              <TooltipContent>{tooltipText ?? ""}</TooltipContent>
-            </Tooltip>
-          </Button>
-          {(countBadge ?? 0) > 0 && (
-            <span
-              className="absolute -top-1 -right-1 inline-flex items-center justify-center
-              h-5 min-w-5 px-1 rounded-full text-[10px] font-bold text-white bg-rose-500"
-            >
-              {countBadge}
-            </span>
-          )}
-        </div>
-      </SheetTrigger>
+    <AppDrawer open={drawer.isOpen} onOpenChange={drawer.setOpen} modal={false}>
+      <div className="relative">
+        <AppDrawerTrigger
+          className={[
+            "inline-flex h-7 w-7 items-center justify-center rounded-[var(--app-radius-md)]",
+            "border border-[hsl(var(--app-border,var(--border)))]",
+            "bg-[hsl(var(--app-background,var(--background)))]",
+            "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+            "transition-colors hover:bg-[hsl(var(--app-muted,var(--muted))/0.55)]",
+            "hover:text-[hsl(var(--app-foreground,var(--foreground)))]",
+            "focus-visible:outline-none focus-visible:ring-2",
+            "focus-visible:ring-[hsl(var(--app-ring,var(--ring)))]",
+          ].join(" ")}
+          aria-label={tooltipText ?? "Notificaciones"}
+          title={tooltipText ?? "Notificaciones"}
+        >
+          {icon ?? <Bell size={15} />}
+        </AppDrawerTrigger>
 
-      {/* derecha y más ancho en desktop */}
-      <SheetContent
+        {hasNotifications ? (
+          <AppBadge
+            tone="danger"
+            appearance="solid"
+            size="xs"
+            radius="full"
+            className="absolute -right-1.5 -top-1.5 h-4 min-w-4 justify-center px-1 text-[9px] leading-none"
+          >
+            {countBadge > 99 ? "99+" : countBadge}
+          </AppBadge>
+        ) : null}
+      </div>
+
+      <AppDrawerContent
         side="right"
-        className="w-[92vw] sm:w-[480px] md:w-[560px] lg:w-[640px] p-0"
+        className="w-[92vw] sm:w-[420px] md:w-[480px] lg:w-[540px]"
       >
-        <div className="flex h-full flex-col">
-          <div className="px-6 py-4 border-b">
-            <div className="flex items-center justify-between gap-3">
-              <SheetTitle className="text-lg font-bold">
-                Notificaciones
-              </SheetTitle>
-
-              {/* Acción alineada a la derecha, discreta */}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setOpenDeleteAllNoti(true)}
-                disabled={!hasNotis}
-                className="gap-2"
-                aria-disabled={!hasNotis}
-                title={
-                  hasNotis
-                    ? "Eliminar todas las notificaciones"
-                    : "No hay notificaciones"
-                }
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar todo
-              </Button>
+        <AppDrawerHeader>
+          <AppInline
+            align="start"
+            justify="between"
+            gap="sm"
+            className="w-full"
+          >
+            <div className="min-w-0">
+              <AppDrawerTitle>Notificaciones</AppDrawerTitle>
+              <AppDrawerDescription>
+                {tooltipText ?? "Centro de notificaciones del sistema."}
+              </AppDrawerDescription>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3">
-            <NotificationList
-              selectNoti={selectNoti}
-              notifications={notifications}
-              isLoading={isLoading}
-              onDelete={onDelete}
-            />
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+            <AppButton
+              type="button"
+              variant="danger"
+              size="xs"
+              width="auto"
+              leftIcon={<Trash2 size={13} />}
+              disabled={!hasNotifications}
+              aria-disabled={!hasNotifications}
+              title={
+                hasNotifications
+                  ? "Eliminar todas las notificaciones"
+                  : "No hay notificaciones"
+              }
+              onClick={handleRequestDeleteAll}
+              className="h-7 shrink-0 px-2"
+            >
+              Eliminar todo
+            </AppButton>
+          </AppInline>
+        </AppDrawerHeader>
+
+        <AppDrawerBody className="px-3 py-3">
+          <NotificationList
+            selectNoti={handleSelectNotification}
+            notifications={notifications}
+            isLoading={isLoading}
+            onDelete={onDelete}
+          />
+        </AppDrawerBody>
+      </AppDrawerContent>
+    </AppDrawer>
   );
 }

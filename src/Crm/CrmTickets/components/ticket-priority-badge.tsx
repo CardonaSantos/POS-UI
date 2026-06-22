@@ -1,5 +1,7 @@
-import { cn } from "@/lib/utils";
-import { getPriorityStyles } from "./ticket-badge-helper";
+"use client";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { getTicketPriorityTone } from "../_components/ticket-list.helpers";
 
 interface TicketPriorityBadgeProps {
   priority: string;
@@ -11,14 +13,17 @@ export function TicketPriorityBadge({
   className,
 }: TicketPriorityBadgeProps) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center px-1.5 py-px rounded border text-[10px] uppercase tracking-wide leading-none",
-        getPriorityStyles(priority),
-        className,
-      )}
+    <AppBadge
+      tone={getTicketPriorityTone(priority)}
+      appearance="soft"
+      size="xs"
+      radius="sm"
+      className={[
+        "h-4 px-1 text-[9px] uppercase tracking-wide",
+        className ?? "",
+      ].join(" ")}
     >
       {priority}
-    </span>
+    </AppBadge>
   );
 }

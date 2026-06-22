@@ -23,6 +23,8 @@ export interface TicketsData {
   ticketsResueltos: number;
 }
 
+export type TicketQuickView = "all" | "assignedToMe" | "createdByMe";
+
 export class QuerySearchTickets {
   page?: number = 1;
 
@@ -38,11 +40,13 @@ export class QuerySearchTickets {
 
   sector?: number;
 
-  fechaInicio?: Date;
+  fechaInicio?: string;
 
-  fechaFin?: Date;
+  fechaFin?: string;
 
   creadosPor?: number;
+
+  vista?: string;
 }
 
 export function useGetTicketsSoporte(query: QuerySearchTickets) {
