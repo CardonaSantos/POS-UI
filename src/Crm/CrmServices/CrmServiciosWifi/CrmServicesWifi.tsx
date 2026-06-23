@@ -1,495 +1,680 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import * as React from "react";
 import axios from "axios";
-import { toast } from "sonner";
 import currency from "currency.js";
-
-// Icons
+import { toast } from "sonner";
 import {
-  Search,
   AlertCircle,
-  Loader2,
   Plus,
-  Filter,
   RefreshCw,
-  Download,
+  Search,
+  Users,
   Wifi,
   WifiOff,
 } from "lucide-react";
 
-// UI Components
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppSkeleton } from "@/components/app/primitives/app-skeleton";
+import { AppStack } from "@/components/app/primitives/app-stack";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Custom Components
-import ServicioTable from "./ServicioTable";
-import CreateServicioDialog from "./CreateServiceDialog";
-import EditServicioDialog from "./EditServicioDialog";
-import DeleteServicioDialog from "./DeleteServicioDialog";
-import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import type {
-  ServicioInternet,
-  NuevoServicioInternet,
-  // ServicioInternetEditable
-} from "./servicio-internet.types";
+  useAppAsyncAction,
+  useAppConfirmHandler,
+  useAppDisclosure,
+  useAppStateHandlers,
+} from "@/components/app/handlers";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 
+import ServicioTable from "./ServicioTable";
+import type {
+  NuevoServicioInternet,
+  ServicioInternet,
+} from "./servicio-internet.types";
+import {
+  CreateServicioInternetDialog,
+  EditServicioInternetDialog,
+} from "../_components/ServicioInternetDialog";
 const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
 
-const formatearMoneda = (monto: number) => {
+function formatearMoneda(monto: number) {
   return currency(monto, {
     symbol: "Q",
     separator: ",",
     decimal: ".",
     precision: 2,
   }).format();
-};
+}
 
-const ServicioInternetManage: React.FC = () => {
-  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
-
-  const [servicios, setServicios] = useState<ServicioInternet[]>([]);
-  const [searchServicio, setSearchServicio] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [nuevoServicio, setNuevoServicio] = useState<NuevoServicioInternet>({
+function createEmptyServicio(empresaId: number): NuevoServicioInternet {
+  return {
     nombre: "",
     velocidad: "",
     precio: 0,
     estado: "ACTIVO",
-    empresaId: empresaId,
+    empresaId,
+  };
+}
+
+interface ServicioInternetState {
+  servicios: ServicioInternet[];
+  searchServicio: string;
+  nuevoServicio: NuevoServicioInternet;
+  editingServicio: ServicioInternet | null;
+  hasLoaded: boolean;
+  error: string | null;
+}
+
+function normalizeServiciosResponse(raw: unknown): ServicioInternet[] {
+  if (Array.isArray(raw)) return raw as ServicioInternet[];
+
+  if (raw && typeof raw === "object") {
+    const record = raw as Record<string, unknown>;
+
+    if (Array.isArray(record.data)) return record.data as ServicioInternet[];
+    if (Array.isArray(record.items)) return record.items as ServicioInternet[];
+    if (Array.isArray(record.servicios)) {
+      return record.servicios as ServicioInternet[];
+    }
+  }
+
+  return [];
+}
+
+function getInitialState(empresaId: number): ServicioInternetState {
+  return {
+    servicios: [],
+    searchServicio: "",
+    nuevoServicio: createEmptyServicio(empresaId),
+    editingServicio: null,
+    hasLoaded: false,
+    error: null,
+  };
+}
+function ServicioStatCard({
+  label,
+  value,
+  description,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  description: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <AppCard variant="outline" size="xs" className="px-3 py-2">
+      <AppInline align="center" justify="between" gap="sm">
+        <AppInline align="center" gap="xs" className="min-w-0">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-md)] bg-[hsl(var(--app-primary)/0.12)] text-[hsl(var(--app-primary))]">
+            {icon}
+          </span>
+
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-medium leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {label}
+            </p>
+            <p className="truncate text-[10px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {description}
+            </p>
+          </div>
+        </AppInline>
+
+        <span className="shrink-0 text-sm font-bold tabular-nums leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
+          {value}
+        </span>
+      </AppInline>
+    </AppCard>
+  );
+}
+export default function ServicioInternetManage() {
+  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
+
+  const createDialog = useAppDisclosure();
+  const editDialog = useAppDisclosure();
+  const deleteDialog = useAppConfirmHandler<ServicioInternet>();
+
+  const state = useAppStateHandlers<ServicioInternetState>(
+    getInitialState(empresaId),
+  );
+
+  const stateRef = React.useRef(state);
+  const empresaIdRef = React.useRef(empresaId);
+  const createDialogRef = React.useRef(createDialog);
+  const editDialogRef = React.useRef(editDialog);
+  const deleteDialogRef = React.useRef(deleteDialog);
+
+  React.useEffect(() => {
+    stateRef.current = state;
+    empresaIdRef.current = empresaId;
+    createDialogRef.current = createDialog;
+    editDialogRef.current = editDialog;
+    deleteDialogRef.current = deleteDialog;
   });
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingServicio, setEditingServicio] =
-    useState<ServicioInternet | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [deleteServicioId, setDeleteServicioId] = useState<number | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const getServiciosInternet = async () => {
-    setIsLoading(true);
-    setError(null);
+  const loadServicios = React.useCallback(async () => {
+    stateRef.current.setField("error", null);
 
     try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/servicio-internet/get-servicios-internet`
+      const response = await axios.get<unknown>(
+        `${VITE_CRM_API_URL}/servicio-internet/get-servicios-internet`,
       );
-      if (response.status === 200) {
-        setServicios(response.data);
-      }
+
+      const servicios = normalizeServiciosResponse(response.data);
+      console.log("Lso servicios son: ", servicios);
+
+      stateRef.current.setState({
+        ...stateRef.current.state,
+        servicios,
+        hasLoaded: true,
+        error: null,
+      });
     } catch (error) {
       console.error("Error al cargar servicios de internet:", error);
-      setError(
-        "No se pudieron conseguir los datos de los servicios. Intente nuevamente."
-      );
-      toast.error("Error al cargar servicios");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    getServiciosInternet();
+      const message =
+        "No se pudieron conseguir los datos de los servicios. Intente nuevamente.";
+
+      stateRef.current.setField("error", message);
+      stateRef.current.setField("hasLoaded", true);
+
+      toast.error("Error al cargar servicios");
+    }
   }, []);
 
-  const handleSubmitServicio = async (servicioData: NuevoServicioInternet) => {
-    setIsLoading(true);
-    setError(null);
+  const loadAction = useAppAsyncAction(
+    async () => {
+      await loadServicios();
+    },
+    {
+      preventConcurrent: true,
+    },
+  );
 
-    try {
-      const dataToSend = {
-        nombre: servicioData.nombre.trim(),
-        velocidad: servicioData.velocidad?.trim(),
-        precio: servicioData.precio,
-        estado: servicioData.estado,
-        empresaId: empresaId,
-      };
+  React.useEffect(() => {
+    void loadAction.run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      const response = await axios.post(
-        `${VITE_CRM_API_URL}/servicio-internet`,
-        dataToSend
-      );
+  const createAction = useAppAsyncAction(
+    async (servicioData: NuevoServicioInternet) => {
+      stateRef.current.setField("error", null);
 
-      if (response.status === 201) {
-        toast.success("Nuevo Servicio de Internet Creado");
-        getServiciosInternet();
-        setIsCreateDialogOpen(false);
+      try {
+        const payload = {
+          nombre: servicioData.nombre.trim(),
+          velocidad: servicioData.velocidad?.trim() || "",
+          precio: Number(servicioData.precio ?? 0),
+          estado: servicioData.estado,
+          empresaId: empresaIdRef.current,
+        };
 
-        setNuevoServicio({
-          nombre: "",
-          velocidad: "",
-          precio: 0,
-          estado: "ACTIVO",
-          empresaId: empresaId,
-        });
-      }
-    } catch (error) {
-      console.error("Error al crear servicio de internet:", error);
-      setError("Error al crear el servicio de internet. Intente nuevamente.");
-      toast.error("Error al crear servicio");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        await axios.post(`${VITE_CRM_API_URL}/servicio-internet`, payload);
 
-  const handleEditClick = (servicio: ServicioInternet) => {
-    setEditingServicio(servicio);
-    setIsEditDialogOpen(true);
-  };
+        toast.success("Nuevo servicio de internet creado");
 
-  const handleSaveEdit = async (updatedServicio: ServicioInternet) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const dataToSend = {
-        nombre: updatedServicio.nombre.trim(),
-        velocidad: updatedServicio.velocidad?.trim(),
-        precio: updatedServicio.precio,
-        estado: updatedServicio.estado,
-        empresaId: empresaId,
-      };
-
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/servicio-internet/update-servicio-wifi/${updatedServicio.id}`,
-        dataToSend
-      );
-
-      if (response.status === 200) {
-        toast.success("Servicio de internet actualizado");
-        setServicios(
-          servicios.map((s) =>
-            s.id === updatedServicio.id ? updatedServicio : s
-          )
+        createDialogRef.current.close();
+        stateRef.current.setField(
+          "nuevoServicio",
+          createEmptyServicio(empresaIdRef.current),
         );
-        setIsEditDialogOpen(false);
-        setEditingServicio(null);
-        getServiciosInternet();
+
+        await loadServicios();
+      } catch (error) {
+        console.error("Error al crear servicio de internet:", error);
+
+        stateRef.current.setField(
+          "error",
+          "Error al crear el servicio de internet. Intente nuevamente.",
+        );
+
+        toast.error("Error al crear servicio");
       }
-    } catch (error) {
-      console.error("Error al actualizar servicio de internet:", error);
-      setError(
-        "Error al actualizar el servicio de internet. Intente nuevamente."
-      );
-      toast.error("Error al actualizar servicio");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (id: number) => {
-    setDeleteServicioId(id);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (deleteServicioId === null) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/servicio-internet/remove-servicio/${deleteServicioId}`
-      );
-
-      if (response.status === 200) {
-        toast.success("Servicio de internet eliminado");
-        setServicios(servicios.filter((s) => s.id !== deleteServicioId));
-        setIsDeleteDialogOpen(false);
-        setDeleteServicioId(null);
-      }
-    } catch (error) {
-      console.error("Error al eliminar servicio de internet:", error);
-      setError(
-        "Error al eliminar el servicio de internet. Intente nuevamente."
-      );
-      toast.error("Error al eliminar servicio");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filteredServicios = servicios.filter(
-    (servicio) =>
-      servicio.nombre.toLowerCase().includes(searchServicio.toLowerCase()) ||
-      servicio.velocidad?.toLowerCase().includes(searchServicio.toLowerCase())
+    },
+    {
+      preventConcurrent: true,
+    },
   );
 
-  const totalServicios = servicios.length;
-  const serviciosActivos = servicios.filter(
-    (s) => s.estado === "ACTIVO"
-  ).length;
-  const totalClientes = servicios.reduce(
-    (acc, servicio) => acc + (servicio.clientesCount || 0),
-    0
+  const updateAction = useAppAsyncAction(
+    async (updatedServicio: ServicioInternet) => {
+      stateRef.current.setField("error", null);
+
+      try {
+        const payload = {
+          nombre: updatedServicio.nombre.trim(),
+          velocidad: updatedServicio.velocidad?.trim() || "",
+          precio: Number(updatedServicio.precio ?? 0),
+          estado: updatedServicio.estado,
+          empresaId: empresaIdRef.current,
+        };
+
+        await axios.patch(
+          `${VITE_CRM_API_URL}/servicio-internet/update-servicio-wifi/${updatedServicio.id}`,
+          payload,
+        );
+
+        toast.success("Servicio de internet actualizado");
+
+        editDialogRef.current.close();
+        stateRef.current.setField("editingServicio", null);
+
+        await loadServicios();
+      } catch (error) {
+        console.error("Error al actualizar servicio de internet:", error);
+
+        stateRef.current.setField(
+          "error",
+          "Error al actualizar el servicio de internet. Intente nuevamente.",
+        );
+
+        toast.error("Error al actualizar servicio");
+      }
+    },
+    {
+      preventConcurrent: true,
+    },
   );
-  const ingresosMensuales = servicios.reduce(
-    (acc, servicio) => acc + servicio.precio * (servicio.clientesCount || 0),
-    0
+
+  const deleteAction = useAppAsyncAction(
+    async () => {
+      await deleteDialogRef.current.confirm(async (target) => {
+        if (!target?.id) {
+          toast.error("Seleccione un servicio para eliminar.");
+          return;
+        }
+
+        stateRef.current.setField("error", null);
+
+        try {
+          await axios.delete(
+            `${VITE_CRM_API_URL}/servicio-internet/remove-servicio/${target.id}`,
+          );
+
+          toast.success("Servicio de internet eliminado");
+
+          await loadServicios();
+        } catch (error) {
+          console.error("Error al eliminar servicio de internet:", error);
+
+          stateRef.current.setField(
+            "error",
+            "Error al eliminar el servicio de internet. Intente nuevamente.",
+          );
+
+          toast.error("Error al eliminar servicio");
+        }
+      });
+    },
+    {
+      preventConcurrent: true,
+    },
+  );
+
+  const openCreateDialog = React.useCallback(() => {
+    stateRef.current.setField(
+      "nuevoServicio",
+      createEmptyServicio(empresaIdRef.current),
+    );
+    createDialogRef.current.open();
+  }, []);
+
+  const openEditDialog = React.useCallback((servicio: ServicioInternet) => {
+    stateRef.current.setField("editingServicio", servicio);
+    editDialogRef.current.open();
+  }, []);
+
+  const openDeleteDialogById = React.useCallback((id: number) => {
+    const servicio = stateRef.current.state.servicios.find(
+      (item) => item.id === id,
+    );
+
+    if (!servicio) {
+      toast.error("No se encontró el servicio seleccionado.");
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        deleteDialogRef.current.open(servicio);
+      }, 0);
+    });
+  }, []);
+
+  const submitCreate = React.useCallback(
+    async (payload: NuevoServicioInternet) => {
+      await createAction.run(payload);
+    },
+    [createAction],
+  );
+
+  const submitEdit = React.useCallback(
+    async (payload: ServicioInternet) => {
+      await updateAction.run(payload);
+    },
+    [updateAction],
+  );
+
+  const confirmDelete = React.useCallback(async () => {
+    await deleteAction.run();
+  }, [deleteAction]);
+
+  const setSearchServicio = React.useCallback((value: string) => {
+    stateRef.current.setField("searchServicio", value);
+  }, []);
+
+  const clearSearch = React.useCallback(() => {
+    stateRef.current.setField("searchServicio", "");
+  }, []);
+
+  const servicios = Array.isArray(state.state.servicios)
+    ? state.state.servicios
+    : [];
+
+  console.log("servicios formateados: ", servicios);
+
+  const filteredServicios = React.useMemo(() => {
+    const search = state.state.searchServicio.trim().toLowerCase();
+
+    if (!search) return servicios;
+
+    return servicios.filter((servicio) => {
+      return (
+        servicio.nombre.toLowerCase().includes(search) ||
+        servicio.velocidad?.toLowerCase().includes(search)
+      );
+    });
+  }, [servicios, state.state.searchServicio]);
+
+  const stats = React.useMemo(() => {
+    const totalServicios = servicios.length;
+    const serviciosActivos = servicios.filter(
+      (servicio) => servicio.estado === "ACTIVO",
+    ).length;
+    const totalClientes = servicios.reduce(
+      (acc, servicio) => acc + (servicio.clientesCount || 0),
+      0,
+    );
+    const ingresosMensuales = servicios.reduce(
+      (acc, servicio) =>
+        acc + Number(servicio.precio || 0) * (servicio.clientesCount || 0),
+      0,
+    );
+
+    return {
+      totalServicios,
+      serviciosActivos,
+      totalClientes,
+      ingresosMensuales,
+    };
+  }, [servicios]);
+
+  const isLoading = loadAction.isLoading || !state.state.hasLoaded;
+  const isMutating =
+    createAction.isLoading || updateAction.isLoading || deleteAction.isLoading;
+  const isBusy = isLoading || isMutating;
+
+  const statItems = React.useMemo(
+    () => [
+      {
+        label: "Planes",
+        value: stats.totalServicios,
+        description: "Configurados",
+        icon: <Wifi size={13} />,
+      },
+      {
+        label: "Activos",
+        value: stats.serviciosActivos,
+        description: "Disponibles",
+        icon: <Wifi size={13} />,
+      },
+      {
+        label: "Clientes",
+        value: stats.totalClientes,
+        description: "Asignados",
+        icon: <Users size={13} />,
+      },
+      {
+        label: "Ingresos",
+        value: formatearMoneda(stats.ingresosMensuales),
+        description: "Mensual estimado",
+        icon: <Wifi size={13} />,
+        skeletonWidth: "w-20",
+      },
+    ],
+    [stats],
   );
 
   return (
     <PageTransitionCrm
       titleHeader="Servicios de Internet"
-      subtitle={``}
+      subtitle="Planes de internet configurados para clientes del CRM"
       variant="fade-pure"
     >
-      {/* Header con título y acciones */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
+      <AppStack gap="md">
+        <AppInline align="center" justify="between" gap="sm" wrap>
+          <AppInline align="center" gap="xs" wrap className="w-full sm:w-auto">
+            <AppInput
+              value={state.state.searchServicio}
+              onChange={(event) => setSearchServicio(event.target.value)}
               placeholder="Buscar servicios..."
-              className="pl-8 w-full sm:w-[250px]"
-              value={searchServicio}
-              onChange={(e) => setSearchServicio(e.target.value)}
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<Search size={13} />}
+              className="sm:w-[260px]"
+              disabled={isBusy}
             />
-          </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-                <span className="sr-only">Filtrar</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSearchServicio("")}>
-                Limpiar filtros
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={getServiciosInternet}>
-                Actualizar datos
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <AppButton
+              type="button"
+              variant="secondary"
+              size="xs"
+              width="auto"
+              leftIcon={<RefreshCw size={13} />}
+              loading={loadAction.isLoading}
+              loadingText="Actualizando..."
+              disabled={isMutating}
+              onClick={() => loadAction.run()}
+            >
+              Actualizar
+            </AppButton>
 
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="w-full sm:w-auto"
+            <AppButton
+              type="button"
+              variant="secondary"
+              size="xs"
+              width="auto"
+              disabled={isBusy || !state.state.searchServicio}
+              onClick={clearSearch}
+            >
+              Limpiar
+            </AppButton>
+          </AppInline>
+
+          <AppButton
+            type="button"
+            variant="primary"
+            size="xs"
+            width="auto"
+            leftIcon={<Plus size={13} />}
+            disabled={isBusy}
+            onClick={openCreateDialog}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Plan
-          </Button>
-        </div>
-      </div>
+            Nuevo plan
+          </AppButton>
+        </AppInline>
 
-      {/* Mensajes de error */}
-      {error && (
-        <Alert variant="destructive" className="animate-in fade-in-50">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {state.state.error ? (
+          <AppAlert
+            tone="danger"
+            size="sm"
+            icon={<AlertCircle size={15} />}
+            title="Error"
+            description={state.state.error}
+          />
+        ) : null}
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Planes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : totalServicios}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Planes de internet configurados
-            </p>
-          </CardContent>
-        </Card>
+        <AppGrid cols={{ base: 1, sm: 2, xl: 4 }} gap="xs">
+          {statItems.map((item) => (
+            <ServicioStatCard
+              key={item.label}
+              label={item.label}
+              value={
+                isLoading ? (
+                  <AppSkeleton
+                    className={`h-4 ${item.skeletonWidth ?? "w-10"}`}
+                  />
+                ) : (
+                  item.value
+                )
+              }
+              description={item.description}
+              icon={item.icon}
+            />
+          ))}
+        </AppGrid>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Planes Activos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : serviciosActivos}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Planes disponibles para clientes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Clientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : totalClientes}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Clientes con planes asignados
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Ingresos Mensuales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                formatearMoneda(ingresosMensuales)
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Facturación mensual estimada
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabla de servicios de internet */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Wifi className="h-5 w-5" />
-                Planes de Internet
-              </CardTitle>
-              <CardDescription>Planes de internet configurados</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={getServiciosInternet}
-              >
-                <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                Actualizar
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-3.5 w-3.5 mr-1" />
-                Exportar
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+        <AppCard
+          variant="outline"
+          size="sm"
+          title={
+            <AppInline align="center" gap="xs">
+              <Wifi size={15} className="text-[hsl(var(--app-primary))]" />
+              <span>Planes de internet</span>
+            </AppInline>
+          }
+          description="Planes disponibles y configuración comercial"
+          action={
+            <AppButton
+              type="button"
+              variant="secondary"
+              size="xs"
+              width="auto"
+              leftIcon={<RefreshCw size={13} />}
+              loading={loadAction.isLoading}
+              loadingText="Actualizando..."
+              disabled={isMutating}
+              onClick={() => loadAction.run()}
+            >
+              Actualizar
+            </AppButton>
+          }
+        >
           {isLoading && servicios.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">
+            <AppStack align="center" gap="sm" className="py-10">
+              <AppSkeleton className="h-8 w-8 rounded-full" />
+              <p className="text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
                 Cargando planes de internet...
               </p>
-            </div>
+            </AppStack>
           ) : servicios.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <div className="rounded-full bg-muted p-4">
-                <WifiOff className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium">
-                  No hay planes de internet
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  No se encontraron planes de internet. Cree un nuevo plan para
-                  comenzar.
-                </p>
-                <Button
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="mt-2"
+            <AppEmptyState
+              preset="empty"
+              variant="plain"
+              size="sm"
+              align="center"
+              icon={<WifiOff size={34} strokeWidth={1.5} />}
+              title="No hay planes de internet"
+              description="Cree un nuevo plan para comenzar."
+              action={
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  width="auto"
+                  leftIcon={<Plus size={13} />}
+                  onClick={openCreateDialog}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Plan
-                </Button>
-              </div>
-            </div>
+                  Nuevo plan
+                </AppButton>
+              }
+              className="py-10"
+            />
           ) : filteredServicios.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <div className="rounded-full bg-muted p-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium">
-                  No se encontraron resultados
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  No se encontraron planes que coincidan con "{searchServicio}
-                  ". Intente con otro término.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setSearchServicio("")}
-                  className="mt-2"
+            <AppEmptyState
+              preset="search"
+              variant="plain"
+              size="sm"
+              align="center"
+              icon={<Search size={34} strokeWidth={1.5} />}
+              title="Sin resultados"
+              description={`No se encontraron planes para "${state.state.searchServicio}".`}
+              action={
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  width="auto"
+                  onClick={clearSearch}
                 >
                   Limpiar búsqueda
-                </Button>
-              </div>
-            </div>
+                </AppButton>
+              }
+              className="py-10"
+            />
           ) : (
             <ServicioTable
               servicios={filteredServicios}
               formatearMoneda={formatearMoneda}
-              onEditClick={handleEditClick}
-              onDeleteClick={handleDeleteClick}
+              onEditClick={openEditDialog}
+              onDeleteClick={openDeleteDialogById}
             />
           )}
-        </CardContent>
-      </Card>
+        </AppCard>
+      </AppStack>
 
-      {/* Diálogo para CREAR servicio */}
-      <CreateServicioDialog
-        isOpen={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        initialData={nuevoServicio}
-        onSubmit={handleSubmitServicio}
-        isLoading={isLoading}
+      <CreateServicioInternetDialog
+        open={createDialog.isOpen}
+        onOpenChange={createDialog.setOpen}
+        initialData={state.state.nuevoServicio}
+        onSubmit={submitCreate}
+        isLoading={createAction.isLoading}
         empresaId={empresaId}
       />
 
-      {/* Diálogo para EDITAR servicio */}
-      <EditServicioDialog
-        isOpen={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        servicio={editingServicio}
-        onSave={handleSaveEdit}
-        isLoading={isLoading}
+      <EditServicioInternetDialog
+        open={editDialog.isOpen}
+        onOpenChange={editDialog.setOpen}
+        servicio={state.state.editingServicio}
+        onSave={submitEdit}
+        isLoading={updateAction.isLoading}
       />
+      <AppConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
+        preset="delete"
+        tone="danger"
+        size="sm"
+        footerAlign="between"
+        title="Eliminar plan de internet"
+        description="Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        loadingText="Eliminando..."
+        isLoading={deleteAction.isLoading}
+        preventClose={deleteAction.isLoading}
+        closeOnConfirm={false}
+        onConfirm={confirmDelete}
+      >
+        <p className="text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Plan seleccionado:{" "}
+          <span className="font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+            {deleteDialog.target?.nombre ?? "Sin nombre"}
+          </span>
+        </p>
 
-      {/* Diálogo para ELIMINAR servicio */}
-      <DeleteServicioDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirmDelete={handleConfirmDelete}
-        isLoading={isLoading}
-      />
+        <p className="mt-2 text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Si hay clientes asociados a este plan, se perderá la relación con
+          ellos.
+        </p>
+      </AppConfirmDialog>
     </PageTransitionCrm>
   );
-};
-
-export default ServicioInternetManage;
+}

@@ -1,45 +1,43 @@
 "use client";
 
-import type React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import ServicioForm from "./ServicioForm";
+  AppDialog,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
 
-// Importación centralizada de tipos
+import ServicioForm from "./ServicioForm";
 import type { CreateServicioDialogProps } from "./servicio-internet.types";
 
-const CreateServicioDialog: React.FC<CreateServicioDialogProps> = ({
+export default function CreateServicioDialog({
   isOpen,
   onOpenChange,
   initialData,
   onSubmit,
   isLoading,
   empresaId,
-}) => {
+}: CreateServicioDialogProps) {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Nuevo Plan de Internet</DialogTitle>
-          <DialogDescription>
-            Complete el formulario para crear un nuevo plan de internet
-          </DialogDescription>
-        </DialogHeader>
+    <AppDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AppDialogContent className="sm:max-w-[520px]">
+        <AppDialogHeader>
+          <AppDialogTitle>Nuevo plan de internet</AppDialogTitle>
+          <AppDialogDescription>
+            Complete los datos para crear un nuevo plan.
+          </AppDialogDescription>
+        </AppDialogHeader>
+
         <ServicioForm
           initialData={initialData}
           onSubmit={onSubmit}
           isLoading={isLoading}
           isEditing={false}
           empresaId={empresaId}
+          onCancel={() => onOpenChange(false)}
         />
-      </DialogContent>
-    </Dialog>
+      </AppDialogContent>
+    </AppDialog>
   );
-};
-
-export default CreateServicioDialog;
+}

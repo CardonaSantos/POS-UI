@@ -1,7 +1,7 @@
 "use client";
 
 import type { UseFormReturn } from "react-hook-form";
-import { FileText, Save, Ticket } from "lucide-react";
+import { Save, Ticket } from "lucide-react";
 
 import {
   AppForm,
@@ -10,7 +10,6 @@ import {
   AppFormTextarea,
 } from "@/components/app/form";
 import { useAppFormHandlers } from "@/components/app/handlers";
-import { AppAlert } from "@/components/app/primitives/app-alert";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
@@ -62,9 +61,9 @@ export function TicketSolucionesForm({
   );
 
   return (
-    <AppCard variant="outline" size="sm" className="w-full">
+    <AppCard variant="outline" size="sm" className="w-full p-2">
       <AppStack gap="md">
-        <AppInline align="center" gap="xs">
+        <AppInline align="center" gap="sm">
           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--app-radius-lg)] bg-[hsl(var(--app-primary)/0.12)] text-[hsl(var(--app-primary))]">
             <Ticket size={16} />
           </span>
@@ -79,7 +78,7 @@ export function TicketSolucionesForm({
           </div>
         </AppInline>
 
-        <AppForm form={form} onSubmit={submitHandler} className="space-y-4">
+        <AppForm form={form} onSubmit={submitHandler} className="space-y-5">
           <AppFormInput<CreateSolucionTicketDto>
             name="solucion"
             label="Título de la solución"
@@ -99,19 +98,11 @@ export function TicketSolucionesForm({
             description="Describe paso a paso la solución aplicada para futuras referencias del equipo."
             placeholder="Describe paso a paso la solución aplicada..."
             required
-            rows={4}
+            rows={5}
             size="xs"
             fieldWidth="full"
             disabled={isLoading}
-            className="min-h-[100px] resize-y"
-          />
-
-          <AppAlert
-            tone="info"
-            size="xs"
-            icon={<FileText size={14} />}
-            title="Uso recomendado"
-            description="Procura escribir soluciones claras, repetibles y útiles para otros técnicos."
+            className="min-h-[130px] resize-y"
           />
 
           <AppFormSubmit

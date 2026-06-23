@@ -4,11 +4,9 @@ import * as React from "react";
 import { Clock, Target, TrendingUp, Trophy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppGrid } from "@/components/app/primitives/app-grid";
 import { AppInline } from "@/components/app/primitives/app-inline";
-import { AppStack } from "@/components/app/primitives/app-stack";
 
 import type { MetasSummary } from "./metas-tecnicos.helpers";
 
@@ -59,44 +57,38 @@ function SummaryStatCard({ item }: { item: SummaryItem }) {
   const toneClasses = getToneClasses(item.tone);
 
   return (
-    <AppCard variant="outline" size="xs" className="h-full p-2">
+    <AppCard variant="outline" size="xs" className="h-full px-3 py-2">
       <AppInline align="center" justify="between" gap="sm">
-        <AppStack gap="md" className="min-w-0">
-          <AppInline align="center" gap="xs">
-            <p className="truncate text-[11px] font-medium text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-              {item.label}
-            </p>
-
-            <AppBadge
-              tone={item.tone === "info" ? "primary" : item.tone}
-              appearance="soft"
-              size="xs"
-            >
-              KPI
-            </AppBadge>
-          </AppInline>
-
-          <p
+        <AppInline align="center" gap="xs" className="min-w-0">
+          <span
             className={cn(
-              "truncate text-2xl font-bold tracking-tight",
-              toneClasses.value,
+              "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-md)] [&_svg]:h-3.5 [&_svg]:w-3.5",
+              toneClasses.icon,
             )}
           >
-            {item.value}
-          </p>
+            {item.icon}
+          </span>
 
-          <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-            {item.description}
-          </p>
-        </AppStack>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] font-medium leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {item.label}
+            </p>
+            <p
+              className="truncate text-[10px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+              title={item.description}
+            >
+              {item.description}
+            </p>
+          </div>
+        </AppInline>
 
         <span
           className={cn(
-            "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--app-radius-lg)]",
-            toneClasses.icon,
+            "shrink-0 text-base font-bold leading-none tabular-nums tracking-tight",
+            toneClasses.value,
           )}
         >
-          {item.icon}
+          {item.value}
         </span>
       </AppInline>
     </AppCard>
@@ -112,29 +104,29 @@ export function MetasSummaryGrid({
       {
         label: "Total metas",
         value: summary.totalMetas,
-        description: "Metas registradas",
-        icon: <Target size={17} />,
+        description: "Registradas",
+        icon: <Target size={14} />,
         tone: "primary",
       },
       {
-        label: "Metas activas",
+        label: "Activas",
         value: summary.metasActivas,
-        description: "Metas abiertas",
-        icon: <Clock size={17} />,
+        description: "Abiertas",
+        icon: <Clock size={14} />,
         tone: "success",
       },
       {
-        label: "Tickets resueltos",
+        label: "Resueltos",
         value: summary.ticketsResueltos,
-        description: "Resoluciones acumuladas",
-        icon: <TrendingUp size={17} />,
+        description: "Acumulados",
+        icon: <TrendingUp size={14} />,
         tone: "warning",
       },
       {
         label: "Meta total",
         value: summary.metaTotal,
-        description: "Objetivo acumulado",
-        icon: <Trophy size={17} />,
+        description: "Objetivo",
+        icon: <Trophy size={14} />,
         tone: "info",
       },
     ],

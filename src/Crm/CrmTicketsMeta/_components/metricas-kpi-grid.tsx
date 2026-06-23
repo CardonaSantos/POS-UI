@@ -4,11 +4,9 @@ import * as React from "react";
 import { Clock, Target, Ticket, TrendingUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppGrid } from "@/components/app/primitives/app-grid";
 import { AppInline } from "@/components/app/primitives/app-inline";
-import { AppStack } from "@/components/app/primitives/app-stack";
 import { TicketsActuales } from "./types";
 import { getTicketsActualesSummary } from "./metricas.helpers";
 
@@ -57,7 +55,7 @@ export function MetricasKpiGrid({
   );
 
   return (
-    <AppGrid cols={{ base: 1, sm: 2, xl: 5 }} gap="sm">
+    <AppGrid cols={{ base: 1, sm: 2, xl: 5 }} gap="xs">
       {items.map((item, index) => {
         const Icon = icons[index] ?? Target;
         const toneClasses = getToneClasses(item.tone);
@@ -67,46 +65,40 @@ export function MetricasKpiGrid({
             key={item.label}
             variant="outline"
             size="xs"
-            className="h-full"
+            className="h-full px-3 py-2"
           >
-            <AppInline
-              align="center"
-              justify="between"
-              gap="sm"
-              className="p-2"
-            >
-              <AppStack gap="md" className="min-w-0">
-                <AppInline align="center" gap="xs">
-                  <p className="truncate text-[11px] font-medium text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            <AppInline align="center" justify="between" gap="sm">
+              <AppInline align="center" gap="xs" className="min-w-0">
+                <span
+                  className={cn(
+                    "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-md)]",
+                    toneClasses.icon,
+                  )}
+                >
+                  <Icon size={13} />
+                </span>
+
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] font-medium leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
                     {item.label}
                   </p>
 
-                  <AppBadge tone={item.tone} appearance="soft" size="xs">
-                    KPI
-                  </AppBadge>
-                </AppInline>
-
-                <p
-                  className={cn(
-                    "text-2xl font-bold tracking-tight",
-                    toneClasses.value,
-                  )}
-                >
-                  {item.value}
-                </p>
-
-                <p className="truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-                  {item.description}
-                </p>
-              </AppStack>
+                  <p
+                    className="truncate text-[10px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+                    title={item.description}
+                  >
+                    {item.description}
+                  </p>
+                </div>
+              </AppInline>
 
               <span
                 className={cn(
-                  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--app-radius-lg)]",
-                  toneClasses.icon,
+                  "shrink-0 text-base font-bold leading-none tabular-nums tracking-tight",
+                  toneClasses.value,
                 )}
               >
-                <Icon size={17} />
+                {item.value}
               </span>
             </AppInline>
           </AppCard>

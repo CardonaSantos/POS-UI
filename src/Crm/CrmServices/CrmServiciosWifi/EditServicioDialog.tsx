@@ -1,51 +1,50 @@
 "use client";
 
-import type React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import ServicioForm from "./ServicioForm";
+  AppDialog,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
 
-// Importación centralizada de tipos
+import ServicioForm from "./ServicioForm";
 import type { EditServicioDialogProps } from "./servicio-internet.types";
 
-const EditServicioDialog: React.FC<EditServicioDialogProps> = ({
+export default function EditServicioDialog({
   isOpen,
   onOpenChange,
   servicio,
   onSave,
   isLoading,
-}) => {
+}: EditServicioDialogProps) {
   if (!servicio) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Editar Plan de Internet</DialogTitle>
-          <DialogDescription>
-            Modifique los detalles del plan de internet y guarde los cambios
-          </DialogDescription>
-        </DialogHeader>
+    <AppDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AppDialogContent className="sm:max-w-[520px]">
+        <AppDialogHeader>
+          <AppDialogTitle>Editar plan de internet</AppDialogTitle>
+          <AppDialogDescription>
+            Modifique los datos del plan y guarde los cambios.
+          </AppDialogDescription>
+        </AppDialogHeader>
+
         <ServicioForm
           initialData={servicio}
           onSubmit={(data) => {
             if ("id" in data && "creadoEn" in data && "actualizadoEn" in data) {
               return onSave(data);
             }
+
             return Promise.reject(new Error("Invalid data type"));
           }}
           isLoading={isLoading}
-          isEditing={true}
+          isEditing
           empresaId={servicio.empresaId}
+          onCancel={() => onOpenChange(false)}
         />
-      </DialogContent>
-    </Dialog>
+      </AppDialogContent>
+    </AppDialog>
   );
-};
-
-export default EditServicioDialog;
+}
