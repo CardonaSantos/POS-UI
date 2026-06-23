@@ -42,7 +42,7 @@ import {
   Timer,
 } from "lucide-react";
 import { EstadoTicket, TicketMoment } from "./types";
-import { PrioridadTicketSoporte } from "../features/dashboard/dashboard-tickets";
+import { PrioridadTicketSoporte } from "../../features/dashboard/dashboard-tickets";
 
 // Types
 

@@ -19,6 +19,12 @@ export interface AppTableRowActionsProps<TData> {
   className?: string;
 }
 
+function runAfterDropdownClose(callback: () => void) {
+  window.requestAnimationFrame(() => {
+    window.setTimeout(callback, 0);
+  });
+}
+
 export function AppTableRowActions<TData>({
   row,
   actions,
@@ -33,7 +39,7 @@ export function AppTableRowActions<TData>({
   }
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
         <AppButton
           type="button"
@@ -51,10 +57,11 @@ export function AppTableRowActions<TData>({
           side={side}
           align={align}
           sideOffset={6}
+          collisionPadding={8}
           className={appTableMenuContentVariants()}
         >
           {visibleActions.map((action, index) => (
-            <React.Fragment key={index}>
+            <React.Fragment key={`${action.label}-${index}`}>
               {action.separatorBefore ? (
                 <DropdownMenu.Separator className="my-1 h-px bg-[hsl(var(--app-table-border))]" />
               ) : null}
@@ -66,9 +73,10 @@ export function AppTableRowActions<TData>({
                     tone: action.tone ?? "default",
                   }),
                 )}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  action.onClick(row);
+                onSelect={() => {
+                  runAfterDropdownClose(() => {
+                    action.onClick(row);
+                  });
                 }}
               >
                 {action.icon ? (
@@ -76,6 +84,7 @@ export function AppTableRowActions<TData>({
                     {action.icon}
                   </span>
                 ) : null}
+
                 <span className="min-w-0 truncate">{action.label}</span>
               </DropdownMenu.Item>
             </React.Fragment>
@@ -90,10 +99,14 @@ export function createAppRowActionsColumn<TData>({
   actions,
   header = "Acciones",
   size = 72,
+  align = "end",
+  side = "bottom",
 }: {
   actions: (row: Row<TData>) => AppTableRowAction<TData>[];
   header?: string;
   size?: number;
+  align?: "start" | "center" | "end";
+  side?: "top" | "right" | "bottom" | "left";
 }): ColumnDef<TData, unknown> {
   return {
     id: "__actions",
@@ -108,6 +121,13 @@ export function createAppRowActionsColumn<TData>({
       align: "center",
       truncate: false,
     },
-    cell: ({ row }) => <AppTableRowActions row={row} actions={actions(row)} />,
+    cell: ({ row }) => (
+      <AppTableRowActions
+        row={row}
+        actions={actions(row)}
+        align={align}
+        side={side}
+      />
+    ),
   };
 }

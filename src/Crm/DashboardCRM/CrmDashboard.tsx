@@ -22,9 +22,9 @@ import MyTickets from "./MyTickets";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { getTicketEnProceso } from "../CrmTicketsMeta/api";
-import TicketsEnProcesoCard from "../CrmTicketsMeta/TicketsEnProcesoTable";
-import { TicketMoment } from "../CrmTicketsMeta/types";
+import { getTicketEnProceso } from "../CrmTicketsMeta/_components/api";
+import TicketsEnProcesoCard from "../CrmTicketsMeta/_components/TicketsEnProcesoTable";
+import { TicketMoment } from "../CrmTicketsMeta/_components/types";
 import { FormattedTicket, formatearMoneda } from "./types";
 import { Link } from "react-router-dom";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
@@ -58,7 +58,7 @@ export interface DashboardData {
 }
 export default function CrmDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
+    null,
   );
 
   const [dataTicketsEnProceso, setDataTicketsEnProceso] = useState<
@@ -76,7 +76,7 @@ export default function CrmDashboard() {
   const getTickets = async () => {
     try {
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/dashboard/get-tickets-asignados/${userId}`
+        `${VITE_CRM_API_URL}/dashboard/get-tickets-asignados/${userId}`,
       );
       if (response.status === 200) {
         setTickets(response.data);
@@ -110,7 +110,7 @@ export default function CrmDashboard() {
     try {
       // Hacemos la solicitud GET al servicio de NestJS
       const response = await axios.get(
-        `${VITE_CRM_API_URL}/dashboard/get-dashboard-data`
+        `${VITE_CRM_API_URL}/dashboard/get-dashboard-data`,
       ); // Asegúrate de que esta URL esté correcta
       if (response.status === 200) {
         // Si la respuesta es exitosa, almacenamos los datos en el estado
@@ -434,7 +434,7 @@ export default function CrmDashboard() {
                 title="Por cobrar"
                 value={formatearMoneda(
                   dashboardData.facturasSinPagarMonto -
-                    dashboardData.totalCobradoDelMes
+                    dashboardData.totalCobradoDelMes,
                 )}
                 icon={<Kanban className="w-4 h-4" />}
                 variant="info"
