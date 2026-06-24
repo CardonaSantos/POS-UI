@@ -1,19 +1,7 @@
-// components/facturacion-zona-table.tsx
 "use client";
-
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  Bell,
-  CalendarDays,
-  CheckCircle,
-  Clock,
-  Edit,
-  FileText,
-  Trash2,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { CalendarDays, Edit, FileText, Trash2, Users } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppButton } from "@/components/app/primitives/app-button";
@@ -86,10 +74,6 @@ function FlagChip({
 function ZonaNameCell({ zona }: { zona: FacturacionZona }) {
   return (
     <AppInline align="center" gap="xs" className="min-w-0">
-      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-md)] bg-[hsl(var(--app-primary)/0.12)] text-[hsl(var(--app-primary))]">
-        <CalendarDays size={13} />
-      </span>
-
       <div className="min-w-0">
         <p
           className="truncate text-xs font-semibold leading-4 text-[hsl(var(--app-foreground,var(--foreground)))]"
@@ -248,15 +232,15 @@ export function FacturacionZonaTable({
       {
         accessorKey: "nombre",
         header: "Zona",
-        size: 220,
+        size: 210,
         minSize: 180,
         cell: ({ row }) => <ZonaNameCell zona={row.original} />,
       },
       {
         id: "ciclo",
         header: "Días del ciclo",
-        size: 360,
-        minSize: 280,
+        size: 210,
+        minSize: 180,
         meta: {
           grow: true,
           truncate: false,
@@ -266,7 +250,7 @@ export function FacturacionZonaTable({
       {
         id: "notificaciones",
         header: "Notificaciones",
-        size: 330,
+        size: 250,
         minSize: 260,
         meta: {
           truncate: false,
@@ -276,7 +260,7 @@ export function FacturacionZonaTable({
       {
         accessorKey: "clientesCount",
         header: "Clientes",
-        size: 90,
+        size: 70,
         minSize: 80,
         maxSize: 110,
         meta: {
@@ -292,7 +276,7 @@ export function FacturacionZonaTable({
       {
         accessorKey: "facturasCount",
         header: "Facturas",
-        size: 90,
+        size: 70,
         minSize: 80,
         maxSize: 110,
         meta: {

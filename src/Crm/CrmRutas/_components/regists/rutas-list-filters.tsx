@@ -2,11 +2,10 @@ import { RotateCcw } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppCard } from "@/components/app/primitives/app-card";
+import { AppField } from "@/components/app/primitives/app-field";
 import { AppGrid } from "@/components/app/primitives/app-grid";
-import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppSearchInput } from "@/components/app/primitives/app-search-input";
 import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
-import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppOption } from "@/Crm/CrmCustomers/customer-table.constants";
 import { ESTADO_RUTA_OPTIONS } from "./rutas_list_consts_";
 
@@ -42,13 +41,13 @@ export function RutasListFilters({
   return (
     <AppCard
       variant="outline"
-      size="sm"
+      size="xs"
       radius="md"
-      className="overflow-visible p-2"
+      className="overflow-visible px-2 py-2"
     >
-      <AppStack gap="sm">
-        <AppInline justify="between" align="center" gap="sm" wrap>
-          <div className="w-full max-w-md">
+      <AppGrid cols={{ base: 1, md: 12 }} gap="xs" className="items-end">
+        <div className="md:col-span-5">
+          <AppField label="Buscar">
             <AppSearchInput
               value={filters.search}
               onValueChange={onSearchChange}
@@ -59,41 +58,66 @@ export function RutasListFilters({
               clearable
               isSearching={isFetching}
             />
-          </div>
+          </AppField>
+        </div>
 
+        <div className="md:col-span-3">
+          <AppField label="Estado">
+            <AppSingleSelect<string>
+              value={filters.estadoRuta ?? "TODOS"}
+              options={ESTADO_RUTA_OPTIONS}
+              onChange={(value) =>
+                onEstadoChange(value === "TODOS" ? null : (value ?? null))
+              }
+              placeholder="Estado ruta"
+              size="xs"
+              menuDensity="compact"
+              fieldWidth="full"
+              isClearable={false}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+
+        <div className="md:col-span-3">
+          <AppField label="Cobrador">
+            <AppSingleSelect<string>
+              value={filters.cobradorId}
+              options={cobradorOptions}
+              onChange={(value) => onCobradorChange(value ?? null)}
+              placeholder="Cobrador"
+              fieldWidth="full"
+              isClearable
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              size="xs"
+              menuDensity="compact"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+
+        <div className="md:col-span-1">
           <AppButton
             type="button"
             variant="ghost"
             size="xs"
-            leftIcon={<RotateCcw size={14} />}
+            width="full"
+            leftIcon={<RotateCcw size={13} />}
             onClick={onClearFilters}
+            disabled={isFetching}
+            className="md:px-2"
           >
-            Limpiar
+            <span className="md:sr-only lg:not-sr-only">Limpiar</span>
           </AppButton>
-        </AppInline>
-
-        <AppGrid cols={{ base: 1, sm: 2, lg: 3 }} gap="xs">
-          <AppSingleSelect<string>
-            value={filters.estadoRuta ?? "TODOS"}
-            options={ESTADO_RUTA_OPTIONS}
-            onChange={(value) => onEstadoChange(value ?? "TODOS")}
-            placeholder="Estado ruta"
-            size="sm"
-            fieldWidth="full"
-            isClearable={false}
-          />
-
-          <AppSingleSelect<string>
-            value={filters.cobradorId}
-            options={cobradorOptions}
-            onChange={(value) => onCobradorChange(value)}
-            placeholder="Cobrador"
-            size="sm"
-            fieldWidth="full"
-            isClearable
-          />
-        </AppGrid>
-      </AppStack>
+        </div>
+      </AppGrid>
     </AppCard>
   );
 }

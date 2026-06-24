@@ -1,29 +1,33 @@
-import { useRef, useState } from "react";
+"use client";
+import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Cloud, ImagePlus, Trash2, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppSeparator } from "@/components/app/primitives/app-separator";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import {
+  useAppDisclosure,
+  useAppStateHandlers,
+} from "@/components/app/handlers";
 import { buildMediaFormData } from "@/Crm/Helpers/media.utils";
 import ImagesCropper from "@/Crm/Helpers/CutterImages/ImageCropper";
+import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
 import {
   MediaUploadItem,
   SubirMediaBatchPayload,
 } from "../../API/payload.interfaces";
 import { useUploadMediaBatch } from "../../API/customer-profile.queries";
-import { Button } from "@/components/ui/button";
-import { Cloud, X } from "lucide-react";
-import { AdvancedDialogCRM } from "@/Crm/_Utils/components/AdvancedDialogCrm/AdvancedDialogCRM";
-
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Label } from "@/components/ui/label";
-import { CustomerImagesGallery } from "../CrmCustomerGalery/CustomerGaleryMain";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
-import { useQueryClient } from "@tanstack/react-query";
-import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
+import { CustomerImagesGallery } from "../CrmCustomerGalery/CustomerGaleryMain";
 
 interface Props {
   clienteId: number;
@@ -31,54 +35,294 @@ interface Props {
   imagenesCliente: CustomerImage[];
 }
 
-function ImagesCustomer({ clienteId, empresaId, imagenesCliente }: Props) {
-  const query = useQueryClient();
-  const [rawFiles, setRawFiles] = useState<File[]>([]);
-  const [items, setItems] = useState<MediaUploadItem[]>([]);
-  const [openCropper, setOpenCropper] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+type ImagesCustomerState = {
+  rawFiles: File[];
+  items: MediaUploadItem[];
+};
+
+function createUploadItems(files: File[]): MediaUploadItem[] {
+  return files.map((file) => ({
+    file,
+    titulo: "",
+    descripcion: "",
+    etiqueta: "",
+    custom_Id: crypto.randomUUID(),
+  }));
+}
+
+function UploadDropzone({
+  disabled,
+  hasItems,
+  inputRef,
+  onFilesSelected,
+  onOpenFilePicker,
+}: {
+  disabled?: boolean;
+  hasItems: boolean;
+  inputRef: React.RefObject<HTMLInputElement>;
+  onFilesSelected: React.ChangeEventHandler<HTMLInputElement>;
+  onOpenFilePicker: () => void;
+}) {
+  return (
+    <AppCard variant="outline" size="xs" radius="md" className="border-dashed">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        aria-label="Seleccionar imágenes del cliente"
+        onChange={onFilesSelected}
+        disabled={disabled}
+      />
+
+      <AppEmptyState
+        preset="empty"
+        variant="plain"
+        size="sm"
+        align="center"
+        icon={<Cloud size={34} strokeWidth={1.5} />}
+        title={hasItems ? "Agregar más imágenes" : "Cargar imágenes"}
+        description="Selecciona imágenes, recórtalas si es necesario y luego sube el lote al perfil del cliente."
+        action={
+          <AppButton
+            type="button"
+            variant="primary"
+            size="xs"
+            width="auto"
+            leftIcon={<ImagePlus size={13} />}
+            onClick={onOpenFilePicker}
+            disabled={disabled}
+          >
+            Seleccionar imágenes
+          </AppButton>
+        }
+      />
+    </AppCard>
+  );
+}
+
+function UploadItemPreview({
+  item,
+  index,
+  disabled,
+  onUpdate,
+  onDelete,
+}: {
+  item: MediaUploadItem;
+  index: number;
+  disabled?: boolean;
+  onUpdate: (index: number, partial: Partial<MediaUploadItem>) => void;
+  onDelete: (item: MediaUploadItem) => void;
+}) {
+  const previewUrl = React.useMemo(
+    () => URL.createObjectURL(item.file),
+    [item.file],
+  );
+
+  React.useEffect(() => {
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  return (
+    <AppCard variant="outline" size="xs" radius="md" className="p-2">
+      <AppGrid cols={{ base: 1, md: 12 }} gap="xs" className="items-center">
+        <div className="md:col-span-2">
+          <div className="h-20 w-full overflow-hidden rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted)))/0.35] md:h-16">
+            <img
+              src={previewUrl}
+              alt={item.titulo || `Imagen seleccionada ${index + 1}`}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div className="md:col-span-3">
+          <AppField label="Título">
+            {(field) => (
+              <AppInput
+                id={field.id}
+                value={item.titulo ?? ""}
+                onChange={(event) =>
+                  onUpdate(index, { titulo: event.target.value })
+                }
+                placeholder="Título"
+                size="xs"
+                fieldWidth="full"
+                disabled={disabled}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+              />
+            )}
+          </AppField>
+        </div>
+
+        <div className="md:col-span-4">
+          <AppField label="Descripción">
+            {(field) => (
+              <AppInput
+                id={field.id}
+                value={item.descripcion ?? ""}
+                onChange={(event) =>
+                  onUpdate(index, { descripcion: event.target.value })
+                }
+                placeholder="Descripción"
+                size="xs"
+                fieldWidth="full"
+                disabled={disabled}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+              />
+            )}
+          </AppField>
+        </div>
+
+        <div className="md:col-span-2">
+          <AppField label="Etiqueta">
+            {(field) => (
+              <AppInput
+                id={field.id}
+                value={item.etiqueta ?? ""}
+                onChange={(event) =>
+                  onUpdate(index, { etiqueta: event.target.value })
+                }
+                placeholder="Etiqueta"
+                size="xs"
+                fieldWidth="full"
+                disabled={disabled}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+              />
+            )}
+          </AppField>
+        </div>
+
+        <div className="md:col-span-1">
+          <AppButton
+            type="button"
+            variant="danger"
+            size="xs"
+            width="full"
+            aria-label={`Quitar imagen ${index + 1}`}
+            onClick={() => onDelete(item)}
+            disabled={disabled}
+            className="md:h-8 md:px-2"
+          >
+            <Trash2 size={13} />
+          </AppButton>
+        </div>
+      </AppGrid>
+    </AppCard>
+  );
+}
+
+function PendingImagesList({
+  items,
+  disabled,
+  onUpdate,
+  onDelete,
+}: {
+  items: MediaUploadItem[];
+  disabled?: boolean;
+  onUpdate: (index: number, partial: Partial<MediaUploadItem>) => void;
+  onDelete: (item: MediaUploadItem) => void;
+}) {
+  if (!items.length) return null;
+
+  return (
+    <AppCard
+      variant="outline"
+      size="xs"
+      radius="md"
+      title="Imágenes preparadas"
+      description="Revisa los metadatos antes de subir el lote."
+      action={
+        <AppBadge tone="info" appearance="soft" size="xs">
+          {items.length} imagen{items.length === 1 ? "" : "es"}
+        </AppBadge>
+      }
+    >
+      <AppStack gap="xs">
+        {items.map((item, index) => (
+          <UploadItemPreview
+            key={item.custom_Id}
+            item={item}
+            index={index}
+            disabled={disabled}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+          />
+        ))}
+      </AppStack>
+    </AppCard>
+  );
+}
+
+export default function ImagesCustomer({
+  clienteId,
+  empresaId,
+  imagenesCliente,
+}: Props) {
+  const queryClient = useQueryClient();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const cropperDialog = useAppDisclosure();
+  const confirmDialog = useAppDisclosure();
+
+  const media = useAppStateHandlers<ImagesCustomerState>({
+    rawFiles: [],
+    items: [],
+  });
 
   const uploadMediaBatch = useUploadMediaBatch(clienteId);
-  const handleDeletFromItems = (item: MediaUploadItem) => {
-    setItems((previa) =>
-      previa.filter((it) => it.custom_Id !== item.custom_Id),
-    );
-  };
-  // cuando el usuario selecciona imágenes desde un input
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const isUploading = uploadMediaBatch.isPending;
+
+  const handleFilesSelected: React.ChangeEventHandler<HTMLInputElement> = (
+    event,
+  ) => {
+    const files = Array.from(event.target.files ?? []);
+
     if (!files.length) return;
 
-    setRawFiles(files);
-    setOpenCropper(true);
-    e.target.value = "";
+    media.patch({
+      rawFiles: files,
+    });
+
+    cropperDialog.open();
+    event.target.value = "";
   };
 
-  // cuando el cropper termina y entrega los archivos finales
   const handleCropDone = (croppedFiles: File[]) => {
-    const newItems: MediaUploadItem[] = croppedFiles.map((file) => ({
-      file,
-      titulo: "",
-      descripcion: "",
-      etiqueta: "",
-      custom_Id: crypto.randomUUID(),
-    }));
-    //combinar arrays
-    setItems((previa) => [...previa, ...newItems]);
-    setRawFiles([]);
-  };
+    const newItems = createUploadItems(croppedFiles);
 
-  const updateItem = (index: number, partial: Partial<MediaUploadItem>) => {
-    setItems((prev) => {
-      const clone = [...prev];
-      clone[index] = { ...clone[index], ...partial };
-      return clone;
+    media.patch({
+      items: [...media.state.items, ...newItems],
+      rawFiles: [],
     });
   };
 
-  const handleUploadMedia = async () => {
-    if (!items.length) {
+  const handleDeleteFromItems = (item: MediaUploadItem) => {
+    media.setField(
+      "items",
+      media.state.items.filter(
+        (current) => current.custom_Id !== item.custom_Id,
+      ),
+    );
+  };
+
+  const updateItem = (index: number, partial: Partial<MediaUploadItem>) => {
+    const nextItems = [...media.state.items];
+
+    nextItems[index] = {
+      ...nextItems[index],
+      ...partial,
+    };
+
+    media.setField("items", nextItems);
+  };
+
+  const handleUploadMedia = async (): Promise<void> => {
+    if (!media.state.items.length) {
       toast.error("No hay imágenes para subir");
       return;
     }
@@ -86,149 +330,128 @@ function ImagesCustomer({ clienteId, empresaId, imagenesCliente }: Props) {
     const payload: SubirMediaBatchPayload = {
       empresaId,
       clienteId,
-      categoria: "CLIENTE_GENERAL", // ajusta al enum que uses
+      categoria: "CLIENTE_GENERAL",
       basePrefix: "crm/clientes/imagenes",
       publico: true,
-      items,
+      items: media.state.items,
     };
 
     const formData = buildMediaFormData(payload);
 
     await toast.promise(uploadMediaBatch.mutateAsync(formData), {
       loading: "Subiendo archivos...",
-      success: "¡Archivos subidos!",
+      success: "Archivos subidos correctamente",
       error: "Error al subir los archivos",
     });
-    query.invalidateQueries({
+
+    await queryClient.invalidateQueries({
       queryKey: customerQkeys.specificCustomer(clienteId),
     });
 
-    setItems([]);
-    setRawFiles([]);
-    setOpenConfirm(false);
+    media.patch({
+      items: [],
+      rawFiles: [],
+    });
+
+    confirmDialog.close();
   };
 
   return (
-    <div className="container mx-auto space-y-4">
-      {/* Input para seleccionar imágenes */}
-      <div>
-        <Empty className="border border-dashed">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <Cloud />
-            </EmptyMedia>
-            <EmptyTitle>Cargar Imágenes</EmptyTitle>
-            <EmptyDescription>
-              Sube tus archivos a tu almacenamiento en la nube para acceder a
-              ellos desde cualquier lugar.{" "}
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Label className="block text-sm font-medium mb-1">
-              Seleccionar imágenes
-            </Label>
-            <Button variant="outline" size="sm">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFilesSelected}
-              />
-            </Button>
-          </EmptyContent>
-        </Empty>
-      </div>
+    <AppStack gap="md" className="w-full">
+      <UploadDropzone
+        inputRef={fileInputRef}
+        disabled={isUploading}
+        hasItems={media.state.items.length > 0}
+        onFilesSelected={handleFilesSelected}
+        onOpenFilePicker={() => fileInputRef.current?.click()}
+      />
 
-      {/* Cropper modal */}
       <ImagesCropper
-        open={openCropper}
-        onOpenChange={setOpenCropper}
-        files={rawFiles}
+        open={cropperDialog.isOpen}
+        onOpenChange={cropperDialog.setOpen}
+        files={media.state.rawFiles}
         onDone={handleCropDone}
       />
 
-      {/* Lista de imágenes con sus metadatos */}
-      {items.length > 0 && (
-        <div className="space-y-3">
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className="flex gap-3 p-3 border rounded-md bg-muted/30"
-            >
-              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                <img
-                  src={URL.createObjectURL(item.file)}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex-1 space-y-1">
-                <input
-                  className="w-full border rounded px-2 py-1 text-sm"
-                  placeholder="Título"
-                  value={item.titulo ?? ""}
-                  onChange={(e) => updateItem(i, { titulo: e.target.value })}
-                />
-                <input
-                  className="w-full border rounded px-2 py-1 text-sm"
-                  placeholder="Descripción"
-                  value={item.descripcion ?? ""}
-                  onChange={(e) =>
-                    updateItem(i, { descripcion: e.target.value })
-                  }
-                />
-                <Button
-                  onClick={() => handleDeletFromItems(item)}
-                  className="w-8 h-8 p-0"
-                  variant="destructive"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <button
-          onClick={() => setOpenConfirm(true)}
-          disabled={!items.length || uploadMediaBatch.isPending}
-          className="px-4 py-2 rounded bg-primary text-white disabled:opacity-50"
-        >
-          {uploadMediaBatch.isPending ? "Subiendo..." : "Subir imágenes"}
-        </button>
-      </div>
-
-      <AdvancedDialogCRM
-        type="info"
-        open={openConfirm}
-        onOpenChange={setOpenConfirm}
-        title="Carga de imágenes"
-        description="¿Está seguro de subir estos datos?"
-        confirmButton={{
-          label: "Cargar",
-          loadingText: "Subiendo imágenes",
-          loading: uploadMediaBatch.isPending,
-          disabled: uploadMediaBatch.isPending,
-          onClick: handleUploadMedia,
-        }}
-        cancelButton={{
-          label: "Cancelar",
-          disabled: uploadMediaBatch.isPending,
-        }}
+      <PendingImagesList
+        items={media.state.items}
+        disabled={isUploading}
+        onUpdate={updateItem}
+        onDelete={handleDeleteFromItems}
       />
 
-      <div className="">
-        <h2 className="font-semibold text-center text-lg">Imágenes en línea</h2>
+      <AppInline align="center" justify="end" gap="xs" wrap>
+        {media.state.items.length > 0 ? (
+          <AppButton
+            type="button"
+            variant="ghost"
+            size="xs"
+            width="auto"
+            leftIcon={<X size={13} />}
+            disabled={isUploading}
+            onClick={() =>
+              media.patch({
+                items: [],
+                rawFiles: [],
+              })
+            }
+          >
+            Limpiar lote
+          </AppButton>
+        ) : null}
+
+        <AppButton
+          type="button"
+          variant="primary"
+          size="xs"
+          width="auto"
+          leftIcon={<UploadCloud size={13} />}
+          loading={isUploading}
+          loadingText="Subiendo..."
+          disabled={!media.state.items.length || isUploading}
+          onClick={confirmDialog.open}
+        >
+          Subir imágenes
+        </AppButton>
+      </AppInline>
+
+      <AppConfirmDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={confirmDialog.setOpen}
+        preset="send"
+        tone="info"
+        size="sm"
+        title="Carga de imágenes"
+        description={`Se subirán ${media.state.items.length} imagen${
+          media.state.items.length === 1 ? "" : "es"
+        } al perfil del cliente.`}
+        confirmText="Subir imágenes"
+        cancelText="Cancelar"
+        loadingText="Subiendo imágenes..."
+        isLoading={isUploading}
+        preventClose={isUploading}
+        closeOnConfirm={false}
+        footerAlign="between"
+        onConfirm={handleUploadMedia}
+      />
+
+      <AppSeparator spacing="xs" />
+
+      <AppCard
+        variant="outline"
+        size="xs"
+        radius="md"
+        title="Imágenes en línea"
+        description={`${imagenesCliente.length} imagen${
+          imagenesCliente.length === 1 ? "" : "es"
+        } registrada${imagenesCliente.length === 1 ? "" : "s"} para este cliente.`}
+      >
         <CustomerImagesGallery
           customerId={clienteId}
-          manageable={true}
+          manageable
           images={imagenesCliente}
         />
-      </div>
-    </div>
+      </AppCard>
+    </AppStack>
   );
 }
-
-export default ImagesCustomer;

@@ -3,15 +3,18 @@ import { cva } from "class-variance-authority";
 export const appDialogOverlayVariants = cva(
   [
     "fixed inset-0 z-[100]",
-    "data-[state=open]:animate-in data-[state=closed]:animate-out",
-    "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+    "bg-[hsl(var(--app-dialog-overlay-bg,var(--app-confirm-overlay-bg)))]",
+    "data-[state=open]:animate-in",
+    "data-[state=closed]:animate-out",
+    "data-[state=open]:fade-in-0",
+    "data-[state=closed]:fade-out-0",
   ],
   {
     variants: {
       tone: {
-        default: "bg-black/55",
-        soft: "bg-black/40",
-        strong: "bg-black/70",
+        default: "",
+        soft: "opacity-80",
+        strong: "opacity-100",
       },
       blur: {
         none: "",
@@ -22,7 +25,7 @@ export const appDialogOverlayVariants = cva(
     },
     defaultVariants: {
       tone: "default",
-      blur: "sm",
+      blur: "none",
     },
   },
 );
@@ -32,16 +35,15 @@ export const appDialogContentVariants = cva(
     "fixed left-1/2 top-1/2 z-[101]",
     "flex w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col",
     "overflow-hidden",
-    "border border-[hsl(var(--app-border,var(--border)))]",
-    "bg-[hsl(var(--app-popover,var(--background)))]",
-    "text-[hsl(var(--app-popover-foreground,var(--foreground)))]",
-    "shadow-xl",
-    "duration-200",
-    "data-[state=open]:animate-in data-[state=closed]:animate-out",
-    "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-    "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-    "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
-    "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+    "border border-[hsl(var(--app-dialog-border,var(--app-border)))]",
+    "bg-[hsl(var(--app-dialog-bg,var(--app-popover,var(--background))))]",
+    "text-[hsl(var(--app-dialog-foreground,var(--app-popover-foreground,var(--foreground))))]",
+    "shadow-[var(--app-dialog-shadow,var(--app-confirm-shadow))]",
+    "outline-none",
+    "data-[state=open]:animate-in",
+    "data-[state=closed]:animate-out",
+    "data-[state=open]:fade-in-0",
+    "data-[state=closed]:fade-out-0",
   ],
   {
     variants: {
@@ -59,10 +61,10 @@ export const appDialogContentVariants = cva(
         full: "max-w-[calc(100vw-2rem)]",
       },
       viewport: {
-        compact: "max-h-[70vh]",
-        default: "max-h-[85vh]",
-        tall: "max-h-[92vh]",
-        screen: "h-[calc(100vh-2rem)] max-h-[calc(100vh-2rem)]",
+        compact: "max-h-[70dvh]",
+        default: "max-h-[85dvh]",
+        tall: "max-h-[92dvh]",
+        screen: "h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)]",
       },
       radius: {
         sm: "rounded-[var(--app-radius-sm)]",
@@ -91,7 +93,7 @@ export const appDialogHeaderVariants = cva(
   {
     variants: {
       divider: {
-        true: "border-b border-[hsl(var(--app-border,var(--border)))] pb-3",
+        true: "border-b border-[hsl(var(--app-dialog-border,var(--app-border)))] pb-3",
         false: "",
       },
     },
@@ -113,7 +115,7 @@ export const appDialogBodyVariants = cva(
         lg: "p-5",
       },
       divider: {
-        true: "border-y border-[hsl(var(--app-border,var(--border)))]",
+        true: "border-y border-[hsl(var(--app-dialog-border,var(--app-border)))]",
         false: "",
       },
     },
@@ -129,7 +131,7 @@ export const appDialogFooterVariants = cva(
   {
     variants: {
       divider: {
-        true: "border-t border-[hsl(var(--app-border,var(--border)))] pt-3",
+        true: "border-t border-[hsl(var(--app-dialog-border,var(--app-border)))] pt-3",
         false: "",
       },
     },
@@ -140,7 +142,7 @@ export const appDialogFooterVariants = cva(
 );
 
 export const appDialogTitleVariants = cva(
-  "text-sm font-semibold leading-none tracking-tight text-[hsl(var(--app-foreground,var(--foreground)))]",
+  "text-sm font-semibold leading-none tracking-tight text-[hsl(var(--app-dialog-foreground,var(--app-foreground,var(--foreground))))]",
 );
 
 export const appDialogDescriptionVariants = cva(

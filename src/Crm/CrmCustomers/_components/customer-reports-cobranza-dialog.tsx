@@ -1,7 +1,13 @@
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, RotateCcw } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
-import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import {
+  AppDialog,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
 import { AppDatePicker } from "@/components/app/primitives/app-date-picker";
 import { AppField } from "@/components/app/primitives/app-field";
 import { AppGrid } from "@/components/app/primitives/app-grid";
@@ -38,6 +44,58 @@ interface Props {
   onGenerate: () => Promise<void> | void;
 }
 
+function ReportRangeFields({
+  title,
+  description,
+  range,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  range: ReportDateRange;
+  onChange: (range: ReportDateRange) => void;
+}) {
+  return (
+    <div className="rounded-[var(--app-radius-lg)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted)))/0.22] p-3">
+      <AppStack gap="sm">
+        <AppField label={title} description={description}>
+          <AppGrid cols={{ base: 1, sm: 2 }} gap="xs">
+            <AppDatePicker
+              mode="single"
+              value={range.start ?? null}
+              onChange={(value) =>
+                onChange({
+                  ...range,
+                  start: value ?? null,
+                })
+              }
+              outputFormat="date"
+              size="xs"
+              fieldWidth="full"
+              placeholder="Desde"
+            />
+
+            <AppDatePicker
+              mode="single"
+              value={range.end ?? null}
+              onChange={(value) =>
+                onChange({
+                  ...range,
+                  end: value ?? null,
+                })
+              }
+              outputFormat="date"
+              size="xs"
+              fieldWidth="full"
+              placeholder="Hasta"
+            />
+          </AppGrid>
+        </AppField>
+      </AppStack>
+    </div>
+  );
+}
+
 export function CustomerReportsCobranzaDialog({
   open,
   filters,
@@ -51,139 +109,136 @@ export function CustomerReportsCobranzaDialog({
   onClear,
   onGenerate,
 }: Props) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isGenerating) return;
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <AppConfirmDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      trigger={
-        <AppButton
-          type="button"
-          variant="secondary"
-          size="xs"
-          leftIcon={<FileSpreadsheet size={14} />}
-        >
-          Reporte
-        </AppButton>
-      }
-      preset="info"
-      tone="info"
-      title="Reporte de cobranzas"
-      description="Filtra fechas, estados y cobrador antes de generar el Excel."
-      confirmText="Generar"
-      cancelText="Cancelar"
-      loadingText="Generando..."
-      isLoading={isGenerating}
-      closeOnConfirm={false}
-      onConfirm={onGenerate}
-      size="lg"
-      footerAlign="between"
-      contentCard={false}
-      preventClose={isGenerating}
-    >
-      <div className="w-full min-w-0 px-1">
-        <AppStack gap="md">
-          <div className="rounded-lg border border-[hsl(var(--app-border))] bg-[hsl(var(--app-muted)/0.25)] p-3">
-            <AppStack gap="md">
-              <AppField
-                label="Rango de fecha pagada"
+    <>
+      <AppButton
+        type="button"
+        variant="secondary"
+        size="xs"
+        width="auto"
+        leftIcon={<FileSpreadsheet size={14} />}
+        onClick={() => onOpenChange(true)}
+      >
+        Reporte
+      </AppButton>
+
+      <AppDialog open={open} onOpenChange={handleOpenChange}>
+        <AppDialogContent className="sm:max-w-[820px]">
+          <AppDialogHeader>
+            <AppDialogTitle>Reporte de cobranzas</AppDialogTitle>
+            <AppDialogDescription>
+              Filtra fechas, estados y cobrador antes de generar el Excel.
+            </AppDialogDescription>
+          </AppDialogHeader>
+
+          <AppStack gap="md">
+            <AppGrid cols={{ base: 1, lg: 2 }} gap="sm">
+              <ReportRangeFields
+                title="Fecha pagada"
                 description="Filtra por la fecha en la que se registró el pago."
-              >
-                <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
-                  <AppDatePicker
-                    mode="single"
-                    value={filters.paidRange.start ?? null}
-                    onChange={(value) =>
-                      onPaidRangeChange({
-                        ...filters.paidRange,
-                        start: value ?? null,
-                      })
-                    }
-                    outputFormat="date"
-                  />
+                range={filters.paidRange}
+                onChange={onPaidRangeChange}
+              />
 
-                  <AppDatePicker
-                    mode="single"
-                    value={filters.paidRange.end ?? null}
-                    onChange={(value) =>
-                      onPaidRangeChange({
-                        ...filters.paidRange,
-                        end: value ?? null,
-                      })
-                    }
-                    outputFormat="date"
-                  />
-                </AppGrid>
-              </AppField>
-
-              <AppField
-                label="Rango de fecha generada"
+              <ReportRangeFields
+                title="Fecha generada"
                 description="Filtra por la fecha de generación de la factura."
+                range={filters.generatedRange}
+                onChange={onGeneratedRangeChange}
+              />
+            </AppGrid>
+
+            <div className="rounded-[var(--app-radius-lg)] border border-[hsl(var(--app-border,var(--border)))] p-3">
+              <AppGrid cols={{ base: 1, md: 2 }} gap="sm">
+                <AppField
+                  label="Estado de factura"
+                  description="Puede seleccionar uno o varios estados."
+                >
+                  <AppMultiSelect<string>
+                    value={filters.estados ?? []}
+                    options={FACTURA_ESTADO_OPTIONS}
+                    onChange={(values) => onEstadosChange(values ?? [])}
+                    placeholder="Seleccionar estados..."
+                    size="xs"
+                    fieldWidth="full"
+                    portalToBody
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    menuShouldScrollIntoView={false}
+                    isDisabled={isGenerating}
+                  />
+                </AppField>
+
+                <AppField
+                  label="Cobrador"
+                  description="Opcional. Filtra por usuario cobrador."
+                >
+                  <AppSingleSelect<string>
+                    value={filters.userId ?? null}
+                    options={userOptions}
+                    onChange={(value) => onUserChange(value ?? null)}
+                    placeholder="Seleccionar cobrador..."
+                    size="xs"
+                    fieldWidth="full"
+                    isClearable
+                    portalToBody
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    menuShouldScrollIntoView={false}
+                    isDisabled={isGenerating}
+                  />
+                </AppField>
+              </AppGrid>
+            </div>
+
+            <AppInline align="center" justify="between" gap="xs" wrap>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="xs"
+                width="auto"
+                leftIcon={<RotateCcw size={13} />}
+                onClick={onClear}
+                disabled={isGenerating}
               >
-                <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
-                  <AppDatePicker
-                    mode="single"
-                    value={filters.generatedRange.start ?? null}
-                    onChange={(value) =>
-                      onGeneratedRangeChange({
-                        ...filters.generatedRange,
-                        start: value ?? null,
-                      })
-                    }
-                    outputFormat="date"
-                  />
+                Limpiar filtros
+              </AppButton>
 
-                  <AppDatePicker
-                    mode="single"
-                    value={filters.generatedRange.end ?? null}
-                    onChange={(value) =>
-                      onGeneratedRangeChange({
-                        ...filters.generatedRange,
-                        end: value ?? null,
-                      })
-                    }
-                    outputFormat="date"
-                  />
-                </AppGrid>
-              </AppField>
-
-              <AppField label="Estado de factura">
-                <AppMultiSelect<string>
-                  value={filters.estados ?? []}
-                  options={FACTURA_ESTADO_OPTIONS}
-                  onChange={(values) => onEstadosChange(values ?? [])}
-                  placeholder="Seleccionar estados..."
-                  size="sm"
-                  fieldWidth="full"
-                />
-              </AppField>
-
-              <AppField label="Cobrador">
-                <AppSingleSelect<string>
-                  value={filters.userId ?? null}
-                  options={userOptions}
-                  onChange={(value) => onUserChange(value ?? null)}
-                  placeholder="Seleccionar cobrador..."
-                  size="sm"
-                  fieldWidth="full"
-                  isClearable
-                />
-              </AppField>
-
-              <AppInline justify="end">
+              <AppInline align="center" justify="end" gap="xs">
                 <AppButton
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="xs"
-                  onClick={onClear}
+                  width="auto"
+                  onClick={() => onOpenChange(false)}
                   disabled={isGenerating}
                 >
-                  Limpiar filtros del reporte
+                  Cancelar
+                </AppButton>
+
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  width="auto"
+                  leftIcon={<FileSpreadsheet size={13} />}
+                  loading={isGenerating}
+                  loadingText="Generando..."
+                  disabled={isGenerating}
+                  onClick={() => void onGenerate()}
+                >
+                  Generar Excel
                 </AppButton>
               </AppInline>
-            </AppStack>
-          </div>
-        </AppStack>
-      </div>
-    </AppConfirmDialog>
+            </AppInline>
+          </AppStack>
+        </AppDialogContent>
+      </AppDialog>
+    </>
   );
 }

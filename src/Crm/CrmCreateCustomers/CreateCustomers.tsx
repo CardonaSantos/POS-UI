@@ -1,34 +1,18 @@
 "use client";
-
 import type React from "react";
 import { useState } from "react";
 import type { MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
-
-import { AlertCircle, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-
 import { CustomerCreateFormCard } from "./customer_create_form_card";
-
 import type {
   FormData,
   OptionSelected,
 } from "../CrmNewCustomerEdition/customer-form-types";
-
 import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
-
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-
 import { useCreateCustomer } from "../CrmHooks/hooks/Client/useGetClient";
 import { useGetDepartamentos } from "../CrmHooks/hooks/Departamentos/useGetDepartamentos";
 import { useGetMikroTiks } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
@@ -37,6 +21,10 @@ import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
 import { useGetServicios } from "../CrmHooks/hooks/Servicios/useGetServicios";
 import { useGetServiciosWifi } from "../CrmHooks/hooks/ServiciosWfi/useGetServiciosWifi";
 import { useGetZonasFacturacion } from "../CrmHooks/hooks/use-zonas-facturacion/use-zonas-facturacion";
+import { useAppDisclosure } from "@/components/app/handlers";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppInline } from "@/components/app/primitives/app-inline";
 
 interface ContratoFormData {
   clienteId: number;
@@ -86,7 +74,8 @@ function CreateCustomers() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const createCustomer = useCreateCustomer();
   const isSubmitting = createCustomer.isPending;
-  const [openConfirm, setOpenConfirm] = useState(false);
+  // const [openConfirm, setOpenConfirm] = useState(false);
+  const confirmCreateDialog = useAppDisclosure();
   const [fechaInstalacion, setFechaInstalacion] = useState<Date | null>(
     new Date(),
   );
@@ -337,7 +326,7 @@ function CreateCustomers() {
         loading: "Registrando usuario...",
         success: () => {
           resetFormData();
-          setOpenConfirm(false);
+          confirmCreateDialog.close();
           return "Cliente creado correctamente";
         },
         error: (error) => getApiErrorMessageAxios(error),
@@ -387,78 +376,45 @@ function CreateCustomers() {
         onSelectZonaFacturacion={handleSelectZonaFacturacion}
         onChangeFechaInstalacion={setFechaInstalacion}
         onSelectEstadoCliente={handleSelectEstadoCliente}
-        onSubmit={() => setOpenConfirm(true)}
+        onSubmit={confirmCreateDialog.open}
         isSubmitting={isSubmitting}
         handleSelectMk={handleSelectMk}
         handleChangeSwitch={handleChangeSwitch}
       />
+      <AppConfirmDialog
+        open={confirmCreateDialog.isOpen}
+        onOpenChange={confirmCreateDialog.setOpen}
+        preset="warning"
+        tone="warning"
+        size="sm"
+        title="Confirmación de cliente"
+        description="Por favor revise los datos antes de continuar."
+        confirmText="Crear cliente"
+        cancelText="Cancelar"
+        loadingText="Procesando..."
+        isLoading={isSubmitting}
+        preventClose={isSubmitting}
+        closeOnConfirm={false}
+        footerAlign="between"
+        onConfirm={handleSubmit}
+      >
+        <AppStack gap="sm">
+          <div className="rounded-[var(--app-radius-lg)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted)))/0.28] p-3">
+            <AppInline align="start" gap="sm">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold leading-4 text-[hsl(var(--app-foreground,var(--foreground)))]">
+                  ¿Estás seguro de que deseas crear este cliente?
+                </p>
 
-      <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-xl border-0 shadow-xl">
-          <div className="flex justify-center mt-6">
-            <div className="rounded-full p-3 shadow-lg border-4 border-white">
-              <div className="bg-amber-100 p-3 rounded-full animate-pulse">
-                <AlertCircle className="h-8 w-8 text-amber-600" />
+                <p className="mt-1 text-[11px] leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                  Revisa cuidadosamente los datos antes de proceder. Esta acción
+                  registrará el cliente con la información proporcionada.
+                </p>
               </div>
-            </div>
+            </AppInline>
           </div>
-
-          <DialogHeader className="pt-8 px-6 pb-2">
-            <DialogTitle className="text-xl font-semibold text-center text-gray-800 dark:text-gray-400">
-              Confirmación de Cliente
-            </DialogTitle>
-
-            <p className="text-center text-gray-600 text-sm mt-1 dark:text-gray-400">
-              Por favor revise los datos antes de continuar
-            </p>
-          </DialogHeader>
-
-          <div className="px-6 py-4">
-            <div className="border border-gray-200 rounded-lg p-5 mb-5 bg-gray-50 shadow-inner dark:bg-stone-950">
-              <h3 className="font-medium mb-2 text-gray-800 text-center dark:text-gray-400">
-                ¿Estás seguro de que deseas crear este cliente con los datos
-                proporcionados?
-              </h3>
-
-              <p className="text-sm text-gray-600 text-center dark:text-gray-400">
-                Por favor, revisa cuidadosamente los datos antes de proceder.
-              </p>
-            </div>
-
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent my-5" />
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 pb-2">
-              <Button
-                variant="outline"
-                onClick={() => setOpenConfirm(false)}
-                className="border border-gray-200 w-full bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 rounded-lg py-2.5 transition-all duration-200"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar
-              </Button>
-
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full bg-zinc-900 text-white hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-gray-800 rounded-lg py-2.5 shadow-sm transition-all duration-200"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Crear Cliente
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </AppStack>
+      </AppConfirmDialog>
     </PageTransitionCrm>
   );
 }

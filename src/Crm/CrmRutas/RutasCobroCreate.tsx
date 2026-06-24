@@ -72,6 +72,26 @@ function toOptionList<T extends { id: number; nombre: string }>(
   });
 }
 
+function toOptionZonasList<T extends { id: number; nombreRuta: string }>(
+  items: T[] | undefined,
+  options?: {
+    withCount?: boolean;
+    getCount?: (item: T) => number | undefined;
+  },
+): AppOption[] {
+  return (items ?? []).map((item) => {
+    const count = options?.getCount?.(item);
+
+    return {
+      value: String(item.id),
+      label:
+        options?.withCount && typeof count === "number"
+          ? `${item.nombreRuta} (${count})`
+          : item.nombreRuta,
+    };
+  });
+}
+
 export function RutasCobroCreate() {
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
   const vm = useRutasCreate(empresaId);
@@ -111,7 +131,7 @@ export function RutasCobroCreate() {
 
   const zonaOptions = React.useMemo<AppOption[]>(
     () =>
-      toOptionList(vm.zonas as any[], {
+      toOptionZonasList(vm.zonas as any[], {
         withCount: true,
         getCount: (zona: any) => zona.clientesCount,
       }),
@@ -330,6 +350,8 @@ export function RutasCobroCreate() {
       toast.error(getApiErrorMessageAxios(error));
     }
   };
+  console.log("opciones de facturacion: ", zonaOptions);
+  console.log("opciones de vm: ", vm.zonas);
 
   return (
     <>

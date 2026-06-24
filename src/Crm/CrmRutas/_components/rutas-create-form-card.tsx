@@ -8,7 +8,6 @@ import { AppGrid } from "@/components/app/primitives/app-grid";
 import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppInput } from "@/components/app/primitives/app-input";
 import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
-import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppTextarea } from "@/components/app/primitives/app-textarea";
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 import { AppOption } from "@/Crm/CrmCustomers/customer-table.constants";
@@ -44,11 +43,13 @@ function RutaMetricBox({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-[hsl(var(--app-border))] bg-[hsl(var(--app-background))] px-3">
-      <AppInline gap="xs" align="center" wrap={false}>
-        <span className="text-[hsl(var(--app-muted-foreground))]">{icon}</span>
+    <div className="flex h-8 w-full items-center justify-between gap-2 rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted)))/0.24] px-2.5">
+      <AppInline gap="xs" align="center" wrap={false} className="min-w-0">
+        <span className="shrink-0 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          {icon}
+        </span>
 
-        <span className="text-xs text-[hsl(var(--app-muted-foreground))]">
+        <span className="truncate text-[11px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
           {label}
         </span>
       </AppInline>
@@ -71,106 +72,120 @@ export function RutasCreateFormCard({
   return (
     <AppCard
       variant="outline"
-      size="sm"
+      size="xs"
       radius="md"
-      className="overflow-visible p-2"
+      className="overflow-visible px-2 py-2"
     >
-      <AppStack gap="sm">
-        <AppInline justify="between" align="center" gap="sm" wrap>
-          <AppInline gap="xs" align="center">
-            <MapPin size={16} />
+      <AppGrid cols={{ base: 1, md: 12 }} gap="xs" className="items-end">
+        <div className="md:col-span-12">
+          <AppInline align="center" gap="xs" className="pb-1">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-md)] bg-[hsl(var(--app-primary)/0.12)] text-[hsl(var(--app-primary))]">
+              <MapPin size={13} />
+            </span>
+
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold leading-none">
+              <h2 className="truncate text-xs font-semibold leading-4 text-[hsl(var(--app-foreground,var(--foreground)))]">
                 Datos de la ruta
               </h2>
-              <p className="mt-1 text-xs text-[hsl(var(--app-muted-foreground))]">
-                Define la ruta, cobrador y clientes a cobrar.
+              <p className="truncate text-[10px] leading-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                Define el nombre, cobrador y resumen de clientes seleccionados.
               </p>
             </div>
           </AppInline>
-        </AppInline>
+        </div>
 
-        <AppGrid cols={{ base: 1, md: 2, xl: 12 }} gap="sm">
-          <AppField
-            label="Nombre de la ruta"
-            required
-            className="xl:col-span-3"
-          >
+        <div className="md:col-span-3">
+          <AppField label="Nombre de la ruta" required>
             <AppInput
               value={form.nombreRuta}
               onChange={(event) =>
                 onFieldChange("nombreRuta", event.target.value)
               }
               placeholder="Nombre de ruta"
-              size="sm"
+              size="xs"
               fieldWidth="full"
               clearable
               onClear={() => onFieldChange("nombreRuta", "")}
+              disabled={isSubmitting}
             />
           </AppField>
+        </div>
 
-          <AppField label="Cobrador asignado" className="xl:col-span-3">
+        <div className="md:col-span-3">
+          <AppField label="Cobrador asignado">
             <AppSingleSelect<string>
               value={form.cobradorId}
               options={cobradorOptions}
-              onChange={(value) => onFieldChange("cobradorId", value)}
+              onChange={(value) => onFieldChange("cobradorId", value ?? null)}
               placeholder="Seleccionar cobrador..."
-              size="sm"
+              size="xs"
+              density="compact"
               fieldWidth="full"
               isClearable
+              isDisabled={isSubmitting}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
             />
           </AppField>
+        </div>
 
-          <AppField label="Clientes" className="xl:col-span-2">
-            <RutaMetricBox icon={<Users size={14} />} label="Seleccionados">
+        <div className="md:col-span-2">
+          <AppField label="Clientes">
+            <RutaMetricBox icon={<Users size={13} />} label="Seleccionados">
               <AppBadge tone="info" appearance="soft" size="xs" radius="full">
                 {selectedCount}
               </AppBadge>
             </RutaMetricBox>
           </AppField>
+        </div>
 
-          <AppField label="Total a cobrar" className="xl:col-span-2">
-            <RutaMetricBox icon={<DollarSign size={14} />} label="Total">
-              <span className="text-xs font-semibold">
+        <div className="md:col-span-2">
+          <AppField label="Total a cobrar">
+            <RutaMetricBox icon={<DollarSign size={13} />} label="Total">
+              <span className="text-[11px] font-semibold tabular-nums text-[hsl(var(--app-foreground,var(--foreground)))]">
                 {formattMonedaGT(totalACobrar)}
               </span>
             </RutaMetricBox>
           </AppField>
+        </div>
 
-          <AppField label="Acción" className="xl:col-span-2">
+        <div className="md:col-span-2">
+          <AppField label="Acción">
             <AppButton
               type="button"
-              size="sm"
+              size="xs"
               variant="primary"
               width="full"
               loading={isSubmitting}
               loadingText="Creando..."
               disabled={!canCreate || isSubmitting}
               onClick={onOpenConfirm}
-              className="h-9"
+              className="h-8"
             >
               Crear ruta
             </AppButton>
           </AppField>
+        </div>
 
-          <AppField
-            label="Observaciones"
-            className="md:col-span-2 xl:col-span-12"
-          >
+        <div className="md:col-span-12">
+          <AppField label="Observaciones">
             <AppTextarea
               value={form.observaciones}
               onChange={(event) =>
                 onFieldChange("observaciones", event.target.value)
               }
-              placeholder="Comentarios..."
+              placeholder="Comentarios u observaciones de la ruta..."
               rows={2}
-              size="sm"
+              size="xs"
               fieldWidth="full"
-              className="min-h-[56px]"
+              disabled={isSubmitting}
+              className="min-h-[52px] resize-y"
             />
           </AppField>
-        </AppGrid>
-      </AppStack>
+        </div>
+      </AppGrid>
     </AppCard>
   );
 }

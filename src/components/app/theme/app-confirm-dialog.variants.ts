@@ -1,28 +1,32 @@
 import { cva } from "class-variance-authority";
 
 export const appConfirmDialogOverlayVariants = cva([
-  "fixed inset-0 z-50",
-  "bg-[hsl(var(--app-confirm-overlay-bg))]",
-  "backdrop-blur-[2px]",
-  "data-[state=open]:animate-[app-fade-in_var(--app-motion-duration-normal)_var(--app-motion-ease-out)]",
-  "data-[state=closed]:animate-[app-fade-out_var(--app-motion-duration-fast)_var(--app-motion-ease-in)]",
+  "fixed inset-0 z-[110]",
+  "bg-[hsl(var(--app-confirm-overlay-bg,var(--app-dialog-overlay-bg)))]",
+  "data-[state=open]:animate-in",
+  "data-[state=closed]:animate-out",
+  "data-[state=open]:fade-in-0",
+  "data-[state=closed]:fade-out-0",
 ]);
 
 export const appConfirmDialogContentVariants = cva(
   [
-    "fixed left-1/2 top-1/2 z-50",
+    "fixed left-1/2 top-1/2 z-[111]",
     "w-[calc(100vw-1rem)]",
     "max-h-[calc(100dvh-1rem)]",
     "-translate-x-1/2 -translate-y-1/2",
     "overflow-hidden",
     "border",
-    "bg-[hsl(var(--app-confirm-bg))]",
-    "text-[hsl(var(--app-confirm-foreground))]",
-    "border-[hsl(var(--app-confirm-border))]",
-    "shadow-[var(--app-confirm-shadow)]",
+    "bg-[hsl(var(--app-confirm-bg,var(--app-popover)))]",
+    "text-[hsl(var(--app-confirm-foreground,var(--app-popover-foreground)))]",
+    "border-[hsl(var(--app-confirm-border,var(--app-border)))]",
+    "shadow-[var(--app-confirm-shadow,var(--app-dialog-shadow))]",
     "[font-family:var(--app-font-sans)]",
-    "focus:outline-none",
-    "data-[state=open]:animate-[app-scale-in_var(--app-motion-duration-normal)_var(--app-motion-ease-out)]",
+    "outline-none",
+    "data-[state=open]:animate-in",
+    "data-[state=closed]:animate-out",
+    "data-[state=open]:fade-in-0",
+    "data-[state=closed]:fade-out-0",
   ],
   {
     variants: {

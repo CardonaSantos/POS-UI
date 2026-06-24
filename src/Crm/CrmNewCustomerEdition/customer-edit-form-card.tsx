@@ -1,16 +1,23 @@
 "use client";
 
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Save, X } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
+import { Save, Trash2, X } from "lucide-react";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppSeparator } from "@/components/app/primitives/app-separator";
+import { AppStack } from "@/components/app/primitives/app-stack";
 
 import { PersonalInfoSection } from "./personal-info-section";
 import { NetworkConfigSection } from "./network-config-section";
 import { ServiceInfoSection } from "./service-info-section";
 import { LocationSection } from "./location-section";
 import { StatusBillingSection } from "./status-billing-section";
-// import { ContractSection } from "./contract-section";
 import { ObservationsSection } from "./observations-section";
+import { MikrotikSection } from "./mikrotik-section";
+
 import type {
   FormData,
   ContratoID,
@@ -21,23 +28,22 @@ import type {
   SelectHandler,
   MultiSelectHandler,
 } from "./customer-form-types";
-import type { Dispatch, SetStateAction } from "react";
+
 import {
   EstadoCliente,
   Sector,
 } from "../features/cliente-interfaces/cliente-types";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
-import { MikrotikSection } from "./mikrotik-section";
 import {
   Departamentos,
   Municipios,
 } from "../features/locations-interfaces/municipios_departamentos.interfaces";
 
-// ========= Props del componente principal =========
 export interface CustomerEditFormCardProps {
   formData: FormData;
   formDataContrato: ContratoID;
   fechaInstalacion: Date | null;
+
   depaSelected: number | null;
   muniSelected: number | null;
   sectorSelected: number | null;
@@ -45,6 +51,7 @@ export interface CustomerEditFormCardProps {
   serviceWifiSelected: number | null;
   zonasFacturacionSelected: number | null;
   mkSelected: number | null;
+
   optionsDepartamentos: OptionSelected[];
   optionsMunis: OptionSelected[];
   optionsServices: OptionSelected[];
@@ -52,12 +59,14 @@ export interface CustomerEditFormCardProps {
   optionsZonasFacturacion: OptionSelected[];
   optionsSectores: OptionSelected[];
   optionsMikrotiks: OptionSelected[];
+
   secureDepartamentos: Departamentos[];
   secureMunicipios: Municipios[];
   secureSectores: Sector[];
   secureServiciosWifi: ServiciosInternet[];
   secureZonasFacturacion: FacturacionZona[];
   mikrotiks: MikrotikRoutersResponse[];
+
   onChangeForm: FormChangeHandler;
   onChangeContrato: FormChangeHandler;
   onSelectDepartamento: SelectHandler<OptionSelected>;
@@ -72,6 +81,7 @@ export interface CustomerEditFormCardProps {
   handleSelectMk: SelectHandler<OptionSelected>;
   handleChangeDataContrato: FormChangeHandler;
   setFormDataContrato: Dispatch<SetStateAction<ContratoID>>;
+
   onClickDelete: () => void;
   onClickOpenConfirm: () => void;
   setOpenUpdNet: () => void;
@@ -81,8 +91,6 @@ export interface CustomerEditFormCardProps {
 
 export function CustomerEditFormCard({
   formData,
-  // formDataContrato,
-
   fechaInstalacion,
   depaSelected,
   muniSelected,
@@ -115,8 +123,6 @@ export function CustomerEditFormCard({
   onSelectEstadoCliente,
   handleEnviarRecordatorioChange,
   handleSelectMk,
-  // handleChangeDataContrato,
-  // setFormDataContrato,
   onClickDelete,
   onClickOpenConfirm,
   setOpenUpdNet,
@@ -124,56 +130,70 @@ export function CustomerEditFormCard({
   isInstalation,
 }: CustomerEditFormCardProps) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-6">
-          {/* SECCIÓN 1: DATOS PRINCIPALES */}
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onClickOpenConfirm();
+      }}
+    >
+      <AppCard
+        variant="outline"
+        size="xs"
+        radius="md"
+        className="overflow-visible p-2"
+      >
+        <AppStack gap="md">
           <section
-            aria-labelledby="section-datos-principales"
-            className="space-y-4"
+            aria-labelledby="customer-edit-main-section"
+            className="min-w-0"
           >
-            <div id="section-datos-principales" className="sr-only">
+            <h2 id="customer-edit-main-section" className="sr-only">
               Datos personales, servicio y ubicación
-            </div>
+            </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <PersonalInfoSection
-                formData={formData}
-                onChangeForm={onChangeForm}
-              />
+            <AppGrid cols={{ base: 1, xl: 12 }} gap="sm">
+              <div className="min-w-0 xl:col-span-4">
+                <PersonalInfoSection
+                  formData={formData}
+                  onChangeForm={onChangeForm}
+                />
+              </div>
 
-              <ServiceInfoSection
-                formData={formData}
-                serviceSelected={serviceSelected}
-                serviceWifiSelected={serviceWifiSelected}
-                optionsServices={optionsServices}
-                optionsServicesWifi={optionsServicesWifi}
-                secureServiciosWifi={secureServiciosWifi}
-                onChangeForm={onChangeForm}
-                onSelectService={onSelectService}
-                onSelectServiceWifi={onSelectServiceWifi}
-              />
+              <div className="min-w-0 xl:col-span-4">
+                <ServiceInfoSection
+                  formData={formData}
+                  serviceSelected={serviceSelected}
+                  serviceWifiSelected={serviceWifiSelected}
+                  optionsServices={optionsServices}
+                  optionsServicesWifi={optionsServicesWifi}
+                  secureServiciosWifi={secureServiciosWifi}
+                  onChangeForm={onChangeForm}
+                  onSelectService={onSelectService}
+                  onSelectServiceWifi={onSelectServiceWifi}
+                />
+              </div>
 
-              <LocationSection
-                formData={formData}
-                depaSelected={depaSelected}
-                muniSelected={muniSelected}
-                sectorSelected={sectorSelected}
-                optionsDepartamentos={optionsDepartamentos}
-                optionsMunis={optionsMunis}
-                optionsSectores={optionsSectores}
-                secureDepartamentos={secureDepartamentos}
-                secureMunicipios={secureMunicipios}
-                secureSectores={secureSectores}
-                onChangeForm={onChangeForm}
-                onSelectDepartamento={onSelectDepartamento}
-                onSelectMunicipio={onSelectMunicipio}
-                onSelectSector={onSelectSector}
-              />
-            </div>
+              <div className="min-w-0 xl:col-span-4">
+                <LocationSection
+                  formData={formData}
+                  depaSelected={depaSelected}
+                  muniSelected={muniSelected}
+                  sectorSelected={sectorSelected}
+                  optionsDepartamentos={optionsDepartamentos}
+                  optionsMunis={optionsMunis}
+                  optionsSectores={optionsSectores}
+                  secureDepartamentos={secureDepartamentos}
+                  secureMunicipios={secureMunicipios}
+                  secureSectores={secureSectores}
+                  onChangeForm={onChangeForm}
+                  onSelectDepartamento={onSelectDepartamento}
+                  onSelectMunicipio={onSelectMunicipio}
+                  onSelectSector={onSelectSector}
+                />
+              </div>
+            </AppGrid>
           </section>
 
-          {/* SECCIÓN 2: ESTADO + WHATSAPP + FACTURACIÓN */}
           <StatusBillingSection
             formData={formData}
             fechaInstalacion={fechaInstalacion}
@@ -186,61 +206,76 @@ export function CustomerEditFormCard({
             onChangeFechaInstalacion={onChangeFechaInstalacion}
           />
 
-          {/* SECCIÓN 3: CONFIGURACIÓN DE RED (IP + MK) - CRÍTICO */}
-          <NetworkConfigSection
-            isInstalation={isInstalation}
-            setOpenAuth={setOpenAuth}
-            setOpenUpdNet={setOpenUpdNet}
-            formData={formData}
-            mkSelected={mkSelected}
-            mikrotiks={mikrotiks}
-            optionsMikrotiks={optionsMikrotiks}
-            onChangeForm={onChangeForm}
-            onSelectMk={handleSelectMk}
-            isCreation={false}
-          />
+          <AppGrid cols={{ base: 1, xl: 12 }} gap="sm">
+            <div className="min-w-0 xl:col-span-7">
+              <NetworkConfigSection
+                isInstalation={isInstalation}
+                setOpenAuth={setOpenAuth}
+                setOpenUpdNet={setOpenUpdNet}
+                formData={formData}
+                mkSelected={mkSelected}
+                mikrotiks={mikrotiks}
+                optionsMikrotiks={optionsMikrotiks}
+                onChangeForm={onChangeForm}
+                onSelectMk={handleSelectMk}
+                isCreation={false}
+              />
+            </div>
 
-          <MikrotikSection
-            // isInstalation={isInstalation}
-            // setOpenAuth={setOpenAuth}
-            // setOpenUpdNet={setOpenUpdNet}
-            // formData={formData}
-            mkSelected={mkSelected}
-            mikrotiks={mikrotiks}
-            optionsMikrotiks={optionsMikrotiks}
-            // onChangeForm={onChangeForm}
-            onSelectMk={handleSelectMk}
-          />
+            <div className="min-w-0 xl:col-span-5">
+              <MikrotikSection
+                mkSelected={mkSelected}
+                mikrotiks={mikrotiks}
+                optionsMikrotiks={optionsMikrotiks}
+                onSelectMk={handleSelectMk}
+              />
+            </div>
+          </AppGrid>
 
-          {/* SECCIÓN 4: CONTRATO */}
-          {/* <ContractSection
-            formDataContrato={formDataContrato}
-            onChangeContrato={handleChangeDataContrato}
-            setFormDataContrato={setFormDataContrato}
-          /> */}
-
-          {/* SECCIÓN 5: OBSERVACIONES */}
           <ObservationsSection
             observaciones={formData.observaciones}
             onChangeForm={onChangeForm}
           />
-        </div>
-      </CardContent>
 
-      <CardFooter className="flex justify-between">
-        <Button type="button" variant="destructive" onClick={onClickDelete}>
-          <X className="mr-2 h-4 w-4" />
-          Eliminar
-        </Button>
-        <Button
-          type="button"
-          onClick={onClickOpenConfirm}
-          className="bg-primary hover:bg-primary/90"
-        >
-          <Save className="mr-2 h-4 w-4" />
-          Guardar Cambios
-        </Button>
-      </CardFooter>
-    </Card>
+          <AppSeparator spacing="xs" />
+
+          <AppInline align="center" justify="between" gap="xs" wrap>
+            <AppButton
+              type="button"
+              variant="danger"
+              size="xs"
+              width="auto"
+              leftIcon={<Trash2 size={13} />}
+              onClick={onClickDelete}
+            >
+              Eliminar
+            </AppButton>
+
+            <AppInline align="center" justify="end" gap="xs" wrap>
+              <AppButton
+                type="button"
+                variant="secondary"
+                size="xs"
+                width="auto"
+                leftIcon={<X size={13} />}
+                onClick={() => window.history.back()}
+              >
+                Cancelar
+              </AppButton>
+
+              <AppButton
+                type="submit"
+                variant="primary"
+                size="xs"
+                width="auto"
+                leftIcon={<Save size={13} />}
+              >
+                Guardar cambios
+              </AppButton>
+            </AppInline>
+          </AppInline>
+        </AppStack>
+      </AppCard>
+    </form>
   );
 }

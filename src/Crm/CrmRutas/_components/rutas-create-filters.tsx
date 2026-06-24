@@ -1,13 +1,12 @@
-import { RotateCcw } from "lucide-react";
+import { RefreshCw, RotateCcw } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppCard } from "@/components/app/primitives/app-card";
+import { AppField } from "@/components/app/primitives/app-field";
 import { AppGrid } from "@/components/app/primitives/app-grid";
-import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppMultiSelect } from "@/components/app/primitives/app-multi-select";
 import { AppSearchInput } from "@/components/app/primitives/app-search-input";
 import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
-import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppOption } from "@/Crm/CrmCustomers/customer-table.constants";
 import {
   ESTADO_CLIENTE_RUTA_OPTIONS,
@@ -62,13 +61,13 @@ export function RutasCreateFilters({
   return (
     <AppCard
       variant="outline"
-      size="sm"
+      size="xs"
       radius="md"
-      className="overflow-visible p-2"
+      className="overflow-visible px-2 py-2"
     >
-      <AppStack gap="sm">
-        <AppInline justify="between" align="center" gap="sm" wrap>
-          <div className="w-full max-w-md">
+      <AppGrid cols={{ base: 1, md: 12 }} gap="xs" className="items-end">
+        <div className="md:col-span-4">
+          <AppField label="Buscar">
             <AppSearchInput
               value={filters.search}
               onValueChange={onSearchChange}
@@ -79,88 +78,141 @@ export function RutasCreateFilters({
               clearable
               isSearching={isFetching}
             />
-          </div>
+          </AppField>
+        </div>
 
-          <AppInline gap="xs" align="center" justify="end" wrap>
+        <div className="md:col-span-2">
+          <AppField label="Estado cliente">
+            <AppSingleSelect<string>
+              value={filters.estado || "TODOS"}
+              options={ESTADO_CLIENTE_RUTA_OPTIONS}
+              onChange={(value) => onEstadoChange(value ?? "TODOS")}
+              placeholder="Estado cliente"
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              isClearable={false}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+
+        <div className="md:col-span-2">
+          <AppField label="Cobranza">
+            <AppSingleSelect<string>
+              value={filters.estadoCobranza || "TODOS"}
+              options={ESTADO_COBRANZA_RUTA_OPTIONS}
+              onChange={(value) => onEstadoCobranzaChange(value ?? "TODOS")}
+              placeholder="Estado cobranza"
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              isClearable={false}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+
+        <div className="md:col-span-2">
+          <AppField label="Ordenar">
+            <AppSingleSelect<string>
+              value={filters.sort || null}
+              options={RUTAS_SORT_OPTIONS}
+              onChange={(value) => onSortChange(value ?? null)}
+              placeholder="Ordenar"
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              isClearable
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-2 gap-1">
             <AppButton
               type="button"
               variant="secondary"
               size="xs"
+              width="full"
+              leftIcon={<RefreshCw size={13} />}
               loading={isFetching}
-              loadingText="Actualizando..."
+              loadingText="..."
               onClick={onRefetch}
+              disabled={isFetching}
+              className="px-2"
             >
-              Refrescar
+              <span className="hidden lg:inline">Refrescar</span>
+              <span className="lg:hidden">Ref.</span>
             </AppButton>
 
             <AppButton
               type="button"
               variant="ghost"
               size="xs"
-              leftIcon={<RotateCcw size={14} />}
+              width="full"
+              leftIcon={<RotateCcw size={13} />}
               onClick={onClearFilters}
+              disabled={isFetching}
+              className="px-2"
             >
-              Limpiar
+              <span className="hidden lg:inline">Limpiar</span>
+              <span className="lg:hidden">Limp.</span>
             </AppButton>
-          </AppInline>
-        </AppInline>
+          </div>
+        </div>
 
-        <AppGrid
-          cols={{ base: 1, sm: 2, lg: 5 }}
-          gap="xs"
-          className="overflow-visible"
-        >
-          <AppSingleSelect<string>
-            value={filters.estado}
-            options={ESTADO_CLIENTE_RUTA_OPTIONS}
-            onChange={(value) => onEstadoChange(value ?? "TODOS")}
-            placeholder="Estado cliente"
-            size="sm"
-            fieldWidth="full"
-            isClearable={false}
-          />
+        <div className="md:col-span-6">
+          <AppField label="Zonas de facturación">
+            <AppMultiSelect<string>
+              value={filters.zonasFacturacionIDs}
+              options={options.zonas}
+              onChange={(values) => onZonasChange(values ?? [])}
+              placeholder="Seleccionar zonas..."
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
 
-          <AppSingleSelect<string>
-            value={filters.estadoCobranza}
-            options={ESTADO_COBRANZA_RUTA_OPTIONS}
-            onChange={(value) => onEstadoCobranzaChange(value ?? null)}
-            placeholder="Estado cobranza"
-            size="sm"
-            fieldWidth="full"
-            isClearable={false}
-          />
-
-          <AppMultiSelect<string>
-            value={filters.zonasFacturacionIDs}
-            options={options.zonas}
-            onChange={(values) => onZonasChange(values)}
-            placeholder="Zonas fact."
-            size="sm"
-            fieldWidth="full"
-            portalToBody={true}
-          />
-
-          <AppMultiSelect<string>
-            value={filters.sectorIDs}
-            options={options.sectores}
-            onChange={(values) => onSectoresChange(values)}
-            placeholder="Sectores"
-            size="sm"
-            fieldWidth="full"
-            portalToBody={true}
-          />
-
-          <AppSingleSelect<string>
-            value={filters.sort}
-            options={RUTAS_SORT_OPTIONS}
-            onChange={(value) => onSortChange(value)}
-            placeholder="Ordenar"
-            size="sm"
-            fieldWidth="full"
-            isClearable
-          />
-        </AppGrid>
-      </AppStack>
+        <div className="md:col-span-6">
+          <AppField label="Sectores">
+            <AppMultiSelect<string>
+              value={filters.sectorIDs}
+              options={options.sectores}
+              onChange={(values) => onSectoresChange(values ?? [])}
+              placeholder="Seleccionar sectores..."
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+              isDisabled={isFetching}
+            />
+          </AppField>
+        </div>
+      </AppGrid>
     </AppCard>
   );
 }
