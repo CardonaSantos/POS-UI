@@ -1,8 +1,14 @@
 import { SetURLSearchParams } from "react-router-dom";
 
+// interface UseTabChangeWithUrlProps {
+//   activeTab: string;
+//   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+//   searchParams: URLSearchParams;
+//   setSearchParams: SetURLSearchParams;
+// }
 interface UseTabChangeWithUrlProps {
   activeTab: string;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  setActiveTab: (value: string) => void;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
 }

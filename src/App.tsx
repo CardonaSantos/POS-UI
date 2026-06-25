@@ -7,7 +7,7 @@ import {
 import { Toaster } from "sonner";
 import RegisterView from "./Pages/Auth/Register";
 import NotFoundPage from "./Pages/NotFount/NotFoundPage";
-import Layout2 from "./components/Layout/Layout";
+import Layout2 from "./components/Layout/layout-crm";
 import { ProtectRouteAdmin } from "./components/Auth/ProtectRouteAdmin";
 import { useAuthStore } from "./components/Auth/AuthState";
 import { useEffect } from "react";
@@ -59,7 +59,9 @@ import ComprobantesMediaPage from "./Crm/CrmWhatsapp/galery-whatsapp/page";
 import WhatsappTemplatesPage from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/page";
 import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/create-templates/create-templates";
 import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
-import Testeos from "./components/testeos";
+import AppShowcasePage from "./components/testeos";
+
+// COMENTARIO DE ULTIMO COMMIT
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -173,7 +175,7 @@ function App() {
 
           <Route path="/crm/tickets" element={crmRoute(<TicketDashboard />)} />
 
-          <Route path="/crm/testeos" element={crmRoute(<Testeos />)} />
+          <Route path="/crm/testeos" element={crmRoute(<AppShowcasePage />)} />
 
           <Route
             path="/crm/tags"

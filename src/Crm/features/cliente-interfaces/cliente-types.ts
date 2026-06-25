@@ -1,42 +1,94 @@
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
-import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
+// import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
 import { MikrotikRoutersResponse } from "../mikro-tiks/mikrotiks.interfaces";
-import { NuevaFacturacionZona } from "../zonas-facturacion/FacturacionZonaTypes";
+import { RolUsuario } from "../users/users-rol";
+// import { NuevaFacturacionZona } from "../zonas-facturacion/FacturacionZonaTypes";
+
 export interface ClienteDetailsDto {
   id: number;
   nombre: string;
   apellidos: string;
-  telefono: string;
-  direccion: string;
-  dpi: string;
-  observaciones: string;
-  contactoReferenciaNombre: string;
-  contactoReferenciaTelefono: string;
-  estadoCliente: string;
-  contrasenaWifi: string;
-  ssidRouter: string;
-  fechaInstalacion: string; // ISO string
-  asesor: Asesor | null;
-  servicio: Servicio | null; // Relación 1:1
-  municipio: Municipio;
-  sector: Sector;
-  departamento: Departamentos;
-  empresa: Empresa;
-  IP: IP;
-  mikrotik: MikrotikRoutersResponse;
-  ubicacion: Ubicacion;
-  saldoCliente: SaldoCliente | null;
-  creadoEn: string;
-  actualizadoEn: string;
-  ticketSoporte: TicketSoporte[];
-  facturaInternet: FacturaInternet[];
-  facturacionZona: NuevaFacturacionZona;
-  clienteServicio: ClienteServicio[];
-  contratoServicioInternet: ContratoServicioInternet | null;
-  imagenes: CustomerImage[];
+  telefono: string | null;
+  direccion: string | null;
+  dpi: string | null;
+  observaciones: string | null;
+  contactoReferenciaNombre: string | null;
+  contactoReferenciaTelefono: string | null;
+
+  estadoCliente: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
+
   estadoServicioMikrotik: EstadoServicioMikrotik;
   servicioEstado: boolean;
+
+  contrasenaWifi: string | null;
+  ssidRouter: string | null;
+  fechaInstalacion: string | null;
+
+  imagenes: CustomerImage[];
+
+  asesor: Asesor | null;
+  servicio: ServicioInternetResumen | null;
+  municipio: MunicipioResumen | null;
+  departamento: DepartamentoResumen | null;
+  sector: SectorResumen | null;
+  empresa: EmpresaResumen | null;
+
+  IP: IP | null;
+  ubicacion: Ubicacion | null;
+  mikrotik: MikrotikRoutersResponse | null;
+
+  facturacionZona: FacturacionZonaResumen | null;
+  contratoServicioInternet: ContratoServicioInternet | null;
+  saldoCliente: SaldoCliente | null;
+
+  creadoEn: string;
+  actualizadoEn: string;
+
+  ticketSoporte: TicketSoporte[];
+  facturaInternet: FacturaInternet[];
+  clienteServicio: ClienteServicio[];
 }
+
+// PARTES DE CLIENTE DETAILS
+interface FacturacionZonaResumen {
+  id: number;
+  nombre: string;
+  creadoEn: string;
+  actualizadoEn: string;
+  enviarRecordatorio: boolean;
+  diaPago: number | null;
+  diaGeneracionFactura: number | null;
+  diaCorte: number | null;
+}
+
+interface MunicipioResumen {
+  id: number;
+  nombre: string;
+}
+
+interface DepartamentoResumen {
+  id: number;
+  nombre: string;
+}
+
+interface SectorResumen {
+  id: number;
+  nombre: string;
+}
+
+interface EmpresaResumen {
+  id: number;
+  nombre: string;
+}
+
+interface ServicioInternetResumen {
+  id: number;
+  nombre: string;
+  precio: number;
+  velocidad: string;
+}
+// PARTES DE CLIENTE DETAILS
 
 export enum EstadoServicioMikrotik {
   SIN_MIKROTIK = "SIN_MIKROTIK",
@@ -97,6 +149,7 @@ export interface Sector {
   clientes?: ClienteDetailsDto[];
   creadoEn: string | Date;
   actualizadoEn: string | Date;
+  clientesCount?: number;
 }
 
 export interface Asesor {
@@ -158,23 +211,57 @@ export interface SaldoCliente {
 export interface TicketSoporte {
   id: number;
   titulo: string;
-  descripcion: string;
+  descripcion: string | null;
   estado: string;
   prioridad: string;
   fechaCreacion: string;
+  fechaApertura: string;
   fechaCierre: string | null;
-  creadoPor: {
-    id: number;
-    nombre: string;
-  };
-  tecnico: {
-    id: number;
-    nombre: string;
-  };
-  acompanantes: acompanantes[];
+  fechaInicioAtencion: string | null;
+  fechaResolucionTecnico: string | null;
+
+  resumen: TicketResumen | null;
+  etiquetas: TicketEtiqueta[];
+
+  /**
+   * El backend actual retorna "creadoPro", no "creadoPor".
+   */
+  creadoPro: UsuarioResumen | null;
+
+  tecnico: UsuarioResumen | null;
+  acompanantes: UsuarioResumen[];
+  seguimientos: TicketSeguimiento[];
 }
 
-interface acompanantes {
+export interface TicketSeguimiento {
+  id: number;
+  descripcion: string;
+  creadoEn: string;
+
+  usuario: {
+    id: number;
+    nombre: string;
+    rol: RolUsuario;
+  };
+}
+
+interface TicketResumen {
+  id: number;
+  tiempoTecnicoMinutos: number | null;
+  tiempoTotalMinutos: number | null;
+  resueltoComo: string | null;
+  reabierto: boolean;
+  numeroReaperturas: number;
+  notasInternas: string | null;
+  creadoEn: string;
+}
+
+interface TicketEtiqueta {
+  id: number;
+  nombre: string;
+}
+
+interface UsuarioResumen {
   id: number;
   nombre: string;
 }

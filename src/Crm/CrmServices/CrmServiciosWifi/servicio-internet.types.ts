@@ -38,11 +38,14 @@ export interface NuevoServicioInternet {
 
 // Interfaz para las props del formulario de servicio
 export interface ServicioFormProps {
-  initialData: ServicioInternet | NuevoServicioInternet;
-  onSubmit: (data: ServicioInternet | NuevoServicioInternet) => Promise<void>;
-  isLoading: boolean;
-  isEditing: boolean;
+  initialData: NuevoServicioInternet | ServicioInternet;
+  onSubmit: (
+    data: NuevoServicioInternet | ServicioInternet,
+  ) => void | Promise<void>;
+  isLoading?: boolean;
+  isEditing?: boolean;
   empresaId: number;
+  onCancel?: () => void;
 }
 
 // Interfaz para las props del diálogo de creación

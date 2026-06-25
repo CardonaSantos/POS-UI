@@ -1,56 +1,83 @@
-import React, { useState } from "react";
+"use client";
+
+import * as React from "react";
 import { Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { useAppStateHandlers } from "@/components/app/handlers";
 
 interface TicketCommentInputProps {
   isPending?: boolean;
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | Promise<void>;
 }
 
 export function TicketCommentInput({
   isPending,
   onSubmit,
 }: TicketCommentInputProps) {
-  const [value, setValue] = useState("");
+  const form = useAppStateHandlers({
+    text: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
-    setValue("");
-  };
+  const canSubmit = Boolean(form.state.text.trim()) && !isPending;
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent);
-    }
-  };
+  const handleSubmit = React.useCallback(
+    async (event?: React.FormEvent) => {
+      event?.preventDefault();
+
+      const trimmed = form.state.text.trim();
+
+      if (!trimmed || isPending) return;
+
+      await onSubmit(trimmed);
+      form.setField("text", "");
+    },
+    [form, isPending, onSubmit],
+  );
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key !== "Enter" || event.shiftKey) return;
+
+      event.preventDefault();
+      void handleSubmit();
+    },
+    [handleSubmit],
+  );
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="flex items-end gap-1.5 px-3 py-2 border-t "
+      onSubmit={(event) => void handleSubmit(event)}
+      className="shrink-0 border-t border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-background,var(--background)))] px-3 py-2"
     >
-      <textarea
-        rows={2}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Escribe un seguimiento… (Enter para enviar)"
-        disabled={isPending}
-        className="flex-1 resize-none text-xs border bg-transparent border-gray-200 rounded px-2 py-1.5 leading-snug focus:outline-none focus:border-gray-400 placeholder:text-gray-300 disabled:opacity-50 "
-      />
-      <Button
-        type="submit"
-        disabled={isPending || !value.trim()}
-        size="icon"
-        className="h-8 w-8 bg-emerald-600 hover:bg-emerald-700 shrink-0 rounded"
-        aria-label="Enviar comentario"
-      >
-        <Send className="w-3.5 h-3.5 text-white" />
-      </Button>
+      <AppInline align="end" gap="xs" className="w-full">
+        <AppTextarea
+          value={form.state.text}
+          onChange={(event) => form.setField("text", event.target.value)}
+          onKeyDown={handleKeyDown}
+          rows={2}
+          placeholder="Escribe un seguimiento… Enter para enviar"
+          disabled={isPending}
+          size="xs"
+          fieldWidth="full"
+          className="min-h-[42px] resize-none text-xs leading-snug"
+        />
+
+        <AppButton
+          type="submit"
+          variant="primary"
+          size="xs"
+          width="auto"
+          disabled={!canSubmit}
+          loading={isPending}
+          aria-label="Enviar comentario"
+          className="h-8 w-8 shrink-0 p-0"
+        >
+          <Send size={14} />
+        </AppButton>
+      </AppInline>
     </form>
   );
 }

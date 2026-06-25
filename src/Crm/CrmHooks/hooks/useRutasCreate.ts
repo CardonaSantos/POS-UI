@@ -8,7 +8,10 @@ import {
   useZonasFacturacion,
 } from "../../CrmRutas/API/rutas-cobro.api";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { EstadoCliente } from "@/Crm/features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 import { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
 type ClientesPaged = Paged<ClienteInternetFromCreateRuta>;
 
@@ -17,6 +20,11 @@ export function useRutasCreate(empresaId: number) {
   // ---- UI state (server-side) ----
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<EstadoCliente | "TODOS">("TODOS");
+
+  const [estadoCobranza, setEstadoCobranza] = useState<
+    EstadoCobranzaCliente | "TODOS"
+  >("TODOS");
+
   const [zonasFacturacionIDs, setZonasFacturacionIDs] = useState<string[]>([]);
 
   const [sectorIDs, setSectorIDs] = useState<string[]>([]);
@@ -29,12 +37,13 @@ export function useRutasCreate(empresaId: number) {
   const [perPage, setPerPage] = useState(ITEMS_PER_PAGE);
   const toNumArray = (arr: string[]) =>
     arr.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0); // evita 0/NaN (ajusta si 0 fuese válido)
-  // ---- Params para el server ----
   const params = useMemo(
     () => ({
       empresaId, // si el backend lo necesita
       search: search || undefined,
       estado: estado === "TODOS" ? undefined : estado,
+      estadoCobranza: estadoCobranza === "TODOS" ? undefined : estadoCobranza,
+
       zonaIds: toNumArray(zonasFacturacionIDs), // ← OK
       sectorIds: toNumArray(sectorIDs), // ← OK
       sortBy,
@@ -46,6 +55,7 @@ export function useRutasCreate(empresaId: number) {
       empresaId,
       search,
       estado,
+      estadoCobranza,
       zonasFacturacionIDs,
       sectorIDs,
       sortBy,
@@ -157,6 +167,8 @@ export function useRutasCreate(empresaId: number) {
     setSearch,
     estado,
     setEstado,
+    estadoCobranza,
+    setEstadoCobranza,
     zonasFacturacionIDs,
     setZonasFacturacionIDs,
     sectorIDs,

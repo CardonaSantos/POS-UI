@@ -1,25 +1,31 @@
-import React from "react";
-import SelectComponent, { MultiValue, SingleValue } from "react-select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+"use client";
+
+import * as React from "react";
+import type { MultiValue, SingleValue } from "react-select";
+import { Pen, Pin, Save, X } from "lucide-react";
+
+import { AppButton } from "@/components/app/primitives/app-button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AppDialog,
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogFooter,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppMultiSelect } from "@/components/app/primitives/app-multi-select";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppSwitch } from "@/components/app/primitives/app-switch";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+
 import type { SelectOption } from "../ticket-detail.types";
-import { Ticket } from "../../ticketTypes";
+import type { Ticket } from "../../ticketTypes";
 
 interface DialogEditTicketProps {
   open: boolean;
@@ -28,35 +34,52 @@ interface DialogEditTicketProps {
   optionsLabels: SelectOption[];
   optionsTecs: SelectOption[];
   optionsCustomers: SelectOption[];
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (event: React.FormEvent) => void;
   onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   onSelectChange: (name: string, value: string) => void;
-  onChangeCustomer: (opt: SingleValue<SelectOption>) => void;
-  onChangeTec: (opt: SingleValue<SelectOption>) => void;
-  onChangeCompanions: (opts: MultiValue<SelectOption>) => void;
-  onChangeLabels: (opts: MultiValue<SelectOption>) => void;
+  onChangeCustomer: (option: SingleValue<SelectOption>) => void;
+  onChangeTec: (option: SingleValue<SelectOption>) => void;
+  onChangeCompanions: (options: MultiValue<SelectOption>) => void;
+  onChangeLabels: (options: MultiValue<SelectOption>) => void;
   isPending?: boolean;
 }
 
-const compactSelectStyles = {
-  control: (base: object) => ({
-    ...base,
-    minHeight: "30px",
-    fontSize: "12px",
-    borderRadius: "6px",
-  }),
-  dropdownIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
-  clearIndicator: (base: object) => ({ ...base, padding: "2px 4px" }),
-  valueContainer: (base: object) => ({ ...base, padding: "0 6px" }),
-  option: (base: object) => ({
-    ...base,
-    fontSize: "12px",
-    padding: "5px 10px",
-  }),
-  menuPortal: (base: object) => ({ ...base, zIndex: 9999 }),
-};
+const PRIORITY_OPTIONS: SelectOption[] = [
+  { value: "BAJA", label: "Baja" },
+  { value: "MEDIA", label: "Media" },
+  { value: "ALTA", label: "Alta" },
+  { value: "URGENTE", label: "Urgente" },
+];
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "NUEVO", label: "Nuevo" },
+  { value: "ABIERTA", label: "Abierta" },
+  { value: "EN_PROCESO", label: "En proceso" },
+  { value: "PENDIENTE", label: "Pendiente" },
+  { value: "PENDIENTE_CLIENTE", label: "Pendiente cliente" },
+  { value: "PENDIENTE_TECNICO", label: "Pendiente técnico" },
+  { value: "PENDIENTE_REVISION", label: "Pendiente revisión" },
+  { value: "RESUELTA", label: "Resuelta" },
+  { value: "CERRADO", label: "Cerrado" },
+  { value: "CANCELADA", label: "Cancelada" },
+  { value: "ARCHIVADA", label: "Archivada" },
+];
+
+function findOption(options: SelectOption[], value?: string | number | null) {
+  if (value === null || value === undefined) return null;
+
+  return options.find((option) => option.value === String(value)) ?? null;
+}
+
+function getCompanionValues(ticket: Ticket) {
+  return ticket.companios?.map((companion) => String(companion.id)) ?? [];
+}
+
+function getTagValues(ticket: Ticket) {
+  return ticket.tags?.map((tag) => String(tag.value)) ?? [];
+}
 
 export function DialogEditTicket({
   open,
@@ -74,235 +97,311 @@ export function DialogEditTicket({
   onChangeLabels,
   isPending,
 }: DialogEditTicketProps) {
-  const companionOptions =
-    ticket.companios?.map((c) => ({
-      value: c.id.toString(),
-      label: c.name,
-    })) ?? [];
+  const customerValue = ticket.customer?.id ? String(ticket.customer.id) : null;
+  const assigneeValue = ticket.assignee?.id ? String(ticket.assignee.id) : null;
+
+  const companionValues = React.useMemo(
+    () => getCompanionValues(ticket),
+    [ticket],
+  );
+
+  const tagValues = React.useMemo(() => getTagValues(ticket), [ticket]);
+
+  const technicianOptions = React.useMemo(
+    () =>
+      optionsTecs.filter(
+        (option) => option.value !== ticket.assignee?.id?.toString(),
+      ),
+    [optionsTecs, ticket.assignee?.id],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[680px] p-0 overflow-y-auto max-h-[90vh] flex flex-col">
-        <form onSubmit={onSubmit} className="flex flex-col h-full">
-          <DialogHeader className="px-4 py-3 border-b">
-            <DialogTitle className="text-sm">
-              Editar Ticket #{ticket.id}
-            </DialogTitle>
-          </DialogHeader>
+    <AppDialog open={open} onOpenChange={onOpenChange}>
+      <AppDialogContent size="2xl" viewport="tall" padding="none">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <AppDialogHeader divider className="px-4 py-3">
+            <AppDialogTitle className="flex items-center gap-2 text-sm">
+              <Pen size={16} />
+              Editar ticket #{ticket.id}
+            </AppDialogTitle>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            {/* Title + fixed */}
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Título
-                </Label>
-                <Input
-                  name="title"
-                  value={ticket.title ?? ""}
-                  onChange={onChange}
-                  className="h-7 text-xs"
-                  placeholder="Resumen del problema"
-                />
-              </div>
-              <div className="space-y-1 shrink-0">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Fijar
-                </Label>
-                <div className="flex items-center gap-1.5 border rounded px-2 h-7 bg-gray-50 text-xs">
-                  <Switch
-                    checked={ticket.fixed}
-                    onCheckedChange={(v) => onSelectChange("fixed", String(v))}
-                    className="scale-75 origin-left"
-                  />
-                  <span className="text-[10px] text-gray-500">
-                    {ticket.fixed ? "Fijado" : "Normal"}
-                  </span>
+            <AppDialogDescription>
+              Actualice la información principal, asignación, prioridad, estado
+              y etiquetas del ticket.
+            </AppDialogDescription>
+          </AppDialogHeader>
+
+          <AppDialogBody
+            padding="none"
+            className="min-h-0 flex-1 overflow-y-auto"
+          >
+            <AppStack gap="sm" className="px-4 py-3">
+              <AppGrid cols={{ base: 1, sm: 12 }} gap="sm">
+                <div className="sm:col-span-9">
+                  <AppField label="Título" required>
+                    {(field) => (
+                      <AppInput
+                        id={field.id}
+                        name="title"
+                        value={ticket.title ?? ""}
+                        onChange={onChange}
+                        placeholder="Resumen del problema"
+                        size="xs"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        aria-invalid={field.invalid}
+                        aria-describedby={field.describedBy}
+                        disabled={isPending}
+                      />
+                    )}
+                  </AppField>
                 </div>
-              </div>
-            </div>
 
-            {/* Description */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                Descripción
-              </Label>
-              <textarea
-                name="description"
-                value={ticket.description ?? ""}
-                onChange={onChange}
-                rows={3}
-                className="w-full resize-y text-xs border bg-transparent border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-gray-400 placeholder:text-gray-300"
-                placeholder="Detalles del requerimiento…"
-              />
-            </div>
+                <div className="sm:col-span-3">
+                  <AppField label="Fijar">
+                    {(field) => (
+                      <div
+                        id={field.id}
+                        className="flex h-8 items-center justify-between gap-2 rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.18)] px-2"
+                      >
+                        <AppInline align="center" gap="xs">
+                          <Pin
+                            size={13}
+                            className={
+                              ticket.fixed
+                                ? "text-[hsl(var(--app-warning))]"
+                                : "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+                            }
+                          />
+                          <span className="text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                            {ticket.fixed ? "Fijado" : "Normal"}
+                          </span>
+                        </AppInline>
 
-            {/* Customer + Priority + Status */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-semibold uppercase">
-                  Cliente
-                </Label>
-                <SelectComponent
-                  placeholder="Buscar cliente…"
-                  isClearable
-                  options={optionsCustomers}
-                  value={
-                    ticket.customer
-                      ? (optionsCustomers.find(
-                          (c) => c.value === ticket.customer!.id.toString(),
-                        ) ?? null)
-                      : null
-                  }
-                  onChange={onChangeCustomer}
-                  styles={compactSelectStyles}
-                  className="text-black"
-                />
-              </div>
+                        <AppSwitch
+                          checked={Boolean(ticket.fixed)}
+                          onCheckedChange={(checked) =>
+                            onSelectChange("fixed", String(checked))
+                          }
+                          disabled={isPending}
+                        />
+                      </div>
+                    )}
+                  </AppField>
+                </div>
+              </AppGrid>
 
-              <div className="space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Prioridad
-                </Label>
-                <Select
-                  value={ticket.priority}
-                  onValueChange={(v) => onSelectChange("priority", v)}
-                >
-                  <SelectTrigger className="h-7 text-xs">
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BAJA" className="text-xs">
-                      Baja
-                    </SelectItem>
-                    <SelectItem value="MEDIA" className="text-xs">
-                      Media
-                    </SelectItem>
-                    <SelectItem value="ALTA" className="text-xs">
-                      Alta
-                    </SelectItem>
-                    <SelectItem value="URGENTE" className="text-xs">
-                      Urgente
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <AppField label="Descripción">
+                {(field) => (
+                  <AppTextarea
+                    id={field.id}
+                    name="description"
+                    value={ticket.description ?? ""}
+                    onChange={onChange}
+                    rows={3}
+                    placeholder="Detalles del requerimiento…"
+                    size="xs"
+                    fieldWidth="full"
+                    invalid={field.invalid}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
+                    disabled={isPending}
+                    className="resize-y"
+                  />
+                )}
+              </AppField>
 
-              <div className="space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Estado
-                </Label>
-                <Select
-                  value={ticket.status}
-                  onValueChange={(v) => onSelectChange("status", v)}
-                >
-                  <SelectTrigger className="h-7 text-xs">
-                    <SelectValue placeholder="Seleccionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NUEVO" className="text-xs">
-                      Nuevo
-                    </SelectItem>
-                    <SelectItem value="ABIERTA" className="text-xs">
-                      Abierta
-                    </SelectItem>
-                    <SelectItem value="EN_PROCESO" className="text-xs">
-                      En Proceso
-                    </SelectItem>
-                    <SelectItem value="PENDIENTE" className="text-xs">
-                      Pendiente
-                    </SelectItem>
-                    <SelectItem value="RESUELTA" className="text-xs">
-                      Resuelta
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="h-px bg-gray-100" />
-
-            {/* Tecnico + Acompañantes */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Técnico
-                </Label>
-                <SelectComponent
-                  placeholder="Asignar técnico…"
-                  isClearable
-                  options={optionsTecs}
-                  value={
-                    ticket.assignee
-                      ? (optionsTecs.find(
-                          (t) => t.value === ticket.assignee!.id.toString(),
-                        ) ?? null)
-                      : null
-                  }
-                  onChange={onChangeTec}
-                  styles={compactSelectStyles}
-                  menuPlacement="top"
-                  className="text-black"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                  Acompañantes
-                </Label>
-                <SelectComponent
-                  placeholder="Agregar…"
-                  isClearable
-                  isMulti
-                  options={optionsTecs.filter(
-                    (t) => t.value !== ticket.assignee?.id.toString(),
+              <AppGrid cols={{ base: 1, sm: 3 }} gap="sm">
+                <AppField label="Cliente">
+                  {(field) => (
+                    <AppSingleSelect<string>
+                      inputId={field.id}
+                      value={customerValue}
+                      selectedOption={findOption(
+                        optionsCustomers,
+                        customerValue,
+                      )}
+                      options={optionsCustomers}
+                      onChange={(_, option) => onChangeCustomer(option)}
+                      placeholder="Buscar cliente…"
+                      isClearable
+                      isSearchable
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isPending}
+                      portalToBody
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuShouldScrollIntoView={false}
+                    />
                   )}
-                  value={companionOptions}
-                  onChange={onChangeCompanions}
-                  styles={compactSelectStyles}
-                  menuPlacement="top"
-                  className="text-black"
-                />
-              </div>
-            </div>
+                </AppField>
 
-            {/* Tags */}
-            <div className="space-y-1">
-              <Label className="text-[10px] font-semibold text-gray-400 uppercase">
-                Etiquetas
-              </Label>
-              <SelectComponent
-                placeholder="Etiquetar ticket…"
-                options={optionsLabels}
-                isMulti
-                value={ticket.tags ?? []}
-                onChange={onChangeLabels}
-                styles={compactSelectStyles}
-                menuPlacement="top"
-                className="text-black"
-              />
-            </div>
-          </div>
+                <AppField label="Prioridad">
+                  {(field) => (
+                    <AppSingleSelect<string>
+                      inputId={field.id}
+                      value={String(ticket.priority)}
+                      selectedOption={findOption(
+                        PRIORITY_OPTIONS,
+                        String(ticket.priority),
+                      )}
+                      options={PRIORITY_OPTIONS}
+                      onChange={(value) => {
+                        if (value) onSelectChange("priority", value);
+                      }}
+                      placeholder="Seleccionar"
+                      isClearable={false}
+                      isSearchable={false}
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isPending}
+                      portalToBody
+                      menuPosition="fixed"
+                    />
+                  )}
+                </AppField>
 
-          <DialogFooter className="px-4 py-2.5 border-t gap-2 shrink-0">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="h-7 text-xs px-3"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="h-7 text-xs px-4"
-            >
-              Guardar cambios
-            </Button>
-          </DialogFooter>
+                <AppField label="Estado">
+                  {(field) => (
+                    <AppSingleSelect<string>
+                      inputId={field.id}
+                      value={String(ticket.status)}
+                      selectedOption={findOption(
+                        STATUS_OPTIONS,
+                        String(ticket.status),
+                      )}
+                      options={STATUS_OPTIONS}
+                      onChange={(value) => {
+                        if (value) onSelectChange("status", value);
+                      }}
+                      placeholder="Seleccionar"
+                      isClearable={false}
+                      isSearchable={false}
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isPending}
+                      portalToBody
+                      menuPosition="fixed"
+                    />
+                  )}
+                </AppField>
+              </AppGrid>
+
+              <div className="h-px bg-[hsl(var(--app-border,var(--border)))]" />
+
+              <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
+                <AppField label="Técnico">
+                  {(field) => (
+                    <AppSingleSelect<string>
+                      inputId={field.id}
+                      value={assigneeValue}
+                      selectedOption={findOption(optionsTecs, assigneeValue)}
+                      options={optionsTecs}
+                      onChange={(_, option) => onChangeTec(option)}
+                      placeholder="Asignar técnico…"
+                      isClearable
+                      isSearchable
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isPending}
+                      portalToBody
+                      menuPosition="fixed"
+                      menuPlacement="top"
+                    />
+                  )}
+                </AppField>
+
+                <AppField label="Acompañantes">
+                  {(field) => (
+                    <AppMultiSelect<string>
+                      inputId={field.id}
+                      value={companionValues}
+                      selectedOptions={technicianOptions.filter((option) =>
+                        companionValues.includes(option.value),
+                      )}
+                      options={technicianOptions}
+                      onChange={(_, options) => onChangeCompanions(options)}
+                      placeholder="Agregar…"
+                      isClearable
+                      isSearchable
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isPending}
+                      portalToBody
+                      menuPosition="fixed"
+                      menuPlacement="top"
+                    />
+                  )}
+                </AppField>
+              </AppGrid>
+
+              <AppField label="Etiquetas">
+                {(field) => (
+                  <AppMultiSelect<string>
+                    inputId={field.id}
+                    value={tagValues}
+                    selectedOptions={optionsLabels.filter((option) =>
+                      tagValues.includes(option.value),
+                    )}
+                    options={optionsLabels}
+                    onChange={(_, options) => onChangeLabels(options)}
+                    placeholder="Etiquetar ticket…"
+                    isClearable
+                    isSearchable
+                    size="xs"
+                    density="compact"
+                    fieldWidth="full"
+                    invalid={field.invalid}
+                    isDisabled={isPending}
+                    portalToBody
+                    menuPosition="fixed"
+                    menuPlacement="top"
+                  />
+                )}
+              </AppField>
+            </AppStack>
+          </AppDialogBody>
+
+          <AppDialogFooter divider className="px-4 py-2.5">
+            <AppInline justify="end" gap="xs" className="w-full">
+              <AppButton
+                type="button"
+                variant="secondary"
+                size="xs"
+                width="auto"
+                leftIcon={<X size={14} />}
+                disabled={isPending}
+                onClick={() => onOpenChange(false)}
+              >
+                Cancelar
+              </AppButton>
+
+              <AppButton
+                type="submit"
+                variant="primary"
+                size="xs"
+                width="auto"
+                leftIcon={<Save size={14} />}
+                loading={isPending}
+                loadingText="Guardando..."
+              >
+                Guardar cambios
+              </AppButton>
+            </AppInline>
+          </AppDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </AppDialogContent>
+    </AppDialog>
   );
 }

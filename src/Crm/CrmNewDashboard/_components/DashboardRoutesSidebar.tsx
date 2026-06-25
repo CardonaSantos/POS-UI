@@ -1,4 +1,18 @@
-import { MorosoTop, RutaActiva } from "../interfaces/dashboard-interfaces";
+"use client";
+
+import * as React from "react";
+import { AlertTriangle, Route, Users } from "lucide-react";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
+import type { MorosoTop, RutaActiva } from "../interfaces/dashboard-interfaces";
+import {
+  DashboardActiveRoutesList,
+  DashboardTopMorososList,
+} from "./dashboard-route-metric";
 
 interface DashboardRoutesSidebarProps {
   rutaActiva: RutaActiva[];
@@ -9,79 +23,121 @@ export function DashboardRoutesSidebar({
   rutaActiva,
   topMorosos,
 }: DashboardRoutesSidebarProps) {
+  const rutas = Array.isArray(rutaActiva) ? rutaActiva : [];
+  const morosos = Array.isArray(topMorosos) ? topMorosos : [];
+
+  const totalClientesRuta = React.useMemo(() => {
+    return rutas.reduce(
+      (acc, ruta) => acc + Number(ruta.totalClientes || 0),
+      0,
+    );
+  }, [rutas]);
+
   return (
-    <aside className="hidden lg:flex flex-col w-64 xl:w-72 border-r border-slate-200 dark:border-slate-800 pr-2 gap-2">
-      <div className="pb-2 mb-1 border-b border-slate-200 dark:border-slate-800">
-        <h2 className="font-semibold text-slate-700 dark:text-slate-100 text-xs uppercase tracking-wide">
-          Rutas y cobros | Rutas {rutaActiva.length} | Morosos{" "}
-          {topMorosos.length}
-        </h2>
-      </div>
+    <AppCard
+      variant="outline"
+      size="xs"
+      radius="md"
+      className="min-w-0 lg:h-full p-2"
+    >
+      <AppStack gap="xs" className="min-w-0">
+        {/* Header compacto */}
+        <AppInline
+          gap="xs"
+          align="center"
+          justify="between"
+          className="min-w-0"
+        >
+          <AppInline gap="xs" align="center" className="min-w-0">
+            <Route className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--app-primary,var(--primary)))]" />
 
-      {/* RUTAS ACTIVAS (scroll propio) */}
-      {Array.isArray(rutaActiva) && rutaActiva.length > 0 && (
-        <div className="space-y-1.5 max-h-28 overflow-y-auto pr-1">
-          {rutaActiva.map((ruta) => (
-            <div
-              key={`${ruta.nombreRuta}-${ruta.cobrador}`}
-              className="rounded-lg border border-teal-100/80 bg-teal-50/90 
-                         dark:border-teal-700/70 dark:bg-slate-900/70 
-                         px-2.5 py-1.5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Ruta activa
-                </span>
-                <span className="text-[10px] text-slate-600 dark:text-slate-300">
-                  Cobrador: {ruta.cobrador}
-                </span>
-              </div>
-
-              <div className="mt-1 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-800 dark:text-slate-50 text-xs truncate">
-                  Ruta: {ruta.nombreRuta}
-                </h3>
-                <div className="ml-2 inline-flex items-center rounded-full bg-teal-100/80 dark:bg-teal-900/50 px-2 py-[1px]">
-                  <span className="text-[10px] font-semibold text-teal-800 dark:text-teal-100">
-                    Clientes: {ruta.totalClientes}
-                  </span>
-                </div>
-              </div>
+            <div className="min-w-0">
+              <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
+                Rutas y cobros
+              </h2>
             </div>
-          ))}
-        </div>
-      )}
+          </AppInline>
 
-      {/* TOP MOROSOS (scroll propio) */}
-      <div
-        className="rounded-lg border border-teal-100/80 bg-teal-50/80 
-                   dark:border-teal-700/70 dark:bg-slate-900/70 
-                   px-2.5 py-1.5"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-200 uppercase tracking-wide">
-            Top morosos
-          </span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-300">
-            Últimos 7 días
-          </span>
+          <AppInline gap="xs" align="center" className="shrink-0">
+            <AppBadge size="xs" tone="primary" appearance="soft">
+              {rutas.length}
+            </AppBadge>
+
+            <AppBadge size="xs" tone="danger" appearance="soft">
+              {morosos.length}
+            </AppBadge>
+          </AppInline>
+        </AppInline>
+
+        {/* Métricas ultra compactas */}
+        <div className="grid grid-cols-2 gap-1 ">
+          <CompactRouteStat
+            label="Clientes"
+            value={totalClientesRuta}
+            tone="primary"
+            icon={<Users className="h-3 w-3" />}
+          />
+
+          <CompactRouteStat
+            label="Morosos"
+            value={morosos.length}
+            tone="danger"
+            icon={<AlertTriangle className="h-3 w-3" />}
+          />
         </div>
 
-        {/* Lista scrolleable de morosos */}
-        <div className="mt-1 space-y-0.5 text-[11px] max-h-24 overflow-y-auto pr-1">
-          {topMorosos.map((m) => (
-            <div key={m.id} className="flex justify-between items-center">
-              <span className="text-slate-700 dark:text-slate-50 truncate">
-                {m.nombre}
-              </span>
-              <span className="ml-2 font-bold text-rose-600 dark:text-rose-200">
-                {m.cantidad}
-              </span>
-            </div>
-          ))}
+        {/* Listas */}
+        <div className="min-w-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1.5">
+          <DashboardActiveRoutesList rutas={rutas} />
         </div>
-      </div>
-    </aside>
+
+        <div className="min-w-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1.5">
+          <DashboardTopMorososList morosos={morosos} />
+        </div>
+      </AppStack>
+    </AppCard>
+  );
+}
+
+function CompactRouteStat({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  tone: "primary" | "danger" | "success" | "warning" | "info" | "neutral";
+}) {
+  return (
+    <div
+      className={[
+        "min-w-0 rounded-[var(--app-radius-sm)]",
+        "border border-[hsl(var(--app-border,var(--border)))]",
+        "bg-[hsl(var(--app-muted,var(--muted))/0.12)]",
+        "px-1.5 py-1",
+      ].join(" ")}
+    >
+      <AppInline gap="xs" align="center" justify="between" className="min-w-0">
+        <span className="truncate text-[10px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          {label}
+        </span>
+
+        <AppBadge
+          size="xs"
+          tone={tone}
+          appearance="soft"
+          radius="sm"
+          className="h-4 min-h-4 px-1"
+        >
+          {icon}
+        </AppBadge>
+      </AppInline>
+
+      <p className="mt-0.5 truncate text-[14px] font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
+        {value}
+      </p>
+    </div>
   );
 }

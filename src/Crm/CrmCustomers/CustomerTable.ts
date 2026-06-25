@@ -1,11 +1,16 @@
 import { ServicioInternet } from "../CrmServices/CrmServiciosWifi/servicio-internet.types";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import { ClasificacionCliente } from "../features/credito/credito-interfaces";
 
 export interface ClienteTableDto {
   id: number;
   nombreCompleto: string;
   estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
+
   telefono: string;
   dpi: string;
   direccion: string;

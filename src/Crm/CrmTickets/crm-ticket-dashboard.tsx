@@ -1,8 +1,18 @@
 "use client";
-import { useState, useMemo } from "react";
-import { MultiValue } from "react-select";
+
+import * as React from "react";
+import { Clipboard, Kanban, Ticket as TicketIcon } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppTabs, type AppTabItem } from "@/components/app/primitives/app-tabs";
+import {
+  useAppDisclosure,
+  useAppStateHandlers,
+} from "@/components/app/handlers";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
-import { OptionSelected } from "../ReactSelectComponent/OptionSelected";
+
 import { useGetTicketSoluciones } from "../CrmHooks/hooks/use-ticket-soluciones/useTicketSoluciones";
 import {
   QuerySearchTickets,
@@ -12,75 +22,95 @@ import {
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
 import { useGetCustomerToSelect } from "../CrmHooks/hooks/Client/useGetClient";
 import { useGetTagsTicket } from "../CrmHooks/hooks/tags-ticket/useTagsTickets";
+import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-import CrmTicketPagination from "./CrmTicketPagination";
-import { MetaPropsResponse } from "../features/meta-server-response/meta-responses";
-import { useSearchParams } from "react-router-dom";
 import { useTabChangeWithUrl } from "../Utils/Components/handleTabChangeWithParamURL";
-import { ReusableTabs, TabItem } from "../Utils/Components/tabs/reusable-tabs";
-import { Clipboard, Kanban, Ticket as TicketIcon } from "lucide-react";
+import { MetaPropsResponse } from "../features/meta-server-response/meta-responses";
+
+import CrmTicketPagination from "./CrmTicketPagination";
 import TicketList from "./components/ticket-list";
-import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 import TicketFilters from "./filters/TicketFilters";
 import TicketDetail from "./ticket-detail/TicketDetail";
 import OperativoMainPage from "./components/operativo/page";
-import { useGetSectores } from "../CrmHooks/hooks/Sectores/useGetSectores";
+
+interface TicketDashboardUiState {
+  ticketTab: string;
+  dashboardTab: string;
+  selectedTicketId: number | null;
+}
+
+const DEFAULT_META: MetaPropsResponse = {
+  hasNextPage: false,
+  hasPrevPage: false,
+  limit: 15,
+  page: 1,
+  total: 0,
+  totalPages: 0,
+};
+
+const DEFAULT_TICKETS_DATA: TicketsData = {
+  ticketEnProceso: 0,
+  ticketsDisponibles: 0,
+  ticketsResueltos: 0,
+};
 
 export default function TicketDashboard() {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = (searchParams.get("tab") as string) || "tickets";
-  const [ticketTab, setTicketTab] = useState("inbox");
-  const [dashboardTab, setDashboardTab] = useState(defaultTab);
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  const [openCreateTicket, setOpenCreateTicket] = useState(false);
-  const [tecnicoSelected, setTecnicoSelected] = useState<string | null>(null);
-  const [filters, setFilters] = useState<QuerySearchTickets>({
+  const defaultTab = searchParams.get("tab") || "tickets";
+
+  const ui = useAppStateHandlers<TicketDashboardUiState>({
+    ticketTab: "inbox",
+    dashboardTab: defaultTab,
+    selectedTicketId: null,
+  });
+
+  const filters = useAppStateHandlers<QuerySearchTickets>({
     page: 1,
     limit: 15,
   });
-  const query = useMemo(() => filters, [filters]);
+
+  const createTicketDialog = useAppDisclosure();
+
+  React.useEffect(() => {
+    const urlTab = searchParams.get("tab") || "tickets";
+
+    if (urlTab !== ui.state.dashboardTab) {
+      ui.setField("dashboardTab", urlTab);
+    }
+  }, [searchParams, ui]);
+
+  const query = React.useMemo(() => filters.state, [filters.state]);
+
   const { data: rawTickets, refetch: getTickets } = useGetTicketsSoporte(query);
   const { data: rawSolutions } = useGetTicketSoluciones();
   const { data: rawCustomers } = useGetCustomerToSelect();
   const { data: rawTags } = useGetTagsTicket();
   const { data: rawTecs } = useGetUsersToSelect();
-
   const { data: sectores = [] } = useGetSectores();
 
-  const ticketsSoporte = rawTickets?.data ? rawTickets.data : [];
+  const ticketsSoporte = React.useMemo(
+    () => rawTickets?.data ?? [],
+    [rawTickets?.data],
+  );
 
-  const meta = useMemo(() => {
-    const met: MetaPropsResponse = rawTickets?.meta
-      ? rawTickets?.meta
-      : {
-          hasNextPage: false,
-          hasPrevPage: false,
-          limit: 15,
-          page: 1,
-          total: 0,
-          totalPages: 0,
-        };
-    return met;
-  }, [rawTickets]);
+  const meta = React.useMemo<MetaPropsResponse>(
+    () => rawTickets?.meta ?? DEFAULT_META,
+    [rawTickets?.meta],
+  );
 
-  const ticketsData = useMemo(() => {
-    const tData: TicketsData = rawTickets?.ticketsData
-      ? rawTickets.ticketsData
-      : {
-          ticketEnProceso: 0,
-          ticketsDisponibles: 0,
-          ticketsResueltos: 0,
-        };
-    return tData;
-  }, [rawTickets?.ticketsData]);
+  const ticketsData = React.useMemo<TicketsData>(
+    () => rawTickets?.ticketsData ?? DEFAULT_TICKETS_DATA,
+    [rawTickets?.ticketsData],
+  );
 
-  const soluciones = useMemo(() => rawSolutions ?? [], [rawSolutions]);
-  const clientes = useMemo(() => rawCustomers ?? [], [rawCustomers]);
-  const etiquetas = useMemo(() => rawTags ?? [], [rawTags]);
-  const tecnicos = useMemo(() => rawTecs ?? [], [rawTecs]);
+  const soluciones = React.useMemo(() => rawSolutions ?? [], [rawSolutions]);
+  const clientes = React.useMemo(() => rawCustomers ?? [], [rawCustomers]);
+  const etiquetas = React.useMemo(() => rawTags ?? [], [rawTags]);
+  const tecnicos = React.useMemo(() => rawTecs ?? [], [rawTecs]);
 
-  const optionsLabels = useMemo(
+  const optionsLabels = React.useMemo(
     () =>
       etiquetas.map((label) => ({
         value: label.id.toString(),
@@ -89,7 +119,7 @@ export default function TicketDashboard() {
     [etiquetas],
   );
 
-  const optionsTecs = useMemo(
+  const optionsTecs = React.useMemo(
     () =>
       tecnicos.map((tec) => ({
         value: tec.id.toString(),
@@ -98,249 +128,225 @@ export default function TicketDashboard() {
     [tecnicos],
   );
 
-  const optionsCustomers = useMemo(
+  const optionsCustomers = React.useMemo(
     () =>
-      clientes.map((c) => ({
-        value: c.id.toString(),
-        label: c.nombre,
+      clientes.map((cliente) => ({
+        value: cliente.id.toString(),
+        label: cliente.nombre,
       })),
     [clientes],
   );
 
-  const selectedTicket = useMemo(
-    () => ticketsSoporte.find((ticket) => ticket.id === selectedTicketId),
-    [ticketsSoporte, selectedTicketId],
+  const selectedTicket = React.useMemo(
+    () =>
+      ticketsSoporte.find((ticket) => ticket.id === ui.state.selectedTicketId),
+    [ticketsSoporte, ui.state.selectedTicketId],
   );
 
-  const handleTabChange = (value: string) => {
-    setTicketTab(value);
-
-    setFilters((prev) => ({
-      ...prev,
-      page: 1,
-      vista: value,
-    }));
-  };
-
-  const handleSelectedTecnico = (optionSelect: OptionSelected | null) => {
-    setTecnicoSelected(optionSelect ? optionSelect.value : null);
-
-    setFilters((prev) => ({
-      ...prev,
-      tecs: optionSelect ? [Number(optionSelect.value)] : undefined,
-      page: 1,
-    }));
-  };
-
-  const handleChangeLabels = (
-    selectedOptions: MultiValue<{ value: string; label: string }>,
-  ) => {
-    const selectedIds = selectedOptions.map((option) => Number(option.value));
-
-    setFilters((prev) => ({
-      ...prev,
-      tags: selectedIds.length ? selectedIds : undefined,
-      page: 1,
-    }));
-  };
-
-  const handleChangeSector = (sectorId: number | undefined) => {
-    setFilters((prev) => ({
-      ...prev,
-      sector: sectorId,
-      page: 1,
-    }));
-  };
-
-  type DateSide = "start" | "end";
-
-  const handleChangeDates = (side: DateSide, date: Date | null) => {
-    setFilters((prev) => ({
-      ...prev,
-      [side === "start" ? "fechaInicio" : "fechaFin"]: date
-        ? date.toISOString()
-        : undefined,
-      page: 1,
-    }));
-  };
-
-  const handleSearchChange = (value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      search: value || undefined,
-      page: 1,
-    }));
-  };
-
-  const handleStatusChange = (value: string | null) => {
-    setFilters((prev) => ({
-      ...prev,
-      estado: value ? (value as EstadoTicketSoporte) : undefined,
-      page: 1,
-    }));
-  };
-
-  const handleQuickViewChange = (value: string, userId: number) => {
-    setFilters((prev) => {
-      if (value === "assignedToMe") {
-        return {
-          ...prev,
-          tecs: [userId],
-          creadosPor: undefined,
-          page: 1,
-        };
-      }
-
-      if (value === "createdByMe") {
-        return {
-          ...prev,
-          creadosPor: userId,
-          tecs: undefined,
-          page: 1,
-        };
-      }
-
-      return {
+  const patchFilters = React.useCallback(
+    (patch: Partial<QuerySearchTickets>, resetPage = true) => {
+      filters.setState((prev) => ({
         ...prev,
-        tecs: undefined,
-        creadosPor: undefined,
-        page: 1,
-      };
-    });
-  };
+        ...patch,
+        page: resetPage ? 1 : (patch.page ?? prev.page),
+      }));
+    },
+    [filters],
+  );
 
-  const handleNextPage = () => {
-    if (!meta?.hasNextPage) return;
+  const handleTicketListTabChange = React.useCallback(
+    (value: string) => {
+      ui.setField("ticketTab", value);
 
-    setFilters((prev) => ({
-      ...prev,
-      page: (prev.page ?? 1) + 1,
-    }));
-  };
+      patchFilters({
+        vista: value,
+      });
+    },
+    [patchFilters, ui],
+  );
 
-  const handlePrevPage = () => {
-    if (!meta?.hasPrevPage) return;
+  const handleNextPage = React.useCallback(() => {
+    if (!meta.hasNextPage) return;
 
-    setFilters((prev) => ({
-      ...prev,
-      page: Math.max((prev.page ?? 1) - 1, 1),
-    }));
-  };
+    patchFilters(
+      {
+        page: (filters.state.page ?? 1) + 1,
+      },
+      false,
+    );
+  }, [filters.state.page, meta.hasNextPage, patchFilters]);
 
-  const handleChangeTabs = useTabChangeWithUrl({
-    activeTab: dashboardTab,
+  const handlePrevPage = React.useCallback(() => {
+    if (!meta.hasPrevPage) return;
+
+    patchFilters(
+      {
+        page: Math.max((filters.state.page ?? 1) - 1, 1),
+      },
+      false,
+    );
+  }, [filters.state.page, meta.hasPrevPage, patchFilters]);
+
+  const setDashboardTab = React.useCallback(
+    (value: string) => {
+      ui.setField("dashboardTab", value);
+    },
+    [ui],
+  );
+
+  const handleDashboardTabChange = useTabChangeWithUrl({
+    activeTab: ui.state.dashboardTab,
     setActiveTab: setDashboardTab,
     searchParams,
     setSearchParams,
   });
 
-  const tabs: Array<TabItem> = [
-    {
-      label: "TICKETS",
-      value: "tickets",
-      icon: <TicketIcon size={16} />,
-      content: (
-        <div>
-          <TicketFilters
-            ticketsTotal={ticketsData.ticketsDisponibles}
-            tickets={ticketsSoporte}
-            onFilterChange={handleSearchChange}
-            onStatusChange={handleStatusChange}
-            onQuickViewChange={(value) => handleQuickViewChange(value, userId)}
-            openCreatT={openCreateTicket}
-            setOpenCreateT={setOpenCreateTicket}
-            getTickets={getTickets}
-            tecnicos={tecnicos}
-            tecnicoSelected={tecnicoSelected}
-            handleSelectedTecnico={handleSelectedTecnico}
-            etiquetas={etiquetas}
-            etiquetasSelecteds={filters.tags ?? []}
-            handleChangeLabels={handleChangeLabels}
-            dateRangeStart={filters.fechaInicio}
-            dateRangeEnd={filters.fechaFin}
-            handleChangeDates={handleChangeDates}
-            sectorSelected={filters.sector ?? undefined}
-            sectores={sectores}
-            handleChangeSector={handleChangeSector}
-          />
+  const setSelectedTicketId = React.useCallback(
+    (value: React.SetStateAction<number | null>) => {
+      const nextValue =
+        typeof value === "function" ? value(ui.state.selectedTicketId) : value;
 
-          {/* CONTENT AREA */}
-          <div className="mt-2 h-[calc(100vh-230px)] flex flex-col lg:grid lg:grid-cols-2 gap-4">
-            <div
-              className={`flex flex-col overflow-hidden bg-background border border-border rounded-lg shadow-sm
-            ${selectedTicket ? "h-1/2" : "h-full"} 
-            lg:h-full`}
-            >
-              <div className="flex-1 min-h-0">
-                <TicketList
-                  tickets={ticketsSoporte}
-                  ticketsData={ticketsData}
-                  selectedTicketId={selectedTicketId}
-                  onSelectTicket={(t) => setSelectedTicketId(t.id)}
-                  activeTab={ticketTab}
-                  onTabChange={handleTabChange}
-                />
+      ui.setField("selectedTicketId", nextValue);
+    },
+    [ui],
+  );
+
+  const tabs = React.useMemo<Array<AppTabItem>>(
+    () => [
+      {
+        label: "Tickets",
+        value: "tickets",
+        icon: <TicketIcon size={16} />,
+        content: (
+          <AppStack gap="sm">
+            <TicketFilters
+              ticketsTotal={ticketsData.ticketsDisponibles}
+              tickets={ticketsSoporte}
+              value={filters.state}
+              onChange={patchFilters}
+              userId={userId}
+              openCreatT={createTicketDialog.isOpen}
+              setOpenCreateT={createTicketDialog.setOpen}
+              getTickets={getTickets}
+              tecnicos={tecnicos}
+              etiquetas={etiquetas}
+              sectores={sectores}
+            />
+
+            <div className="h-[calc(100vh-230px)] min-h-0 gap-4 lg:grid lg:grid-cols-2">
+              <div
+                className={[
+                  "flex flex-col overflow-hidden rounded-[var(--app-radius-lg)]",
+                  "border border-[hsl(var(--app-border,var(--border)))]",
+                  "bg-[hsl(var(--app-background,var(--background)))]",
+                  selectedTicket ? "h-1/2" : "h-full",
+                  "lg:h-full",
+                ].join(" ")}
+              >
+                <div className="min-h-0 flex-1">
+                  <TicketList
+                    tickets={ticketsSoporte}
+                    ticketsData={ticketsData}
+                    selectedTicketId={ui.state.selectedTicketId}
+                    onSelectTicket={(ticket) =>
+                      ui.setField("selectedTicketId", ticket.id)
+                    }
+                    activeTab={ui.state.ticketTab}
+                    onTabChange={handleTicketListTabChange}
+                  />
+                </div>
+
+                <div className="z-10 shrink-0">
+                  <CrmTicketPagination
+                    handleNextPage={handleNextPage}
+                    handlePrevPage={handlePrevPage}
+                    meta={meta}
+                  />
+                </div>
               </div>
 
-              <div className="shrink-0 z-10">
-                <CrmTicketPagination
-                  handleNextPage={handleNextPage}
-                  handlePrevPage={handlePrevPage}
-                  meta={meta}
-                />
-              </div>
+              {selectedTicket ? (
+                <div
+                  className={[
+                    "flex h-1/2 flex-col overflow-hidden rounded-[var(--app-radius-lg)]",
+                    "border border-[hsl(var(--app-border,var(--border)))]",
+                    "bg-[hsl(var(--app-background,var(--background)))]",
+                    "lg:h-full",
+                  ].join(" ")}
+                >
+                  <TicketDetail
+                    query={query}
+                    ticket={selectedTicket}
+                    setSelectedTicketId={setSelectedTicketId}
+                    getTickets={getTickets}
+                    soluciones={soluciones}
+                    optionsCustomers={optionsCustomers}
+                    optionsLabels={optionsLabels}
+                    optionsTecs={optionsTecs}
+                  />
+                </div>
+              ) : null}
             </div>
-
-            {selectedTicket && (
-              <div className="flex flex-col h-1/2 overflow-hidden lg:h-full bg-background border border-border rounded-lg shadow-sm">
-                <TicketDetail
-                  query={query}
-                  ticket={selectedTicket}
-                  setSelectedTicketId={setSelectedTicketId}
-                  getTickets={getTickets}
-                  soluciones={soluciones}
-                  optionsCustomers={optionsCustomers}
-                  optionsLabels={optionsLabels}
-                  optionsTecs={optionsTecs}
-                />
-              </div>
-            )}
+          </AppStack>
+        ),
+      },
+      {
+        label: "Operativo",
+        value: "operativo",
+        icon: <Kanban size={16} />,
+        content: <OperativoMainPage tecnicos={tecnicos} />,
+      },
+      {
+        label: "Gerencial",
+        value: "gerencial",
+        icon: <Clipboard size={16} />,
+        content: (
+          <div className="rounded-[var(--app-radius-lg)] border border-dashed border-[hsl(var(--app-border,var(--border)))] p-6 text-sm text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            Próximamente
           </div>
-        </div>
-      ),
-    },
-    {
-      label: "OPERATIVO",
-      value: "operativo",
-      icon: <Kanban size={16} />,
-      content: (
-        <div className="">
-          <OperativoMainPage tecnicos={tecnicos} />
-        </div>
-      ),
-    },
-
-    {
-      label: "GERENCIAL",
-      value: "gerencial",
-      icon: <Clipboard size={16} />,
-      content: (
-        <div className="">
-          <h2>PRÓXIMAMENTE</h2>
-        </div>
-      ),
-    },
-  ];
+        ),
+      },
+    ],
+    [
+      createTicketDialog.isOpen,
+      createTicketDialog.setOpen,
+      etiquetas,
+      filters.state,
+      getTickets,
+      handleNextPage,
+      handlePrevPage,
+      handleTicketListTabChange,
+      meta,
+      optionsCustomers,
+      optionsLabels,
+      optionsTecs,
+      patchFilters,
+      query,
+      sectores,
+      selectedTicket,
+      setSelectedTicketId,
+      soluciones,
+      tecnicos,
+      ticketsData,
+      ticketsSoporte,
+      ui,
+      userId,
+    ],
+  );
 
   return (
     <PageTransitionCrm titleHeader="Tickets Soporte" variant="fade-pure">
-      <ReusableTabs
-        tabs={tabs}
-        activeTab={dashboardTab}
-        setActiveTab={setDashboardTab}
-        handleTabChange={handleChangeTabs}
-        variant="compact"
-      />
+      <AppContainer size="full" paddingX="none" paddingY="none">
+        <AppTabs
+          tabs={tabs}
+          value={ui.state.dashboardTab}
+          onValueChange={handleDashboardTabChange}
+          variant="compact"
+          size="sm"
+          contentSpacing="sm"
+          listClassName="w-full"
+        />
+      </AppContainer>
     </PageTransitionCrm>
   );
 }

@@ -1,11 +1,6 @@
 import { create } from "zustand";
+import { RolUsuario } from "../features/users/users-rol";
 
-enum RolUsuario {
-  TECNICO = "TECNICO",
-  OFICINA = "OFICINA",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-}
 interface CRM_PROPS {
   nombre: string | null;
   correo: string | null;

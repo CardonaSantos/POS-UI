@@ -1,20 +1,37 @@
 "use client";
-import { AnimatePresence, motion } from "framer-motion";
-import dayjs from "dayjs";
-import "dayjs/locale/es";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { Inbox } from "lucide-react";
-import MapNotifications from "./MapNotifications";
-import { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
 
-dayjs.extend(relativeTime);
-dayjs.locale("es");
+import { AnimatePresence, motion } from "framer-motion";
+import { Inbox } from "lucide-react";
+
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppSkeleton } from "@/components/app/primitives/app-skeleton";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
+import type { UiNotificacion } from "@/Crm/WEB/notifications/notifications.type";
+import MapNotifications from "./MapNotifications";
 
 interface Props {
   notifications: UiNotificacion[];
   isLoading?: boolean;
   onDelete?: (id: number) => void | Promise<void>;
   selectNoti: (noti: UiNotificacion) => void;
+}
+
+function NotificationLoadingList() {
+  return (
+    <AppStack gap="xs">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div
+          key={index}
+          className="rounded-[var(--app-radius-lg)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-card,var(--background)))] p-3"
+        >
+          <AppSkeleton className="mb-2 h-3.5 w-1/3" />
+          <AppSkeleton className="mb-1.5 h-3 w-2/3" />
+          <AppSkeleton className="h-3 w-1/2" />
+        </div>
+      ))}
+    </AppStack>
+  );
 }
 
 function NotificationList({
@@ -24,36 +41,32 @@ function NotificationList({
   selectNoti,
 }: Props) {
   if (isLoading) {
-    return (
-      <div className="space-y-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="animate-pulse rounded-xl border p-3">
-            <div className="h-3.5 w-1/3 bg-muted rounded mb-2" />
-            <div className="h-3 w-2/3 bg-muted rounded" />
-          </div>
-        ))}
-      </div>
-    );
+    return <NotificationLoadingList />;
   }
 
   if (!notifications.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
-        <Inbox className="h-8 w-8 mb-2 opacity-70" />
-        <p className="font-medium">No hay notificaciones por ver</p>
-        <p className="text-xs">Te avisaremos cuando llegue algo nuevo.</p>
-      </div>
+      <AppEmptyState
+        preset="empty"
+        variant="plain"
+        size="sm"
+        align="center"
+        icon={<Inbox size={30} strokeWidth={1.5} />}
+        title="No hay notificaciones"
+        description="Te avisaremos cuando llegue algo nuevo."
+        className="py-10"
+      />
     );
   }
 
   return (
     <motion.ul layout className="space-y-2 pr-1">
       <AnimatePresence initial={false}>
-        {notifications.map((n) => (
+        {notifications.map((notification) => (
           <MapNotifications
+            key={notification.id}
             selectNoti={selectNoti}
-            key={n.id}
-            notification={n}
+            notification={notification}
             onDelete={onDelete}
           />
         ))}

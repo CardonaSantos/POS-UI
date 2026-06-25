@@ -106,7 +106,7 @@ export const columnsClientesRutaCreate: ColumnDef<ClienteInternetFromCreateRuta>
       sortingFn: esStringSort,
       enableColumnFilter: true,
       filterFn: includesFilter,
-      meta: { align: "left", serverSortKey: "estadoCliente" },
+      meta: { align: "left" },
       cell: ({ getValue }) => (
         <span className="block truncate">{String(getValue() ?? "")}</span>
       ),
@@ -140,7 +140,7 @@ export const columnsClientesRutaCreate: ColumnDef<ClienteInternetFromCreateRuta>
       sortingFn: numericSort,
       enableColumnFilter: true,
       filterFn: numberInRange, // filtra por cantidad de facturas
-      meta: { align: "right", serverSortKey: "facturasPendientes" },
+      meta: { align: "right" },
       cell: ({ getValue, row }) => {
         const count = Number(getValue() ?? 0);
         const saldo = Number((row.original as any)?.saldoPendiente ?? 0);
@@ -205,7 +205,7 @@ export const columnsClientesRutaCreate: ColumnDef<ClienteInternetFromCreateRuta>
       sortingFn: esStringSort,
       enableColumnFilter: true,
       filterFn: includesFilter,
-      meta: { align: "left", serverSortKey: "sector.nombre" },
+      meta: { align: "left" },
       cell: ({ getValue }) => {
         const v = String(getValue() ?? "—");
         return (
@@ -242,7 +242,7 @@ export const columnsClientesRutaCreate: ColumnDef<ClienteInternetFromCreateRuta>
       sortingFn: esStringSort,
       enableColumnFilter: true,
       filterFn: includesFilter,
-      meta: { align: "left", serverSortKey: "zonaFacturacion" },
+      meta: { align: "left" },
       cell: ({ getValue }) => {
         const v = String(getValue() ?? "—");
         return (

@@ -32,7 +32,7 @@ export function useCloseRuta(rutaId: number) {
     {
       onSuccess: () => {
         query.invalidateQueries({
-          queryKey: rutasQkeys.list(),
+          queryKey: rutasQkeys.list({}),
         });
       },
     },
@@ -48,7 +48,7 @@ export function useDeleteRuta(rutaId: number) {
     {
       onSuccess: () => {
         query.invalidateQueries({
-          queryKey: rutasQkeys.list(),
+          queryKey: rutasQkeys.list({}),
         });
       },
     },

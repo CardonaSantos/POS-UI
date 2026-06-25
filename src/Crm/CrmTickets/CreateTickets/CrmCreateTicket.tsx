@@ -1,554 +1,662 @@
 "use client";
-import type React from "react";
-import { useState } from "react";
+
+import * as React from "react";
 import {
-  Ticket,
-  User,
   AlertCircle,
   Calendar,
-  Tag,
-  MessageSquare,
-  Save,
-  // Search,
   Clock,
   Flag,
-  Loader,
-  Users,
+  MessageSquare,
+  Save,
   Smartphone,
+  Ticket,
+  User,
+  X,
 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import SelectComponent from "react-select";
 import { toast } from "sonner";
-import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
-import { MultiSelect } from "./MultiSelect";
-import { TechSelect } from "./TechSelect";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import {
+  AppDialog,
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogDescription,
+  AppDialogFooter,
+  AppDialogHeader,
+  AppDialogTitle,
+} from "@/components/app/primitives/app-dialog";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppMultiSelect } from "@/components/app/primitives/app-multi-select";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+import {
+  useAppAsyncAction,
+  useAppStateHandlers,
+} from "@/components/app/handlers";
+import type { AppSelectOption } from "@/components/app/primitives/app-single-select";
+
 import { useCreateTicket } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketsSoporte";
-import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useGetTagsTicket } from "@/Crm/CrmHooks/hooks/tags-ticket/useTagsTickets";
 import { useGetUsersToSelect } from "@/Crm/CrmHooks/hooks/useUsuarios/use-usuers";
 import { useGetCustomerToSelect } from "@/Crm/CrmHooks/hooks/Client/useGetClient";
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+
 interface CreateTicketProps {
   openCreatT: boolean;
   setOpenCreateT: (open: boolean) => void;
   getTickets: () => void;
 }
 
-interface OptionSelectedReactComponent {
-  value: string;
-  label: string;
-}
+type CreateTicketTab = "info" | "details";
+
+type TicketEstado =
+  | "NUEVO"
+  | "ABIERTA"
+  | "EN_PROCESO"
+  | "PENDIENTE"
+  | "PENDIENTE_CLIENTE"
+  | "PENDIENTE_TECNICO";
+
+type TicketPrioridad = "BAJA" | "MEDIA" | "ALTA" | "URGENTE";
 
 interface FormDataCreateTicket {
   clienteId: number | null;
   tecnicoId: number | null;
   tecnicosAdicionales: number[];
-
   telefonoTemporal: string;
-
-  titulo: "";
-  descripcion: "";
-  estado: "NUEVO";
-  prioridad: "MEDIA";
+  titulo: string;
+  descripcion: string;
+  estado: TicketEstado;
+  prioridad: TicketPrioridad;
   etiquetas: number[];
   userId: number;
   empresaId: number;
 }
 
 export interface PayloadCreateTicket extends FormDataCreateTicket {
-  etiquetas: Array<number>;
+  etiquetas: number[];
   tecnicoId: number | null;
 }
 
-function CrmCreateTicket({ openCreatT, setOpenCreateT }: CreateTicketProps) {
-  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
-  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
-  const [labelsSelecteds, setLabelsSelecteds] = useState<number[]>([]);
-  const createTicket = useCreateTicket();
-  const isSubmitting = createTicket.isPending;
+const STATUS_OPTIONS: Array<AppSelectOption<TicketEstado>> = [
+  { value: "NUEVO", label: "Nuevo" },
+  { value: "ABIERTA", label: "Abierta" },
+  { value: "EN_PROCESO", label: "En proceso" },
+  { value: "PENDIENTE", label: "Pendiente" },
+  { value: "PENDIENTE_CLIENTE", label: "Pendiente cliente" },
+  { value: "PENDIENTE_TECNICO", label: "Pendiente técnico" },
+];
 
-  const [formData, setFormData] = useState<FormDataCreateTicket>({
-    clienteId: 0,
-    tecnicoId: 0,
+const PRIORITY_OPTIONS: Array<AppSelectOption<TicketPrioridad>> = [
+  { value: "BAJA", label: "Baja" },
+  { value: "MEDIA", label: "Media" },
+  { value: "ALTA", label: "Alta" },
+  { value: "URGENTE", label: "Urgente" },
+];
+
+const TABS: Array<{
+  value: CreateTicketTab;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  {
+    value: "info",
+    label: "Información básica",
+    icon: <AlertCircle size={13} />,
+  },
+  {
+    value: "details",
+    label: "Detalles",
+    icon: <MessageSquare size={13} />,
+  },
+];
+
+function createInitialTicketState(
+  userId: number,
+  empresaId: number,
+): FormDataCreateTicket {
+  return {
+    clienteId: null,
+    tecnicoId: null,
     titulo: "",
     descripcion: "",
     estado: "NUEVO",
     prioridad: "MEDIA",
-    etiquetas: [] as number[],
-    userId: userId,
-    empresaId: empresaId,
+    etiquetas: [],
+    userId,
+    empresaId,
     tecnicosAdicionales: [],
     telefonoTemporal: "",
+  };
+}
+
+function SectionTitle({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <AppInline
+      align="center"
+      gap="xs"
+      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-1.5 text-xs font-semibold text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+    >
+      {icon}
+      <span>{children}</span>
+    </AppInline>
+  );
+}
+
+function CrmCreateTicket({
+  openCreatT,
+  setOpenCreateT,
+  getTickets,
+}: CreateTicketProps) {
+  const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
+  const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
+
+  const form = useAppStateHandlers<FormDataCreateTicket>(
+    createInitialTicketState(userId, empresaId),
+  );
+
+  const ui = useAppStateHandlers({
+    activeTab: "info" as CreateTicketTab,
   });
 
-  const clearFormData = () => {
-    setFormData({
-      clienteId: 0,
-      tecnicoId: 0,
-      titulo: "",
-      descripcion: "",
-      estado: "NUEVO",
-      prioridad: "MEDIA",
-      etiquetas: [],
-      userId: userId,
-      empresaId: empresaId,
-      tecnicosAdicionales: [],
-      telefonoTemporal: "",
+  const createTicket = useCreateTicket();
+
+  const { data: clientesData } = useGetCustomerToSelect();
+  const { data: tecnicosData } = useGetUsersToSelect();
+  const { data: etiquetasData } = useGetTagsTicket();
+
+  const clientes = clientesData ?? [];
+  const tecnicos = tecnicosData ?? [];
+  const etiquetas = etiquetasData ?? [];
+
+  React.useEffect(() => {
+    form.patch({
+      userId,
+      empresaId,
     });
-    setLabelsSelecteds([]);
-  };
+  }, [userId, empresaId]);
 
-  const { data: clientesx } = useGetCustomerToSelect();
-  const clientes = clientesx ? clientesx : [];
-  const { data: tecnicosx } = useGetUsersToSelect();
-  const tecnicos = tecnicosx ? tecnicosx : [];
-  const { data: etiquetasx } = useGetTagsTicket();
+  const optionsCustomers = React.useMemo<Array<AppSelectOption<number>>>(
+    () =>
+      clientes.map((cliente) => ({
+        value: cliente.id,
+        label: cliente.nombre,
+      })),
+    [clientes],
+  );
 
-  const etiquetas = etiquetasx ? etiquetasx : [];
+  const optionsTecs = React.useMemo<Array<AppSelectOption<number>>>(
+    () =>
+      tecnicos.map((tecnico) => ({
+        value: tecnico.id,
+        label: tecnico.nombre,
+      })),
+    [tecnicos],
+  );
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const optionsLabels = React.useMemo<Array<AppSelectOption<number>>>(
+    () =>
+      etiquetas.map((etiqueta) => ({
+        value: etiqueta.id,
+        label: etiqueta.nombre,
+      })),
+    [etiquetas],
+  );
 
-  const handleSelectChange = (name: string, value: string | null) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const availableMainTechOptions = React.useMemo(
+    () =>
+      optionsTecs.filter(
+        (option) => !form.state.tecnicosAdicionales.includes(option.value),
+      ),
+    [form.state.tecnicosAdicionales, optionsTecs],
+  );
 
-  const handleSubmit = async () => {
-    const payload: PayloadCreateTicket = {
-      ...formData,
-      etiquetas: labelsSelecteds,
-      tecnicoId:
-        formData.tecnicoId !== null && formData.tecnicoId !== undefined
-          ? Number(formData.tecnicoId)
-          : null,
-    };
+  const companionOptions = React.useMemo(
+    () => optionsTecs.filter((option) => option.value !== form.state.tecnicoId),
+    [form.state.tecnicoId, optionsTecs],
+  );
 
-    toast.promise(createTicket.mutateAsync(payload), {
-      success: () => {
-        clearFormData();
-        return "Ticket creado";
-      },
-      loading: "Registrando...",
-      error: (error) => getApiErrorMessageAxios(error),
-    });
+  const resetForm = React.useCallback(() => {
+    form.setState(createInitialTicketState(userId, empresaId));
+    ui.setField("activeTab", "info");
+  }, [empresaId, form, ui, userId]);
 
-    setOpenCreateT(false);
-  };
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (createTicket.isPending) return;
 
-  const handleChangeCustomerSelect = (
-    selectedOption: OptionSelectedReactComponent | null,
-  ) => {
-    const newCustomerId = selectedOption
-      ? parseInt(selectedOption.value, 10)
-      : null;
-    setFormData((prev) => ({ ...prev, clienteId: newCustomerId }));
-  };
+      setOpenCreateT(nextOpen);
 
-  const optionsCustomers = clientes.map((cliente) => ({
-    value: cliente.id.toString(),
-    label: cliente.nombre,
-  }));
+      if (!nextOpen) {
+        resetForm();
+      }
+    },
+    [createTicket.isPending, resetForm, setOpenCreateT],
+  );
 
-  const optionsTecs = tecnicos.map((tec) => ({
-    value: tec.id.toString(),
-    label: tec.nombre,
-  }));
+  const handleMainTechChange = React.useCallback(
+    (value: number | null) => {
+      form.patch({
+        tecnicoId: value,
+        tecnicosAdicionales: form.state.tecnicosAdicionales.filter(
+          (id) => id !== value,
+        ),
+      });
+    },
+    [form],
+  );
 
-  const optionsLabels = etiquetas.map((label) => ({
-    value: label.id.toString(),
-    label: label.nombre,
-  }));
+  const submitAction = useAppAsyncAction(
+    async () => {
+      const titulo = form.state.titulo.trim();
+      const descripcion = form.state.descripcion.trim();
+      const telefonoTemporal = form.state.telefonoTemporal.trim();
 
-  const tecnicoSelected = formData.tecnicoId ? false : true;
+      if (!form.state.clienteId) {
+        ui.setField("activeTab", "info");
+        toast.info("Seleccione un cliente para crear el ticket");
+        return;
+      }
+
+      if (!titulo) {
+        ui.setField("activeTab", "details");
+        toast.info("El ticket debe tener un título");
+        return;
+      }
+
+      const payload: PayloadCreateTicket = {
+        ...form.state,
+        userId,
+        empresaId,
+        titulo,
+        descripcion,
+        telefonoTemporal,
+        clienteId: form.state.clienteId,
+        tecnicoId: form.state.tecnicoId ?? null,
+        tecnicosAdicionales: form.state.tecnicosAdicionales ?? [],
+        etiquetas: form.state.etiquetas ?? [],
+      };
+
+      await toast.promise(createTicket.mutateAsync(payload), {
+        loading: "Registrando ticket...",
+        success: "Ticket creado",
+        error: (error) => getApiErrorMessageAxios(error),
+      });
+
+      getTickets();
+      resetForm();
+      setOpenCreateT(false);
+    },
+    {
+      preventConcurrent: true,
+    },
+  );
+
+  const isSubmitting = createTicket.isPending || submitAction.isLoading;
+  const hasMainTech = Boolean(form.state.tecnicoId);
 
   return (
-    <Dialog open={openCreatT} onOpenChange={setOpenCreateT}>
-      <DialogContent className="sm:max-w-[900px] lg:max-w-[1000px] max-h-[98vh]  flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Ticket className="h-5 w-5 text-primary" />
-            Crear Nuevo Ticket de Soporte
-          </DialogTitle>
-        </DialogHeader>
-
-        <Tabs
-          defaultValue="info"
-          className="flex-1 overflow-hidden flex flex-col"
+    <AppDialog open={openCreatT} onOpenChange={handleOpenChange}>
+      <AppDialogContent size="5xl" viewport="tall" padding="none">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submitAction.run();
+          }}
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="info" className="flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              Información Básica
-            </TabsTrigger>
-            <TabsTrigger value="details" className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              Detalles
-            </TabsTrigger>
-          </TabsList>
+          <AppDialogHeader divider className="px-4 py-3">
+            <AppDialogTitle className="flex items-center gap-2 text-sm">
+              <Ticket size={16} />
+              Crear nuevo ticket de soporte
+            </AppDialogTitle>
 
-          <ScrollArea className="flex-1">
-            <TabsContent value="info" className="mt-0 space-y-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-1">
-                {/* COLUMNA IZQUIERDA - Cliente y Asignaciones */}
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground border-b pb-2">
-                      Cliente y Asignaciones
-                    </h3>
+            <AppDialogDescription>
+              Registre el cliente, asignación técnica, estado, prioridad y
+              detalle inicial del ticket.
+            </AppDialogDescription>
+          </AppDialogHeader>
 
-                    {/* Cliente */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="cliente"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        Cliente <span className="text-destructive">*</span>
-                      </Label>
-                      <div className="relative" style={{ zIndex: 50 }}>
-                        <SelectComponent
-                          placeholder="Seleccione un cliente"
-                          isClearable
-                          className="text-black text-sm"
-                          options={optionsCustomers}
-                          value={
-                            optionsCustomers.find(
-                              (option) =>
-                                option.value === formData.clienteId?.toString(),
-                            ) || null
-                          }
-                          onChange={handleChangeCustomerSelect}
-                        />
-                      </div>
-                    </div>
+          <div className="shrink-0 border-b border-[hsl(var(--app-border,var(--border)))] px-4 py-2">
+            <div className="grid grid-cols-2 rounded-[var(--app-radius-md)] bg-[hsl(var(--app-muted,var(--muted))/0.45)] p-0.5">
+              {TABS.map((tab) => {
+                const isActive = ui.state.activeTab === tab.value;
 
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="titulo"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <Smartphone className="h-4 w-4 text-muted-foreground" />
-                        Tel. Temporal (Opcional)
-                      </Label>
-                      <Input
-                        id="telefonoTemporal"
-                        name="telefonoTemporal"
-                        value={formData.telefonoTemporal}
-                        onChange={handleChange}
-                        placeholder="12345678"
-                        required
-                        type="tel"
-                        className="text-sm"
+                return (
+                  <AppButton
+                    key={tab.value}
+                    type="button"
+                    variant={isActive ? "secondary" : "ghost"}
+                    size="xs"
+                    width="full"
+                    className={[
+                      "h-7 justify-center gap-1 rounded-[var(--app-radius-sm)]",
+                      isActive
+                        ? "bg-[hsl(var(--app-background,var(--background)))] text-[hsl(var(--app-foreground,var(--foreground)))]"
+                        : "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+                    ].join(" ")}
+                    onClick={() => ui.setField("activeTab", tab.value)}
+                  >
+                    {tab.icon}
+                    <span className="truncate">{tab.label}</span>
+                  </AppButton>
+                );
+              })}
+            </div>
+          </div>
+
+          <AppDialogBody
+            padding="none"
+            className="min-h-0 flex-1 overflow-y-auto"
+          >
+            {ui.state.activeTab === "info" ? (
+              <AppGrid cols={{ base: 1, lg: 2 }} gap="lg" className="p-4">
+                <AppStack gap="md">
+                  <SectionTitle icon={<User size={14} />}>
+                    Cliente y asignaciones
+                  </SectionTitle>
+
+                  <AppField label="Cliente" required>
+                    {(field) => (
+                      <AppSingleSelect<number>
+                        inputId={field.id}
+                        value={form.state.clienteId}
+                        onChange={(value) => form.setField("clienteId", value)}
+                        options={optionsCustomers}
+                        placeholder="Seleccione un cliente"
+                        isClearable
+                        isSearchable
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        isDisabled={isSubmitting}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
                       />
-                    </div>
+                    )}
+                  </AppField>
 
-                    {/* Técnico Asignado */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="tecnicoId"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        Técnico Asignado
-                      </Label>
-                      <div className="relative" style={{ zIndex: 40 }}>
-                        <TechSelect
-                          options={optionsTecs.filter(
-                            (o) =>
-                              !formData.tecnicosAdicionales.includes(
-                                Number(o.value),
-                              ),
-                          )}
-                          value={
-                            optionsTecs.find(
-                              (tec) =>
-                                tec.value === formData.tecnicoId?.toString(),
-                            ) || null
-                          }
-                          onChange={(opt) => {
-                            handleSelectChange("tecnicoId", opt?.value ?? null);
-                          }}
-                          placeholder="Seleccione un técnico"
-                        />
-                      </div>
-                    </div>
+                  <AppField label="Tel. temporal" description="Opcional">
+                    {(field) => (
+                      <AppInput
+                        id={field.id}
+                        type="tel"
+                        leftIcon={<Smartphone size={14} />}
+                        placeholder="12345678"
+                        size="xs"
+                        fieldWidth="full"
+                        disabled={isSubmitting}
+                        invalid={field.invalid}
+                        aria-invalid={field.invalid}
+                        aria-describedby={field.describedBy}
+                        {...form.inputProps("telefonoTemporal")}
+                      />
+                    )}
+                  </AppField>
 
-                    {/* Acompañantes */}
-                    <div className="space-y-2 pb-10">
-                      <Label
-                        htmlFor="acompanantes"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        Acompañantes
-                      </Label>
-                      <div className="relative">
-                        <MultiSelect
-                          disabled={tecnicoSelected}
-                          options={optionsTecs.filter(
-                            (t) => t.value !== formData.tecnicoId?.toString(),
-                          )}
-                          value={optionsTecs.filter((t) =>
-                            formData.tecnicosAdicionales.includes(+t.value),
-                          )}
-                          onChange={(opts) =>
-                            setFormData({
-                              ...formData,
-                              tecnicosAdicionales: opts.map((o) => +o.value),
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  <AppField label="Técnico asignado">
+                    {(field) => (
+                      <AppSingleSelect<number>
+                        inputId={field.id}
+                        value={form.state.tecnicoId}
+                        onChange={handleMainTechChange}
+                        options={availableMainTechOptions}
+                        placeholder="Seleccione un técnico"
+                        isClearable
+                        isSearchable
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        isDisabled={isSubmitting}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
+                      />
+                    )}
+                  </AppField>
 
-                {/* COLUMNA DERECHA - Estado y Prioridad */}
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground border-b pb-2">
-                      Estado y Configuración
-                    </h3>
-
-                    {/* Estado */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="estado"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <Clock className="h-4 w-4 text-blue-500" />
-                        Estado
-                      </Label>
-                      <Select
-                        value={formData.estado}
-                        onValueChange={(value) =>
-                          handleSelectChange("estado", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar estado" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[60]">
-                          <SelectItem value="NUEVO">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                              <span>Nuevo</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="ABIERTA">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-yellow-600"></span>
-                              <span>Abierta</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="EN_PROCESO">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-green-600"></span>
-                              <span>En Proceso</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="PENDIENTE">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-gray-600"></span>
-                              <span>Pendiente</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="PENDIENTE_CLIENTE">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-pink-600"></span>
-                              <span>Pendiente Cliente</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="PENDIENTE_TECNICO">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-teal-600"></span>
-                              <span>Pendiente Técnico</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Prioridad */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="prioridad"
-                        className="flex items-center gap-2 text-sm font-medium"
-                      >
-                        <Flag className="h-4 w-4 text-red-500" />
-                        Prioridad
-                      </Label>
-                      <Select
-                        value={formData.prioridad}
-                        onValueChange={(value) =>
-                          handleSelectChange("prioridad", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar prioridad" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[60]">
-                          <SelectItem
-                            value="BAJA"
-                            className="flex items-center"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-gray-500"></span>
-                              <span>Baja</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="MEDIA">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                              <span>Media</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="ALTA">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
-                              <span>Alta</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="URGENTE">
-                            <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                              <span>Urgente</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="details" className="mt-0 space-y-6 p-1">
-              <div className="max-w-2xl mx-auto space-y-6">
-                {/* Título */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="titulo"
-                    className="flex items-center gap-2 text-sm font-medium"
+                  <AppField
+                    label="Acompañantes"
+                    description={
+                      hasMainTech
+                        ? "Técnicos adicionales para el ticket."
+                        : "Seleccione primero un técnico principal."
+                    }
                   >
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                    Título <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="titulo"
-                    name="titulo"
-                    value={formData.titulo}
-                    onChange={handleChange}
-                    placeholder="Título descriptivo del problema"
-                    required
-                    className="text-sm"
-                  />
-                </div>
+                    {(field) => (
+                      <AppMultiSelect<number>
+                        inputId={field.id}
+                        value={form.state.tecnicosAdicionales}
+                        onChange={(values) =>
+                          form.setField("tecnicosAdicionales", values)
+                        }
+                        options={companionOptions}
+                        placeholder="Agregar acompañantes"
+                        isClearable
+                        isSearchable
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        isDisabled={isSubmitting || !hasMainTech}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
+                      />
+                    )}
+                  </AppField>
+                </AppStack>
 
-                {/* Descripción */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="descripcion"
-                    className="flex items-center gap-2 text-sm font-medium"
-                  >
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    Descripción
-                  </Label>
-                  <Textarea
-                    id="descripcion"
-                    name="descripcion"
-                    value={formData.descripcion}
-                    onChange={handleChange}
-                    placeholder="Describa detalladamente el problema o solicitud"
-                    className="min-h-[90px] text-sm"
-                  />
-                </div>
+                <AppStack gap="md">
+                  <SectionTitle icon={<Clock size={14} />}>
+                    Estado y configuración
+                  </SectionTitle>
 
-                {/* Etiquetas */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    Etiquetas
-                  </Label>
-                  <div className="relative" style={{ zIndex: 30 }}>
-                    <MultiSelect
-                      options={optionsLabels}
-                      value={optionsLabels.filter((o) =>
-                        labelsSelecteds.includes(Number(o.value)),
-                      )}
-                      onChange={(opts) =>
-                        setLabelsSelecteds(opts.map((o) => Number(o.value)))
-                      }
-                      placeholder="Seleccione etiquetas (opcional)"
-                      // disabled={true} // cámbialo a true si quieres bloquearlo
+                  <AppField label="Estado">
+                    {(field) => (
+                      <AppSingleSelect<TicketEstado>
+                        inputId={field.id}
+                        value={form.state.estado}
+                        onChange={(value) => {
+                          if (value) form.setField("estado", value);
+                        }}
+                        options={STATUS_OPTIONS}
+                        placeholder="Seleccionar estado"
+                        isClearable={false}
+                        isSearchable={false}
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        isDisabled={isSubmitting}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
+                      />
+                    )}
+                  </AppField>
+
+                  <AppField label="Prioridad">
+                    {(field) => (
+                      <AppSingleSelect<TicketPrioridad>
+                        inputId={field.id}
+                        value={form.state.prioridad}
+                        onChange={(value) => {
+                          if (value) form.setField("prioridad", value);
+                        }}
+                        options={PRIORITY_OPTIONS}
+                        placeholder="Seleccionar prioridad"
+                        isClearable={false}
+                        isSearchable={false}
+                        size="xs"
+                        density="compact"
+                        fieldWidth="full"
+                        invalid={field.invalid}
+                        isDisabled={isSubmitting}
+                        portalToBody
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuShouldScrollIntoView={false}
+                      />
+                    )}
+                  </AppField>
+
+                  <div className="rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.18)] px-3 py-2">
+                    <AppInline
+                      align="center"
+                      gap="xs"
+                      className="text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+                    >
+                      <Flag size={14} />
+                      <span>
+                        El ticket se creará con estado{" "}
+                        <span className="font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+                          {form.state.estado}
+                        </span>{" "}
+                        y prioridad{" "}
+                        <span className="font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+                          {form.state.prioridad}
+                        </span>
+                        .
+                      </span>
+                    </AppInline>
+                  </div>
+                </AppStack>
+              </AppGrid>
+            ) : (
+              <AppStack gap="md" className="mx-auto max-w-3xl p-4">
+                <AppField label="Título" required>
+                  {(field) => (
+                    <AppInput
+                      id={field.id}
+                      leftIcon={<AlertCircle size={14} />}
+                      placeholder="Título descriptivo del problema"
+                      size="xs"
+                      fieldWidth="full"
+                      disabled={isSubmitting}
+                      invalid={field.invalid}
+                      aria-invalid={field.invalid}
+                      aria-describedby={field.describedBy}
+                      {...form.inputProps("titulo")}
                     />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+                  )}
+                </AppField>
 
-        <Separator className="my-4" />
+                <AppField label="Descripción">
+                  {(field) => (
+                    <AppTextarea
+                      id={field.id}
+                      placeholder="Describa detalladamente el problema o solicitud"
+                      rows={5}
+                      size="xs"
+                      fieldWidth="full"
+                      disabled={isSubmitting}
+                      invalid={field.invalid}
+                      aria-invalid={field.invalid}
+                      aria-describedby={field.describedBy}
+                      className="min-h-[100px] resize-y"
+                      {...form.textareaProps("descripcion")}
+                    />
+                  )}
+                </AppField>
 
-        {/* FOOTER CORREGIDO */}
-        <div className="flex sm:justify-between gap-2 pt-2 pb-4">
-          <div className="hidden sm:flex items-center text-sm text-muted-foreground">
-            <Calendar className="mr-2 h-4 w-4" />
-            Fecha de creación: {new Date().toLocaleDateString()}
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              onClick={() => setOpenCreateT(false)}
-              className="flex-1 sm:flex-initial"
+                <AppField label="Etiquetas">
+                  {(field) => (
+                    <AppMultiSelect<number>
+                      inputId={field.id}
+                      value={form.state.etiquetas}
+                      onChange={(values) => form.setField("etiquetas", values)}
+                      options={optionsLabels}
+                      placeholder="Seleccione etiquetas"
+                      isClearable
+                      isSearchable
+                      size="xs"
+                      density="compact"
+                      fieldWidth="full"
+                      invalid={field.invalid}
+                      isDisabled={isSubmitting}
+                      portalToBody
+                      menuPosition="fixed"
+                      menuPlacement="auto"
+                      menuShouldScrollIntoView={false}
+                    />
+                  )}
+                </AppField>
+              </AppStack>
+            )}
+          </AppDialogBody>
+
+          <AppDialogFooter divider className="px-4 py-2.5">
+            <AppInline
+              align="center"
+              justify="between"
+              gap="sm"
+              className="w-full"
             >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              className="flex-1 sm:flex-initial"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Crear Ticket
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+              <AppInline
+                align="center"
+                gap="xs"
+                className="hidden text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))] sm:flex"
+              >
+                <Calendar size={14} />
+                <span>
+                  Fecha de creación: {new Date().toLocaleDateString()}
+                </span>
+              </AppInline>
+
+              <AppInline
+                align="center"
+                justify="end"
+                gap="xs"
+                className="ml-auto"
+              >
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  width="auto"
+                  leftIcon={<X size={14} />}
+                  disabled={isSubmitting}
+                  onClick={() => handleOpenChange(false)}
+                >
+                  Cancelar
+                </AppButton>
+
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="xs"
+                  width="auto"
+                  leftIcon={<Save size={14} />}
+                  loading={isSubmitting}
+                  loadingText="Creando..."
+                >
+                  Crear ticket
+                </AppButton>
+              </AppInline>
+            </AppInline>
+          </AppDialogFooter>
+        </form>
+      </AppDialogContent>
+    </AppDialog>
   );
 }
 

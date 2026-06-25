@@ -1,258 +1,329 @@
-import { useEffect, useMemo, useState } from "react";
+"use client";
+
+import * as React from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Ticket,
   Activity,
+  CheckCircle2,
+  FileText,
   SquarePen,
+  Ticket,
+  Trash2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppDataTable } from "@/components/app/table/app-data-table";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { createAppRowActionsColumn } from "@/components/app/table/app-table-row-actions";
+import { useAppTableHandlers } from "@/components/app/handlers";
 
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { SolucionTicketItem } from "@/Crm/features/ticket-soluciones/ticket-soluciones.interface";
+import type { SolucionTicketItem } from "@/Crm/features/ticket-soluciones/ticket-soluciones.interface";
+import {
+  getSolucionEstadoLabel,
+  getSolucionEstadoTone,
+  getSolucionTicketCount,
+} from "../ticket-soluciones.helpers";
 
 interface TicketSolucionesListProps {
   data: SolucionTicketItem[];
-  onDelete: (id: number) => void
   itemsPerPage?: number;
-  openToggleDelete: () => void
-   handleSelectResolucion: (regist: SolucionTicketItem) => void
-   handleSelectEdit: (regist: SolucionTicketItem) => void
+  onEdit: (item: SolucionTicketItem) => void;
+  onDelete: (item: SolucionTicketItem) => void;
 }
 
-export const TicketSolucionesList = ({
-  data,
-  itemsPerPage = 10,
-  handleSelectEdit,
-  handleSelectResolucion,
-}: TicketSolucionesListProps) => {
-  const pageSize = Math.min(itemsPerPage, 20);
+function SolucionTitleCell({ item }: { item: SolucionTicketItem }) {
+  return (
+    <AppStack gap="md" className="min-w-[240px]">
+      <AppInline align="center" gap="xs" className="min-w-0">
+        <CheckCircle2
+          size={14}
+          className="shrink-0 text-[hsl(var(--app-primary))]"
+        />
 
-  const [currentPage, setCurrentPage] = useState(1);
+        <p
+          className="truncate text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]"
+          title={item.solucion}
+        >
+          {item.solucion || "Sin título"}
+        </p>
+      </AppInline>
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [data]);
+      <p
+        className="line-clamp-2 text-[10.5px] leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))] md:hidden"
+        title={item.descripcion}
+      >
+        {item.descripcion || "Sin descripción"}
+      </p>
+    </AppStack>
+  );
+}
 
-  const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+function SolucionDescriptionCell({ item }: { item: SolucionTicketItem }) {
+  return (
+    <p
+      className="line-clamp-2 max-w-[720px] text-[11px] leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+      title={item.descripcion}
+    >
+      {item.descripcion || "Sin descripción"}
+    </p>
+  );
+}
 
-  const currentData = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return data.slice(start, end);
-  }, [data, currentPage, pageSize]);
-
-  const handlePrevious = () =>
-    setCurrentPage((p) => Math.max(p - 1, 1));
-
-  const handleNext = () =>
-    setCurrentPage((p) => Math.min(p + 1, totalPages));
+function SolucionUsageCell({ item }: { item: SolucionTicketItem }) {
+  const count = getSolucionTicketCount(item);
 
   return (
-    <Card className="w-full border-zinc-200 text-sm">
-      {/* HEADER */}
-      <CardHeader className="p-4 pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Ticket className="h-4 w-4 text-zinc-500" />
-            <div>
-              <CardTitle className="text-sm font-semibold">
-                Soluciones
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Catálogo general
-              </CardDescription>
-            </div>
-          </div>
-
-          <Badge
-            variant="outline"
-            className="h-6 text-xs font-normal"
-          >
-            Total: {data.length}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      {/* TABLE */}
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="h-8">
-                <TableHead className="w-[50px] text-center text-xs">
-                  ID
-                </TableHead>
-                <TableHead className="min-w-[150px] text-xs">
-                  Solución
-                </TableHead>
-                <TableHead className="hidden md:table-cell text-xs">
-                  Descripción
-                </TableHead>
-                <TableHead className="text-center text-xs">
-                  Uso
-                </TableHead>
-                <TableHead className="text-right text-xs pr-4">
-                  Estado
-                </TableHead>
-
-                 <TableHead className="text-right text-xs pr-4">
-                  Acción
-                </TableHead>
-
-
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <TableRow key={item.id} className="h-9">
-                    <TableCell className="text-center text-xs text-zinc-500 py-1">
-                      #{item.id}
-                    </TableCell>
-
-                    <TableCell className="py-1">
-                      <div className="text-sm font-medium">
-                        {item.solucion}
-                      </div>
-                      <div className="md:hidden text-[10px] text-zinc-400 truncate max-w-[180px]">
-                        {item.descripcion}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="hidden md:table-cell text-xs text-zinc-500 truncate max-w-[250px] py-1">
-                      {item.descripcion}
-                    </TableCell>
-
-                    <TableCell className="text-center py-1">
-                      <div className="flex items-center justify-center gap-1">
-                        <Activity className="h-3 w-3 text-zinc-400" />
-                        <span className="text-xs font-medium">
-                          {item.ticketsCount}
-                        </span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-right py-1 pr-4">
-                      {item.isEliminado ? (
-                        <Badge
-                          variant="destructive"
-                          className="h-5 px-1.5 text-[10px]"
-                        >
-                          Baja
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="secondary"
-                          className="h-5 px-1.5 text-[10px] bg-emerald-100 text-emerald-700"
-                        >
-                          Activo
-                        </Badge>
-                      )}
-                    </TableCell>
-
-
-                      <TableCell className="text-right py-1 pr-4">
-                                        <DropdownMenu>
-                      <DropdownMenuTrigger>
-                                        <Button
-                                        size={'sm'}
-                                          type="button"
-                                          variant={'outline'}
-                                        >
-                                          <SquarePen
-                                          size={12}
-                                          />
-                                        </Button>
-
-
-                    </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                        onClick={()=> handleSelectResolucion(item)}
-                        
-                        
-                        >Eliminar</DropdownMenuItem>
-                        <DropdownMenuItem
-                        onClick={()=> handleSelectEdit(item)}
-                        >Editar</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-
-
-                    </TableCell>
-
-
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-16 text-center text-xs text-zinc-500"
-                  >
-                    Sin registros.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-
-      {/* PAGINACIÓN */}
-      {totalPages > 1 && (
-        <CardFooter className="flex items-center justify-between p-2 px-4 bg-zinc-50/50">
-          <span className="text-[10px] text-zinc-500">
-            Página {currentPage} / {totalPages}
-          </span>
-
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              className="h-6 w-6 p-0"
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-3 w-3" />
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-6 w-6 p-0"
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </div>
-        </CardFooter>
-      )}
-    </Card>
+    <AppInline align="center" justify="center" gap="xs">
+      <AppBadge
+        tone={count > 0 ? "primary" : "neutral"}
+        appearance="soft"
+        size="xs"
+      >
+        <Activity size={12} />
+        {count}
+      </AppBadge>
+    </AppInline>
   );
-};
+}
+
+function SolucionEstadoCell({ item }: { item: SolucionTicketItem }) {
+  return (
+    <AppInline align="center" justify="end">
+      <AppBadge tone={getSolucionEstadoTone(item)} appearance="soft" size="xs">
+        {getSolucionEstadoLabel(item)}
+      </AppBadge>
+    </AppInline>
+  );
+}
+
+function SolucionesToolbar({ total }: { total: number }) {
+  return (
+    <AppInline align="center" justify="between" gap="sm" wrap>
+      <AppInline align="center" gap="xs" className="min-w-0">
+        <Ticket size={15} className="text-[hsl(var(--app-primary))]" />
+
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+            Soluciones
+          </p>
+          <p className="truncate text-[11px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            Catálogo general de soluciones rápidas.
+          </p>
+        </div>
+      </AppInline>
+
+      <AppBadge tone="neutral" appearance="soft" size="xs">
+        Total: {total}
+      </AppBadge>
+    </AppInline>
+  );
+}
+
+function SolucionMobileCard({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: SolucionTicketItem;
+  onEdit: (item: SolucionTicketItem) => void;
+  onDelete: (item: SolucionTicketItem) => void;
+}) {
+  return (
+    <AppCard variant="outline" size="xs">
+      <AppStack gap="sm">
+        <AppInline align="start" justify="between" gap="sm">
+          <SolucionTitleCell item={item} />
+
+          <AppBadge
+            tone={getSolucionEstadoTone(item)}
+            appearance="soft"
+            size="xs"
+          >
+            {getSolucionEstadoLabel(item)}
+          </AppBadge>
+        </AppInline>
+
+        <p className="text-[11px] leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          {item.descripcion || "Sin descripción"}
+        </p>
+
+        <AppInline align="center" justify="between" gap="sm">
+          <AppBadge tone="neutral" appearance="soft" size="xs">
+            #{item.id}
+          </AppBadge>
+
+          <AppBadge tone="primary" appearance="soft" size="xs">
+            <Ticket size={12} />
+            {getSolucionTicketCount(item)}
+          </AppBadge>
+        </AppInline>
+
+        <AppInline align="center" justify="end" gap="xs">
+          <AppButton
+            type="button"
+            variant="secondary"
+            size="xs"
+            width="auto"
+            leftIcon={<SquarePen size={12} />}
+            onClick={() => onEdit(item)}
+          >
+            Editar
+          </AppButton>
+
+          <AppButton
+            type="button"
+            variant="danger"
+            size="xs"
+            width="auto"
+            leftIcon={<Trash2 size={12} />}
+            onClick={() => onDelete(item)}
+          >
+            Eliminar
+          </AppButton>
+        </AppInline>
+      </AppStack>
+    </AppCard>
+  );
+}
+
+export function TicketSolucionesList({
+  data,
+  itemsPerPage = 10,
+  onEdit,
+  onDelete,
+}: TicketSolucionesListProps) {
+  const table = useAppTableHandlers({
+    initialPageSize: Math.min(itemsPerPage, 20),
+    initialSorting: [{ id: "id", desc: true }],
+  });
+
+  const columns = React.useMemo<ColumnDef<SolucionTicketItem, any>[]>(
+    () => [
+      {
+        id: "id",
+        header: "ID",
+        size: 56,
+        minSize: 52,
+        maxSize: 64,
+        enableSorting: false,
+        meta: {
+          align: "center",
+        },
+        cell: ({ row }) => (
+          <span className="text-[11px] font-medium text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            #{row.original.id}
+          </span>
+        ),
+      },
+      {
+        id: "solucion",
+        header: "Solución",
+        size: 260,
+        minSize: 220,
+        maxSize: 320,
+        enableSorting: false,
+        cell: ({ row }) => <SolucionTitleCell item={row.original} />,
+      },
+      {
+        id: "descripcion",
+        header: "Descripción",
+        size: 340,
+        minSize: 360,
+        enableSorting: false,
+        meta: {
+          grow: true,
+        },
+        cell: ({ row }) => <SolucionDescriptionCell item={row.original} />,
+      },
+      {
+        id: "uso",
+        header: "Uso",
+        size: 72,
+        minSize: 64,
+        maxSize: 84,
+        enableSorting: false,
+        meta: {
+          align: "center",
+        },
+        cell: ({ row }) => <SolucionUsageCell item={row.original} />,
+      },
+      {
+        id: "estado",
+        header: "Estado",
+        size: 92,
+        minSize: 84,
+        maxSize: 108,
+        enableSorting: false,
+        meta: {
+          align: "right",
+        },
+        cell: ({ row }) => <SolucionEstadoCell item={row.original} />,
+      },
+      createAppRowActionsColumn<SolucionTicketItem>({
+        header: "",
+        size: 44,
+        actions: (row) => [
+          {
+            label: "Editar",
+            icon: <SquarePen size={13} />,
+            onClick: () => onEdit(row.original),
+          },
+          {
+            label: "Eliminar",
+            icon: <Trash2 size={13} />,
+            tone: "danger",
+            separatorBefore: true,
+            onClick: () => onDelete(row.original),
+          },
+        ],
+      }),
+    ],
+    [onDelete, onEdit],
+  );
+
+  if (data.length === 0) {
+    return (
+      <AppCard variant="outline" size="sm">
+        <AppEmptyState
+          preset="empty"
+          variant="plain"
+          size="sm"
+          align="center"
+          icon={<FileText size={34} strokeWidth={1.5} />}
+          title="Sin registros"
+          description="No hay soluciones rápidas registradas en el catálogo."
+          className="py-8"
+        />
+      </AppCard>
+    );
+  }
+
+  return (
+    <AppDataTable
+      data={data}
+      columns={columns}
+      getRowId={(row) => String(row.id)}
+      toolbar={<SolucionesToolbar total={data.length} />}
+      // density="xs"
+      responsiveMode="cards"
+      renderMobileCard={(row) => (
+        <SolucionMobileCard
+          item={row.original}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      )}
+      paginationMode="client"
+      pagination={table.getPaginationConfig({
+        totalRows: data.length,
+        pageSizeOptions: [5, 10, 20],
+      })}
+      maxHeight="560px"
+      {...table.getDataTableStateProps()}
+    />
+  );
+}

@@ -1,7 +1,7 @@
-// src/components/navigation/BackButton.tsx
-import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { AppButton } from "@/components/app/primitives/app-button";
 import { useGoBackCrm } from "./UseGoBack";
 
 type BackButtonProps = {
@@ -9,7 +9,7 @@ type BackButtonProps = {
   className?: string;
   label?: string;
   placement?: "inline" | "absolute" | "fixed";
-  compact?: boolean; // h-7 w-7
+  compact?: boolean;
 };
 
 export function BackButtonCrm({
@@ -25,24 +25,38 @@ export function BackButtonCrm({
     placement === "absolute"
       ? "absolute"
       : placement === "fixed"
-      ? "fixed"
-      : "";
+        ? "fixed"
+        : "";
+
+  if (label) {
+    return (
+      <AppButton
+        type="button"
+        onClick={goBack}
+        aria-label={label}
+        variant="secondary"
+        size={compact ? "xs" : "sm"}
+        width="auto"
+        leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}
+        className={cn(posClass, compact && "h-7", className)}
+      >
+        {label}
+      </AppButton>
+    );
+  }
 
   return (
-    <Button
+    <AppButton
       type="button"
       onClick={goBack}
-      aria-label={label ?? "Volver"}
-      variant="outline"
-      size="icon"
-      className={cn(
-        posClass,
-        compact && "h-7 w-7 p-0", // más pequeño que el icon default de shadcn
-        className
-      )}
+      aria-label="Volver"
+      variant="secondary"
+      size="xs"
+      width="auto"
+      className={cn(posClass, "h-7 w-7 px-0", className)}
     >
-      <ArrowLeft className="h-4 w-4" />
-      {label && <span className="ml-2">{label}</span>}
-    </Button>
+      <ArrowLeft className="h-3.5 w-3.5" />
+      <span className="sr-only">Volver</span>
+    </AppButton>
   );
 }

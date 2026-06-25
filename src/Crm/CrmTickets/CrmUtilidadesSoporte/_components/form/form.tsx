@@ -1,100 +1,123 @@
+"use client";
 
-// Shadcn UI Components
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UseFormReturn } from "react-hook-form";
-import { CreateSolucionTicketDto,  } from "./zod";
+import type { UseFormReturn } from "react-hook-form";
 import { Save, Ticket } from "lucide-react";
 
+import {
+  AppForm,
+  AppFormInput,
+  AppFormSubmit,
+  AppFormTextarea,
+} from "@/components/app/form";
+import { useAppFormHandlers } from "@/components/app/handlers";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
 
-// Definimos las props que recibe el componente
+import type { CreateSolucionTicketDto } from "./zod";
+
 interface TicketSolucionesFormProps {
-  form: UseFormReturn<CreateSolucionTicketDto>; // <--- La magia del tipado
-  onSubmit: (data: CreateSolucionTicketDto) => void; // La función que se ejecuta al guardar
-  isLoading?: boolean; // Opcional: para deshabilitar el botón mientras guarda
+  form: UseFormReturn<CreateSolucionTicketDto>;
+  onSubmit: (data: CreateSolucionTicketDto) => void | Promise<void>;
+  isLoading?: boolean;
+  mode?: "create" | "edit";
 }
 
+function getFormCopy(mode: "create" | "edit") {
+  if (mode === "edit") {
+    return {
+      title: "Editar solución",
+      description: "Actualiza una solución rápida existente para tickets.",
+      submitText: "Guardar cambios",
+      loadingText: "Guardando...",
+    };
+  }
 
-export const TicketSolucionesForm = ({
-    form,
-    onSubmit,
-    isLoading,
-}:TicketSolucionesFormProps) => {
-  return (
-    <div className="flex justify-center w-full">
-      <Card className="w-full max-w-lg shadow-sm ">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-zinc-500" />
-            <CardTitle className="text-xl font-semibold">Nueva Solución</CardTitle>
-          </div>
-          <CardDescription>
-            Registra una posible solución para el ticket actual.
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* CAMPO: Solución */}
-              <FormField
-                control={form.control}
-                name="solucion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título de la Solución</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Reinicio de Mikrotik" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+  return {
+    title: "Nueva solución",
+    description: "Registra una posible solución para reutilizarla en tickets.",
+    submitText: "Guardar solución",
+    loadingText: "Creando...",
+  };
+}
 
-              {/* CAMPO: Descripción */}
-              <FormField
-                control={form.control}
-                name="descripcion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción Detallada</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe paso a paso la solución aplicada..." 
-                        className="resize-none min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs text-zinc-500">
-                      Sé específico para futuras referencias del equipo.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+export function TicketSolucionesForm({
+  form,
+  onSubmit,
+  isLoading,
+  mode = "create",
+}: TicketSolucionesFormProps) {
+  const copy = getFormCopy(mode);
+  const formHandlers = useAppFormHandlers(form);
 
-
-              {/* Botón de Submit */}
-              <Button type="submit" className="w-full flex gap-2">
-                <Save className="h-4 w-4" />
-                {isLoading?"Creando..." : "Guardar Solución"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+  const submitHandler = formHandlers.toSubmitHandler(
+    async (payload) => {
+      await onSubmit(payload);
+    },
+    {
+      trimStrings: true,
+      removeUndefined: true,
+    },
   );
-};
+
+  return (
+    <AppCard variant="outline" size="sm" className="w-full p-2">
+      <AppStack gap="md">
+        <AppInline align="center" gap="sm">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--app-radius-lg)] bg-[hsl(var(--app-primary)/0.12)] text-[hsl(var(--app-primary))]">
+            <Ticket size={16} />
+          </span>
+
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+              {copy.title}
+            </h3>
+            <p className="truncate text-[11px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {copy.description}
+            </p>
+          </div>
+        </AppInline>
+
+        <AppForm form={form} onSubmit={submitHandler} className="space-y-5">
+          <AppFormInput<CreateSolucionTicketDto>
+            name="solucion"
+            label="Título de la solución"
+            description="Nombre corto para identificar la solución."
+            placeholder="Ej: Reinicio de MikroTik"
+            required
+            size="xs"
+            fieldWidth="full"
+            leftIcon={<Ticket size={13} />}
+            disabled={isLoading}
+            autoComplete="off"
+          />
+
+          <AppFormTextarea<CreateSolucionTicketDto>
+            name="descripcion"
+            label="Descripción detallada"
+            description="Describe paso a paso la solución aplicada para futuras referencias del equipo."
+            placeholder="Describe paso a paso la solución aplicada..."
+            required
+            rows={5}
+            size="xs"
+            fieldWidth="full"
+            disabled={isLoading}
+            className="min-h-[130px] resize-y"
+          />
+
+          <AppFormSubmit
+            variant="primary"
+            size="xs"
+            width="full"
+            leftIcon={<Save size={13} />}
+            loading={isLoading}
+            loadingText={copy.loadingText}
+            disableWhenInvalid
+          >
+            {copy.submitText}
+          </AppFormSubmit>
+        </AppForm>
+      </AppStack>
+    </AppCard>
+  );
+}

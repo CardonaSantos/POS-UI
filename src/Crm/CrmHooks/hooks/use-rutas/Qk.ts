@@ -10,6 +10,6 @@ export interface QueryRutasDto {
 
 export const rutasQkeys = {
   all: ["rutas"] as const,
-  specific: (id: number) => ["rutas", id] as const,
-  list: (query?: QueryRutasDto) => ["rutas", query] as const,
+  specific: (id: number) => [...rutasQkeys.all, id] as const,
+  list: (query?: QueryRutasDto) => [...rutasQkeys.all, query] as const,
 };

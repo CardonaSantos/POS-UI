@@ -1,158 +1,165 @@
 "use client";
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-import { Loader2, DollarSign, Gauge, Save } from "lucide-react";
+import * as React from "react";
+import { DollarSign, Gauge, Save, Wifi } from "lucide-react";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { useAppStateHandlers } from "@/components/app/handlers";
 
-// Importación centralizada de tipos
-import type {
-  ServicioFormProps,
-  //   EstadoServicio,
-} from "./servicio-internet.types";
+import type { ServicioFormProps } from "./servicio-internet.types";
 
-const ServicioForm: React.FC<ServicioFormProps> = ({
+export default function ServicioForm({
   initialData,
   onSubmit,
   isLoading,
   isEditing,
   empresaId,
-}) => {
-  const [formData, setFormData] = React.useState({
+  onCancel,
+}: ServicioFormProps) {
+  const form = useAppStateHandlers({
     ...initialData,
-    empresaId: empresaId,
+    empresaId,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  React.useEffect(() => {
+    form.setState({
+      ...initialData,
+      empresaId,
+    });
+  }, [initialData, empresaId]);
 
-    if (name === "precio") {
-      setFormData({
-        ...formData,
-        [name]: value === "" ? 0 : Number.parseFloat(value),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-  };
+  const handleChange = React.useCallback(
+    (name: string, value: string) => {
+      if (name === "precio") {
+        form.setField(
+          name as never,
+          (value === "" ? 0 : Number(value)) as never,
+        );
+        return;
+      }
 
-  //   const handleEstadoChange = (value: string) => {
-  //     setFormData({
-  //       ...formData,
-  //       estado: value as EstadoServicio,
-  //     });
-  //   };
+      form.setField(name as never, value as never);
+    },
+    [form],
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+  const handleSubmit = React.useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void onSubmit(form.state);
+    },
+    [form.state, onSubmit],
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="nombre">Nombre del Plan</Label>
-        <Input
-          id="nombre"
-          name="nombre"
-          placeholder="Ej: Plan Básico Internet"
-          value={formData.nombre}
-          onChange={handleChange}
+    <form onSubmit={handleSubmit}>
+      <AppStack gap="md">
+        <AppField
+          label="Nombre del plan"
           required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="velocidad">Velocidad</Label>
-        <div className="relative">
-          <Gauge className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="velocidad"
-            name="velocidad"
-            className="pl-8"
-            placeholder="Ej: 20 Mbps"
-            value={formData.velocidad || ""}
-            onChange={handleChange}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Especifique la velocidad del plan (opcional)
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="precio">Precio</Label>
-        <div className="relative">
-          <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="precio"
-            name="precio"
-            type="number"
-            step="0.01"
-            min="0"
-            className="pl-8"
-            placeholder="0.00"
-            value={formData.precio || ""}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">Precio mensual del plan</p>
-      </div>
-
-      {/* <div className="space-y-2">
-        <Label htmlFor="estado">Estado</Label>
-        <Select onValueChange={handleEstadoChange} value={formData.estado}>
-          <SelectTrigger id="estado">
-            <SelectValue placeholder="Seleccione un estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ACTIVO">Activo</SelectItem>
-            <SelectItem value="INACTIVO">Inactivo</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Los planes inactivos no estarán disponibles para asignar a nuevos
-          clientes
-        </p>
-      </div> */}
-
-      <div className="flex justify-end gap-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            // Reset form or close dialog
-          }}
-          disabled={isLoading}
+          description="Nombre comercial del plan de internet."
         >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditing ? (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Guardar Cambios
-            </>
-          ) : (
-            "Crear Plan"
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="nombre"
+              value={form.state.nombre ?? ""}
+              onChange={(event) => handleChange("nombre", event.target.value)}
+              placeholder="Ej: Plan básico internet"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<Wifi size={13} />}
+              disabled={isLoading}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              autoComplete="off"
+              required
+            />
           )}
-        </Button>
-      </div>
+        </AppField>
+
+        <AppField
+          label="Velocidad"
+          description="Especifique la velocidad del plan. Opcional."
+        >
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="velocidad"
+              value={form.state.velocidad ?? ""}
+              onChange={(event) =>
+                handleChange("velocidad", event.target.value)
+              }
+              placeholder="Ej: 20 Mbps"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<Gauge size={13} />}
+              disabled={isLoading}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              autoComplete="off"
+            />
+          )}
+        </AppField>
+
+        <AppField
+          label="Precio"
+          required
+          description="Precio mensual del plan."
+        >
+          {(field) => (
+            <AppInput
+              id={field.id}
+              name="precio"
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.state.precio ?? ""}
+              onChange={(event) => handleChange("precio", event.target.value)}
+              placeholder="0.00"
+              size="xs"
+              fieldWidth="full"
+              leftIcon={<DollarSign size={13} />}
+              disabled={isLoading}
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+              required
+            />
+          )}
+        </AppField>
+
+        <AppInline align="center" justify="end" gap="xs" className="pt-1">
+          <AppButton
+            type="button"
+            variant="secondary"
+            size="xs"
+            width="auto"
+            disabled={isLoading}
+            onClick={onCancel}
+          >
+            Cancelar
+          </AppButton>
+
+          <AppButton
+            type="submit"
+            variant="primary"
+            size="xs"
+            width="auto"
+            leftIcon={isEditing ? <Save size={13} /> : <Wifi size={13} />}
+            loading={isLoading}
+            loadingText={isEditing ? "Guardando..." : "Creando..."}
+            disabled={isLoading}
+          >
+            {isEditing ? "Guardar cambios" : "Crear plan"}
+          </AppButton>
+        </AppInline>
+      </AppStack>
     </form>
   );
-};
-
-export default ServicioForm;
+}

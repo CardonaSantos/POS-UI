@@ -1,40 +1,31 @@
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+"use client";
+
 import { Ghost } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
 
 interface Props {
   customerId: number;
 }
+
 function EmptyImages({ customerId }: Props) {
   return (
-    <div>
-      <Empty className="border border-dashed">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Ghost />
-          </EmptyMedia>
-          <EmptyTitle>Sin recursos disponibles</EmptyTitle>
-          <EmptyDescription>
-            Oops, parece que aún no hay nada cargado
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Link to={`/crm/cliente-edicion/${customerId}`}>
-            <Button variant="outline" size="sm">
-              Actualizar
-            </Button>
-          </Link>
-        </EmptyContent>
-      </Empty>
-    </div>
+    <AppEmptyState
+      preset="empty"
+      variant="dashed"
+      size="md"
+      align="center"
+      icon={<Ghost size={26} />}
+      title="Sin recursos disponibles"
+      description="Aún no hay imágenes o archivos cargados para este cliente."
+      action={
+        <AppButton asChild variant="secondary" size="sm" width="auto">
+          <Link to={`/crm/cliente-edicion/${customerId}`}>Actualizar</Link>
+        </AppButton>
+      }
+    />
   );
 }
 

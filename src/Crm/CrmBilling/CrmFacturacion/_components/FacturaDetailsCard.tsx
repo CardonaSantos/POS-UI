@@ -1,13 +1,12 @@
-import { FacturaInternetToPay } from "@/Crm/features/factura-internet/factura-to-pay";
-import { ServicioAdicional } from "@/Crm/features/servicio-adicional/servicio-adicional";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type React from "react";
+import { Link } from "react-router-dom";
 import {
+  AlertCircle,
   Bot,
   Calendar,
   CalendarClock,
+  CheckCircle,
   CreditCard,
-  EllipsisVertical,
   FilePenLine,
   FileText,
   Globe,
@@ -18,31 +17,34 @@ import {
   Trash2,
   User,
   Wifi,
+  XCircle,
 } from "lucide-react";
-import {
-  getEstadoBadgeColor,
-  getEstadoIcon,
-} from "../helpers/bagesColorFunctions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Link } from "react-router-dom";
-import { CompactField } from "./CompactField";
-import { Button } from "@/components/ui/button";
-import { formattShortFecha } from "@/utils/formattFechas";
+
+import type { FacturaInternetToPay } from "@/Crm/features/factura-internet/factura-to-pay";
+import type { ServicioAdicional } from "@/Crm/features/servicio-adicional/servicio-adicional";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppSeparator } from "@/components/app/primitives/app-separator";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppSwitch } from "@/components/app/primitives/app-switch";
+
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
-import { Separator } from "@/components/ui/separator";
+import { formattShortFecha } from "@/utils/formattFechas";
+
+import { CompactField } from "./CompactField";
+
+type AppBadgeTone =
+  | "neutral"
+  | "primary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info";
 
 interface FacturaDetailsCardProps {
   factura: FacturaInternetToPay;
@@ -63,68 +65,62 @@ export const FacturaDetailsCard: React.FC<FacturaDetailsCardProps> = ({
   onShowHistorial,
   onRequestDelete,
 }) => {
+  const pagosCount = factura.pagos?.length ?? 0;
+  const saldoPendiente = factura.saldoPendiente ?? factura.montoPago ?? 0;
+  const estadoTone = getFacturaEstadoTone(
+    String(factura.estadoFacturaInternet),
+  );
+
   return (
-    <Card>
-      <CardHeader className="pt-3 pb-1">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <ReceiptText className="h-4 w-4" />
-            <span className="truncate">Factura #{factura.id}</span>
-          </CardTitle>
-
-          <Badge
-            className={`${getEstadoBadgeColor(
-              factura.estadoFacturaInternet
-            )} flex items-center text-[11px] px-2 py-0.5`}
+    <AppCard
+      variant="outline"
+      size="xs"
+      title={
+        <AppInline gap="xs" align="center" className="min-w-0">
+          <ReceiptText className="h-4 w-4 shrink-0" />
+          <span className="truncate">Factura #{factura.id}</span>
+        </AppInline>
+      }
+      action={
+        <AppInline gap="xs" align="center" justify="end" wrap>
+          <AppBadge
+            size="xs"
+            tone={estadoTone}
+            appearance="soft"
+            leftIcon={getFacturaEstadoIcon(
+              String(factura.estadoFacturaInternet),
+            )}
           >
-            {getEstadoIcon(factura.estadoFacturaInternet)}
             {factura.estadoFacturaInternet}
-          </Badge>
+          </AppBadge>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full hover:bg-muted dark:hover:bg-gray-800"
-              >
-                <EllipsisVertical className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
+          <AppButton
+            asChild
+            size="xs"
+            variant="ghost"
+            leftIcon={<FilePenLine className="h-3.5 w-3.5" />}
+          >
+            <Link to={`/crm/editar?factura=${factura.id}`}>Editar</Link>
+          </AppButton>
 
-            <DropdownMenuContent align="end" className="w-36">
-              <DropdownMenuLabel className="text-xs">
-                Acciones
-              </DropdownMenuLabel>
-
-              <DropdownMenuItem asChild>
-                <Link
-                  className="flex items-center text-xs"
-                  to={`/crm/editar?factura=${factura.id}`}
-                >
-                  <FilePenLine className="h-3 w-3 mr-2" />
-                  Editar
-                </Link>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={onRequestDelete}
-                className="text-red-600 dark:text-red-400 text-xs"
-              >
-                <Trash2 className="h-3 w-3 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3 pt-1 pb-3">
-        {/* Detalles principales */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-          {/* Servicio */}
+          <AppButton
+            type="button"
+            size="xs"
+            variant="danger"
+            leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+            onClick={onRequestDelete}
+          >
+            Eliminar
+          </AppButton>
+        </AppInline>
+      }
+    >
+      <AppStack gap="xs">
+        <AppGrid cols={{ base: 1, sm: 2, xl: 3 }} gap="xs">
           <CompactField
-            icon={<Wifi className="h-4 w-4" />}
+            icon={
+              <Wifi className="h-4 w-4 text-[hsl(var(--app-primary,var(--primary)))]" />
+            }
             label="Servicio"
             value={
               factura.cliente.servicioInternet?.nombre || "Plan de Internet"
@@ -132,204 +128,288 @@ export const FacturaDetailsCard: React.FC<FacturaDetailsCardProps> = ({
             extra={factura.cliente.servicioInternet?.velocidad}
           />
 
-          {/* Fecha de Pago Esperada */}
           <CompactField
             icon={
               <CalendarClock
-                className={`h-4 w-4 ${
+                className={[
+                  "h-4 w-4",
                   facturaVencida
-                    ? "text-destructive"
-                    : "text-primary dark:text-white"
-                }`}
+                    ? "text-[hsl(var(--app-danger,var(--destructive)))]"
+                    : "text-[hsl(var(--app-primary,var(--primary)))]",
+                ].join(" ")}
               />
             }
-            label="Fecha de Pago Esperada"
+            label="Fecha de pago esperada"
             value={formattShortFecha(factura.fechaPagoEsperada)}
             badge={
-              facturaVencida && (
-                <Badge
-                  variant="destructive"
-                  className="text-[10px] px-1 uppercase"
-                >
+              facturaVencida ? (
+                <AppBadge size="xs" tone="danger" appearance="soft">
                   Vencida
-                </Badge>
-              )
+                </AppBadge>
+              ) : null
             }
           />
 
-          {/* Fecha Pagada */}
           <CompactField
-            icon={<Calendar className="h-4 w-4" />}
-            label="Fecha Pagada"
+            icon={
+              <Calendar className="h-4 w-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
+            }
+            label="Fecha pagada"
             value={formattShortFecha(factura.fechaPagada)}
           />
 
-          {/* Monto Total */}
           <CompactField
-            icon={<CreditCard className="h-4 w-4" />}
-            label="Monto Total"
+            icon={
+              <CreditCard className="h-4 w-4 text-[hsl(var(--app-primary,var(--primary)))]" />
+            }
+            label="Monto total"
             value={formattMonedaGT(factura.montoPago)}
-            valueClassName="text-sm"
           />
 
-          {/* Saldo Pendiente */}
           <CompactField
-            icon={<CreditCard className="h-4 w-4" />}
-            label="Saldo Pendiente"
-            value={formattMonedaGT(
-              factura.saldoPendiente ?? factura.montoPago ?? 0
-            )}
-            valueClassName={`text-sm ${
-              factura.saldoPendiente && factura.saldoPendiente > 0
-                ? "text-destructive"
-                : "text-green-600"
-            }`}
+            icon={
+              <CreditCard className="h-4 w-4 text-[hsl(var(--app-primary,var(--primary)))]" />
+            }
+            label="Saldo pendiente"
+            value={formattMonedaGT(saldoPendiente)}
+            valueClassName={
+              saldoPendiente > 0
+                ? "text-[hsl(var(--app-danger,var(--destructive)))]"
+                : "text-[hsl(var(--app-success))]"
+            }
           />
 
-          {/* Generado por */}
           <CompactField
             icon={
               factura.creador ? (
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4 text-[hsl(var(--app-primary,var(--primary)))]" />
               ) : (
-                <Bot className="h-4 w-4" />
+                <Bot className="h-4 w-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
               )
             }
             label="Generado por"
             value={factura.creador?.nombre ?? "Sistema Auto"}
-            valueClassName="text-sm"
           />
-        </div>
+        </AppGrid>
 
-        <Separator />
-        {/* Detalle + Zona + Historial súper compactados */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          {/* Detalle de la factura */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <FileText className="h-3 w-3" />
-              <span>Detalle</span>
+        <AppSeparator spacing="none" />
+
+        <AppGrid cols={{ base: 1, md: 2 }} gap="xs">
+          <FacturaInfoBox
+            icon={<FileText className="h-3.5 w-3.5" />}
+            label="Detalle"
+          >
+            {factura.detalleFactura || "Sin detalles adicionales"}
+          </FacturaInfoBox>
+
+          {factura.facturacionZona ? (
+            <FacturaInfoBox
+              icon={<MapPin className="h-3.5 w-3.5" />}
+              label="Zona de facturación"
+            >
+              <AppInline gap="xs" align="center">
+                <MapPin className="h-3.5 w-3.5 text-[hsl(var(--app-primary,var(--primary)))]" />
+                <span>{factura.facturacionZona.nombre}</span>
+              </AppInline>
+            </FacturaInfoBox>
+          ) : null}
+
+          {pagosCount > 0 ? (
+            <div className="md:col-span-2">
+              <FacturaInfoBox
+                icon={<History className="h-3.5 w-3.5" />}
+                label="Historial de pagos"
+                action={
+                  <AppButton
+                    type="button"
+                    size="xs"
+                    variant="ghost"
+                    leftIcon={<History className="h-3.5 w-3.5" />}
+                    onClick={onShowHistorial}
+                  >
+                    Ver historial
+                  </AppButton>
+                }
+              >
+                {pagosCount === 1
+                  ? "1 pago registrado"
+                  : `${pagosCount} pagos registrados`}
+              </FacturaInfoBox>
             </div>
-            <p className="bg-muted rounded-md px-2 py-1 leading-snug">
-              {factura.detalleFactura || "Sin detalles adicionales"}
-            </p>
-          </div>
+          ) : null}
+        </AppGrid>
 
-          {/* Zona de facturación */}
-          {factura.facturacionZona && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                <MapPin className="h-3 w-3" />
-                <span>Zona de Facturación</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3 w-3 text-primary dark:text-white" />
-                <span className="text-xs">
-                  {factura.facturacionZona.nombre}
-                </span>
-              </div>
-            </div>
-          )}
+        <AppSeparator spacing="none" />
 
-          {/* Historial de pagos */}
-          {factura.pagos && factura.pagos.length > 0 && (
-            <div className="space-y-1 md:col-span-2">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                  <History className="h-3 w-3" />
-                  <span>Historial de Pagos</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-[11px]"
-                  onClick={onShowHistorial}
-                >
-                  <History className="h-3.5 w-3.5 mr-1" />
-                  Ver historial
-                </Button>
-              </div>
-              <div className="text-[11px]">
-                {factura.pagos.length === 1 ? (
-                  <span>1 pago registrado</span>
-                ) : (
-                  <span>{factura.pagos.length} pagos registrados</span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Otros servicios adquiridos – sin Card, más plano */}
-        <div className="mt-2 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-muted-foreground">
+        <AppStack gap="xs">
+          <AppInline gap="xs" align="center" justify="between">
+            <span className="text-[11px] font-medium text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
               Otros servicios adquiridos
             </span>
-          </div>
+
+            {servicios.length > 0 ? (
+              <AppBadge size="xs" tone="info" appearance="soft">
+                {servicios.length}
+              </AppBadge>
+            ) : null}
+          </AppInline>
 
           {servicios.length === 0 ? (
-            <p className="text-[11px] text-muted-foreground">
-              No hay servicios adicionales disponibles para este cliente.
-            </p>
+            <AppEmptyState
+              preset="empty"
+              variant="plain"
+              size="xs"
+              align="left"
+              title="Sin servicios adicionales"
+              description="No hay servicios adicionales disponibles para este cliente."
+            />
           ) : (
-            <div className="space-y-1.5">
+            <AppStack gap="xs">
               {servicios.map((servicio) => (
-                <div
+                <ServicioAdicionalItem
                   key={servicio.id}
-                  className="flex items-center justify-between rounded-md border border-border/60 bg-card/50 px-2 py-1.5 hover:bg-accent/5 transition-colors"
-                >
-                  <div className="flex items-start gap-2">
-                    <Badge
-                      variant="outline"
-                      className="flex h-5 items-center gap-1 bg-background"
-                    >
-                      <Globe className="h-3 w-3" />
-                      <span className="text-[11px] font-medium">
-                        {servicio.nombre}
-                      </span>
-                    </Badge>
-
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-semibold">
-                          {formattMonedaGT(servicio.precio)}
-                        </span>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              className="max-w-[220px] text-[11px]"
-                            >
-                              <p>{servicio.descripcion}</p>
-                              <p className="mt-1 text-muted-foreground">
-                                Adquirido:{" "}
-                                {formattShortFecha(servicio.creadoEn as string)}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Switch
-                    checked={serviciosSeleccionados.includes(servicio.id)}
-                    onCheckedChange={(checked) =>
-                      onToggleServicio(checked, servicio.id)
-                    }
-                    aria-label={`Agregar ${servicio.nombre} a la factura`}
-                  />
-                </div>
+                  servicio={servicio}
+                  checked={serviciosSeleccionados.includes(servicio.id)}
+                  onCheckedChange={(checked) =>
+                    onToggleServicio(checked, servicio.id)
+                  }
+                />
               ))}
-            </div>
+            </AppStack>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </AppStack>
+      </AppStack>
+    </AppCard>
   );
 };
+
+function FacturaInfoBox({
+  icon,
+  label,
+  action,
+  children,
+}: {
+  icon?: React.ReactNode;
+  label: React.ReactNode;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.14)] px-2 py-1.5">
+      <AppInline gap="xs" align="center" justify="between" className="mb-0.5">
+        <AppInline gap="xs" align="center" className="min-w-0">
+          {icon ? (
+            <span className="shrink-0 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {icon}
+            </span>
+          ) : null}
+
+          <span className="truncate text-[11px] font-medium text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            {label}
+          </span>
+        </AppInline>
+
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </AppInline>
+
+      <div className="break-words text-xs leading-snug text-[hsl(var(--app-foreground,var(--foreground)))]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ServicioAdicionalItem({
+  servicio,
+  checked,
+  onCheckedChange,
+}: {
+  servicio: ServicioAdicional;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-background,var(--background))/0.45)] px-2 py-1.5 transition-colors hover:bg-[hsl(var(--app-muted,var(--muted))/0.18)]">
+      <AppInline gap="sm" align="start" justify="between">
+        <AppStack gap="none" className="min-w-0">
+          <AppInline gap="xs" align="center" wrap>
+            <AppBadge
+              size="xs"
+              tone="primary"
+              appearance="soft"
+              leftIcon={<Globe className="h-3 w-3" />}
+            >
+              {servicio.nombre}
+            </AppBadge>
+
+            <span className="text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+              {formattMonedaGT(servicio.precio)}
+            </span>
+          </AppInline>
+
+          {servicio.descripcion ? (
+            <AppInline
+              gap="xs"
+              align="start"
+              className="text-[11px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+            >
+              <Info className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className="break-words leading-snug">
+                {servicio.descripcion}
+              </span>
+            </AppInline>
+          ) : null}
+
+          <span className="text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            Adquirido: {formattShortFecha(servicio.creadoEn as string)}
+          </span>
+        </AppStack>
+
+        <AppSwitch
+          size="sm"
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          aria-label={`Agregar ${servicio.nombre} a la factura`}
+        />
+      </AppInline>
+    </div>
+  );
+}
+
+function getFacturaEstadoTone(estado: string): AppBadgeTone {
+  const normalized = estado.toUpperCase();
+
+  if (normalized.includes("PAGADA")) return "success";
+  if (normalized.includes("VENCIDA")) return "danger";
+  if (normalized.includes("PARCIAL")) return "info";
+  if (normalized.includes("PENDIENTE")) return "warning";
+  if (normalized.includes("ANULADA")) return "neutral";
+
+  return "neutral";
+}
+
+function getFacturaEstadoIcon(estado: string) {
+  const normalized = estado.toUpperCase();
+
+  if (normalized.includes("PAGADA")) {
+    return <CheckCircle className="h-3 w-3" />;
+  }
+
+  if (normalized.includes("VENCIDA")) {
+    return <AlertCircle className="h-3 w-3" />;
+  }
+
+  if (normalized.includes("PARCIAL")) {
+    return <CreditCard className="h-3 w-3" />;
+  }
+
+  if (normalized.includes("PENDIENTE")) {
+    return <CalendarClock className="h-3 w-3" />;
+  }
+
+  if (normalized.includes("ANULADA")) {
+    return <XCircle className="h-3 w-3" />;
+  }
+
+  return null;
+}

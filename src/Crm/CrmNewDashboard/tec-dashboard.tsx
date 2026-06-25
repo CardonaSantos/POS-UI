@@ -1,61 +1,136 @@
+"use client";
+import * as React from "react";
+import { AlertTriangle, ClipboardList, RefreshCw } from "lucide-react";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppDataState } from "@/components/app/primitives/app-data-state";
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+import { AppStack } from "@/components/app/primitives/app-stack";
 import { useGetTicketsAsignados } from "../CrmHooks/hooks/dashboard/useDashboard";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-import { ClipboardList, Loader2, AlertTriangle } from "lucide-react";
 import { TicketAsignadoCard } from "./_components/tec-ticket/TicketAsignadoCard";
+import { TecDashboardSummary } from "./_components/tec-dashboard-summary";
+import {
+  getTicketStats,
+  sortTicketsForTechnician,
+} from "./_components/ticket-helpers";
 
 function TecDashboard() {
-  const tecId: number = useStoreCrm((state) => state.userIdCRM) ?? 0;
-  const { data: tks = [], isLoading, isError } = useGetTicketsAsignados(tecId);
+  const tecId = useStoreCrm((state) => state.userIdCRM) ?? 0;
 
-  const tickets = Array.isArray(tks) ? tks : [];
+  const ticketsQuery = useGetTicketsAsignados(tecId);
+
+  const {
+    data: tks = [],
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = ticketsQuery;
+
+  const tickets = React.useMemo(() => {
+    if (!Array.isArray(tks)) return [];
+
+    return [...tks].sort(sortTicketsForTechnician);
+  }, [tks]);
+
+  const stats = React.useMemo(() => getTicketStats(tickets), [tickets]);
 
   return (
-    <PageTransitionCrm titleHeader="Técnico Dashboard" variant="fade-pure">
-      <div className="flex flex-col gap-3 h-full">
-        {/* Resumen superior */}
-        <header className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300">
-              <ClipboardList className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Tickets asignados</p>
-              <p className="text-base font-semibold">
-                {tickets.length} en total
-              </p>
-            </div>
-          </div>
-        </header>
+    <PageTransitionCrm
+      titleHeader="Mis tickets"
+      fallbackBackTo="/crm"
+      variant="crm-soft"
+      stickyHeader
+      actions={
+        <AppButton
+          type="button"
+          size="xs"
+          variant="secondary"
+          width="auto"
+          leftIcon={
+            <RefreshCw
+              className={["h-3.5 w-3.5", isFetching ? "animate-spin" : ""].join(
+                " ",
+              )}
+            />
+          }
+          disabled={isFetching}
+          onClick={() => refetch()}
+        >
+          Actualizar
+        </AppButton>
+      }
+    >
+      <AppStack
+        gap="sm"
+        // className="pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+      >
+        <TecDashboardSummary stats={stats} isFetching={isFetching} />
 
-        {/* Estados de carga / error / vacío */}
-        {isLoading && (
-          <div className="flex flex-1 items-center justify-center py-10 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Cargando tickets...
-          </div>
-        )}
-
-        {isError && !isLoading && (
-          <div className="flex flex-1 items-center justify-center py-10 text-sm text-rose-500 gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Ocurrió un error al cargar tus tickets.
-          </div>
-        )}
-
-        {!isLoading && !isError && tickets.length === 0 && (
-          <div className="flex flex-1 items-center justify-center py-10 text-sm text-muted-foreground text-center">
-            No tienes tickets asignados por ahora.
-          </div>
-        )}
-
-        {/* Lista de tickets */}
-        <section className="flex-1 space-y-3 pb-2">
-          {tickets.map((ticket) => (
-            <TicketAsignadoCard key={ticket.id} ticket={ticket} />
-          ))}
-        </section>
-      </div>
+        <AppDataState
+          isLoading={isLoading}
+          isFetching={isFetching}
+          error={isError ? error : null}
+          isEmpty={!tickets.length}
+          onRetry={() => refetch()}
+          loadingVariant="skeleton-card"
+          loadingRows={4}
+          emptyFallback={
+            <AppEmptyState
+              preset="empty"
+              variant="outline"
+              size="sm"
+              align="center"
+              icon={<ClipboardList className="h-6 w-6" />}
+              title="Sin tickets asignados"
+              description="No tienes tickets pendientes por atender en este momento."
+              action={
+                <AppButton
+                  type="button"
+                  size="xs"
+                  variant="secondary"
+                  leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+                  onClick={() => refetch()}
+                >
+                  Actualizar
+                </AppButton>
+              }
+            />
+          }
+          errorFallback={
+            <AppEmptyState
+              preset="error"
+              variant="outline"
+              size="sm"
+              align="center"
+              icon={<AlertTriangle className="h-6 w-6" />}
+              title="No se pudieron cargar los tickets"
+              description="Revisa tu conexión o intenta actualizar nuevamente."
+              action={
+                <AppButton
+                  type="button"
+                  size="xs"
+                  variant="secondary"
+                  leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+                  onClick={() => refetch()}
+                >
+                  Reintentar
+                </AppButton>
+              }
+            />
+          }
+        >
+          <section aria-label="Lista de tickets asignados">
+            <AppStack gap="2xl">
+              {tickets.map((ticket) => (
+                <TicketAsignadoCard key={ticket.id} ticket={ticket} />
+              ))}
+            </AppStack>
+          </section>
+        </AppDataState>
+      </AppStack>
     </PageTransitionCrm>
   );
 }

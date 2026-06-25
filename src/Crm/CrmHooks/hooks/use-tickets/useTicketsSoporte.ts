@@ -23,6 +23,8 @@ export interface TicketsData {
   ticketsResueltos: number;
 }
 
+export type TicketQuickView = "all" | "assignedToMe" | "createdByMe";
+
 export class QuerySearchTickets {
   page?: number = 1;
 
@@ -38,11 +40,13 @@ export class QuerySearchTickets {
 
   sector?: number;
 
-  fechaInicio?: Date;
+  fechaInicio?: string;
 
-  fechaFin?: Date;
+  fechaFin?: string;
 
   creadosPor?: number;
+
+  vista?: string;
 }
 
 export function useGetTicketsSoporte(query: QuerySearchTickets) {
@@ -53,14 +57,6 @@ export function useGetTicketsSoporte(query: QuerySearchTickets) {
       params: query,
     },
   );
-  // return useCrmQuery<PropsResponse>(
-
-  //   ticketsSoporteQkeys.search(query),
-  //   `tickets-soporte`,
-  //   {
-  //     params: query,
-  //   },
-  // );
 }
 
 /**
@@ -83,9 +79,16 @@ export function useGetTicketsSoporteFromCustomer() {
  * @returns
  */
 export function usePostCommentary() {
+  const invalidate = useInvalidateQk();
   return crm.useMutationApi<void, ComentarioSeguimientoDto>(
     "post",
     crm_endpoints.ticket.post_commentary,
+    undefined,
+    {
+      onSuccess: () => {
+        invalidate(ticketsSoporteQkeys.search({}));
+      },
+    },
   );
 }
 

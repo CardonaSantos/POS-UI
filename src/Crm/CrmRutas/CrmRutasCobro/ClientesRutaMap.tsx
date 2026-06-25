@@ -1,67 +1,95 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
+import * as React from "react";
 import {
-  Map,
   AdvancedMarker,
-  useMap,
   InfoWindow,
+  Map as GoogleMap,
+  useMap,
 } from "@vis.gl/react-google-maps";
-import { MapPin, Phone, UserRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ExternalLink,
+  MapPin,
+  Navigation,
+  Phone,
+  UserRound,
+  X,
+} from "lucide-react";
 
-interface Ubicacion {
-  lat: number;
-  lng: number;
-}
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
 
-interface Factura {
-  id: number;
-  montoPago: number;
-  estadoFactura: string;
-  saldoPendiente: number;
-  creadoEn: string;
-  detalleFactura: string;
-}
-
-interface contactoReferencia {
-  telefono: string;
-  nombre: string;
-}
-
-interface Cliente {
-  id: number;
-  nombreCompleto: string;
-  telefono: string;
-  contactoReferencia: contactoReferencia;
-  location: Ubicacion;
-  direccion: string;
-  imagenes: string[];
-  facturas: Factura[];
-}
+import type { ClienteRutaMapItem } from "./_components/ruta-cobro.helpers";
 
 interface PropsClientes {
-  clientes: Cliente[];
+  clientes: ClienteRutaMapItem[];
+  selectedClientId?: number | null;
+  onSelectClient?: (clienteId: number | null) => void;
 }
 
-const Maps = ({ clientes }: PropsClientes) => {
-  const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
-  const map = useMap();
+const DEFAULT_CENTER = {
+  lat: 15.666148,
+  lng: -91.709069,
+};
 
-  const isValidLocation = (location: Ubicacion) =>
+function isValidLocation(location?: { lat: number; lng: number } | null) {
+  return (
     location &&
     typeof location.lat === "number" &&
     typeof location.lng === "number" &&
-    !isNaN(location.lat) &&
-    !isNaN(location.lng) &&
+    Number.isFinite(location.lat) &&
+    Number.isFinite(location.lng) &&
     Math.abs(location.lat) <= 90 &&
-    Math.abs(location.lng) <= 180;
+    Math.abs(location.lng) <= 180
+  );
+}
 
-  const validClientes = clientes.filter((c) => isValidLocation(c.location));
+function hasPendingInvoices(cliente: ClienteRutaMapItem) {
+  return cliente.facturas.some((factura) => factura.estadoFactura !== "PAGADA");
+}
 
-  useEffect(() => {
-    if (!map || validClientes.length < 2) return;
+function getClienteStatus(cliente: ClienteRutaMapItem) {
+  if (!cliente.facturas.length) {
+    return {
+      label: "Sin facturas",
+      tone: "neutral" as const,
+      markerClass:
+        "bg-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+    };
+  }
+
+  if (hasPendingInvoices(cliente)) {
+    return {
+      label: "Pendiente",
+      tone: "danger" as const,
+      markerClass: "bg-[hsl(var(--app-danger,var(--destructive)))]",
+    };
+  }
+
+  return {
+    label: "Pagado",
+    tone: "success" as const,
+    markerClass: "bg-[hsl(var(--app-success))]",
+  };
+}
+
+function getRouteStrokeColor() {
+  if (typeof window === "undefined") return "#2563eb";
+
+  const primary = getComputedStyle(document.documentElement)
+    .getPropertyValue("--app-primary")
+    .trim();
+
+  return primary ? `hsl(${primary})` : "#2563eb";
+}
+
+function RouteDirections({ clientes }: { clientes: ClienteRutaMapItem[] }) {
+  const map = useMap();
+
+  React.useEffect(() => {
+    if (!map || clientes.length < 2) return;
 
     const service = new google.maps.DirectionsService();
     const renderer = new google.maps.DirectionsRenderer({
@@ -69,164 +97,276 @@ const Maps = ({ clientes }: PropsClientes) => {
       suppressInfoWindows: true,
       preserveViewport: false,
       polylineOptions: {
-        strokeColor: "#0802b0",
+        strokeColor: getRouteStrokeColor(),
         strokeWeight: 4,
-        strokeOpacity: 0.7,
+        strokeOpacity: 0.78,
       },
       map,
     });
 
-    const waypoints = validClientes.slice(1, -1).map((c) => ({
-      location: c.location,
+    const waypoints = clientes.slice(1, -1).map((cliente) => ({
+      location: cliente.location,
       stopover: true,
     }));
 
     service.route(
       {
-        origin: validClientes[0].location,
-        destination: validClientes[validClientes.length - 1].location,
+        origin: clientes[0].location,
+        destination: clientes[clientes.length - 1].location,
         waypoints,
         travelMode: google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
         if (status === "OK" && result) {
           renderer.setDirections(result);
-        } else {
-          console.error("Error en DirectionsService:", status);
+          return;
         }
+
+        console.warn("No se pudo dibujar la ruta en Google Maps:", status);
       },
     );
 
     return () => renderer.setMap(null);
-  }, [map, validClientes]);
+  }, [map, clientes]);
 
-  const CustomMarker = ({ cliente }: { cliente: Cliente }) => {
-    const todasPagadas = cliente.facturas.every(
-      (factura) => factura.estadoFactura === "PAGADA",
-    );
+  return null;
+}
 
-    return (
-      <div className="relative group">
-        <div className="flex flex-col items-center">
-          <div
-            className={`w-5 h-5 ${
-              todasPagadas ? "bg-green-500" : "bg-red-500"
-            } rounded-full flex items-center justify-center text-white shadow-md transform-gpu transition-transform group-hover:scale-110 z-10`}
-          >
-            <UserRound className="w-3 h-3" />
-          </div>
-          <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-transparent border-t-blue-600 -mt-[1px] shadow-sm"></div>
-        </div>
-        <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-white px-2 py-1 rounded shadow text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 border border-gray-200 text-black">
-          {cliente.nombreCompleto}
-        </div>
-      </div>
-    );
-  };
+function MapSelectionSync({ cliente }: { cliente: ClienteRutaMapItem | null }) {
+  const map = useMap();
 
-  const InfoContent = ({
-    cliente,
-    onClose,
-  }: {
-    cliente: Cliente;
-    onClose: () => void;
-  }) => {
-    return (
-      <div className="w-[350px] bg-white rounded-lg overflow-hidden shadow-md border border-gray-200 text-xs">
-        <div className="flex">
-          <div className="w-full p-2">
-            <h2 className="text-sm font-semibold text-gray-900">
-              {cliente.nombreCompleto}
-            </h2>
-            <p className="text-gray-600 text-xs">{cliente.direccion}</p>
+  React.useEffect(() => {
+    if (!map || !cliente) return;
 
-            <div className="flex items-center gap-2 mt-1 text-gray-700">
-              <Phone className="h-3 w-3 text-blue-500" />
-              <span>{cliente.telefono || "Sin teléfono registrado"}</span>
-            </div>
-          </div>
-        </div>
+    map.panTo(cliente.location);
 
-        <div className="px-2 py-1 border-t border-gray-100">
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-xs text-gray-800">
-              Contacto de referencia:
-            </span>
-            <span className="text-xs text-gray-700">
-              {cliente.contactoReferencia.nombre || "Sin nombre registrado"}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 mt-1 text-gray-700">
-            <Phone className="h-3 w-3 text-gray-500" />
-            <span>
-              {cliente.contactoReferencia.telefono || "No registrado"}
-            </span>
-          </div>
-        </div>
+    const currentZoom = map.getZoom() ?? 16;
+    if (currentZoom < 17) {
+      map.setZoom(17);
+    }
+  }, [map, cliente]);
 
-        <div className="flex justify-between items-center px-2 py-1 bg-gray-50 text-gray-500 text-xs">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            <span>
-              {cliente.location.lat.toFixed(5)},{" "}
-              {cliente.location.lng.toFixed(5)}
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-blue-600 hover:underline text-xs"
-          >
-            Cerrar
-          </button>
-        </div>
+  return null;
+}
 
-        <div className="flex justify-between items-center px-2 py-1 bg-gray-50 text-gray-500 text-xs">
-          <Button variant="link" asChild>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${cliente.location.lat},${cliente.location.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span className="text-blue-500 underline text-sm hover:text-blue-600">
-                Iniciar ruta en Maps
-              </span>
-            </a>
-          </Button>
-        </div>
-      </div>
-    );
-  };
+function ClienteMarker({
+  cliente,
+  selected,
+  onSelect,
+}: {
+  cliente: ClienteRutaMapItem;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const status = getClienteStatus(cliente);
 
   return (
-    <Map
+    <button
+      type="button"
+      aria-label={`Seleccionar cliente ${cliente.nombreCompleto}`}
+      aria-pressed={selected}
+      onClick={onSelect}
+      className="group relative flex flex-col items-center outline-none"
+    >
+      <span
+        className={[
+          "flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md ring-2 ring-white transition-transform group-hover:scale-110 group-focus-visible:scale-110 group-focus-visible:ring-[hsl(var(--app-ring,var(--ring)))]",
+          status.markerClass,
+          selected ? "scale-110" : "",
+        ].join(" ")}
+      >
+        <UserRound size={13} />
+      </span>
+
+      <span
+        className={[
+          "mt-[-1px] h-0 w-0 border-x-[5px] border-t-[7px] border-x-transparent",
+          status.markerClass.replace("bg-", "border-t-"),
+        ].join(" ")}
+      />
+
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1 max-w-[220px] -translate-x-1/2 truncate rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-popover,var(--popover)))] px-2 py-1 text-[11px] font-medium text-[hsl(var(--app-popover-foreground,var(--popover-foreground)))] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+        {cliente.nombreCompleto}
+      </span>
+    </button>
+  );
+}
+
+function MapInfoWindowContent({
+  cliente,
+  onClose,
+}: {
+  cliente: ClienteRutaMapItem;
+  onClose: () => void;
+}) {
+  const status = getClienteStatus(cliente);
+  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${cliente.location.lat},${cliente.location.lng}`;
+
+  return (
+    <div className="w-[300px] overflow-hidden rounded-[var(--app-radius-lg)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-popover,var(--popover)))] text-[hsl(var(--app-popover-foreground,var(--popover-foreground)))] shadow-sm">
+      <AppStack gap="sm" className="p-3">
+        <AppInline align="start" justify="between" gap="sm">
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold leading-5">
+              {cliente.nombreCompleto}
+            </h2>
+
+            <p className="line-clamp-2 text-[11px] leading-4 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              {cliente.direccion || "Sin dirección registrada"}
+            </p>
+          </div>
+
+          <AppButton
+            type="button"
+            variant="ghost"
+            size="xs"
+            width="auto"
+            aria-label="Cerrar detalle del cliente"
+            onClick={onClose}
+            className="h-7 px-2"
+          >
+            <X size={13} />
+          </AppButton>
+        </AppInline>
+
+        <AppInline align="center" gap="xs" wrap>
+          <AppBadge tone={status.tone} appearance="soft" size="xs">
+            {status.label}
+          </AppBadge>
+
+          <AppBadge tone="info" appearance="soft" size="xs">
+            {cliente.facturas.length} factura
+            {cliente.facturas.length === 1 ? "" : "s"}
+          </AppBadge>
+        </AppInline>
+
+        <div className="rounded-[var(--app-radius-md)] bg-[hsl(var(--app-muted,var(--muted)))/0.35] p-2">
+          <AppStack gap="xs">
+            <AppInline align="center" gap="xs" className="min-w-0">
+              <Phone
+                size={13}
+                className="shrink-0 text-[hsl(var(--app-primary))]"
+              />
+              <span className="truncate text-xs">
+                {cliente.telefono || "Sin teléfono registrado"}
+              </span>
+            </AppInline>
+
+            <AppInline align="center" gap="xs" className="min-w-0">
+              <Phone
+                size={13}
+                className="shrink-0 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+              />
+              <span className="truncate text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                Ref:{" "}
+                {cliente.contactoReferencia?.telefono ||
+                  "Referencia no registrada"}
+              </span>
+            </AppInline>
+          </AppStack>
+        </div>
+
+        <AppInline align="center" gap="xs" className="min-w-0">
+          <MapPin
+            size={13}
+            className="shrink-0 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+          />
+
+          <span className="truncate text-[11px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            {cliente.location.lat.toFixed(5)}, {cliente.location.lng.toFixed(5)}
+          </span>
+        </AppInline>
+
+        <AppButton
+          type="button"
+          variant="primary"
+          size="xs"
+          width="full"
+          asChild
+        >
+          <a href={mapsHref} target="_blank" rel="noopener noreferrer">
+            <Navigation size={13} />
+            Iniciar ruta en Maps
+            <ExternalLink size={12} />
+          </a>
+        </AppButton>
+      </AppStack>
+    </div>
+  );
+}
+
+export default function Maps({
+  clientes,
+  selectedClientId,
+  onSelectClient,
+}: PropsClientes) {
+  const [internalSelectedClientId, setInternalSelectedClientId] =
+    React.useState<number | null>(null);
+
+  const validClientes = React.useMemo(
+    () => clientes.filter((cliente) => isValidLocation(cliente.location)),
+    [clientes],
+  );
+
+  const activeClientId = selectedClientId ?? internalSelectedClientId;
+
+  const selectedClient = React.useMemo(
+    () =>
+      validClientes.find((cliente) => cliente.id === activeClientId) ?? null,
+    [activeClientId, validClientes],
+  );
+
+  const handleSelectClient = React.useCallback(
+    (clienteId: number | null) => {
+      setInternalSelectedClientId(clienteId);
+      onSelectClient?.(clienteId);
+    },
+    [onSelectClient],
+  );
+
+  const defaultCenter = validClientes[0]?.location ?? DEFAULT_CENTER;
+
+  return (
+    <GoogleMap
       mapId="e209b83095802909"
       defaultZoom={16}
-      defaultCenter={{ lat: 15.666148, lng: -91.709069 }}
-      className="w-full h-full"
+      defaultCenter={defaultCenter}
+      mapTypeId="satellite"
+      gestureHandling="greedy"
+      streetViewControl={false}
+      fullscreenControl
+      mapTypeControl
+      className="h-full w-full"
     >
+      <RouteDirections clientes={validClientes} />
+
+      <MapSelectionSync cliente={selectedClient} />
+
       {validClientes.map((cliente) => (
         <AdvancedMarker
           key={cliente.id}
           position={cliente.location}
-          onClick={() => setSelectedClient(cliente)}
+          onClick={() => handleSelectClient(cliente.id)}
         >
-          <CustomMarker cliente={cliente} />
+          <ClienteMarker
+            cliente={cliente}
+            selected={cliente.id === activeClientId}
+            onSelect={() => handleSelectClient(cliente.id)}
+          />
         </AdvancedMarker>
       ))}
 
-      {selectedClient && (
+      {selectedClient ? (
         <InfoWindow
           position={selectedClient.location}
-          onCloseClick={() => setSelectedClient(null)}
+          onCloseClick={() => handleSelectClient(null)}
         >
-          <InfoContent
+          <MapInfoWindowContent
             cliente={selectedClient}
-            onClose={() => setSelectedClient(null)}
+            onClose={() => handleSelectClient(null)}
           />
         </InfoWindow>
-      )}
-    </Map>
+      ) : null}
+    </GoogleMap>
   );
-};
-
-export default Maps;
+}
