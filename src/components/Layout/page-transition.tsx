@@ -1,51 +1,98 @@
 "use client";
 
-import { PageHeaderCrm } from "@/Crm/Utils/Components/PageHeader";
-import { motion, type Variants } from "framer-motion";
-import * as React from "react";
+import type React from "react";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 
-export const fadeElegant: Variants = {
-  initial: { opacity: 0, y: 12 },
+import { cn } from "@/lib/utils";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { PageHeaderCrm } from "@/Crm/Utils/Components/PageHeader";
+
+export const crmSoft: Variants = {
+  initial: {
+    opacity: 0,
+    y: 8,
+    scale: 0.998,
+  },
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+    scale: 1,
+    transition: {
+      duration: 0.24,
+      ease: [0.22, 1, 0.36, 1],
+    },
   },
   exit: {
     opacity: 0,
-    y: -8,
-    transition: { duration: 0.2, ease: [0.4, 0, 0.6, 1] },
+    y: -4,
+    scale: 0.998,
+    transition: {
+      duration: 0.16,
+      ease: [0.4, 0, 0.6, 1],
+    },
   },
 };
 
-const fadePure: Variants = {
+export const fadeElegant: Variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.26, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    transition: { duration: 0.18, ease: [0.4, 0, 0.6, 1] },
+  },
+};
+
+export const fadePure: Variants = {
   initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    transition: { duration: 0.4, ease: "easeInOut" },
+    transition: { duration: 0.22, ease: "easeInOut" },
   },
   exit: {
     opacity: 0,
-    transition: { duration: 0.25, ease: "easeInOut" },
+    transition: { duration: 0.14, ease: "easeInOut" },
   },
 };
 
-const professionalBlur: Variants = {
-  initial: { opacity: 0, y: 6, filter: "blur(2px)" },
+export const professionalBlur: Variants = {
+  initial: { opacity: 0, y: 6, filter: "blur(1.5px)" },
   animate: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { duration: 0.26, ease: [0.25, 0.1, 0.25, 1] },
   },
   exit: {
     opacity: 0,
     filter: "blur(1px)",
-    transition: { duration: 0.2, ease: [0.4, 0, 0.6, 1] },
+    transition: { duration: 0.16, ease: [0.4, 0, 0.6, 1] },
   },
 };
 
-type AnimationVariant = "fade-elegant" | "fade-pure" | "professional-blur";
+const reducedMotion: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.12 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1 },
+  },
+};
+
+type AnimationVariant =
+  | "crm-soft"
+  | "fade-elegant"
+  | "fade-pure"
+  | "professional-blur";
+
+type AppContainerSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
 type PageTransitionProps = {
   titleHeader: string;
@@ -55,10 +102,14 @@ type PageTransitionProps = {
   stickyHeader?: boolean;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
   variant?: AnimationVariant;
+  containerSize?: AppContainerSize;
+  showBackButton?: boolean;
 };
 
 const variantMap: Record<AnimationVariant, Variants> = {
+  "crm-soft": crmSoft,
   "fade-elegant": fadeElegant,
   "fade-pure": fadePure,
   "professional-blur": professionalBlur,
@@ -67,36 +118,49 @@ const variantMap: Record<AnimationVariant, Variants> = {
 export function PageTransitionCrm({
   children,
   className,
+  contentClassName,
   titleHeader,
   subtitle,
   fallbackBackTo = "/crm",
   actions,
   stickyHeader = false,
-  variant = "fade-elegant",
+  variant = "crm-soft",
+  containerSize = "full",
+  showBackButton = true,
 }: PageTransitionProps) {
-  const selectedVariants = variantMap[variant];
+  const shouldReduceMotion = useReducedMotion();
+  const selectedVariants = shouldReduceMotion
+    ? reducedMotion
+    : variantMap[variant];
 
   return (
-    <>
-      {/* Header fuera del motion: no “rebota” si haces scroll y sticky funciona mejor */}
+    <div className={cn("min-w-0", className)}>
       <PageHeaderCrm
         title={titleHeader}
         subtitle={subtitle}
         fallbackBackTo={fallbackBackTo}
         actions={actions}
         sticky={stickyHeader}
+        showBackButton={showBackButton}
+        containerSize={containerSize}
       />
 
-      {/* Contenido animado */}
       <motion.div
-        className={`container mx-auto px-2 py-1 ${className ?? ""}`}
         variants={selectedVariants}
         initial="initial"
         animate="animate"
         exit="exit"
+        className="min-w-0"
       >
-        {children}
+        <AppContainer
+          size={containerSize}
+          paddingX="sm"
+          paddingY="xs"
+          className={cn("min-w-0", contentClassName)}
+        >
+          {children}
+        </AppContainer>
       </motion.div>
-    </>
+    </div>
   );
 }

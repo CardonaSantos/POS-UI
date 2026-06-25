@@ -1,29 +1,22 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type React from "react";
+import dayjs from "dayjs";
+import { CreditCard, Receipt, Save } from "lucide-react";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppDatePicker } from "@/components/app/primitives/app-date-picker";
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
 import {
   FacturaInternetToPay,
   MetodoPagoFacturaInternet,
 } from "@/Crm/features/factura-internet/factura-to-pay";
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
-import dayjs from "dayjs";
-import {
-  Building,
-  Coins,
-  CreditCard,
-  Loader2,
-  Receipt,
-  Save,
-  Wallet,
-} from "lucide-react";
 import { NuevoPagoFormValues } from "../types/nuevoPago.interface";
 
 interface RegistrarPagoCardProps {
@@ -35,6 +28,14 @@ interface RegistrarPagoCardProps {
   onOpenConfirm: () => void;
   isSubmitting: boolean;
 }
+
+const metodoPagoOptions = [
+  { value: MetodoPagoFacturaInternet.EFECTIVO, label: "Efectivo" },
+  { value: MetodoPagoFacturaInternet.DEPOSITO, label: "Depósito" },
+  { value: MetodoPagoFacturaInternet.TARJETA, label: "Tarjeta" },
+  { value: MetodoPagoFacturaInternet.OTRO, label: "Otro" },
+];
+
 export const RegistrarPagoCard: React.FC<RegistrarPagoCardProps> = ({
   factura,
   nuevoPago,
@@ -45,141 +46,132 @@ export const RegistrarPagoCard: React.FC<RegistrarPagoCardProps> = ({
   isSubmitting,
 }) => {
   const saldo = factura.saldoPendiente ?? factura.montoPago ?? 0;
+
   const isDisabled =
     isSubmitting || !nuevoPago.montoPagado || nuevoPago.montoPagado <= 0;
 
+  const fechaPagoValue = normalizeDateInputValue(nuevoPago.fechaPago);
+
   return (
-    <Card className="print:hidden">
-      <CardContent className="pt-2 pb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-xs">
-          {/* Monto */}
-          <div className="space-y-1.5">
-            <Label htmlFor="montoPagado" className="text-[11px]">
-              Monto a Pagar
-            </Label>
-            <div className="relative">
-              <CreditCard className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                id="montoPagado"
+    <AppCard
+      className="print:hidden"
+      size="xs"
+      variant="outline"
+      title="Registrar pago"
+      footer={
+        <AppInline justify="end" className="w-full">
+          <AppButton
+            type="button"
+            size="xs"
+            leftIcon={<Save className="h-3.5 w-3.5" />}
+            loading={isSubmitting}
+            loadingText="Procesando..."
+            disabled={isDisabled}
+            onClick={onOpenConfirm}
+          >
+            Registrar
+          </AppButton>
+        </AppInline>
+      }
+    >
+      <AppStack gap="xs">
+        <p className="text-[11px] leading-tight text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          Ingrese los datos del pago antes de confirmar.
+        </p>
+
+        <AppGrid cols={{ base: 1, md: 2, lg: 3 }} gap="xs">
+          <AppField
+            label="Monto a pagar"
+            required
+            hint={`Saldo pendiente: ${formattMonedaGT(saldo)}`}
+          >
+            {(field) => (
+              <AppInput
+                id={field.id}
                 name="montoPagado"
                 type="number"
                 step="0.01"
-                className="pl-7 h-8 text-xs"
-                value={nuevoPago.montoPagado || ""}
-                onChange={onInputChange}
-                required
                 min={0.01}
                 max={saldo}
+                size="sm"
+                value={nuevoPago.montoPagado || ""}
+                onChange={onInputChange}
+                leftIcon={<CreditCard className="h-3.5 w-3.5" />}
+                invalid={field.invalid}
+                aria-invalid={field.invalid}
+                aria-describedby={field.describedBy}
+                disabled={isSubmitting}
+                required
               />
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Saldo pendiente: {formattMonedaGT(saldo)}
-            </p>
-          </div>
+            )}
+          </AppField>
 
-          {/* Método de pago */}
-          <div className="space-y-1.5">
-            <Label htmlFor="metodoPago" className="text-[11px]">
-              Método de Pago
-            </Label>
-            <Select
-              onValueChange={(value) =>
-                onMetodoPagoChange(value as MetodoPagoFacturaInternet)
-              }
-              defaultValue={nuevoPago.metodoPago}
-            >
-              <SelectTrigger id="metodoPago" className="h-8 text-xs">
-                <SelectValue placeholder="Seleccione un método de pago" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={MetodoPagoFacturaInternet.EFECTIVO}>
-                  <div className="flex items-center text-xs">
-                    <Coins className="h-3.5 w-3.5 mr-2" />
-                    Efectivo
-                  </div>
-                </SelectItem>
+          <AppField label="Método de pago" required>
+            {(field) => (
+              <AppSingleSelect<MetodoPagoFacturaInternet>
+                inputId={field.id}
+                value={nuevoPago.metodoPago}
+                options={metodoPagoOptions}
+                onChange={(value) => {
+                  if (!value) return;
+                  onMetodoPagoChange(value);
+                }}
+                placeholder="Seleccione un método"
+                size="sm"
+                invalid={field.invalid}
+                isDisabled={isSubmitting}
+              />
+            )}
+          </AppField>
 
-                <SelectItem value={MetodoPagoFacturaInternet.DEPOSITO}>
-                  <div className="flex items-center text-xs">
-                    <Building className="h-3.5 w-3.5 mr-2" />
-                    Depósito
-                  </div>
-                </SelectItem>
-
-                <SelectItem value={MetodoPagoFacturaInternet.TARJETA}>
-                  <div className="flex items-center text-xs">
-                    <CreditCard className="h-3.5 w-3.5 mr-2" />
-                    Tarjeta
-                  </div>
-                </SelectItem>
-
-                <SelectItem value={MetodoPagoFacturaInternet.OTRO}>
-                  <div className="flex items-center text-xs">
-                    <Wallet className="h-3.5 w-3.5 mr-2" />
-                    Otro
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Fecha de pago */}
-          <div className="space-y-1.5">
-            <Label htmlFor="fechaPago" className="text-[11px]">
-              Fecha de Pago
-            </Label>
-            <Input
-              id="fechaPago"
-              type="date"
-              className="h-8 text-xs"
-              value={dayjs(nuevoPago.fechaPago).format("YYYY-MM-DD")}
-              onChange={(e) => onFechaPagoChange(e.target.value)}
+          <AppField label="Fecha de pago" required>
+            <AppDatePicker
+              mode="single"
+              value={fechaPagoValue}
+              onChange={(value) => {
+                if (!value) return;
+                onFechaPagoChange(value);
+              }}
+              outputFormat="date"
+              size="sm"
+              disabled={isSubmitting}
             />
-          </div>
+          </AppField>
 
-          {/* No. boleta (solo depósito) */}
-          {nuevoPago.metodoPago === MetodoPagoFacturaInternet.DEPOSITO && (
-            <div className="space-y-1.5 md:col-span-2 lg:col-span-1">
-              <Label htmlFor="numeroBoleta" className="text-[11px]">
-                No. Boleta
-              </Label>
-              <div className="relative">
-                <Receipt className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  id="numeroBoleta"
-                  name="numeroBoleta"
-                  className="pl-7 h-8 text-xs"
-                  value={nuevoPago.numeroBoleta || ""}
-                  onChange={onInputChange}
-                  placeholder="Ingrese número de boleta"
-                  required
-                />
-              </div>
+          {nuevoPago.metodoPago === MetodoPagoFacturaInternet.DEPOSITO ? (
+            <div className="md:col-span-2 lg:col-span-1">
+              <AppField label="No. boleta" required>
+                {(field) => (
+                  <AppInput
+                    id={field.id}
+                    name="numeroBoleta"
+                    size="sm"
+                    value={nuevoPago.numeroBoleta || ""}
+                    onChange={onInputChange}
+                    placeholder="Ingrese número de boleta"
+                    leftIcon={<Receipt className="h-3.5 w-3.5" />}
+                    invalid={field.invalid}
+                    aria-invalid={field.invalid}
+                    aria-describedby={field.describedBy}
+                    disabled={isSubmitting}
+                    required
+                  />
+                )}
+              </AppField>
             </div>
-          )}
-        </div>
-      </CardContent>
-
-      <CardFooter className="flex justify-end pt-0 pb-2">
-        <Button
-          onClick={onOpenConfirm}
-          type="button"
-          className="w-full md:w-auto h-8 text-xs bg-zinc-900 hover:bg-zinc-800"
-          disabled={isDisabled}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              Procesando...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-3.5 w-3.5 " />
-              Registrar
-            </>
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+          ) : null}
+        </AppGrid>
+      </AppStack>
+    </AppCard>
   );
 };
+
+function normalizeDateInputValue(value: Date | string | null | undefined) {
+  if (!value) return dayjs().format("YYYY-MM-DD");
+
+  const date = dayjs(value);
+
+  if (!date.isValid()) return dayjs().format("YYYY-MM-DD");
+
+  return date.format("YYYY-MM-DD");
+}

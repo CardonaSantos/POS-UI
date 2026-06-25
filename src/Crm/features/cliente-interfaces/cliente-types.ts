@@ -1,6 +1,7 @@
 import { CustomerImage } from "../customer-galery/customer-galery.interfaces";
 // import { Departamentos } from "../locations-interfaces/municipios_departamentos.interfaces";
 import { MikrotikRoutersResponse } from "../mikro-tiks/mikrotiks.interfaces";
+import { RolUsuario } from "../users/users-rol";
 // import { NuevaFacturacionZona } from "../zonas-facturacion/FacturacionZonaTypes";
 
 export interface ClienteDetailsDto {
@@ -229,6 +230,19 @@ export interface TicketSoporte {
 
   tecnico: UsuarioResumen | null;
   acompanantes: UsuarioResumen[];
+  seguimientos: TicketSeguimiento[];
+}
+
+export interface TicketSeguimiento {
+  id: number;
+  descripcion: string;
+  creadoEn: string;
+
+  usuario: {
+    id: number;
+    nombre: string;
+    rol: RolUsuario;
+  };
 }
 
 interface TicketResumen {

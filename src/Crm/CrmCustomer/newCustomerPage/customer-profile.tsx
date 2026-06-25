@@ -237,6 +237,8 @@ export default function CustomerProfile() {
     [clienteSecure, commonTabProps, contentMediaSection],
   );
 
+  console.log("Detalles del cliente: ", cliente);
+
   return (
     <PageTransitionCrm
       titleHeader="Perfil del cliente"

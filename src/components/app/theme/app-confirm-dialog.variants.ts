@@ -3,10 +3,10 @@ import { cva } from "class-variance-authority";
 export const appConfirmDialogOverlayVariants = cva([
   "fixed inset-0 z-[110]",
   "bg-[hsl(var(--app-confirm-overlay-bg,var(--app-dialog-overlay-bg)))]",
-  "data-[state=open]:animate-in",
-  "data-[state=closed]:animate-out",
-  "data-[state=open]:fade-in-0",
-  "data-[state=closed]:fade-out-0",
+  "will-change-opacity",
+  "backdrop-blur-[var(--app-dialog-overlay-blur)]",
+  "data-[state=open]:animate-[app-dialog-overlay-in_var(--app-dialog-overlay-duration-in)_var(--app-motion-ease-out)_both]",
+  "data-[state=closed]:animate-[app-dialog-overlay-out_var(--app-dialog-overlay-duration-out)_var(--app-motion-ease-in)_both]",
 ]);
 
 export const appConfirmDialogContentVariants = cva(
@@ -23,10 +23,9 @@ export const appConfirmDialogContentVariants = cva(
     "shadow-[var(--app-confirm-shadow,var(--app-dialog-shadow))]",
     "[font-family:var(--app-font-sans)]",
     "outline-none",
-    "data-[state=open]:animate-in",
-    "data-[state=closed]:animate-out",
-    "data-[state=open]:fade-in-0",
-    "data-[state=closed]:fade-out-0",
+    "will-change-[opacity,transform]",
+    "data-[state=open]:animate-[app-dialog-content-in_var(--app-dialog-content-duration-in)_var(--app-motion-ease-out)_both]",
+    "data-[state=closed]:animate-[app-dialog-content-out_var(--app-dialog-content-duration-out)_var(--app-motion-ease-in)_both]",
   ],
   {
     variants: {

@@ -79,10 +79,10 @@ export function HistorialPagos({
     >
       <AppStack gap="sm">
         <AppInline gap="xs" align="center" justify="between" wrap>
-          <AppInline gap="xs" align="center" className="min-w-0">
+          <AppInline gap="xs" align="center" className="min-w-0 px-2 py-2">
             <CreditCard size={16} className="shrink-0" />
 
-            <div className="min-w-0">
+            <div className="min-w-0 ">
               <h2 className="truncate text-sm font-semibold">
                 Historial de facturación
               </h2>

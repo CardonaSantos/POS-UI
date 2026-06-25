@@ -39,7 +39,7 @@ function MikrotikSectionHeader({ selected }: { selected: boolean }) {
       align="center"
       justify="between"
       gap="sm"
-      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-2"
+      className="border-b border-[hsl(var(--app-border,var(--border)))] pb-2 "
     >
       <AppInline align="center" gap="xs" className="min-w-0">
         <Router size={15} className="text-[hsl(var(--app-primary))]" />
@@ -128,7 +128,7 @@ export function MikrotikSection({
   );
 
   return (
-    <AppCard variant="outline" size="xs" className="h-full">
+    <AppCard variant="outline" size="xs" className="h-full p-2">
       <AppStack gap="sm">
         <MikrotikSectionHeader selected={Boolean(mkSelected)} />
 

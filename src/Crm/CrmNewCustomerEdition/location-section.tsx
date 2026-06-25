@@ -225,7 +225,7 @@ export function LocationSection({
     <AppStack gap="sm">
       <LocationSectionHeader />
 
-      <AppCard variant="outline" size="xs" className="overflow-hidden">
+      <AppCard variant="outline" size="xs" className="overflow-hidden p-2">
         <AppStack gap="sm">
           <div className="relative h-[200px] w-full overflow-hidden rounded-[var(--app-radius-md)] border border-[hsl(var(--app-border,var(--border)))] bg-[hsl(var(--app-muted,var(--muted))/0.25)]">
             <UniversalMap

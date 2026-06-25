@@ -325,16 +325,15 @@ export function ClientOverview({ cliente }: ClientOverviewProps) {
             items={estadoItems}
             className="border-[hsl(var(--app-primary)/0.35)] bg-[hsl(var(--app-primary)/0.06)]"
             action={
-              <AppButton
-                asChild
-                size="xs"
-                variant="primary"
-                leftIcon={<CreditCard size={14} />}
-              >
-                <Link to={`/crm/credito?clienteId=${cliente.id}`}>
+              <Link to={`/crm/credito?clienteId=${cliente.id}`}>
+                <AppButton
+                  size="xs"
+                  variant="primary"
+                  leftIcon={<CreditCard size={14} />}
+                >
                   Verificar Crédito
-                </Link>
-              </AppButton>
+                </AppButton>
+              </Link>
             }
           />
 

@@ -57,14 +57,6 @@ export function useGetTicketsSoporte(query: QuerySearchTickets) {
       params: query,
     },
   );
-  // return useCrmQuery<PropsResponse>(
-
-  //   ticketsSoporteQkeys.search(query),
-  //   `tickets-soporte`,
-  //   {
-  //     params: query,
-  //   },
-  // );
 }
 
 /**
@@ -87,9 +79,16 @@ export function useGetTicketsSoporteFromCustomer() {
  * @returns
  */
 export function usePostCommentary() {
+  const invalidate = useInvalidateQk();
   return crm.useMutationApi<void, ComentarioSeguimientoDto>(
     "post",
     crm_endpoints.ticket.post_commentary,
+    undefined,
+    {
+      onSuccess: () => {
+        invalidate(ticketsSoporteQkeys.search({}));
+      },
+    },
   );
 }
 

@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { MultiValue } from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
-import { AlertCircle, Images, KeyRound, Trash2, UserRound } from "lucide-react";
+import { Images, KeyRound, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -837,17 +837,7 @@ function EditCustomers() {
         closeOnConfirm={false}
         footerAlign="between"
         onConfirm={handleSubmit}
-      >
-        <AppInline align="start" gap="sm">
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--app-radius-full)] bg-[hsl(var(--app-warning)/0.14)] text-[hsl(var(--app-warning))]">
-            <AlertCircle size={16} />
-          </span>
-
-          <p className="text-xs leading-5 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-            Revisa cuidadosamente la información antes de guardar los cambios.
-          </p>
-        </AppInline>
-      </AppConfirmDialog>
+      ></AppConfirmDialog>
 
       <AppConfirmDialog
         open={deleteDialog.isOpen}

@@ -3,29 +3,23 @@ import { cva } from "class-variance-authority";
 export const appDialogOverlayVariants = cva(
   [
     "fixed inset-0 z-[100]",
-    "bg-[hsl(var(--app-dialog-overlay-bg,var(--app-confirm-overlay-bg)))]",
-    "data-[state=open]:animate-in",
-    "data-[state=closed]:animate-out",
-    "data-[state=open]:fade-in-0",
-    "data-[state=closed]:fade-out-0",
+    "will-change-opacity",
+    "backdrop-blur-[var(--app-dialog-overlay-blur)]",
+    "data-[state=open]:animate-[app-dialog-overlay-in_var(--app-dialog-overlay-duration-in)_var(--app-motion-ease-out)_both]",
+    "data-[state=closed]:animate-[app-dialog-overlay-out_var(--app-dialog-overlay-duration-out)_var(--app-motion-ease-in)_both]",
   ],
   {
     variants: {
       tone: {
-        default: "",
-        soft: "opacity-80",
-        strong: "opacity-100",
-      },
-      blur: {
-        none: "",
-        sm: "backdrop-blur-[1px]",
-        md: "backdrop-blur-sm",
-        lg: "backdrop-blur-md",
+        default:
+          "bg-[hsl(var(--app-dialog-overlay-bg,var(--app-confirm-overlay-bg)))]",
+        soft: "bg-[hsl(var(--app-dialog-overlay-bg-soft,var(--app-dialog-overlay-bg,var(--app-confirm-overlay-bg))))]",
+        strong:
+          "bg-[hsl(var(--app-dialog-overlay-bg-strong,var(--app-dialog-overlay-bg,var(--app-confirm-overlay-bg))))]",
       },
     },
     defaultVariants: {
       tone: "default",
-      blur: "none",
     },
   },
 );
@@ -40,10 +34,9 @@ export const appDialogContentVariants = cva(
     "text-[hsl(var(--app-dialog-foreground,var(--app-popover-foreground,var(--foreground))))]",
     "shadow-[var(--app-dialog-shadow,var(--app-confirm-shadow))]",
     "outline-none",
-    "data-[state=open]:animate-in",
-    "data-[state=closed]:animate-out",
-    "data-[state=open]:fade-in-0",
-    "data-[state=closed]:fade-out-0",
+    "will-change-[opacity,transform]",
+    "data-[state=open]:animate-[app-dialog-content-in_var(--app-dialog-content-duration-in)_var(--app-motion-ease-out)_both]",
+    "data-[state=closed]:animate-[app-dialog-content-out_var(--app-dialog-content-duration-out)_var(--app-motion-ease-in)_both]",
   ],
   {
     variants: {

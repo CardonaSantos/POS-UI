@@ -150,17 +150,15 @@ export function CustomerHeader({
                     <AppDropdownMenuSeparator />
 
                     {plantillas.map((plantilla) => (
-                      <AppDropdownMenuItem
-                        asChild
-                        key={plantilla.id}
-                        icon={<Printer />}
-                      >
+                      <AppDropdownMenuItem key={plantilla.id}>
                         <Link
                           to={`/crm/contrato/${
                             cliente.contratoServicioInternet!.id
                           }/vista?plantilla=${plantilla.id}`}
+                          className="flex w-full items-center gap-2"
                         >
-                          {plantilla.nombre}
+                          <Printer size={13} className="shrink-0" />
+                          <span className="truncate">{plantilla.nombre}</span>
                         </Link>
                       </AppDropdownMenuItem>
                     ))}
