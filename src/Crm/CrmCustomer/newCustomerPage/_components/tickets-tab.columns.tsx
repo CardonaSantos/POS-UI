@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronRight, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
 import type { TicketSoporte } from "@/Crm/features/cliente-interfaces/cliente-types";

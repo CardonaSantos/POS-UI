@@ -1,16 +1,9 @@
 "use client";
 
 import * as React from "react";
-import {
-  AlertTriangle,
-  Network,
-  RefreshCw,
-  Router,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertTriangle, RefreshCw, Router, ShieldCheck } from "lucide-react";
 
 import { AppAlert } from "@/components/app/primitives/app-alert";
-import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppField } from "@/components/app/primitives/app-field";
 import { AppGrid } from "@/components/app/primitives/app-grid";

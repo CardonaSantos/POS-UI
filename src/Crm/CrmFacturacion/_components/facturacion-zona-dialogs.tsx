@@ -136,7 +136,7 @@ function FormSection({
 }
 
 function ZonaFormFields({
-  open,
+  // open,
   onOpenChange,
   form,
   isLoading,

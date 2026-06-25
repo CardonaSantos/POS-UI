@@ -9,10 +9,8 @@ import {
   MessageSquare,
   Save,
   Smartphone,
-  Tag,
   Ticket,
   User,
-  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";

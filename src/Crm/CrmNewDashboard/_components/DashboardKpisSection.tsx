@@ -1,17 +1,26 @@
-import { DashboardData } from "@/Crm/features/dashboard/dashboard.interfaces";
-import { KpiCard } from "./KpiCard";
+import * as React from "react";
 import {
+  AlertTriangle,
+  Clock,
   CreditCard,
   DollarSign,
   FileText,
-  AlertTriangle,
-  Users,
-  UserCheck,
   PauseCircle,
-  Clock,
+  ReceiptText,
   Trash2,
+  UserCheck,
+  Users,
 } from "lucide-react";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
+import type { DashboardData } from "@/Crm/features/dashboard/dashboard.interfaces";
+
+import { KpiCard } from "./KpiCard";
 
 interface DashboardKpisSectionProps {
   kpisData: DashboardData;
@@ -21,21 +30,21 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
   const { facturacion, clientes } = kpisData;
 
   return (
-    <main className="flex-1 flex flex-col gap-4">
-      {/* FACTURACIÓN */}
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2.5">
-          Facturación
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-fr">
-          {/* Cantidades (facturas) */}
+    <AppStack gap="sm" className="min-w-0">
+      <DashboardKpiGroup
+        title="Facturación"
+        description="Resumen mensual de emisión, cobro y saldos pendientes"
+        icon={<ReceiptText className="h-4 w-4" />}
+        badge={`${facturacion.facturasEmitidasMes} emitidas`}
+      >
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
+          {" "}
           <KpiCard
             type="FACTURACION"
             linkValue=""
             title="Emitidas"
             value={facturacion.facturasEmitidasMes}
-            color="bg-blue-500 dark:bg-blue-600"
+            tone="info"
             Icon={FileText}
           />
           <KpiCard
@@ -43,17 +52,15 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="PAGADA"
             title="Pagadas"
             value={facturacion.facturasPagadasMes}
-            color="bg-emerald-500 dark:bg-emerald-600"
+            tone="success"
             Icon={DollarSign}
           />
-
-          {/* Montos en Q */}
           <KpiCard
             type="FACTURACION"
             linkValue=""
             title="Facturado"
             value={formattMonedaGT(facturacion.montoFacturadoMes)}
-            color="bg-indigo-500 dark:bg-indigo-600"
+            tone="purple"
             Icon={CreditCard}
           />
           <KpiCard
@@ -61,35 +68,34 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="PENDIENTE"
             title="Sin pagar"
             value={formattMonedaGT(facturacion.montoPendienteMes)}
-            color="bg-rose-500 dark:bg-rose-600"
+            tone="danger"
             Icon={AlertTriangle}
           />
-
           <KpiCard
             type="FACTURACION"
             linkValue="PAGADAS"
-            title="Total Pagadas"
+            title="Cobrado"
             value={formattMonedaGT(facturacion.montoCobradoMes)}
-            color="bg-teal-500 dark:bg-teal-600"
-            Icon={AlertTriangle}
+            tone="teal"
+            Icon={DollarSign}
           />
         </div>
-      </section>
+      </DashboardKpiGroup>
 
-      {/* ESTADO DE CLIENTES */}
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2.5">
-          Clientes
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1 auto-rows-fr">
+      <DashboardKpiGroup
+        title="Clientes"
+        description="Estado operativo de clientes en el sistema"
+        icon={<Users className="h-4 w-4" />}
+        badge={`${clientes.totalEnSistema} en sistema`}
+      >
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
+          {" "}
           <KpiCard
             type="CLIENTE"
             linkValue=""
             title="En sistema"
             value={clientes.totalEnSistema}
-            color="bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-900"
-            solidText={false}
+            tone="neutral"
             Icon={Users}
           />
           <KpiCard
@@ -97,8 +103,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="ACTIVO"
             title="Activos"
             value={clientes.activos}
-            color="bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100/80 dark:border-emerald-800 text-emerald-800"
-            solidText={false}
+            tone="success"
             Icon={UserCheck}
           />
           <KpiCard
@@ -106,8 +111,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="SUSPENDIDO"
             title="Suspendidos"
             value={clientes.suspendidos}
-            color="bg-amber-50 dark:bg-amber-900/40 border border-amber-100/80 dark:border-amber-800 text-amber-800"
-            solidText={false}
+            tone="warning"
             Icon={PauseCircle}
           />
           <KpiCard
@@ -115,8 +119,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="MOROSO"
             title="Morosos"
             value={clientes.morosos}
-            color="bg-rose-50 dark:bg-rose-900/40 border border-rose-100/80 dark:border-rose-800 text-rose-800"
-            solidText={false}
+            tone="danger"
             Icon={AlertTriangle}
           />
           <KpiCard
@@ -124,8 +127,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="PENDIENTE_ACTIVO"
             title="Pend. activo"
             value={clientes.pendientesActivacion}
-            color="bg-fuchsia-50 dark:bg-fuchsia-900/40 border border-fuchsia-100/80 dark:border-fuchsia-800 text-fuchsia-800"
-            solidText={false}
+            tone="purple"
             Icon={Clock}
           />
           <KpiCard
@@ -133,12 +135,70 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             linkValue="DESINSTALADO"
             title="Desinstalados"
             value={clientes.desinstalados}
-            color="bg-slate-50 dark:bg-slate-900/40 border border-slate-100/80 dark:border-slate-700 text-slate-800"
-            solidText={false}
+            tone="neutral"
             Icon={Trash2}
           />
         </div>
-      </section>
-    </main>
+      </DashboardKpiGroup>
+    </AppStack>
+  );
+}
+
+function DashboardKpiGroup({
+  title,
+  description,
+  icon,
+  badge,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  badge: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <AppCard variant="outline" radius="lg" className="min-w-0">
+      <AppStack gap="xs" className="min-w-0">
+        <AppInline
+          gap="xs"
+          align="center"
+          justify="between"
+          className="min-w-0"
+        >
+          <AppInline gap="xs" align="center" className="min-w-0">
+            <div
+              className={[
+                "flex h-5 w-5 shrink-0 items-center justify-center",
+                "rounded-[var(--app-radius-md)]",
+                "bg-[hsl(var(--app-primary,var(--primary))/0.10)]",
+                "text-[hsl(var(--app-primary,var(--primary)))]",
+              ].join(" ")}
+            >
+              {icon}
+            </div>
+
+            <div className="min-w-0">
+              <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide  text-[hsl(var(--app-foreground,var(--foreground)))]">
+                {title}
+              </h2>
+
+              <p className="hidden">{description}</p>
+            </div>
+          </AppInline>
+
+          <AppBadge
+            size="xs"
+            tone="neutral"
+            appearance="soft"
+            className="hidden shrink-0 sm:inline-flex"
+          >
+            {badge}
+          </AppBadge>
+        </AppInline>
+
+        {children}
+      </AppStack>
+    </AppCard>
   );
 }
