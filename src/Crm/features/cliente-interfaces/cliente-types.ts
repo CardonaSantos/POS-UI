@@ -237,12 +237,18 @@ export interface TicketSeguimiento {
   id: number;
   descripcion: string;
   creadoEn: string;
-
   usuario: {
     id: number;
     nombre: string;
     rol: RolUsuario;
+    perfil?: Perfil;
   };
+}
+
+export interface Perfil {
+  avatar: string;
+  portadaUrl: string;
+  bio: string;
 }
 
 interface TicketResumen {

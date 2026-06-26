@@ -1,3 +1,4 @@
+import { Perfil } from "../features/cliente-interfaces/cliente-types";
 import { EstadoTicketSoporte } from "../features/dashboard/dashboard-tickets";
 import { RolUsuario } from "../features/users/users-rol";
 
@@ -17,6 +18,7 @@ export interface Companion {
 
 export interface Comment {
   user: User;
+  perfil: Perfil;
   text: string;
   date: string;
   isPrivate?: boolean;

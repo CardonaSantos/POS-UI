@@ -31,7 +31,7 @@ export function DashboardChartsGrid({
 }: DashboardChartsGridProps) {
   return (
     <section aria-label="Gráficas del dashboard" className="min-w-0">
-      <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2 ">
         <DashboardChartCard
           title="Instalaciones vs desinstalaciones"
           icon={<LineChart className="h-3.5 w-3.5" />}
@@ -106,7 +106,7 @@ function DashboardChartCard({
       variant="outline"
       size="xs"
       radius="lg"
-      className="min-w-0 overflow-hidden"
+      className="min-w-0 overflow-hidden p-1"
     >
       <AppStack gap="xs" className="min-w-0">
         <AppInline
@@ -120,7 +120,7 @@ function DashboardChartCard({
               {icon}
             </span>
 
-            <h3 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
+            <h3 className="truncate text-[9px]  font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
               {title}
             </h3>
           </AppInline>

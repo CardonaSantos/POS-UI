@@ -885,10 +885,11 @@
   --app-table-header-bg: 190 20% 97%;
   --app-table-header-foreground: 190 8% 34%;
 
-  --app-table-row-bg: 0 0% 100%;
-  --app-table-row-hover-bg: 163 30% 97%;
-  --app-table-row-selected-bg: 163 62% 93%;
-  --app-table-row-selected-foreground: var(--app-foreground);
+  --app-table-row-selected-bg: 163 52% 88%;
+  --app-table-row-selected-foreground: 190 18% 13%;
+  --app-table-row-selected-muted: 190 10% 24%;
+  --app-table-row-selected-link: 163 72% 18%;
+  --app-table-row-selected-border: 163 42% 72%;
 
   --app-table-pinned-bg: var(--app-table-row-bg);
   --app-table-pinned-header-bg: var(--app-table-header-bg);
@@ -1348,10 +1349,11 @@
   --app-table-header-bg: 195 14% 13%;
   --app-table-header-foreground: 175 9% 74%;
 
-  --app-table-row-bg: 195 15% 11%;
-  --app-table-row-hover-bg: 195 14% 15%;
-  --app-table-row-selected-bg: 163 55% 14%;
-  --app-table-row-selected-foreground: var(--app-foreground);
+  --app-table-row-selected-bg: 163 34% 20%;
+  --app-table-row-selected-foreground: 170 18% 96%;
+  --app-table-row-selected-muted: 170 14% 84%;
+  --app-table-row-selected-link: 163 76% 82%;
+  --app-table-row-selected-border: 163 36% 30%;
 
   --app-table-pinned-bg: var(--app-table-row-bg);
   --app-table-pinned-header-bg: var(--app-table-header-bg);

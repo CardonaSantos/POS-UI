@@ -27,6 +27,7 @@ import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppSeparator } from "@/components/app/primitives/app-separator";
 import { AppStack } from "@/components/app/primitives/app-stack";
 import type {
+  Perfil,
   TicketSeguimiento,
   TicketSoporte,
 } from "@/Crm/features/cliente-interfaces/cliente-types";
@@ -38,6 +39,7 @@ import {
 } from "./helpers-tickets";
 import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
 import { formattShortFecha } from "@/utils/formattFechas";
+import { RolUsuario } from "@/Crm/features/users/users-rol";
 
 interface TicketDetailsDialogProps {
   isOpen: boolean;
@@ -97,45 +99,6 @@ function DetailItem({
   );
 }
 
-function SeguimientoItem({ seguimiento }: { seguimiento: TicketSeguimiento }) {
-  return (
-    <div
-      className={[
-        "rounded-[var(--app-radius-sm)]",
-        "border border-[hsl(var(--app-border,var(--border)))]",
-        "bg-[hsl(var(--app-background,var(--background))/0.45)]",
-        "px-3 py-2",
-      ].join(" ")}
-    >
-      <AppInline gap="xs" align="center" className="mb-1">
-        <MessageSquareText className="h-3.5 w-3.5 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
-
-        <span className="min-w-0 truncate text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
-          {seguimiento.usuario?.nombre ?? "Usuario no disponible"}
-        </span>
-
-        {seguimiento.usuario?.rol ? (
-          <AppBadge size="xs" tone="neutral" appearance="soft">
-            {seguimiento.usuario.rol}
-          </AppBadge>
-        ) : null}
-
-        <AppInline gap="xs" align="center" className="ml-auto shrink-0">
-          <Clock3 className="h-3 w-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
-
-          <span className="text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-            {formattShortFecha(seguimiento.creadoEn)}
-          </span>
-        </AppInline>
-      </AppInline>
-
-      <p className="whitespace-pre-line break-words text-xs leading-relaxed text-[hsl(var(--app-foreground,var(--foreground)))]">
-        {seguimiento.descripcion || "Sin descripción"}
-      </p>
-    </div>
-  );
-}
-
 function DetailSeguimiento({
   label,
   value,
@@ -180,7 +143,7 @@ function DetailSeguimiento({
       </AppInline>
 
       {hasSeguimientos ? (
-        <AppStack gap="xs" className="max-h-36 overflow-y-auto">
+        <AppStack gap="xs" className="max-h-40 overflow-y-auto pr-1">
           {value!.map((seguimiento) => (
             <SeguimientoItem key={seguimiento.id} seguimiento={seguimiento} />
           ))}
@@ -194,6 +157,131 @@ function DetailSeguimiento({
           description="Este ticket todavía no tiene registros de seguimiento."
         />
       )}
+    </div>
+  );
+}
+
+function UsuarioAvatarTooltip({
+  nombre,
+  rol,
+  perfil,
+}: {
+  nombre: string;
+  rol?: RolUsuario;
+  perfil?: Perfil;
+}) {
+  const avatarUrl = perfil?.avatar || "";
+  const bio = perfil?.bio?.trim() || "Sin biografía registrada.";
+  const initials = getInitials(nombre);
+
+  const tooltipText = [
+    nombre,
+    rol ? `Rol: ${rol}` : null,
+    bio ? `Bio: ${bio}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return (
+    <span
+      title={tooltipText}
+      className={[
+        "relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border",
+        "border-[hsl(var(--app-border,var(--border)))]",
+        "bg-[hsl(var(--app-muted,var(--muted))/0.55)]",
+        "text-[10px] font-semibold uppercase",
+        "text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]",
+        "transition",
+        "hover:border-[hsl(var(--app-primary,var(--primary))/0.55)]",
+        "hover:ring-2 hover:ring-[hsl(var(--app-primary,var(--primary))/0.16)]",
+      ].join(" ")}
+    >
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={nombre}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          draggable={false}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </span>
+  );
+}
+
+function getInitials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (!words.length) return "U";
+
+  return words
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+function SeguimientoItem({ seguimiento }: { seguimiento: TicketSeguimiento }) {
+  const usuario = seguimiento.usuario;
+  const perfil = usuario?.perfil;
+
+  return (
+    <div
+      className={[
+        "rounded-[var(--app-radius-sm)]",
+        "border border-[hsl(var(--app-border,var(--border)))]",
+        "bg-[hsl(var(--app-background,var(--background))/0.45)]",
+        "px-2.5 py-2",
+      ].join(" ")}
+    >
+      <AppInline gap="xs" align="center" className="mb-1 min-w-0">
+        <UsuarioAvatarTooltip
+          nombre={usuario?.nombre ?? "Usuario no disponible"}
+          rol={usuario?.rol}
+          perfil={perfil}
+        />
+
+        <div className="min-w-0 flex-1">
+          <AppInline gap="xs" align="center" className="min-w-0">
+            <span className="min-w-0 truncate text-xs font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
+              {usuario?.nombre ?? "Usuario no disponible"}
+            </span>
+
+            {usuario?.rol ? (
+              <AppBadge
+                size="xs"
+                tone="neutral"
+                appearance="soft"
+                className="h-4 min-h-4 shrink-0 px-1 text-[9px]"
+              >
+                {usuario.rol}
+              </AppBadge>
+            ) : null}
+          </AppInline>
+
+          <AppInline
+            gap="xs"
+            align="center"
+            className="mt-0.5 text-[10px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+          >
+            <MessageSquareText className="h-3 w-3 shrink-0" />
+            <span>Seguimiento</span>
+          </AppInline>
+        </div>
+
+        <AppInline gap="xs" align="center" className="ml-auto shrink-0">
+          <Clock3 className="h-3 w-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
+
+          <span className="text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            {formattShortFecha(seguimiento.creadoEn)}
+          </span>
+        </AppInline>
+      </AppInline>
+
+      <p className="whitespace-pre-line break-words text-xs leading-relaxed text-[hsl(var(--app-foreground,var(--foreground)))]">
+        {seguimiento.descripcion || "Sin descripción"}
+      </p>
     </div>
   );
 }

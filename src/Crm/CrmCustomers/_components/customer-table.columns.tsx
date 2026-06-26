@@ -66,11 +66,15 @@ export function getClasificacionTone(
   return "neutral";
 }
 
+const tableMutedTextClass =
+  "text-[hsl(var(--app-table-cell-muted-fg,var(--app-muted-foreground)))]";
+
+const tableLinkClass =
+  "text-[hsl(var(--app-table-cell-link-fg,var(--app-primary)))]";
+
 function EmptyText({ children = "-" }: { children?: React.ReactNode }) {
   return (
-    <span className="text-xs italic text-[hsl(var(--app-muted-foreground))]">
-      {children}
-    </span>
+    <span className={`text-xs italic ${tableMutedTextClass}`}>{children}</span>
   );
 }
 
@@ -87,7 +91,7 @@ export function createClienteTableColumns(
       enableSorting: true,
       maxSize: 70,
       cell: ({ row }) => (
-        <span className="text-xs font-medium text-[hsl(var(--app-muted-foreground))]">
+        <span className={`text-xs font-medium ${tableMutedTextClass}`}>
           {row.original.id}
         </span>
       ),
@@ -107,10 +111,10 @@ export function createClienteTableColumns(
       cell: ({ row }) => (
         <Link
           to={`/crm/cliente/${row.original.id}/?tab=resumen`}
-          className="block truncate text-xs font-medium text-[hsl(var(--app-primary))] hover:underline"
+          className={`block truncate text-xs font-semibold hover:underline ${tableLinkClass}`}
           title={row.original.nombreCompleto}
         >
-          {row.original.nombreCompleto}
+          {row.original.nombreCompleto || "Cliente sin nombre"}
         </Link>
       ),
     },
@@ -127,7 +131,7 @@ export function createClienteTableColumns(
         return (
           <AppInline gap="xs" align="center" wrap={false}>
             <span
-              className="max-w-[86px] truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+              className={`max-w-[86px] truncate text-xs ${tableMutedTextClass}`}
               title={telefono}
             >
               {telefono}
@@ -140,7 +144,7 @@ export function createClienteTableColumns(
               width="auto"
               title="Copiar teléfono"
               onClick={() => actions.onCopyPhone(telefono)}
-            ></AppButton>
+            />
           </AppInline>
         );
       },
@@ -157,7 +161,7 @@ export function createClienteTableColumns(
         if (!ip) return <EmptyText>Sin IP</EmptyText>;
 
         return (
-          <span className="font-mono text-xs text-[hsl(var(--app-muted-foreground))]">
+          <span className={`font-mono text-xs ${tableMutedTextClass}`}>
             {ip}
           </span>
         );
@@ -176,7 +180,7 @@ export function createClienteTableColumns(
 
         return (
           <span
-            className="block max-w-[150px] truncate text-xs font-medium text-[hsl(var(--app-muted-foreground))]"
+            className={`block max-w-[150px] truncate text-xs font-medium ${tableMutedTextClass}`}
             title={servicio.nombre}
           >
             {servicio.nombre}
@@ -196,7 +200,7 @@ export function createClienteTableColumns(
 
         return (
           <span
-            className="block max-w-[140px] truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block max-w-[140px] truncate text-xs ${tableMutedTextClass}`}
             title={zona}
           >
             {zona}
@@ -216,7 +220,7 @@ export function createClienteTableColumns(
 
         return (
           <span
-            className="block max-w-[220px] truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block max-w-[220px] truncate text-xs ${tableMutedTextClass}`}
             title={direccion}
           >
             {direccion}
@@ -277,7 +281,7 @@ export function createClienteTableColumns(
 
         return (
           <span
-            className="block max-w-[140px] truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block max-w-[140px] truncate text-xs ${tableMutedTextClass}`}
             title={sector}
           >
             {sector}

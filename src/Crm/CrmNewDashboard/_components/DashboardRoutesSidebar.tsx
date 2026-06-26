@@ -57,16 +57,6 @@ export function DashboardRoutesSidebar({
               </h2>
             </div>
           </AppInline>
-
-          <AppInline gap="xs" align="center" className="shrink-0">
-            <AppBadge size="xs" tone="primary" appearance="soft">
-              {rutas.length}
-            </AppBadge>
-
-            <AppBadge size="xs" tone="danger" appearance="soft">
-              {morosos.length}
-            </AppBadge>
-          </AppInline>
         </AppInline>
 
         {/* Métricas ultra compactas */}
@@ -87,12 +77,15 @@ export function DashboardRoutesSidebar({
         </div>
 
         {/* Listas */}
-        <div className="min-w-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1.5">
-          <DashboardActiveRoutesList rutas={rutas} />
-        </div>
+        {/* Listas */}
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="min-w-0 shrink-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
+            <DashboardActiveRoutesList rutas={rutas} />
+          </div>
 
-        <div className="min-w-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1.5">
-          <DashboardTopMorososList morosos={morosos} />
+          <div className="min-w-0 min-h-0 flex-1 border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
+            <DashboardTopMorososList morosos={morosos} />
+          </div>
         </div>
       </AppStack>
     </AppCard>
@@ -113,31 +106,33 @@ function CompactRouteStat({
   return (
     <div
       className={[
-        "min-w-0 rounded-[var(--app-radius-sm)]",
+        "flex min-w-0 items-center justify-between gap-1",
+        "rounded-[var(--app-radius-sm)]",
         "border border-[hsl(var(--app-border,var(--border)))]",
         "bg-[hsl(var(--app-muted,var(--muted))/0.12)]",
-        "px-1.5 py-1",
+        "px-1.5 py-0.5",
+        "h-6",
       ].join(" ")}
     >
-      <AppInline gap="xs" align="center" justify="between" className="min-w-0">
-        <span className="truncate text-[10px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-          {label}
-        </span>
-
+      <div className="flex min-w-0 items-center gap-1">
         <AppBadge
           size="xs"
           tone={tone}
           appearance="soft"
           radius="sm"
-          className="h-4 min-h-4 px-1"
+          className="h-3.5 min-h-3.5 px-0.5 [&_svg]:size-2.5"
         >
           {icon}
         </AppBadge>
-      </AppInline>
 
-      <p className="mt-0.5 truncate text-[14px] font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
+        <span className="truncate text-[10px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+          {label}
+        </span>
+      </div>
+
+      <span className="shrink-0 text-[12px] font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
         {value}
-      </p>
+      </span>
     </div>
   );
 }

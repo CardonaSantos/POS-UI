@@ -22,15 +22,19 @@ type AppBadgeTone =
   | "danger"
   | "info";
 
+const tableMutedTextClass =
+  "text-[hsl(var(--app-table-cell-muted-fg,var(--app-muted-foreground)))]";
+
+const tableLinkClass =
+  "text-[hsl(var(--app-table-cell-link-fg,var(--app-primary)))]";
+
 function getClienteNombre(cliente: ClienteInternetFromCreateRuta) {
   return `${cliente.nombre ?? ""} ${cliente.apellidos ?? ""}`.trim();
 }
 
 function EmptyText({ children = "-" }: { children?: React.ReactNode }) {
   return (
-    <span className="text-xs italic text-[hsl(var(--app-muted-foreground))]">
-      {children}
-    </span>
+    <span className={`text-xs italic ${tableMutedTextClass}`}>{children}</span>
   );
 }
 
@@ -47,7 +51,7 @@ export function createRutasClientesColumns(): ColumnDef<
       size: 20,
       enableSorting: false,
       cell: ({ row }) => (
-        <span className="text-xs font-medium text-[hsl(var(--app-muted-foreground))]">
+        <span className={`text-xs font-medium ${tableMutedTextClass}`}>
           {row.original.id}
         </span>
       ),
@@ -69,7 +73,7 @@ export function createRutasClientesColumns(): ColumnDef<
 
         return (
           <span
-            className="block truncate text-xs font-medium text-[hsl(var(--app-primary))]"
+            className={`block truncate text-xs font-semibold ${tableLinkClass}`}
             title={nombre}
           >
             {nombre}
@@ -135,7 +139,7 @@ export function createRutasClientesColumns(): ColumnDef<
 
         return (
           <span
-            className="block truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block truncate text-xs ${tableMutedTextClass}`}
             title={zona}
           >
             {zona}
@@ -157,7 +161,7 @@ export function createRutasClientesColumns(): ColumnDef<
 
         return (
           <span
-            className="block truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block truncate text-xs ${tableMutedTextClass}`}
             title={sector}
           >
             {sector}
@@ -179,7 +183,7 @@ export function createRutasClientesColumns(): ColumnDef<
 
         return (
           <span
-            className="block truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block truncate text-xs ${tableMutedTextClass}`}
             title={municipio}
           >
             {municipio}
@@ -200,7 +204,7 @@ export function createRutasClientesColumns(): ColumnDef<
 
         return (
           <span
-            className="block truncate text-xs text-[hsl(var(--app-muted-foreground))]"
+            className={`block truncate text-xs ${tableMutedTextClass}`}
             title={direccion}
           >
             {direccion}

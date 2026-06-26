@@ -1,10 +1,11 @@
 import React from "react";
+import { Camera, ImageIcon, UserRound } from "lucide-react";
 
 interface ProfileHeaderImagesProps {
   portadaPreview: string | null;
   avatarPreview: string | null;
   onImageSelected: (
-    e: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>,
     type: "avatar" | "portada",
   ) => void;
 }
@@ -15,54 +16,86 @@ export function ProfileHeaderImages({
   onImageSelected,
 }: ProfileHeaderImagesProps) {
   return (
-    <div className="w-full">
-      {/* Portada */}
-      <div className="relative w-full h-32 bg-slate-200 rounded-md border">
+    <div className="min-w-0">
+      <div
+        className={[
+          "relative h-36 w-full overflow-hidden rounded-[var(--app-radius-md)] border",
+          "border-[hsl(var(--app-border,var(--border)))]",
+          "bg-[hsl(var(--app-muted,var(--muted))/0.45)]",
+        ].join(" ")}
+      >
         {portadaPreview ? (
           <img
             src={portadaPreview}
             alt="Portada"
-            className="w-full h-full object-cover rounded-md"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-sm text-slate-500">
-            Sin portada
+          <div className="flex h-full flex-col items-center justify-center gap-1 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            <ImageIcon className="h-5 w-5" />
+            <span className="text-xs">Sin portada</span>
           </div>
         )}
-        <label className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white text-xs px-2 py-1 rounded cursor-pointer transition-colors">
-          Cambiar Portada
+
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 to-transparent" />
+
+        <label
+          className={[
+            "absolute bottom-2 right-2 inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[var(--app-radius-sm)] px-2",
+            "bg-black/60 text-[11px] font-medium text-white",
+            "transition hover:bg-black/75",
+          ].join(" ")}
+        >
+          <Camera className="h-3.5 w-3.5" />
+          Cambiar portada
           <input
             type="file"
             accept="image/*"
             hidden
-            onChange={(e) => onImageSelected(e, "portada")}
+            onChange={(event) => onImageSelected(event, "portada")}
           />
         </label>
       </div>
 
-      {/* Avatar */}
-      <div className="flex justify-center -mt-12">
+      <div className="flex justify-center -mt-11">
         <div className="relative">
-          <div className="w-24 h-24 rounded-full border-[3px] border-white bg-slate-100 overflow-hidden shadow-sm">
+          <div
+            className={[
+              "flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-[3px]",
+              "border-[hsl(var(--app-card-bg,var(--card)))]",
+              "bg-[hsl(var(--app-muted,var(--muted))/0.65)]",
+              "ring-1 ring-[hsl(var(--app-border,var(--border)))]",
+            ].join(" ")}
+          >
             {avatarPreview ? (
               <img
                 src={avatarPreview}
                 alt="Avatar"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-xs text-slate-500">
-                Sin foto
+              <div className="flex flex-col items-center gap-1 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                <UserRound className="h-5 w-5" />
+                <span className="text-[10px]">Sin foto</span>
               </div>
             )}
           </div>
-          <label className="absolute bottom-0 right-0 bg-slate-800 hover:bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded cursor-pointer shadow">
+
+          <label
+            className={[
+              "absolute bottom-0 right-0 inline-flex h-6 cursor-pointer items-center gap-1 rounded-[var(--app-radius-full)] px-2",
+              "bg-[hsl(var(--app-primary,var(--primary)))]",
+              "text-[10px] font-semibold text-[hsl(var(--app-primary-foreground,var(--primary-foreground)))]",
+              "transition hover:bg-[hsl(var(--app-primary-hover,var(--primary)))]",
+            ].join(" ")}
+          >
+            <Camera className="h-3 w-3" />
             Editar
             <input
               type="file"
               accept="image/*"
               hidden
-              onChange={(e) => onImageSelected(e, "avatar")}
+              onChange={(event) => onImageSelected(event, "avatar")}
             />
           </label>
         </div>

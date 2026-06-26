@@ -1,14 +1,14 @@
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea"; // <-- Importamos Textarea
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Bell, BellRing, Smartphone } from "lucide-react";
+
+import { AppField } from "@/components/app/primitives/app-field";
+import { AppGrid } from "@/components/app/primitives/app-grid";
+import { AppInline } from "@/components/app/primitives/app-inline";
+import { AppInput } from "@/components/app/primitives/app-input";
+import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
+import { AppStack } from "@/components/app/primitives/app-stack";
+import { AppSwitch } from "@/components/app/primitives/app-switch";
+import { AppTextarea } from "@/components/app/primitives/app-textarea";
+
 import { RolUsuario } from "@/Crm/features/users/users-rol";
 
 export interface ProfileFormData {
@@ -18,10 +18,10 @@ export interface ProfileFormData {
   contrasena: string;
   rol: RolUsuario;
   activo: boolean;
-  bio: string; // <-- Nuevo
-  notificarWhatsApp: boolean; // <-- Nuevo
-  notificarPush: boolean; // <-- Nuevo
-  notificarSonido: boolean; // <-- Nuevo
+  bio: string;
+  notificarWhatsApp: boolean;
+  notificarPush: boolean;
+  notificarSonido: boolean;
 }
 
 interface ProfileBasicInfoProps {
@@ -32,155 +32,225 @@ interface ProfileBasicInfoProps {
   ) => void;
 }
 
+const rolOptions = [
+  { value: RolUsuario.TECNICO, label: "Técnico" },
+  { value: RolUsuario.OFICINA, label: "Oficina" },
+  { value: RolUsuario.ADMIN, label: "Administrador" },
+  { value: RolUsuario.COBRADOR, label: "Cobrador" },
+];
+
 export function ProfileBasicInfo({
   formData,
   onChange,
 }: ProfileBasicInfoProps) {
   return (
-    <div className="flex flex-col gap-4 mt-6">
-      {/* DATOS PERSONALES (2 Columnas en escritorio) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="nombre" className="text-sm font-medium">
-            Nombre Completo
-          </label>
-          <Input
-            id="nombre"
-            value={formData.nombre}
-            onChange={(e) => onChange("nombre", e.target.value)}
-            required
-            className="h-9"
-          />
-        </div>
+    <AppStack gap="sm" className="mt-2 min-w-0">
+      <AppGrid cols={{ base: 1, sm: 2 }} gap="sm" className="min-w-0">
+        <AppField label="Nombre completo" required>
+          {(field) => (
+            <AppInput
+              id={field.id}
+              value={formData.nombre}
+              onChange={(event) => onChange("nombre", event.target.value)}
+              required
+              size="sm"
+              radius="sm"
+              fieldWidth="full"
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="correo" className="text-sm font-medium">
-            Correo Electrónico
-          </label>
-          <Input
-            id="correo"
-            type="email"
-            value={formData.correo}
-            onChange={(e) => onChange("correo", e.target.value)}
-            required
-            className="h-9"
-          />
-        </div>
+        <AppField label="Correo electrónico" required>
+          {(field) => (
+            <AppInput
+              id={field.id}
+              type="email"
+              value={formData.correo}
+              onChange={(event) => onChange("correo", event.target.value)}
+              required
+              size="sm"
+              radius="sm"
+              fieldWidth="full"
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="telefono" className="text-sm font-medium">
-            Teléfono
-          </label>
-          <Input
-            id="telefono"
-            value={formData.telefono}
-            onChange={(e) => onChange("telefono", e.target.value)}
-            className="h-9"
-          />
-        </div>
+        <AppField label="Teléfono">
+          {(field) => (
+            <AppInput
+              id={field.id}
+              value={formData.telefono}
+              onChange={(event) => onChange("telefono", event.target.value)}
+              size="sm"
+              radius="sm"
+              fieldWidth="full"
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="contrasena" className="text-sm font-medium">
-            Contraseña
-          </label>
-          <Input
-            id="contrasena"
-            type="password"
-            value={formData.contrasena}
-            onChange={(e) => onChange("contrasena", e.target.value)}
-            placeholder="Dejar en blanco para no cambiar"
-            className="h-9"
-          />
-        </div>
+        <AppField label="Contraseña" hint="Déjala en blanco para no cambiarla.">
+          {(field) => (
+            <AppInput
+              id={field.id}
+              type="password"
+              value={formData.contrasena}
+              onChange={(event) => onChange("contrasena", event.target.value)}
+              placeholder="Nueva contraseña"
+              size="sm"
+              radius="sm"
+              fieldWidth="full"
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="rol" className="text-sm font-medium">
-            Rol Asignado
-          </label>
-          <Select
-            disabled
-            value={formData.rol}
-            onValueChange={(v) => onChange("rol", v as RolUsuario)}
-          >
-            <SelectTrigger className="h-9 bg-slate-50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={RolUsuario.TECNICO}>Técnico</SelectItem>
-              <SelectItem value={RolUsuario.OFICINA}>Oficina</SelectItem>
-              <SelectItem value={RolUsuario.ADMIN}>Administrador</SelectItem>
-              <SelectItem value={RolUsuario.COBRADOR}>Cobrador</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <AppField label="Rol asignado" disabled>
+          {(field) => (
+            <AppSingleSelect<RolUsuario>
+              inputId={field.id}
+              value={formData.rol}
+              options={rolOptions}
+              onChange={(value) => {
+                if (value) onChange("rol", value);
+              }}
+              isDisabled
+              size="sm"
+              fieldWidth="full"
+              invalid={field.invalid}
+              placeholder="Seleccione rol"
+            />
+          )}
+        </AppField>
 
-        {/* Estado de la cuenta (Switch compacto) */}
-        <div className="flex items-center justify-between p-2 mt-[22px] h-9 border rounded-md bg-slate-50">
-          <span className="text-sm font-medium text-slate-700">
-            Estado activo
-          </span>
-          <Switch
-            disabled
+        <div
+          className={[
+            "flex min-h-[3.55rem] items-center justify-between gap-2 rounded-[var(--app-radius-sm)] border p-2",
+            "border-[hsl(var(--app-border,var(--border)))]",
+            "bg-[hsl(var(--app-muted,var(--muted))/0.18)]",
+          ].join(" ")}
+        >
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+              Estado activo
+            </p>
+
+            <p className="mt-0.5 truncate text-[10px] text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+              Controlado por administración.
+            </p>
+          </div>
+
+          <AppSwitch
             checked={formData.activo}
-            onCheckedChange={(val) => onChange("activo", val)}
+            onCheckedChange={(value) => onChange("activo", value)}
+            disabled
+            size="sm"
           />
         </div>
+      </AppGrid>
+
+      <div className="border-t border-[hsl(var(--app-border,var(--border)))] pt-3">
+        <AppField label="Biografía / notas del perfil">
+          {(field) => (
+            <AppTextarea
+              id={field.id}
+              value={formData.bio}
+              onChange={(event) => onChange("bio", event.target.value)}
+              placeholder="Escribe algo sobre ti..."
+              size="sm"
+              radius="sm"
+              fieldWidth="full"
+              className="min-h-[5rem] resize-none"
+              invalid={field.invalid}
+              aria-invalid={field.invalid}
+              aria-describedby={field.describedBy}
+            />
+          )}
+        </AppField>
       </div>
 
-      {/* BIOGRAFÍA (Ocupa todo el ancho) */}
-      <div className="flex flex-col gap-1.5 border-t pt-4 mt-2">
-        <label htmlFor="bio" className="text-sm font-medium">
-          Biografía / Notas del perfil
-        </label>
-        <Textarea
-          id="bio"
-          value={formData.bio}
-          onChange={(e) => onChange("bio", e.target.value)}
-          placeholder="Escribe algo sobre ti..."
-          className="min-h-[80px] resize-none text-sm"
-        />
-      </div>
+      <AppStack gap="xs" className="min-w-0">
+        <div className="min-w-0">
+          <h3 className="truncate text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+            Preferencias de notificación
+          </h3>
 
-      {/* PREFERENCIAS DE NOTIFICACIÓN (Grid compacto de 3 columnas) */}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-slate-800">
-          Preferencias de Notificación
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center justify-between p-2.5 border rounded-md bg-white shadow-sm">
-            <div className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-emerald-600" />
-              <span className="text-xs font-medium">WhatsApp</span>
-            </div>
-            <Switch
-              checked={formData.notificarWhatsApp}
-              onCheckedChange={(val) => onChange("notificarWhatsApp", val)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-2.5 border rounded-md bg-white shadow-sm">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-medium">Push (Navegador)</span>
-            </div>
-            <Switch
-              checked={formData.notificarPush}
-              onCheckedChange={(val) => onChange("notificarPush", val)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-2.5 border rounded-md bg-white shadow-sm">
-            <div className="flex items-center gap-2">
-              <BellRing className="w-4 h-4 text-amber-500" />
-              <span className="text-xs font-medium">Sonidos</span>
-            </div>
-            <Switch
-              checked={formData.notificarSonido}
-              onCheckedChange={(val) => onChange("notificarSonido", val)}
-            />
-          </div>
+          <p className="mt-0.5 text-[10px] leading-tight text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            Configura cómo quieres recibir avisos del CRM.
+          </p>
         </div>
-      </div>
+
+        <AppGrid cols={{ base: 1, sm: 3 }} gap="xs" className="min-w-0">
+          <NotificationPreferenceCard
+            icon={<Smartphone className="h-3.5 w-3.5" />}
+            label="WhatsApp"
+            checked={formData.notificarWhatsApp}
+            onCheckedChange={(value) => onChange("notificarWhatsApp", value)}
+          />
+
+          <NotificationPreferenceCard
+            icon={<Bell className="h-3.5 w-3.5" />}
+            label="Push"
+            checked={formData.notificarPush}
+            onCheckedChange={(value) => onChange("notificarPush", value)}
+          />
+
+          <NotificationPreferenceCard
+            icon={<BellRing className="h-3.5 w-3.5" />}
+            label="Sonidos"
+            checked={formData.notificarSonido}
+            onCheckedChange={(value) => onChange("notificarSonido", value)}
+          />
+        </AppGrid>
+      </AppStack>
+    </AppStack>
+  );
+}
+
+function NotificationPreferenceCard({
+  icon,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+}) {
+  return (
+    <div
+      className={[
+        "flex min-w-0 items-center justify-between gap-2 rounded-[var(--app-radius-sm)] border p-2",
+        "border-[hsl(var(--app-border,var(--border)))]",
+        "bg-[hsl(var(--app-card-bg,var(--card)))]",
+      ].join(" ")}
+    >
+      <AppInline gap="xs" align="center" className="min-w-0">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--app-radius-sm)] bg-[hsl(var(--app-primary,var(--primary))/0.12)] text-[hsl(var(--app-primary,var(--primary)))]">
+          {icon}
+        </span>
+
+        <span className="truncate text-xs font-medium text-[hsl(var(--app-foreground,var(--foreground)))]">
+          {label}
+        </span>
+      </AppInline>
+
+      <AppSwitch
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        size="sm"
+      />
     </div>
   );
 }
