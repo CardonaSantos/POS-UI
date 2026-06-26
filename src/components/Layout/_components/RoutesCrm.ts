@@ -29,7 +29,6 @@ import {
   GalleryHorizontal,
   BadgeCheck,
   BadgePlus,
-  Settings,
 } from "lucide-react";
 
 export interface Route {
@@ -212,8 +211,6 @@ export const routesCrm_SuperAdmin = [
 
   { icon: User, label: "Perfil", href: "/crm/perfil" },
   { icon: Users, label: "Usuarios", href: "/crm/usuarios" },
-
-  { icon: Settings, label: "Testeos", href: "/crm/testeos" },
 ];
 
 export const routesCrm_Admin = [

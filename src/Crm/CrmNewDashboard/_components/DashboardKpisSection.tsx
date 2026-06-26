@@ -30,14 +30,14 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
   const { facturacion, clientes } = kpisData;
 
   return (
-    <AppStack gap="sm" className="min-w-0">
+    <AppStack gap="sm" className="min-w-0 ">
       <DashboardKpiGroup
         title="Facturación"
         description="Resumen mensual de emisión, cobro y saldos pendientes"
         icon={<ReceiptText className="h-4 w-4" />}
         badge={`${facturacion.facturasEmitidasMes} emitidas`}
       >
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 p-1">
           {" "}
           <KpiCard
             type="FACTURACION"
@@ -158,7 +158,7 @@ function DashboardKpiGroup({
   children: React.ReactNode;
 }) {
   return (
-    <AppCard variant="outline" radius="lg" className="min-w-0">
+    <AppCard variant="outline" radius="lg" className="min-w-0 p-1">
       <AppStack gap="xs" className="min-w-0">
         <AppInline
           gap="xs"

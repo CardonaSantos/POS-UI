@@ -78,14 +78,27 @@ export const appDataTableHeaderRowVariants = cva(
 
 export const appDataTableRowVariants = cva(
   [
+    "group/app-table-row",
     "grid",
     "min-w-full",
     "border-b",
     "border-[hsl(var(--app-table-border))]",
     "bg-[hsl(var(--app-table-row-bg))]",
+    "text-[hsl(var(--app-table-foreground))]",
     "transition-colors",
     "duration-[var(--app-motion-duration-fast)]",
     "ease-[var(--app-motion-ease-standard)]",
+
+    "[--app-table-cell-fg:var(--app-table-foreground)]",
+    "[--app-table-cell-muted-fg:var(--app-muted-foreground)]",
+    "[--app-table-cell-link-fg:var(--app-primary)]",
+
+    "data-[state=selected]:!bg-[hsl(var(--app-table-row-selected-bg))]",
+    "data-[state=selected]:!text-[hsl(var(--app-table-row-selected-foreground))]",
+    "data-[state=selected]:[--app-table-cell-fg:var(--app-table-row-selected-foreground)]",
+    "data-[state=selected]:[--app-table-cell-muted-fg:var(--app-table-row-selected-muted,var(--app-table-row-selected-foreground))]",
+    "data-[state=selected]:[--app-table-cell-link-fg:var(--app-table-row-selected-link,var(--app-table-row-selected-foreground))]",
+    "data-[state=selected]:[--app-table-pinned-bg:var(--app-table-row-selected-bg)]",
   ],
   {
     variants: {
@@ -99,7 +112,7 @@ export const appDataTableRowVariants = cva(
         false: "",
       },
       selected: {
-        true: "bg-[hsl(var(--app-table-row-selected-bg))]",
+        true: "",
         false: "",
       },
       clickable: {

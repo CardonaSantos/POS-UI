@@ -65,12 +65,15 @@ export function DashboardRouteMetric({
 
 export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
   return (
-    <section aria-labelledby="dashboard-rutas-activas" className="min-w-0 p-1">
+    <section
+      aria-labelledby="dashboard-rutas-activas"
+      className="min-w-0 p-0.5"
+    >
       <AppInline
         gap="xs"
         align="center"
         justify="between"
-        className="mb-1 min-w-0"
+        className="mb-0.5 min-w-0"
       >
         <AppInline gap="xs" align="center" className="min-w-0">
           <CircleDollarSign className="h-3 w-3 shrink-0 text-[hsl(var(--app-primary,var(--primary)))]" />
@@ -88,7 +91,7 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
           tone="neutral"
           appearance="soft"
           radius="sm"
-          className="h-4 min-h-4 px-1.5 text-[10px]"
+          className="h-3.5 min-h-3.5 px-1 text-[9px]"
         >
           {rutas.length}
         </AppBadge>
@@ -98,7 +101,7 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
         <div
           className={[
             "flex gap-1 overflow-x-auto pb-0.5",
-            "lg:block lg:max-h-[8.75rem] lg:space-y-1 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1",
+            "lg:block lg:max-h-[6.75rem] lg:space-y-0.5 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1",
             "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           ].join(" ")}
         >
@@ -127,65 +130,60 @@ function DashboardRouteItem({ ruta }: { ruta: RutaActiva }) {
   return (
     <article
       className={[
-        "min-w-[9.75rem] max-w-[10.5rem] rounded-[var(--app-radius-sm)]",
-        "border border-[hsl(var(--app-primary,var(--primary))/0.24)]",
+        "flex h-7 min-w-[10.5rem] max-w-[11rem] items-center justify-between gap-1.5",
+        "rounded-[var(--app-radius-sm)]",
+        "border border-[hsl(var(--app-primary,var(--primary))/0.22)]",
         "bg-[hsl(var(--app-primary,var(--primary))/0.055)]",
-        "px-1 py-1 lg:min-w-0 lg:max-w-none",
+        "px-1.5 py-0.5",
+        "lg:min-w-0 lg:max-w-none",
       ].join(" ")}
     >
-      <AppInline gap="xs" align="center" justify="between" className="min-w-0">
-        <AppInline gap="xs" align="center" className="min-w-0">
-          <span
-            className={[
-              "h-1.5 w-1.5 shrink-0 rounded-full",
-              "bg-[hsl(var(--app-success))]",
-            ].join(" ")}
-          />
+      <div className="flex min-w-0 items-center gap-1">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[hsl(var(--app-success))]" />
 
-          <span className="truncate text-[8.5px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-primary,var(--primary)))]">
-            Activa
-          </span>
-        </AppInline>
+        <div className="min-w-0">
+          <p
+            title={ruta.nombreRuta}
+            className="truncate text-[11px] font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]"
+          >
+            {ruta.nombreRuta || "Ruta sin nombre"}
+          </p>
 
-        <AppBadge
-          size="xs"
-          tone="primary"
-          appearance="soft"
-          radius="sm"
-          className="h-4 min-h-4 px-1 text-[9px]"
-        >
-          {ruta.totalClientes}
-        </AppBadge>
-      </AppInline>
+          <AppInline
+            gap="xs"
+            align="center"
+            className="mt-0.5 min-w-0 text-[8.5px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
+          >
+            <UserRound className="h-2.5 w-2.5 shrink-0" />
+            <span className="truncate">{ruta.cobrador || "Sin cobrador"}</span>
+          </AppInline>
+        </div>
+      </div>
 
-      <p
-        title={ruta.nombreRuta}
-        className="mt-0.5 truncate text-[12px] font-semibold leading-tight text-[hsl(var(--app-foreground,var(--foreground)))]"
+      <AppBadge
+        size="xs"
+        tone="primary"
+        appearance="soft"
+        radius="sm"
+        className="h-4 min-h-4 shrink-0 px-1 text-[9px]"
       >
-        {ruta.nombreRuta || "Ruta sin nombre"}
-      </p>
-
-      <AppInline
-        gap="xs"
-        align="center"
-        className="mt-0.5 min-w-0 text-[9.5px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]"
-      >
-        <UserRound className="h-2.5 w-2.5 shrink-0" />
-
-        <span className="truncate">{ruta.cobrador || "Sin cobrador"}</span>
-      </AppInline>
+        {ruta.totalClientes}
+      </AppBadge>
     </article>
   );
 }
 
 export function DashboardTopMorososList({ morosos }: { morosos: MorosoTop[] }) {
   return (
-    <section aria-labelledby="dashboard-top-morosos" className="min-w-0 p-1">
+    <section
+      aria-labelledby="dashboard-top-morosos"
+      className="flex h-full min-h-0 flex-col p-0.5"
+    >
       <AppInline
         gap="xs"
         align="center"
         justify="between"
-        className="mb-1 min-w-0"
+        className="mb-0.5 min-w-0 shrink-0"
       >
         <AppInline gap="xs" align="center" className="min-w-0">
           <AlertTriangle className="h-3 w-3 shrink-0 text-[hsl(var(--app-danger,var(--destructive)))]" />
@@ -198,13 +196,13 @@ export function DashboardTopMorososList({ morosos }: { morosos: MorosoTop[] }) {
           </h3>
         </AppInline>
 
-        <span className="shrink-0 text-[9px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+        <span className="shrink-0 text-[8.5px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
           7 días
         </span>
       </AppInline>
 
       {morosos.length > 0 ? (
-        <div className="max-h-[10.5rem] space-y-1 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1">
           {morosos.map((moroso, index) => (
             <DashboardMorosoItem
               key={moroso.id}
@@ -214,14 +212,16 @@ export function DashboardTopMorososList({ morosos }: { morosos: MorosoTop[] }) {
           ))}
         </div>
       ) : (
-        <AppEmptyState
-          preset="success"
-          variant="dashed"
-          size="xs"
-          align="left"
-          title="Sin morosos destacados"
-          description="No hay clientes críticos."
-        />
+        <div className="min-h-0 flex-1">
+          <AppEmptyState
+            preset="success"
+            variant="dashed"
+            size="xs"
+            align="left"
+            title="Sin morosos destacados"
+            description="No hay clientes críticos."
+          />
+        </div>
       )}
     </section>
   );
@@ -237,40 +237,39 @@ function DashboardMorosoItem({
   return (
     <article
       className={[
+        "flex h-6 min-w-0 items-center justify-between gap-1.5",
         "rounded-[var(--app-radius-sm)]",
         "border border-[hsl(var(--app-border,var(--border)))]",
         "bg-[hsl(var(--app-card-bg,var(--card)))]",
-        "px-1.5 py-1",
+        "px-1 py-0.5",
       ].join(" ")}
     >
-      <AppInline gap="xs" align="center" justify="between" className="min-w-0">
-        <AppInline gap="xs" align="center" className="min-w-0">
-          <span
-            className={[
-              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
-              "bg-[hsl(var(--app-danger,var(--destructive))/0.10)]",
-              "text-[9px] font-semibold leading-none",
-              "text-[hsl(var(--app-danger,var(--destructive)))]",
-            ].join(" ")}
-          >
-            {index + 1}
-          </span>
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <span
+          className={[
+            "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full",
+            "bg-[hsl(var(--app-danger,var(--destructive))/0.10)]",
+            "text-[8px] font-semibold leading-none",
+            "text-[hsl(var(--app-danger,var(--destructive)))]",
+          ].join(" ")}
+        >
+          {index + 1}
+        </span>
 
-          <span
-            title={moroso.nombre}
-            className="truncate text-[11px] font-medium leading-tight text-[hsl(var(--app-foreground,var(--foreground)))]"
-          >
-            {moroso.nombre || "Cliente sin nombre"}
-          </span>
-        </AppInline>
+        <span
+          title={moroso.nombre}
+          className="min-w-0 flex-1 truncate text-[10.5px] font-medium leading-none text-[hsl(var(--app-foreground,var(--foreground)))]"
+        >
+          {moroso.nombre || "Cliente sin nombre"}
+        </span>
+      </div>
 
-        <AppInline gap="xs" align="center" className="shrink-0">
-          <span className="text-[13px] font-semibold leading-none text-[hsl(var(--app-danger,var(--destructive)))]">
-            {moroso.cantidad}
-          </span>
+      <AppInline gap="xs" align="center" className="shrink-0">
+        <span className="text-[12px] font-semibold leading-none text-[hsl(var(--app-danger,var(--destructive)))]">
+          {moroso.cantidad}
+        </span>
 
-          <ChevronRight className="h-3 w-3 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
-        </AppInline>
+        <ChevronRight className="h-2.5 w-2.5 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]" />
       </AppInline>
     </article>
   );

@@ -289,9 +289,11 @@ function NewDashboard() {
               <section
                 aria-label="Dashboard operativo"
                 className={[
-                  "grid min-w-0 grid-cols-1 gap-2",
+                  "grid min-w-0 grid-cols-1 items-start gap-2",
                   "xl:grid-cols-[15.5rem_minmax(0,1fr)_16rem]",
                   "2xl:grid-cols-[17rem_minmax(0,1fr)_17rem]",
+                  "xl:[--dashboard-panel-h:31rem]",
+                  "2xl:[--dashboard-panel-h:31rem]",
                 ].join(" ")}
               >
                 {/* Columna izquierda */}
@@ -302,7 +304,7 @@ function NewDashboard() {
                   />
                 </aside>
 
-                {/* Centro: KPIs + charts */}
+                {/* Centro */}
                 <main className="order-1 min-w-0 xl:order-2">
                   <AppStack gap="xs" className="min-w-0">
                     <DashboardKpisSection kpisData={kpisData} />
@@ -315,7 +317,7 @@ function NewDashboard() {
                 </main>
 
                 {/* Columna derecha */}
-                <aside className="order-3 min-w-0 xl:order-3 ">
+                <aside className="order-3 min-w-0 xl:order-3 xl:h-[var(--dashboard-panel-h)]">
                   <DashboardSupportSidebar ticketsSoporte={ticketsSoporte} />
                 </aside>
               </section>

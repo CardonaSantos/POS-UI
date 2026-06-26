@@ -73,10 +73,9 @@ export function DashboardMapPanel({ usuariosEnCampo }: DashboardMapPanelProps) {
       title={
         <AppInline gap="xs" align="center" className="min-w-0">
           <MapPin className="h-4 w-4 shrink-0 text-[hsl(var(--app-primary,var(--primary)))]" />
-          <span className="truncate">Técnicos en campo</span>
+          <span className="truncate">Equipo en campo</span>
         </AppInline>
       }
-      description="Ubicación en tiempo real del equipo operativo"
       action={
         <AppBadge size="xs" tone="info" appearance="soft">
           {usuariosEnCampo.length} activos
