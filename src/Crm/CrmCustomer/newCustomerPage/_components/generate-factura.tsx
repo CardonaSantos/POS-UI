@@ -172,13 +172,7 @@ export default function GenerateFacturas({
 
   return (
     <AppDialog open={openGenerateFacturas} onOpenChange={handleOpenChange}>
-      <AppDialogContent
-        size="lg"
-        viewport="default"
-        padding="sm"
-        // overlayTone="default"
-        // overlayBlur="sm"
-      >
+      <AppDialogContent size="lg" viewport="default" padding="sm">
         <AppDialogHeader divider>
           <AppDialogTitle className="flex items-center gap-2">
             <FileText size={16} />
