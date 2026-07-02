@@ -11,7 +11,10 @@ import type {
   FormData,
   OptionSelected,
 } from "../CrmNewCustomerEdition/customer-form-types";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { useCreateCustomer } from "../CrmHooks/hooks/Client/useGetClient";
 import { useGetDepartamentos } from "../CrmHooks/hooks/Departamentos/useGetDepartamentos";
@@ -47,7 +50,7 @@ const INITIAL_FORM_DATA: FormData = {
   observaciones: "",
   contactoReferenciaNombre: "",
   contactoReferenciaTelefono: "",
-
+  estadoCobranza: EstadoCobranzaCliente.AL_DIA,
   // Datos del servicio
   contrasenaWifi: "",
   ssidRouter: "",
@@ -174,6 +177,14 @@ function CreateCustomers() {
       estado: value,
     }));
   };
+
+  const handleSelectEstadoCobranzaCliente = (value: EstadoCobranzaCliente) => {
+    setFormData((prev) => ({
+      ...prev,
+      estadoCobranza: value,
+    }));
+  };
+
   // Contrato handlers
   const handleChangeDataContrato = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -380,6 +391,7 @@ function CreateCustomers() {
         isSubmitting={isSubmitting}
         handleSelectMk={handleSelectMk}
         handleChangeSwitch={handleChangeSwitch}
+        onSelectEstadoCobranzaCliente={handleSelectEstadoCobranzaCliente}
       />
       <AppConfirmDialog
         open={confirmCreateDialog.isOpen}

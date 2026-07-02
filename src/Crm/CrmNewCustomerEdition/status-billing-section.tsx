@@ -19,7 +19,10 @@ import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppSwitch } from "@/components/app/primitives/app-switch";
 import type { AppSelectOption } from "@/components/app/primitives/app-single-select";
 
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import type { StatusBillingSectionProps } from "./customer-form-types";
 
 function toDateTimeLocalValue(value: Date | null) {
@@ -59,6 +62,12 @@ function normalizeOptions(
 
 const ESTADO_CLIENTE_OPTIONS: Array<AppSelectOption<EstadoCliente>> =
   Object.values(EstadoCliente).map((estado) => ({
+    value: estado,
+    label: formatEstadoClienteLabel(estado),
+  }));
+
+const ESTADO_COBRANZA_OPTIONS: Array<AppSelectOption<EstadoCobranzaCliente>> =
+  Object.values(EstadoCobranzaCliente).map((estado) => ({
     value: estado,
     label: formatEstadoClienteLabel(estado),
   }));
@@ -130,6 +139,7 @@ export function StatusBillingSection({
   onEnviarRecordatorioChange,
   onSelectZonaFacturacion,
   onChangeFechaInstalacion,
+  onSelectEstadoCobranza,
 }: StatusBillingSectionProps) {
   const zonaFacturacionOptions = React.useMemo(
     () => normalizeOptions(optionsZonasFacturacion),
@@ -147,6 +157,14 @@ export function StatusBillingSection({
       onSelectEstadoCliente(value);
     },
     [onSelectEstadoCliente],
+  );
+
+  const handleEstadoCobranzaChange = React.useCallback(
+    (value: EstadoCobranzaCliente | null) => {
+      if (!value) return;
+      onSelectEstadoCobranza(value);
+    },
+    [onSelectEstadoCobranza],
   );
 
   const handleZonaFacturacionChange = React.useCallback(
@@ -170,13 +188,35 @@ export function StatusBillingSection({
       <StatusBillingSectionHeader />
 
       <AppGrid cols={{ base: 1, md: 2, xl: 4 }} gap="sm">
-        <AppField label="Estado del cliente">
+        <AppField label="Estado Operativo del cliente">
           {(field) => (
             <AppSingleSelect<EstadoCliente>
               inputId={field.id}
               value={formData.estado}
               options={ESTADO_CLIENTE_OPTIONS}
               onChange={handleEstadoChange}
+              placeholder="Seleccionar estado..."
+              isClearable={false}
+              isSearchable={false}
+              size="xs"
+              density="compact"
+              fieldWidth="full"
+              invalid={field.invalid}
+              portalToBody
+              menuPosition="fixed"
+              menuPlacement="auto"
+              menuShouldScrollIntoView={false}
+            />
+          )}
+        </AppField>
+
+        <AppField label="Estado Cobranza">
+          {(field) => (
+            <AppSingleSelect<EstadoCobranzaCliente>
+              inputId={field.id}
+              value={formData.estadoCobranza}
+              options={ESTADO_COBRANZA_OPTIONS}
+              onChange={handleEstadoCobranzaChange}
               placeholder="Seleccionar estado..."
               isClearable={false}
               isSearchable={false}

@@ -1,4 +1,7 @@
-import { EstadoCliente } from "../cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../cliente-interfaces/cliente-types";
 
 export interface UpdateCustomerDto {
   id: number;
@@ -31,5 +34,6 @@ export interface UpdateCustomerDto {
   archivoContrato: string;
   observacionesContrato: string;
   estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
   enviarRecordatorio: boolean;
 }
