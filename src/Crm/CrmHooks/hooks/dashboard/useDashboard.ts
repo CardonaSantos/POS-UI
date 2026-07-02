@@ -31,7 +31,7 @@ export function useGetDashboardData() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -52,7 +52,7 @@ export function useGetDashboardChartInstalaciones() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -73,7 +73,7 @@ export function useGetInstalacionesVsDesinstalaciones() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -93,7 +93,7 @@ export function useGetTicketProceso() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -113,10 +113,11 @@ export function useGetCobrosDashboard() {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
+// TECNICOS
 // TECNICOS
 /**
  * Hook de retorno de tickets tecnico
@@ -129,12 +130,12 @@ export function useGetTicketsAsignados(tecId: number) {
     `dashboard/get-tickets-asignados/${tecId}`,
     undefined,
     {
-      staleTime: 0,
       refetchOnWindowFocus: "always",
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+      enabled: tecId > 0,
+    },
   );
 }
 
@@ -155,7 +156,7 @@ export function useGetTicketDetails(ticketId: number) {
       refetchOnMount: "always",
       refetchOnReconnect: "always",
       retry: 1,
-    }
+    },
   );
 }
 
@@ -178,7 +179,7 @@ export function usePatchTicketEnProceso(ticketId: number) {
           queryKey: TicketsAsignadosQkeys.all,
         });
       },
-    }
+    },
   );
 }
 
@@ -201,6 +202,6 @@ export function usePatchTicketEnRevision(ticketId: number) {
           queryKey: TicketsAsignadosQkeys.all,
         });
       },
-    }
+    },
   );
 }
