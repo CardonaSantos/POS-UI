@@ -2,8 +2,6 @@ import { RotateCcw } from "lucide-react";
 
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppCard } from "@/components/app/primitives/app-card";
-import { AppGrid } from "@/components/app/primitives/app-grid";
-import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppSearchInput } from "@/components/app/primitives/app-search-input";
 import { AppSingleSelect } from "@/components/app/primitives/app-single-select";
 import { AppStack } from "@/components/app/primitives/app-stack";
@@ -71,10 +69,16 @@ export function CustomerTableFilters({
   onClearFilters,
 }: Props) {
   return (
-    <AppCard variant="ghost" size="sm" radius="sm" className="overflow-visible">
-      <AppStack gap="sm">
-        <AppInline justify="between" align="center" gap="sm" wrap>
-          <div className="w-full max-w-md">
+    <AppCard
+      variant="ghost"
+      size="xs"
+      radius="sm"
+      className="overflow-visible py-1"
+    >
+      <AppStack gap="xs">
+        {/* Barra superior */}
+        <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="w-full lg:max-w-[420px]">
             <AppSearchInput
               value={filters.search}
               onValueChange={onSearchChange}
@@ -85,38 +89,42 @@ export function CustomerTableFilters({
               isSearching={isSearching}
               placeholder="Buscar por nombre, teléfono, DPI o IP..."
               wrapperWidth="full"
-              minWidth="lg"
+              minWidth="sm"
             />
           </div>
 
-          <AppInline gap="xs" align="center" justify="end" wrap>
+          <div className="flex items-center justify-end gap-1">
             {rightActions}
 
             <AppButton
               type="button"
               variant="ghost"
               size="xs"
-              leftIcon={<RotateCcw size={14} />}
+              leftIcon={<RotateCcw size={13} />}
               onClick={onClearFilters}
+              className="h-7 px-2 text-[11px]"
             >
               Limpiar
             </AppButton>
-          </AppInline>
-        </AppInline>
+          </div>
+        </div>
 
-        <AppGrid
-          cols={{ base: 1, sm: 2, md: 3, xl: 7 }}
-          gap="xs"
-          className="overflow-visible pb-1"
-        >
+        {/* Filtros */}
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
           <AppSingleSelect<string>
             value={filters.departamentoId}
             options={options.departamentos}
             onChange={onDepartamentoChange}
-            placeholder="Departamento"
-            size="sm"
+            placeholder="Depto."
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -124,10 +132,16 @@ export function CustomerTableFilters({
             options={options.municipios}
             onChange={onMunicipioChange}
             placeholder="Municipio"
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isDisabled={!filters.departamentoId}
             isClearable
+            isSearchable
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -135,9 +149,15 @@ export function CustomerTableFilters({
             options={options.sectores}
             onChange={onSectorChange}
             placeholder="Sector"
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -145,9 +165,15 @@ export function CustomerTableFilters({
             options={ESTADOS_CLIENTE_OPTIONS}
             onChange={onEstadoChange}
             placeholder="Operativo"
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable={false}
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -155,9 +181,15 @@ export function CustomerTableFilters({
             options={ESTADOS_COBRANZA_OPTIONS}
             onChange={onEstadoCobranzaChange}
             placeholder="Cobranza"
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable={false}
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -165,9 +197,15 @@ export function CustomerTableFilters({
             options={options.zonasFacturacion}
             onChange={onZonaFacturacionChange}
             placeholder="Zona fact."
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
 
           <AppSingleSelect<string>
@@ -175,11 +213,17 @@ export function CustomerTableFilters({
             options={CUSTOMER_SORT_OPTIONS}
             onChange={onSortChange}
             placeholder="Ordenar"
-            size="sm"
+            size="xs"
+            density="compact"
             fieldWidth="full"
             isClearable
+            isSearchable={false}
+            portalToBody
+            menuPosition="fixed"
+            menuPlacement="auto"
+            menuShouldScrollIntoView={false}
           />
-        </AppGrid>
+        </div>
       </AppStack>
     </AppCard>
   );

@@ -28,7 +28,10 @@ import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import { OptionSelected } from "../features/OptionSelected/OptionSelected";
 import { UpdateCustomerDto } from "../features/update-customer/update-customer";
 import { CustomerImage } from "../features/customer-galery/customer-galery.interfaces";
@@ -77,6 +80,7 @@ interface FormData {
   mascara: string;
   gateway: string;
   estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
   enviarRecordatorio: boolean;
   sectorId?: number | null;
 }
@@ -131,6 +135,7 @@ const INITIAL_FORM_DATA: FormData = {
   departamentoId: "",
   empresaId: "",
   estado: EstadoCliente.ACTIVO,
+  estadoCobranza: EstadoCobranzaCliente.AL_DIA,
   enviarRecordatorio: true,
 };
 
@@ -584,6 +589,10 @@ function EditCustomers() {
     patchFormData({ estado: value });
   };
 
+  const handleSelectEstadoCobranzaCliente = (value: EstadoCobranzaCliente) => {
+    patchFormData({ estadoCobranza: value });
+  };
+
   const buildUpdatePayload = React.useCallback((): UpdateCustomerDto => {
     return {
       id: Number(customerId),
@@ -617,6 +626,7 @@ function EditCustomers() {
       archivoContrato: formDataContrato.archivoContrato,
       observacionesContrato: formDataContrato.observaciones,
       estado: formData.estado as EstadoCliente,
+      estadoCobranza: formData.estadoCobranza as EstadoCobranzaCliente,
       enviarRecordatorio: formData.enviarRecordatorio,
       mikrotikRouterId: view.state.mkSelected ?? null,
     };
@@ -719,6 +729,7 @@ function EditCustomers() {
         departamentoId: customer.departamento?.id?.toString() || "",
         empresaId: "1",
         estado: customer.estado as EstadoCliente,
+        estadoCobranza: customer.estadoCobranza,
         enviarRecordatorio: customer.enviarRecordatorio,
       },
       fechaInstalacion: customer.fechaInstalacion
@@ -806,6 +817,7 @@ function EditCustomers() {
                 view.setField("fechaInstalacion", date)
               }
               onSelectEstadoCliente={handleSelectEstadoCliente}
+              onSelectEstadoCobranza={handleSelectEstadoCobranzaCliente}
               onClickDelete={deleteDialog.open}
               onClickOpenConfirm={updateDialog.open}
               handleChangeDataContrato={handleChangeDataContrato}
@@ -835,6 +847,7 @@ function EditCustomers() {
         isLoading={updateCustomer.isPending}
         preventClose={updateCustomer.isPending}
         closeOnConfirm={false}
+        // CustomerEditFormCard
         footerAlign="between"
         onConfirm={handleSubmit}
       ></AppConfirmDialog>

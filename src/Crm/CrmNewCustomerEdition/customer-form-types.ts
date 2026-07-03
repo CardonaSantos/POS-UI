@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
+import {
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "../features/cliente-interfaces/cliente-types";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
 
 // ========= Estado Cliente =========
@@ -36,6 +39,7 @@ export interface FormData {
   mascara: string;
   gateway: string;
   estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
   enviarRecordatorio: boolean;
   activateOnMk?: boolean;
 }
@@ -156,12 +160,15 @@ export interface LocationSectionProps {
 }
 
 export interface StatusBillingSectionProps {
-  formData: Pick<FormData, "estado" | "enviarRecordatorio">;
+  formData: Pick<FormData, "estado" | "enviarRecordatorio" | "estadoCobranza">;
   fechaInstalacion: Date | null;
   zonasFacturacionSelected: number | null;
   optionsZonasFacturacion: OptionSelected[];
   secureZonasFacturacion: FacturacionZona[];
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
+
+  onSelectEstadoCobranza: (value: EstadoCobranzaCliente) => void;
+
   onEnviarRecordatorioChange: (checked: boolean) => void;
   onSelectZonaFacturacion: SelectHandler<OptionSelected>;
   onChangeFechaInstalacion: (date: Date | null) => void;

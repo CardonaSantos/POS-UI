@@ -31,6 +31,7 @@ import type {
 
 import {
   EstadoCliente,
+  EstadoCobranzaCliente,
   Sector,
 } from "../features/cliente-interfaces/cliente-types";
 import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
@@ -77,6 +78,9 @@ export interface CustomerEditFormCardProps {
   onSelectZonaFacturacion: SelectHandler<OptionSelected>;
   onChangeFechaInstalacion: (date: Date | null) => void;
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
+
+  onSelectEstadoCobranza: (value: EstadoCobranzaCliente) => void;
+
   handleEnviarRecordatorioChange: (checked: boolean) => void;
   handleSelectMk: SelectHandler<OptionSelected>;
   handleChangeDataContrato: FormChangeHandler;
@@ -121,6 +125,7 @@ export function CustomerEditFormCard({
   onSelectZonaFacturacion,
   onChangeFechaInstalacion,
   onSelectEstadoCliente,
+  onSelectEstadoCobranza,
   handleEnviarRecordatorioChange,
   handleSelectMk,
   onClickDelete,
@@ -201,6 +206,7 @@ export function CustomerEditFormCard({
             optionsZonasFacturacion={optionsZonasFacturacion}
             secureZonasFacturacion={secureZonasFacturacion}
             onSelectEstadoCliente={onSelectEstadoCliente}
+            onSelectEstadoCobranza={onSelectEstadoCobranza}
             onEnviarRecordatorioChange={handleEnviarRecordatorioChange}
             onSelectZonaFacturacion={onSelectZonaFacturacion}
             onChangeFechaInstalacion={onChangeFechaInstalacion}

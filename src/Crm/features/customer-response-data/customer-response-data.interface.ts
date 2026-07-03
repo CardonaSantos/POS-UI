@@ -1,6 +1,7 @@
 import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
 import {
   EstadoCliente,
+  EstadoCobranzaCliente,
   Sector,
   Servicio,
   ServiciosInternet,
@@ -31,6 +32,7 @@ export interface CustomerDataResponse {
   fechaInstalacion: string;
   enviarRecordatorio: boolean;
   estado: EstadoCliente;
+  estadoCobranza: EstadoCobranzaCliente;
   departamento: Departamentos;
   municipio: Municipios;
   sector: Sector;

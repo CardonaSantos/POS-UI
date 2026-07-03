@@ -29,6 +29,7 @@ import {
 
 import {
   EstadoCliente,
+  EstadoCobranzaCliente,
   Sector,
   ServiciosInternet,
 } from "../features/cliente-interfaces/cliente-types";
@@ -91,6 +92,8 @@ interface CustomerCreateFormCardProps {
 
   onChangeFechaInstalacion: (date: Date | null) => void;
   onSelectEstadoCliente: (estado: EstadoCliente) => void;
+
+  onSelectEstadoCobranzaCliente: (value: EstadoCobranzaCliente) => void;
 
   onSubmit: () => void | Promise<void>;
   isSubmitting: boolean;
@@ -321,6 +324,7 @@ export function CustomerCreateFormCard({
   mkSelected,
   handleSelectMk,
   handleChangeSwitch,
+  onSelectEstadoCobranzaCliente,
 }: CustomerCreateFormCardProps) {
   const ui = useAppStateHandlers({
     activeTab: "cliente" as CustomerCreateTab,
@@ -433,6 +437,7 @@ export function CustomerCreateFormCard({
                         ? Number(zonasFacturacionSelected)
                         : null
                     }
+                    onSelectEstadoCobranza={onSelectEstadoCobranzaCliente}
                     optionsZonasFacturacion={optionsZonasFacturacion}
                     onSelectEstadoCliente={onSelectEstadoCliente}
                     onEnviarRecordatorioChange={() => {}}

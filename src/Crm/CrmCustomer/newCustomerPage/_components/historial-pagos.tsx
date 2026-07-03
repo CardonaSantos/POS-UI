@@ -92,8 +92,8 @@ export function HistorialPagos({
             </div>
           </AppInline>
 
-          <span className="text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
-            {rows.length} registro{rows.length === 1 ? "" : "s"}
+          <span className="text-xs px-2 text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+            {rows.length} registros
           </span>
         </AppInline>
 
