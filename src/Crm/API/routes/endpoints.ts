@@ -4,6 +4,11 @@ export const crm_endpoints = {
     login: "/auth/login-user",
   },
 
+  instalaciones: {
+    post_instalacion: `/cliente-instalaciones`,
+    get_instalaciones_paginated: `/cliente-instalaciones`,
+  },
+
   customer: {
     create: "/internet-customer/create-new-customer",
 

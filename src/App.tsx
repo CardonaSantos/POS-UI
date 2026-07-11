@@ -60,6 +60,7 @@ import WhatsappTemplatesPage from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/
 import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/create-templates/create-templates";
 import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
 import AppShowcasePage from "./components/testeos";
+import InstalacionesMainPage from "./Crm/Crm-instalaciones/page";
 
 // COMENTARIO DE ULTIMO COMMIT
 
@@ -339,6 +340,15 @@ function App() {
           {/* ========================= */}
 
           <Route path="/crm-samples" element={crmRoute(<Samples1 />)} />
+
+          {/* ========================= */}
+          {/* INSTALACIONES MAIN PAGE */}
+          {/* ========================= */}
+
+          <Route
+            path="/crm/crear-instalacion"
+            element={crmRoute(<InstalacionesMainPage />)}
+          />
         </Route>
 
         {/* ========================= */}
