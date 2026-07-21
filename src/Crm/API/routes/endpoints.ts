@@ -7,6 +7,10 @@ export const crm_endpoints = {
   instalaciones: {
     post_instalacion: `/cliente-instalaciones`,
     get_instalaciones_paginated: `/cliente-instalaciones`,
+    get_instalacion: (id: number) => `/cliente-instalaciones/${id}`,
+
+    post_evidencias: (instalacionId: number, empresaId: number) =>
+      `/cliente-instalaciones/${instalacionId}/evidencias/upload?empresaId=${empresaId}`,
   },
 
   customer: {

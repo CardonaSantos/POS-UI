@@ -23,3 +23,27 @@ export enum RolTecnicoOperacionCliente {
   COBRADOR = "COBRADOR",
   OTRO = "OTRO",
 }
+
+export enum TipoEvidenciaClienteOperacion {
+  ANTES = "ANTES",
+  DESPUES = "DESPUES",
+  EQUIPO = "EQUIPO",
+  ROUTER = "ROUTER",
+  ONU = "ONU",
+  ANTENA = "ANTENA",
+  CABLEADO = "CABLEADO",
+  UBICACION = "UBICACION",
+  FIRMA = "FIRMA",
+  BOLETA = "BOLETA",
+  RECIBO = "RECIBO",
+  DOCUMENTO = "DOCUMENTO",
+  OTRO = "OTRO",
+}
+
+// export enum RolTecnicoOperacionCliente {
+//   RESPONSABLE = "RESPONSABLE",
+//   APOYO = "APOYO",
+//   SUPERVISOR = "SUPERVISOR",
+//   COBRADOR = "COBRADOR",
+//   OTRO = "OTRO",
+// }

@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 function InstalacionesMainPage() {
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
@@ -202,49 +203,42 @@ function InstalacionesMainPage() {
     });
 
   return (
-    <AppContainer size="xl" paddingX="sm" paddingY="sm">
-      <AppStack gap="md">
-        <div>
-          <h1 className="text-xl font-semibold">Nueva instalación</h1>
+    <PageTransitionCrm titleHeader="Registrar instalación" variant="fade-pure">
+      <AppContainer size="xl" paddingX="sm" paddingY="sm">
+        <AppStack gap="md">
+          <AppCard size="sm">
+            <InstalacionCreateForm
+              form={form}
+              onSubmit={onSubmit}
+              clienteOptions={clienteOptions}
+              servicioOptions={servicioOptions}
+              ticketOptions={ticketOptions}
+              tecnicoOptions={tecnicoOptions}
+              tecnicoResponsableOptions={tecnicoResponsableOptions}
+              tipoOptions={tipoOptions}
+              estadoOptions={estadoOptions}
+              isLoadingClientes={isLoadingClientes}
+              isLoadingServicios={isLoadingServicios}
+              isLoadingTickets={isLoadingTickets}
+              isLoadingTecnicos={isLoadingTecnicos}
+            />
+          </AppCard>
+        </AppStack>
 
-          <p className="text-sm">
-            Registre la instalación, su programación, ubicación, técnicos y
-            costos.
-          </p>
-        </div>
-
-        <AppCard size="sm">
-          <InstalacionCreateForm
-            form={form}
-            onSubmit={onSubmit}
-            clienteOptions={clienteOptions}
-            servicioOptions={servicioOptions}
-            ticketOptions={ticketOptions}
-            tecnicoOptions={tecnicoOptions}
-            tecnicoResponsableOptions={tecnicoResponsableOptions}
-            tipoOptions={tipoOptions}
-            estadoOptions={estadoOptions}
-            isLoadingClientes={isLoadingClientes}
-            isLoadingServicios={isLoadingServicios}
-            isLoadingTickets={isLoadingTickets}
-            isLoadingTecnicos={isLoadingTecnicos}
-          />
-        </AppCard>
-      </AppStack>
-
-      <AppConfirmDialog
-        open={createConfirm.isOpen}
-        onOpenChange={createConfirm.setOpen}
-        preset="warning"
-        title="Crear nueva instalación"
-        description="Se registrará una nueva instalación para este cliente con los datos ingresados. Algunos datos podrían no poder modificarse posteriormente. ¿Desea continuar?"
-        confirmText="Crear instalación"
-        cancelText="Cancelar"
-        loadingText="Creando instalación..."
-        isLoading={createInstalacion.isPending}
-        onConfirm={handleConfirmCreate}
-      />
-    </AppContainer>
+        <AppConfirmDialog
+          open={createConfirm.isOpen}
+          onOpenChange={createConfirm.setOpen}
+          preset="warning"
+          title="Crear nueva instalación"
+          description="Se registrará una nueva instalación para este cliente con los datos ingresados. Algunos datos podrían no poder modificarse posteriormente. ¿Desea continuar?"
+          confirmText="Crear instalación"
+          cancelText="Cancelar"
+          loadingText="Creando instalación..."
+          isLoading={createInstalacion.isPending}
+          onConfirm={handleConfirmCreate}
+        />
+      </AppContainer>
+    </PageTransitionCrm>
   );
 }
 

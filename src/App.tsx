@@ -61,6 +61,8 @@ import { WhatsappTemplateCreatePage } from "./Crm/CrmWhatsappCampaings/whatsapp-
 import { WhatsappMessaginCapaing } from "./Crm/CrmWhatsappCampaings/whatsapp-campaing/send-messages/page";
 import AppShowcasePage from "./components/testeos";
 import InstalacionesMainPage from "./Crm/Crm-instalaciones/page";
+import InstalacionesListPage from "./Crm/Crm-instalaciones/tabla/instalaciones-list-page";
+import InstalacionDetailPage from "./Crm/Crm-instalaciones/details/instalacion-detail-page";
 
 // COMENTARIO DE ULTIMO COMMIT
 
@@ -347,7 +349,17 @@ function App() {
 
           <Route
             path="/crm/crear-instalacion"
-            element={crmRoute(<InstalacionesMainPage />)}
+            element={adminRoute(<InstalacionesMainPage />)}
+          />
+
+          <Route
+            path="/crm/instalaciones"
+            element={adminRoute(<InstalacionesListPage />)}
+          />
+
+          <Route
+            path="/crm/instalacion/:instalacionId"
+            element={adminRoute(<InstalacionDetailPage />)}
           />
         </Route>
 

@@ -33,19 +33,19 @@ export function useRutasCreate(empresaId: number) {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selected, setSelected] = useState<string[]>([]);
 
-  const [page, setPage] = useState(1); // 1-based para el server
+  const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(ITEMS_PER_PAGE);
   const toNumArray = (arr: string[]) =>
     arr.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0); // evita 0/NaN (ajusta si 0 fuese válido)
   const params = useMemo(
     () => ({
-      empresaId, // si el backend lo necesita
+      empresaId,
       search: search || undefined,
       estado: estado === "TODOS" ? undefined : estado,
       estadoCobranza: estadoCobranza === "TODOS" ? undefined : estadoCobranza,
 
-      zonaIds: toNumArray(zonasFacturacionIDs), // ← OK
-      sectorIds: toNumArray(sectorIDs), // ← OK
+      zonaIds: toNumArray(zonasFacturacionIDs),
+      sectorIds: toNumArray(sectorIDs),
       sortBy,
       sortDir,
       page,
@@ -106,15 +106,13 @@ export function useRutasCreate(empresaId: number) {
     [pageData, selected],
   );
 
-  // ---- Mutation crear ruta ----
-  // useRutasCreate.ts (solo el create)
   const crearRuta = useCrearRutaMutation();
 
   const create = async (form: {
     nombreRuta: string;
     cobradorId?: string | number | null;
     observaciones?: string;
-    clientesIds: string[]; // 👈 ahora obligatorio aquí
+    clientesIds: string[];
     asignadaPor?: number;
   }) => {
     const { nombreRuta, cobradorId, observaciones, clientesIds } = form;
@@ -125,28 +123,23 @@ export function useRutasCreate(empresaId: number) {
       throw new Error("Seleccione al menos una factura");
     if (!empresaId) throw new Error("Empresa requerida");
 
-    // Ajusta al DTO real de tu backend:
-    // Si tu backend espera { facturas: number[] }:
-    const payload: any /* CrearRutaDTO */ = {
+    const payload: any = {
       nombreRuta,
       cobradorId: cobradorId ? Number(cobradorId) : undefined,
       empresaId,
-      clientesIds: clientesIds.map(Number), // 👈 importante
+      clientesIds: clientesIds.map(Number),
       observaciones: observaciones?.trim() || undefined,
       asignadoPor: userID,
     };
 
     await crearRuta.mutateAsync(payload);
 
-    // refrescos
     refetchAll();
 
-    // limpia filtros/paginación si quieres
     setSearch("");
     setPage(1);
   };
 
-  // ---- Flags combinados ----
   const isFetchingAny =
     isFetchingClientes || zonasQ.isFetching || sectoresQ.isFetching;
 
@@ -162,7 +155,6 @@ export function useRutasCreate(empresaId: number) {
     total,
     totalPages,
 
-    // ui (server-side)
     search,
     setSearch,
     estado,

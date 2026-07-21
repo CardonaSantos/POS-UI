@@ -61,6 +61,12 @@ export const routesCrm_SuperAdmin = [
         label: "Nueva Instalacion",
         href: "/crm/crear-instalacion",
       },
+
+      {
+        icon: CircleFadingPlus,
+        label: "Instalaciones",
+        href: "/crm/instalaciones",
+      },
     ],
   },
 
