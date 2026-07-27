@@ -263,11 +263,11 @@ function CrmCreateTicket({
       const descripcion = form.state.descripcion.trim();
       const telefonoTemporal = form.state.telefonoTemporal.trim();
 
-      if (!form.state.clienteId) {
-        ui.setField("activeTab", "info");
-        toast.info("Seleccione un cliente para crear el ticket");
-        return;
-      }
+      // if (!form.state.clienteId) {
+      //   ui.setField("activeTab", "info");
+      //   toast.info("Seleccione un cliente para crear el ticket");
+      //   return;
+      // }
 
       if (!titulo) {
         ui.setField("activeTab", "details");

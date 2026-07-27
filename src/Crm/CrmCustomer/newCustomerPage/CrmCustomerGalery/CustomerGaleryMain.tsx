@@ -51,9 +51,7 @@ export function CustomerImagesGallery({
 
   const [index, setIndex] = React.useState(0);
 
-  const selectedMediaId = deleteDialog.target?.mediaId ?? 0;
-
-  const deleteImage = useDeleteImage(selectedMediaId, empresaId, customerId);
+  const deleteImage = useDeleteImage(empresaId, customerId);
 
   const slides = React.useMemo(
     () =>
@@ -75,33 +73,24 @@ export function CustomerImagesGallery({
     [lightbox],
   );
 
-  const handleDeleteOpenChange = React.useCallback(
-    (open: boolean) => {
-      deleteDialog.setOpen(open);
-
-      if (!open) {
-        deleteDialog.clearTarget();
-      }
-    },
-    [deleteDialog],
-  );
-
   const handleDeleteMedia = React.useCallback(async () => {
-    const target = deleteDialog.target;
+    await deleteDialog.confirm(async (target) => {
+      if (!target.mediaId || !target.customerId) {
+        toast.warning("Datos no válidos");
+        return;
+      }
 
-    if (!target?.mediaId || !target.customerId) {
-      toast.warning("Datos no válidos");
-      return;
-    }
-
-    await toast.promise(deleteImage.mutateAsync(), {
-      success: "Recurso eliminado",
-      loading: "Eliminando...",
-      error: (error) => getApiErrorMessageAxios(error),
+      await toast.promise(
+        deleteImage.mutateAsync({
+          id: target.mediaId,
+        }),
+        {
+          success: "Recurso eliminado",
+          loading: "Eliminando...",
+          error: (error) => getApiErrorMessageAxios(error),
+        },
+      );
     });
-
-    deleteDialog.close();
-    deleteDialog.clearTarget();
   }, [deleteDialog, deleteImage]);
 
   if (!images.length) return null;
@@ -161,7 +150,7 @@ export function CustomerImagesGallery({
 
       <AppConfirmDialog
         open={deleteDialog.isOpen}
-        onOpenChange={handleDeleteOpenChange}
+        onOpenChange={deleteDialog.setOpen}
         preset="delete"
         tone="danger"
         title="Eliminar recurso"

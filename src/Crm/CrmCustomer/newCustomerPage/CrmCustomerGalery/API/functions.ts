@@ -1,36 +1,40 @@
+import { useQueryClient } from "@tanstack/react-query";
+
 import { useCrmMutation } from "@/Crm/hooks/crmApiHooks";
 import { customerQkeys } from "@/Crm/CrmHooks/hooks/Client/Qk";
-import { useQueryClient } from "@tanstack/react-query";
 import { clienteKeys } from "@/Crm/CrmCustomer/API/QK/queries-keys";
 
-export function useDeleteImage(
-  imageId: number,
-  empresaId: number,
-  customerId: number
-) {
+interface DeleteMediaPayload {
+  id: number;
+}
+
+export function useDeleteImage(empresaId: number, customerId: number) {
   const queryClient = useQueryClient();
 
-  return useCrmMutation<void, void>(
-    "delete",
-    `media/${imageId}`,
+  return useCrmMutation<unknown, DeleteMediaPayload>(
+    "post",
+    "media/delete",
     {
       params: {
         empresaId,
       },
     },
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: customerQkeys.specificCustomer(customerId),
-        });
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: customerQkeys.specificCustomer(customerId),
+          }),
 
-        queryClient.invalidateQueries({
-          queryKey: clienteKeys.details(customerId),
-        });
-        queryClient.invalidateQueries({
-          queryKey: clienteKeys.media(customerId),
-        });
+          queryClient.invalidateQueries({
+            queryKey: clienteKeys.details(customerId),
+          }),
+
+          queryClient.invalidateQueries({
+            queryKey: clienteKeys.media(customerId),
+          }),
+        ]);
       },
-    }
+    },
   );
 }

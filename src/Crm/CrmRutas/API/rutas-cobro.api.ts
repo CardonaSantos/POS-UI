@@ -58,21 +58,18 @@ export const rutasCobroKeys = {
 export function useClientesRuta(
   params: Partial<ClientesRutaParams>,
 ): UseQueryResult<Paged<ClienteInternetFromCreateRuta>, Error> {
-  const initialPaged: Paged<ClienteInternetFromCreateRuta> = {
-    items: [],
-    total: 0,
-    page: params.page ?? 1,
-    perPage: params.perPage ?? 10,
-  };
+  // const initialPaged: Paged<ClienteInternetFromCreateRuta> = {
+  //   items: [],
+  //   total: 0,
+  //   page: params.page ?? 1,
+  //   perPage: params.perPage ?? 10,
+  // };
 
   return useCrmQuery<Paged<ClienteInternetFromCreateRuta>>(
     rutasCobroKeys.clientes(params),
     "/internet-customer/get-customers-ruta",
     { params: clean(params) },
     {
-      // En v5, placeholderData debe devolver TData, no undefined:
-      placeholderData: (prev) => prev ?? initialPaged,
-      initialData: initialPaged,
       retry: 1,
     },
   );

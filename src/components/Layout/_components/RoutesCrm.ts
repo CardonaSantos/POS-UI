@@ -29,6 +29,7 @@ import {
   GalleryHorizontal,
   BadgeCheck,
   BadgePlus,
+  CircleFadingPlus,
 } from "lucide-react";
 
 export interface Route {
@@ -54,6 +55,17 @@ export const routesCrm_SuperAdmin = [
         icon: UserPlus,
         label: "Nuevo Cliente",
         href: "/crm/crear-cliente-crm",
+      },
+      {
+        icon: CircleFadingPlus,
+        label: "Nueva Instalacion",
+        href: "/crm/crear-instalacion",
+      },
+
+      {
+        icon: CircleFadingPlus,
+        label: "Instalaciones",
+        href: "/crm/instalaciones",
       },
     ],
   },
