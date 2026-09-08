@@ -3,7 +3,7 @@ import { crm_endpoints } from "@/Crm/API/routes/endpoints";
 import { instalacionesQkeys } from "../instalaciones/qk";
 import { useInvalidateQk } from "../useInvalidateQk/useInvalidateQk";
 import { pppoeAuditoriaInstalacionQkeys } from "../pppoe-auditoria/qk";
-
+import { pppoeCuentasQkeys } from "../pppoe-cuentas/qk";
 import { pppoeAdministracionQkeys } from "./qk";
 import { PerfilHomologacionSeleccionable } from "@/Crm/features/pppoe-homologaciones/intefaces";
 import {
@@ -31,8 +31,23 @@ function useInvalidatePppoeAdministration() {
 
   return () => {
     invalidate(instalacionesQkeys.all);
+
     invalidate(pppoeAuditoriaInstalacionQkeys.all);
+
     invalidate(pppoeAdministracionQkeys.all);
+
+    /**
+     * Nuevo recurso administrativo.
+     *
+     * Suspender/reactivar/reintentar pueden modificar:
+     *
+     * - estadoCuenta
+     * - estadoAcceso
+     * - ultimaOperacion
+     * - acciones disponibles
+     * - fechas operativas
+     */
+    invalidate(pppoeCuentasQkeys.all);
   };
 }
 

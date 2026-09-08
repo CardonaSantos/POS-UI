@@ -177,6 +177,16 @@ export const crm_endpoints = {
 
     get_auditoria_instalacion: (instalacionId: number) =>
       `/cliente-instalaciones/${instalacionId}/auditoria-pppoe`,
+
+    // CUENTAS PPPoE / ADMINISTRACIÓN GENERAL
+    get_cuentas_paginated: "/pppoe-cuentas",
+
+    get_cuenta: (cuentaPppoeId: number) => `/pppoe-cuentas/${cuentaPppoeId}`,
+
+    post_prealta_cuenta: "/pppoe-cuentas/prealta",
+
+    post_provisionar_cuenta: (cuentaPppoeId: number) =>
+      `/pppoe-cuentas/${cuentaPppoeId}/provisionar`,
   },
 
   // TICKET- CONFORMIDAD

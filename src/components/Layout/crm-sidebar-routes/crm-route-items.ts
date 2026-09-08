@@ -87,10 +87,53 @@ export const instalacionesRoute: Route = {
       label: "Instalaciones registradas",
       href: "/crm/instalaciones",
     },
+  ],
+};
+
+/**
+ * Administración PPPoE completa.
+ *
+ * Se utiliza para roles que pueden:
+ *
+ * - administrar cuentas;
+ * - consultar homologaciones.
+ *
+ * Actualmente:
+ * - SUPER_ADMIN
+ * - COORDINADOR_OPERACIONES
+ */
+export const pppoeRoute: Route = {
+  icon: Router,
+  label: "PPPoE",
+  submenu: [
+    {
+      icon: Users,
+      label: "Cuentas PPPoE",
+      href: "/crm/pppoe/cuentas",
+    },
     {
       icon: NetworkChartFilled,
       label: "Perfiles Homologados",
       href: "/crm/pppoe/homologacion-perfiles",
+    },
+  ],
+};
+
+/**
+ * Administración PPPoE operativa.
+ *
+ * OFICINA puede administrar cuentas, suspender,
+ * reactivar y activar, pero no administrar
+ * homologaciones.
+ */
+export const pppoeOficinaRoute: Route = {
+  icon: Router,
+  label: "PPPoE",
+  submenu: [
+    {
+      icon: Users,
+      label: "Cuentas PPPoE",
+      href: "/crm/pppoe/cuentas",
     },
   ],
 };

@@ -10,6 +10,7 @@ import {
   opticoRoute,
   perfilRoute,
   plantillasContratosRoute,
+  pppoeRoute,
   registrosEliminadosRoute,
   reportsRoute,
   rutasCobroRoute,
@@ -35,4 +36,5 @@ export const routesCrm_Admin: Route[] = [
   registrosEliminadosRoute,
   reportsRoute,
   perfilRoute,
+  pppoeRoute,
 ];

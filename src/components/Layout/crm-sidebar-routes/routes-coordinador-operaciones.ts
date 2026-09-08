@@ -1,4 +1,5 @@
 import type { Route } from "./crm-route-types";
+
 import {
   botMensajeriaRoute,
   clientesRoute,
@@ -10,6 +11,7 @@ import {
   opticoRoute,
   perfilRoute,
   plantillasContratosRoute,
+  pppoeRoute,
   registrosEliminadosRoute,
   reportsRoute,
   rutasCobroRoute,
@@ -20,19 +22,36 @@ import {
 
 export const routesCrm_CoordinadorOperaciones: Route[] = [
   dashboardRoute,
+
   clientesRoute,
+
   instalacionesRoute,
+
+  pppoeRoute,
+
   soporteRoute,
+
   desinstalacionesRoute,
+
   serviciosRoute,
+
   facturacionZonaRoute,
+
   sectoresRoute,
+
   botMensajeriaRoute,
+
   plantillasContratosRoute,
+
   rutasCobroRoute,
+
   opticoRoute,
+
   creditosRoute,
+
   registrosEliminadosRoute,
+
   reportsRoute,
+
   perfilRoute,
 ];
