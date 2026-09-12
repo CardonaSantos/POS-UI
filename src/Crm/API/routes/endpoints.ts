@@ -187,6 +187,12 @@ export const crm_endpoints = {
 
     post_provisionar_cuenta: (cuentaPppoeId: number) =>
       `/pppoe-cuentas/${cuentaPppoeId}/provisionar`,
+
+    // ADOPCIÓN DE CUENTAS PPPoE EXISTENTES
+
+    post_verificar_adopcion_cuenta: "/pppoe-cuentas/adopcion/verificar",
+
+    post_adoptar_cuenta: "/pppoe-cuentas/adopcion",
   },
 
   // TICKET- CONFORMIDAD

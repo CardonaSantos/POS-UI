@@ -204,11 +204,6 @@ export function PppoeCuentaCreateForm({ onCreated }: Props) {
   return (
     <AppForm form={form} onSubmit={handleSubmit}>
       <AppStack gap="md">
-        <AppAlert tone="info" title="Prealta administrativa" size="xs">
-          Esta etapa prepara el acceso y la cuenta PPPoE, pero todavía no
-          ejecuta comandos sobre el router MikroTik.
-        </AppAlert>
-
         {catalogError ? (
           <AppAlert tone="danger" title="Catálogos no disponibles" size="xs">
             No fue posible cargar todos los datos necesarios para preparar la
@@ -216,7 +211,7 @@ export function PppoeCuentaCreateForm({ onCreated }: Props) {
           </AppAlert>
         ) : null}
 
-        <AppCard variant="outline" size="sm" radius="md">
+        <AppCard variant="outline" size="sm" radius="md" className="p-2">
           <AppStack gap="md">
             <div>
               <AppInline align="center" gap="xs">
@@ -247,7 +242,7 @@ export function PppoeCuentaCreateForm({ onCreated }: Props) {
           </AppStack>
         </AppCard>
 
-        <AppCard variant="outline" size="sm" radius="md">
+        <AppCard variant="outline" size="sm" radius="md" className="p-2">
           <AppStack gap="md">
             <div>
               <AppInline align="center" gap="xs">

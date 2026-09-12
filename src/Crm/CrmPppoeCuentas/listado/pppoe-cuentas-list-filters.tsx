@@ -106,6 +106,10 @@ const ORIGEN_OPTIONS: EnumSelectOption<OrigenCuentaPppoe>[] = [
     value: "ALTA_MANUAL",
     label: "Alta manual",
   },
+  {
+    value: "EXTERNA_ADOPTADA",
+    label: "Externa adoptada",
+  },
 ];
 
 type PppoeCuentasListFiltersProps = {

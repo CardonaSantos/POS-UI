@@ -215,7 +215,24 @@ export type PppoeCuentaDetalle = {
 
   generadoPorId: number | null;
 
+  /**
+   * Operador que incorporó una cuenta PPPoE
+   * preexistente al CRM.
+   *
+   * null para instalación y alta manual.
+   */
+  adoptadoPorId: number | null;
+
   generadoEn: string;
+
+  /**
+   * Fecha en que una cuenta externa fue adoptada
+   * por el CRM.
+   *
+   * No representa la fecha histórica en que el
+   * secret fue creado en MikroTik.
+   */
+  adoptadoEn: string | null;
 
   secretCreadoEn: string | null;
 
@@ -232,6 +249,12 @@ export type PppoeCuentaDetalle = {
   actualizadoEn: string;
 
   generadoPor: PppoeCuentaDetalleUsuario | null;
+
+  /**
+   * Usuario administrativo que realizó
+   * la adopción.
+   */
+  adoptadoPor: PppoeCuentaDetalleUsuario | null;
 
   cliente: PppoeCuentaDetalleCliente;
 

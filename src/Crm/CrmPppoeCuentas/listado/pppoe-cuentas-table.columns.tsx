@@ -106,11 +106,19 @@ function getEstadoAccesoTone(estado: EstadoAccesoInternet): AppBadgeTone {
 }
 
 function getOrigenTone(origen: OrigenCuentaPppoe): AppBadgeTone {
-  if (origen === "ALTA_MANUAL") {
-    return "primary";
-  }
+  switch (origen) {
+    case "ALTA_MANUAL":
+      return "primary";
 
-  return "info";
+    case "EXTERNA_ADOPTADA":
+      return "warning";
+
+    case "INSTALACION":
+      return "info";
+
+    default:
+      return "neutral";
+  }
 }
 
 export function createPppoeCuentasTableColumns(): ColumnDef<
@@ -233,24 +241,33 @@ export function createPppoeCuentasTableColumns(): ColumnDef<
       accessorKey: "origen",
       header: "Origen",
 
-      size: 125,
-      minSize: 105,
-      maxSize: 140,
+      size: 135,
+      minSize: 115,
+      maxSize: 160,
 
       enableSorting: false,
 
-      cell: ({ row }) => (
-        <AppBadge
-          tone={getOrigenTone(row.original.origen)}
-          appearance="soft"
-          size="xs"
-          radius="full"
-        >
-          {row.original.origen === "ALTA_MANUAL"
+      cell: ({ row }) => {
+        const origen = row.original.origen;
+
+        const label =
+          origen === "ALTA_MANUAL"
             ? "Alta manual"
-            : "Instalación"}
-        </AppBadge>
-      ),
+            : origen === "EXTERNA_ADOPTADA"
+              ? "Externa adoptada"
+              : "Instalación";
+
+        return (
+          <AppBadge
+            tone={getOrigenTone(origen)}
+            appearance="soft"
+            size="xs"
+            radius="full"
+          >
+            {label}
+          </AppBadge>
+        );
+      },
     },
 
     {

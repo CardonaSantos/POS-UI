@@ -115,6 +115,9 @@ import { ReportesPage } from "../CrmReportes/pages/reportes-page";
 import PppoeCuentasListPage from "../CrmPppoeCuentas/listado/pppoe-cuentas-list-page";
 import PppoeCuentaDetailPage from "../CrmPppoeCuentas/detalles/pppoe-cuenta-detail-page";
 import PppoeCuentaCreatePage from "../CrmPppoeCuentas/crear/pppoe-cuenta-create-page";
+
+import PppoeCuentaAdopcionPage from "../CrmPppoeCuentas/adopcion/pppoe-cuenta-adopcion-page";
+
 /*
  * Entrada principal del CRM.
  *
@@ -659,6 +662,14 @@ function CrmRoutes() {
           element={permissionRoute(
             CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL,
             <PppoeCuentaCreatePage />,
+          )}
+        />
+
+        <Route
+          path="/crm/pppoe/cuentas/adoptar"
+          element={permissionRoute(
+            CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL,
+            <PppoeCuentaAdopcionPage />,
           )}
         />
 

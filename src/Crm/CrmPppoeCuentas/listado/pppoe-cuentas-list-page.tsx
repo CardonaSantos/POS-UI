@@ -36,7 +36,7 @@ import { createPppoeCuentasTableColumns } from "./pppoe-cuentas-table.columns";
 import { useAuthorization } from "@/Crm/CrmAuthRoutes/auth/use-authorization";
 import { CRM_PERMISSION } from "@/Crm/CrmAuthRoutes/auth/crm-permissions";
 import { AppButton } from "@/components/app/primitives/app-button";
-import { Plus } from "lucide-react";
+import { Link2, Plus } from "lucide-react";
 import { AppInline } from "@/components/app/primitives/app-inline";
 
 const EMPTY_ITEMS: PppoeCuentaListItem[] = [];
@@ -279,13 +279,26 @@ export default function PppoeCuentasListPage() {
             </div>
 
             {canCreatePppoe ? (
-              <AppButton
-                asChild
-                size="sm"
-                leftIcon={<Plus size={14} aria-hidden="true" />}
-              >
-                <Link to="/crm/pppoe/cuentas/nueva">Nueva cuenta PPPoE</Link>
-              </AppButton>
+              <AppInline gap="xs" wrap>
+                <AppButton
+                  asChild
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Link2 size={14} aria-hidden="true" />}
+                >
+                  <Link to="/crm/pppoe/cuentas/adoptar">Adoptar existente</Link>
+                </AppButton>
+
+                <AppButton
+                  asChild
+                  type="button"
+                  size="sm"
+                  leftIcon={<Plus size={14} aria-hidden="true" />}
+                >
+                  <Link to="/crm/pppoe/cuentas/nueva">Nueva cuenta PPPoE</Link>
+                </AppButton>
+              </AppInline>
             ) : null}
           </AppInline>
 

@@ -8,7 +8,10 @@ import type {
   TipoOperacionPppoe,
 } from "@/Crm/features/instalaciones_pppoe_auditoria/instalacion-pppoe-auditoria.interfaces";
 
-export type OrigenCuentaPppoe = "INSTALACION" | "ALTA_MANUAL";
+export type OrigenCuentaPppoe =
+  | "INSTALACION"
+  | "ALTA_MANUAL"
+  | "EXTERNA_ADOPTADA";
 
 export type PppoeCuentaClienteResumen = {
   id: number;

@@ -1,4 +1,4 @@
-import { ArrowLeft, Router } from "lucide-react";
+import { ArrowLeft, Link2 } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,30 +11,36 @@ import { AppContainer } from "@/components/app/primitives/app-container";
 import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
 
-import type { CrearPrealtaPppoeCuentaResponse } from "@/Crm/features/pppoe-cuentas/pppoe-prealta.interfaces";
+import type { AdoptarCuentaPppoeResponse } from "@/Crm/features/pppoe-cuentas/pppoe-adopcion.interfaces";
 
-import { PppoeCuentaCreateForm } from "./pppoe-cuenta-create-form";
+import { PppoeCuentaAdopcionForm } from "./pppoe-cuenta-adopcion-form";
 
-export default function PppoeCuentaCreatePage() {
+export default function PppoeCuentaAdopcionPage() {
   const navigate = useNavigate();
 
-  const handleCreated = async (result: CrearPrealtaPppoeCuentaResponse) => {
-    /**
-     * La provisión real se ejecuta desde el detalle.
-     *
-     * Incluso si creada=false, el backend devolvió
-     * la cuenta/prealta válida que debemos administrar.
-     */
+  const handleAdopted = async (result: AdoptarCuentaPppoeResponse) => {
     navigate(`/crm/pppoe/cuentas/${result.cuentaPppoeId}`, {
       replace: true,
     });
   };
 
   return (
-    <PageTransitionCrm titleHeader="Nueva cuenta PPPoE" variant="fade-pure">
+    <PageTransitionCrm
+      titleHeader="Adoptar cuenta PPPoE"
+      subtitle="
+                  Vincule al CRM una cuenta que ya existe en MikroTik.
+    "
+      variant="fade-pure"
+    >
       <AppContainer size="lg" paddingX="sm" paddingY="sm">
         <AppStack gap="md">
-          <PppoeCuentaCreateForm onCreated={handleCreated} />
+          <AppAlert
+            tone="info"
+            title="La cuenta ya debe existir en MikroTik"
+            size="xs"
+          ></AppAlert>
+
+          <PppoeCuentaAdopcionForm onAdopted={handleAdopted} />
         </AppStack>
       </AppContainer>
     </PageTransitionCrm>

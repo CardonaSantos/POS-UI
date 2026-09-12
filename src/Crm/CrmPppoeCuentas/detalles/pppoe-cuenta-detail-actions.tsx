@@ -480,11 +480,22 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
   const invalidateCuenta = useInvalidatePppoeCuenta(cuenta.cuentaPppoeId);
 
-  const canProvisionar = can(CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL);
+  /**
+   * Una cuenta adoptada ya posee un secret físico
+   * verificado en MikroTik.
+   *
+   * Nunca debe entrar nuevamente al flujo de
+   * CREAR_SECRET + ACTIVAR_SECRET.
+   */
+  const esAdoptada = cuenta.origen === "EXTERNA_ADOPTADA";
+
+  const canProvisionar =
+    can(CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL) && !esAdoptada;
 
   const canSuspender = can(CRM_PERMISSION.PPPOE_SUSPENDER);
 
   const canReactivar = can(CRM_PERMISSION.PPPOE_REACTIVAR);
+
   const canManageOperations = can(CRM_PERMISSION.PPPOE_OPERACIONES_REINTENTAR);
 
   const retryOperationId = cuenta.acciones.reintentarOperacion.operacionId;
@@ -540,11 +551,6 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
               <p className="text-sm font-semibold">Acciones PPPoE</p>
             </AppInline>
-
-            <p className="mt-1 text-xs text-[hsl(var(--app-muted-foreground))]">
-              Las acciones disponibles dependen del estado real de la cuenta y
-              de sus permisos.
-            </p>
           </div>
 
           <AppInline gap="xs" wrap>

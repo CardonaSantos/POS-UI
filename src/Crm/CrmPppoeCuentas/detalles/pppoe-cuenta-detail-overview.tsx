@@ -233,7 +233,11 @@ export function PppoeCuentaDetailOverview({
                   value={
                     <AppBadge
                       tone={
-                        cuenta.origen === "ALTA_MANUAL" ? "primary" : "info"
+                        cuenta.origen === "ALTA_MANUAL"
+                          ? "primary"
+                          : cuenta.origen === "EXTERNA_ADOPTADA"
+                            ? "warning"
+                            : "info"
                       }
                       appearance="soft"
                       size="xs"
@@ -241,7 +245,9 @@ export function PppoeCuentaDetailOverview({
                     >
                       {cuenta.origen === "ALTA_MANUAL"
                         ? "Alta manual"
-                        : "Instalación"}
+                        : cuenta.origen === "EXTERNA_ADOPTADA"
+                          ? "Externa adoptada"
+                          : "Instalación"}
                     </AppBadge>
                   }
                 />
@@ -278,9 +284,41 @@ export function PppoeCuentaDetailOverview({
                 gap="sm"
               >
                 <DetailItem
-                  label="Generada"
+                  label={
+                    cuenta.origen === "EXTERNA_ADOPTADA"
+                      ? "Registrada en CRM"
+                      : "Generada"
+                  }
                   value={formattFechaWithMinutes(cuenta.generadoEn)}
                 />
+
+                {cuenta.origen === "EXTERNA_ADOPTADA" ? (
+                  <>
+                    <DetailItem
+                      label="Adoptada"
+                      value={
+                        cuenta.adoptadoEn ? (
+                          formattFechaWithMinutes(cuenta.adoptadoEn)
+                        ) : (
+                          <EmptyValue />
+                        )
+                      }
+                    />
+
+                    <DetailItem
+                      label="Adoptada por"
+                      value={
+                        cuenta.adoptadoPor ? (
+                          <span title={cuenta.adoptadoPor.correo}>
+                            {cuenta.adoptadoPor.nombre}
+                          </span>
+                        ) : (
+                          <EmptyValue />
+                        )
+                      }
+                    />
+                  </>
+                ) : null}
 
                 <DetailItem
                   label="Secret creado"
@@ -356,7 +394,6 @@ export function PppoeCuentaDetailOverview({
               </div>
             ) : null}
           </DetailSection>
-
           <DetailSection
             title="Última operación"
             description="Último evento operativo registrado para esta cuenta."
