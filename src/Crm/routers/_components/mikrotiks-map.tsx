@@ -1,56 +1,106 @@
-import { MikrotikRoutersResponse } from "@/Crm/features/mikro-tiks/mikrotiks.interfaces";
+import { useMemo } from "react";
+
+import { Router } from "lucide-react";
+
+import { AppBadge } from "@/components/app/primitives/app-badge";
+
+import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
+
+import { AppGrid } from "@/components/app/primitives/app-grid";
+
+import { AppInline } from "@/components/app/primitives/app-inline";
+
+import { AppStack } from "@/components/app/primitives/app-stack";
+
+import type { MikrotikRoutersResponse } from "@/Crm/features/mikro-tiks/mikrotiks.interfaces";
+
 import MikroTikCard from "./mikrotik-card";
-import dayjs from "dayjs";
-import "dayjs/locale/es";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-dayjs.extend(customParseFormat);
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(isSameOrBefore);
-dayjs.extend(isSameOrAfter);
-dayjs.locale("es");
 
 interface PropsMikrotiks {
   mikrotiks: MikrotikRoutersResponse[];
+
   handleSelectToEdit: (mk: MikrotikRoutersResponse) => void;
-  isToUpdate: boolean;
+
   handleOpenDelete: (mk: MikrotikRoutersResponse) => void;
+}
+
+function getCreatedTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function MikroTiks({
   mikrotiks,
   handleSelectToEdit,
-  isToUpdate,
   handleOpenDelete,
 }: PropsMikrotiks) {
-  if (!mikrotiks || mikrotiks.length === 0) {
+  const orderedMikrotiks = useMemo(
+    () =>
+      [...mikrotiks].sort(
+        (a, b) =>
+          getCreatedTimestamp(b.creadoEn) - getCreatedTimestamp(a.creadoEn),
+      ),
+    [mikrotiks],
+  );
+
+  if (orderedMikrotiks.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No hay routers Mikrotik registrados.
-      </p>
+      <AppEmptyState
+        title="No hay routers MikroTik registrados"
+        description="Cuando registres un router aparecerá aquí junto con su estado y datos de conexión."
+        icon={<Router aria-hidden="true" />}
+      />
     );
   }
 
+  const routerCount = orderedMikrotiks.length;
+
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {mikrotiks
-        .sort(
-          (a, b) => dayjs(b.creadoEn).valueOf() - dayjs(a.creadoEn).valueOf()
-        )
-        .map((mk) => (
+    <AppStack gap="sm">
+      <AppInline
+        justify="between"
+        align="center"
+        gap="sm"
+        collapseBelow="sm"
+        fullWidth
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Routers registrados</p>
+
+          <p className="mt-0.5 text-xs text-[hsl(var(--app-muted-foreground))]">
+            Infraestructura MikroTik disponible para las operaciones del CRM.
+          </p>
+        </div>
+
+        <AppBadge tone="neutral" appearance="soft" size="xs" radius="full">
+          {routerCount} {routerCount === 1 ? "router" : "routers"}
+        </AppBadge>
+      </AppInline>
+
+      <AppGrid
+        cols={{
+          base: 1,
+          md: 2,
+          xl: 3,
+        }}
+        gap="sm"
+      >
+        {orderedMikrotiks.map((mk) => (
           <MikroTikCard
-            handleOpenDelete={handleOpenDelete}
-            isToUpdate={isToUpdate}
-            handleSelectToEdit={handleSelectToEdit}
             key={mk.id}
             mk={mk}
+            handleOpenDelete={handleOpenDelete}
+            handleSelectToEdit={handleSelectToEdit}
           />
         ))}
-    </div>
+      </AppGrid>
+    </AppStack>
   );
 }
+
 export default MikroTiks;

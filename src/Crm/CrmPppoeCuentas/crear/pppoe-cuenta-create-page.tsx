@@ -1,14 +1,8 @@
-import { ArrowLeft, Router } from "lucide-react";
-
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
-import { AppAlert } from "@/components/app/primitives/app-alert";
-import { AppButton } from "@/components/app/primitives/app-button";
-import { AppCard } from "@/components/app/primitives/app-card";
 import { AppContainer } from "@/components/app/primitives/app-container";
-import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
 
 import type { CrearPrealtaPppoeCuentaResponse } from "@/Crm/features/pppoe-cuentas/pppoe-prealta.interfaces";

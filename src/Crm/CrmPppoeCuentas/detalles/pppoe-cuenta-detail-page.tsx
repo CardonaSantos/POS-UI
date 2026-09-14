@@ -10,7 +10,6 @@ import { AppStack } from "@/components/app/primitives/app-stack";
 
 import { useGetPppoeCuentaDetalle } from "@/Crm/CrmHooks/hooks/pppoe-cuentas/pppoe-cuentas-hook";
 
-import { PppoeCuentaDetailHeader } from "./pppoe-cuenta-detail-header";
 import { PppoeCuentaDetailOverview } from "./pppoe-cuenta-detail-overview";
 import { PppoeCuentaDetailActions } from "./pppoe-cuenta-detail-actions";
 import { AppSeparator } from "@/components/app/primitives/app-separator";

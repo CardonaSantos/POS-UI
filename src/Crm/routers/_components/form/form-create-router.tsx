@@ -1,5 +1,18 @@
-import { useForm } from "react-hook-form";
-import { RouterMkType } from "./zformRouter";
+import type { UseFormReturn } from "react-hook-form";
+
+import {
+  FileText,
+  Globe,
+  KeyRound,
+  Save,
+  Server,
+  Terminal,
+  User,
+  X,
+} from "lucide-react";
+
+import type { RouterMkType } from "./zformRouter";
+
 import {
   Form,
   FormControl,
@@ -8,213 +21,294 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Ban,
-  FileText,
-  Globe,
-  KeyRound,
-  Save,
-  Server,
-  Terminal,
-  User,
-} from "lucide-react";
-interface PropsForm {
-  form: ReturnType<typeof useForm<RouterMkType>>;
-  handleCancelEdit: () => void;
-  isToEdit: boolean;
-  handleOpen: () => void;
+
+type RouterFormMode = "create" | "edit";
+
+interface FormCreateRouterProps {
+  form: UseFormReturn<RouterMkType>;
+
+  mode: RouterFormMode;
+
+  isSaving?: boolean;
+
+  onCancel: () => void;
+
+  onRequestSubmit: () => void;
 }
 
 function FormCreateRouter({
   form,
-  handleCancelEdit,
-  isToEdit,
-  handleOpen,
-}: PropsForm) {
+  mode,
+  isSaving = false,
+  onCancel,
+  onRequestSubmit,
+}: FormCreateRouterProps) {
+  const isEdit = mode === "edit";
+
+  const handleSubmit = form.handleSubmit(() => {
+    onRequestSubmit();
+  });
+
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => console.log(data))}
-        className="space-y-6"
-      >
-        {/* Título / encabezado opcional */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Server className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold leading-tight">
-                Nuevo router Mikrotik
-              </h2>
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {/* ================================= */}
+        {/* ENCABEZADO */}
+        {/* ================================= */}
+
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Server className="h-4 w-4 text-primary" aria-hidden="true" />
+
+            <h2 className="text-sm font-semibold leading-tight">
+              {isEdit ? "Configuración del router" : "Datos del nuevo router"}
+            </h2>
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            {isEdit
+              ? "Modifica únicamente los datos que necesites actualizar."
+              : "Ingresa los datos de conexión del router MikroTik."}
+          </p>
         </div>
 
-        {/* Grid del formulario */}
+        {/* ================================= */}
+        {/* CAMPOS */}
+        {/* ================================= */}
+
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {/* Nombre */}
+
           <FormField
             control={form.control}
             name="nombre"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <Server className="h-3.5 w-3.5" />
+                  <Server className="h-3.5 w-3.5" aria-hidden="true" />
+
                   <span>Nombre</span>
                 </FormLabel>
+
                 <FormControl>
                   <Input
-                    placeholder="Ej: MKT Principal"
                     {...field}
+                    placeholder="Ej: MikroTik Principal"
+                    autoComplete="off"
+                    disabled={isSaving}
                     className="h-9 text-sm"
                   />
                 </FormControl>
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
           {/* Host */}
+
           <FormField
             control={form.control}
             name="host"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  <span>Host (IP)</span>
+                  <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+
+                  <span>Host</span>
                 </FormLabel>
+
                 <FormControl>
                   <Input
-                    placeholder="192.168.88.1"
                     {...field}
+                    placeholder="192.168.88.1"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
+                    disabled={isSaving}
                     className="h-9 text-sm"
                   />
                 </FormControl>
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
           {/* Usuario */}
+
           <FormField
             control={form.control}
             name="usuario"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <User className="h-3.5 w-3.5" />
-                  <span>Usuario</span>
+                  <User className="h-3.5 w-3.5" aria-hidden="true" />
+
+                  <span>Usuario SSH</span>
                 </FormLabel>
+
                 <FormControl>
                   <Input
-                    placeholder="admin"
                     {...field}
+                    placeholder="admin"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
+                    disabled={isSaving}
                     className="h-9 text-sm"
                   />
                 </FormControl>
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
-          {/* SSH Port */}
+          {/* Puerto SSH */}
+
           <FormField
             control={form.control}
             name="sshPort"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <Terminal className="h-3.5 w-3.5" />
+                  <Terminal className="h-3.5 w-3.5" aria-hidden="true" />
+
                   <span>Puerto SSH</span>
                 </FormLabel>
+
                 <FormControl>
                   <Input
                     type="number"
+                    min={1}
+                    max={65535}
+                    inputMode="numeric"
                     placeholder="22"
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value === "" ? undefined : +e.target.value
-                      )
-                    }
+                    value={field.value ?? ""}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    disabled={isSaving}
+                    onChange={(event) => {
+                      const value = event.target.value;
+
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
                     className="h-9 text-sm"
                   />
                 </FormControl>
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
           {/* Contraseña */}
+
           <FormField
             control={form.control}
             name="passwordEnc"
             render={({ field }) => (
-              <FormItem className="md:col-span-2 space-y-1.5">
+              <FormItem className="space-y-1.5 md:col-span-2">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <KeyRound className="h-3.5 w-3.5" />
-                  <span>Contraseña</span>
+                  <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+
+                  <span>Contraseña SSH</span>
                 </FormLabel>
+
                 <FormControl>
                   <Input
-                    type="password"
-                    placeholder="Contraseña de acceso"
                     {...field}
-                    className="h-9 text-sm max-w-md"
+                    value={field.value ?? ""}
+                    type="password"
+                    placeholder={
+                      isEdit
+                        ? "Dejar vacío para conservar la contraseña actual"
+                        : "Contraseña de acceso SSH"
+                    }
+                    autoComplete="new-password"
+                    disabled={isSaving}
+                    className="h-9 max-w-md text-sm"
                   />
                 </FormControl>
+
+                {isEdit ? (
+                  <p className="text-xs text-muted-foreground">
+                    Si no deseas cambiar la credencial, deja este campo vacío.
+                  </p>
+                ) : null}
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
           {/* Descripción */}
+
           <FormField
             control={form.control}
             name="descripcion"
             render={({ field }) => (
-              <FormItem className="md:col-span-2 space-y-1.5">
+              <FormItem className="space-y-1.5 md:col-span-2">
                 <FormLabel className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+
                   <span>Descripción</span>
                 </FormLabel>
+
                 <FormControl>
                   <Textarea
-                    placeholder="Notas, ubicación física, propósito, etc."
                     {...field}
-                    className="text-sm h-24 max-w-2xl mx-auto block"
+                    value={field.value ?? ""}
+                    placeholder="Ubicación, función del router o información adicional."
+                    disabled={isSaving}
+                    className="min-h-24 resize-y text-sm"
                   />
                 </FormControl>
+
                 <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
         </div>
 
-        {/* Botón */}
-        <div className="flex justify-end gap-4">
-          {isToEdit ? (
-            <Button
-              variant={"destructive"}
-              onClick={handleCancelEdit}
-              type="submit"
-              className="h-9 px-4 text-xs sm:text-sm"
-            >
-              <Ban className="mr-2 h-3.5 w-3.5" />
-              Cancelar
-            </Button>
-          ) : null}
+        {/* ================================= */}
+        {/* ACCIONES */}
+        {/* ================================= */}
 
+        <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
           <Button
-            onClick={handleOpen}
-            type="submit"
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
             className="h-9 px-4 text-xs sm:text-sm"
           >
-            <Save className="mr-2 h-3.5 w-3.5" />
-            {`${isToEdit ? "Actualizar Router" : "Guardar"}`}
+            <X className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+            Cancelar
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={isSaving || !form.formState.isDirty}
+            className="h-9 px-4 text-xs sm:text-sm"
+          >
+            <Save className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
+
+            {isSaving
+              ? isEdit
+                ? "Actualizando..."
+                : "Guardando..."
+              : isEdit
+                ? "Actualizar router"
+                : "Guardar router"}
           </Button>
         </div>
       </form>

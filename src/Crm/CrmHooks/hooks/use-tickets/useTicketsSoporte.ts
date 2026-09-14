@@ -21,6 +21,7 @@ export interface TicketsData {
   ticketsDisponibles: number;
   ticketEnProceso: number;
   ticketsResueltos: number;
+  ticketsCancelados: number;
 }
 
 export type TicketQuickView = "all" | "assignedToMe" | "createdByMe";

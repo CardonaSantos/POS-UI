@@ -37,10 +37,20 @@ export const ESTADO_COBRANZA_RUTA_OPTIONS: AppOption[] = [
 ];
 
 export const RUTAS_SORT_OPTIONS: AppOption[] = [
-  { value: "nombre-asc", label: "Nombre ascendente" },
-  { value: "nombre-desc", label: "Nombre descendente" },
-  { value: "saldo-asc", label: "Saldo ascendente" },
-  { value: "saldo-desc", label: "Saldo descendente" },
-  { value: "facturas-asc", label: "Facturas ascendente" },
-  { value: "facturas-desc", label: "Facturas descendente" },
+  {
+    value: "nombre-asc",
+    label: "Nombre ascendente",
+  },
+  {
+    value: "nombre-desc",
+    label: "Nombre descendente",
+  },
+  {
+    value: "saldo-asc",
+    label: "Saldo ascendente",
+  },
+  {
+    value: "saldo-desc",
+    label: "Saldo descendente",
+  },
 ];

@@ -188,6 +188,9 @@ export const crm_endpoints = {
     post_provisionar_cuenta: (cuentaPppoeId: number) =>
       `/pppoe-cuentas/${cuentaPppoeId}/provisionar`,
 
+    post_revelar_credenciales_cuenta: (cuentaPppoeId: number) =>
+      `/pppoe-cuentas/${cuentaPppoeId}/revelar-credenciales`,
+
     // ADOPCIÓN DE CUENTAS PPPoE EXISTENTES
 
     post_verificar_adopcion_cuenta: "/pppoe-cuentas/adopcion/verificar",

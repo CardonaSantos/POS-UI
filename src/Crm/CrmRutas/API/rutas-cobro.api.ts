@@ -1,14 +1,19 @@
-import type { SortDir, SortField } from "../types/types";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import { CRM } from "@/hooks/indexCalls";
+
 import {
   EstadoCliente,
-  Sector,
+  EstadoCobranzaCliente,
+  type Sector,
 } from "@/Crm/features/cliente-interfaces/cliente-types";
-import { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
-import { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
 
-// Paginado genérico
+import type { FacturacionZona } from "@/Crm/features/zonas-facturacion/FacturacionZonaTypes";
+
+import type { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
+
+import type { SortDir, SortField } from "../types/types";
+
 export type Paged<T> = {
   items: T[];
   total: number;
@@ -16,61 +21,97 @@ export type Paged<T> = {
   perPage: number;
 };
 
-// Filtros que mandará el cliente al server
-// api.ts
 export type ClientesRutaParams = {
+  empresaId?: number;
+
   search?: string;
+
   estado?: EstadoCliente;
-  zonaIds?: number[]; // ← multi
-  sectorIds?: number[]; // ← multi
+  estadoCobranza?: EstadoCobranzaCliente;
+
+  zonaIds?: number[];
+  sectorIds?: number[];
+
   sortBy?: SortField;
   sortDir?: SortDir;
+
   page?: number;
   perPage?: number;
-  empresaId?: number; // si tu backend lo usa
 };
 
-const { useApiMutation: useCrmMutations } = CRM;
-const { useApiQuery: useCrmQuery } = CRM;
+export interface CobradorRuta {
+  id: number;
+  nombre: string;
+  apellidos?: string;
+  correo?: string;
+  telefono?: string;
+  rol?: string;
+}
 
-// Limpia undefined/null para no ensuciar la URL
-// api.ts
-const clean = (obj: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(obj).filter(
-      ([, v]) =>
-        v !== undefined &&
-        v !== null &&
-        !(Array.isArray(v) && v.length === 0) &&
-        !(typeof v === "string" && v.trim() === ""),
-    ),
+export type CrearRutaDTO = {
+  nombreRuta: string;
+
+  empresaId: number;
+
+  clientesIds: number[];
+
+  observaciones?: string;
+
+  cobradorId?: number;
+
+  asignadoPor: number;
+};
+
+const { useApiMutation: useCrmMutation, useApiQuery: useCrmQuery } = CRM;
+
+function clean(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => {
+      if (value === undefined || value === null) {
+        return false;
+      }
+
+      if (Array.isArray(value) && value.length === 0) {
+        return false;
+      }
+
+      if (typeof value === "string" && value.trim() === "") {
+        return false;
+      }
+
+      return true;
+    }),
   );
+}
 
 export const rutasCobroKeys = {
   base: ["rutas-cobro"] as const,
-  clientes: (p?: Partial<ClientesRutaParams>) =>
-    [...rutasCobroKeys.base, "clientes", p ?? {}] as const,
+
+  clientes: (params?: Partial<ClientesRutaParams>) =>
+    [...rutasCobroKeys.base, "clientes", params ?? {}] as const,
+
   zonas: () => [...rutasCobroKeys.base, "zonas"] as const,
+
   sectores: () => [...rutasCobroKeys.base, "sectores"] as const,
+
+  cobradores: () => [...rutasCobroKeys.base, "cobradores"] as const,
 } as const;
 
-// —— Queries —— //
 export function useClientesRuta(
   params: Partial<ClientesRutaParams>,
+  options?: {
+    enabled?: boolean;
+  },
 ): UseQueryResult<Paged<ClienteInternetFromCreateRuta>, Error> {
-  // const initialPaged: Paged<ClienteInternetFromCreateRuta> = {
-  //   items: [],
-  //   total: 0,
-  //   page: params.page ?? 1,
-  //   perPage: params.perPage ?? 10,
-  // };
-
   return useCrmQuery<Paged<ClienteInternetFromCreateRuta>>(
     rutasCobroKeys.clientes(params),
     "/internet-customer/get-customers-ruta",
-    { params: clean(params) },
+    {
+      params: clean(params),
+    },
     {
       retry: 1,
+      enabled: options?.enabled ?? true,
     },
   );
 }
@@ -80,7 +121,10 @@ export function useZonasFacturacion() {
     rutasCobroKeys.zonas(),
     "/facturacion-zona/get-zonas-facturacion-to-ruta",
     undefined,
-    { initialData: [], retry: 1 },
+    {
+      initialData: [],
+      retry: 1,
+    },
   );
 }
 
@@ -89,19 +133,25 @@ export function useSectoresSelect() {
     rutasCobroKeys.sectores(),
     "/sector/sectores-to-select",
     undefined,
-    { initialData: [], retry: 1 },
+    {
+      initialData: [],
+      retry: 1,
+    },
   );
 }
 
-// —— Mutations —— //
-export type CrearRutaDTO = {
-  nombreRuta: string;
-  empresaId: number;
-  clientes: number[];
-  observaciones?: string;
-  cobradorId?: number; // ← opcional
-};
+export function useCobradoresRuta() {
+  return useCrmQuery<CobradorRuta[]>(
+    rutasCobroKeys.cobradores(),
+    "/user/get-users-to-rutas",
+    undefined,
+    {
+      initialData: [],
+      retry: 1,
+    },
+  );
+}
 
 export function useCrearRutaMutation() {
-  return useCrmMutations<void, CrearRutaDTO>("post", "/ruta-cobro");
+  return useCrmMutation<unknown, CrearRutaDTO>("post", "/ruta-cobro");
 }

@@ -21,6 +21,14 @@ import {
   CrearPrealtaPppoeCuentaResponse,
 } from "@/Crm/features/pppoe-cuentas/pppoe-prealta.interfaces";
 
+export type RevelarCredencialesPppoeCuentaResponse = {
+  cuentaPppoeId: number;
+
+  usuario: string;
+
+  contrasena: string;
+};
+
 export type ProvisionarPppoeCuentaPayload = {
   contrasenaActual: string;
 
@@ -179,5 +187,28 @@ export function usePostCrearPrealtaPppoeCuenta() {
         invalidate(pppoeCuentasQkeys.lists());
       },
     },
+  );
+}
+
+/**
+ * POST /pppoe-cuentas/:cuentaPppoeId/revelar-credenciales
+ *
+ * Descifra temporalmente las credenciales PPPoE
+ * de una cuenta concreta.
+ *
+ * Se utiliza una mutación porque:
+ *
+ * - el endpoint es POST;
+ * - la visualización genera auditoría;
+ * - la contraseña no debe almacenarse como query cache.
+ *
+ * El consumidor debe llamar mutation.reset()
+ * al cerrar el diálogo.
+ */
+export function usePostRevelarCredencialesPppoeCuenta(cuentaPppoeId: number) {
+  return crm.useMutationApi<RevelarCredencialesPppoeCuentaResponse, void>(
+    "post",
+
+    crm_endpoints.pppoe.post_revelar_credenciales_cuenta(cuentaPppoeId),
   );
 }

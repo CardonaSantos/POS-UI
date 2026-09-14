@@ -33,6 +33,16 @@ export const TICKET_LIST_TABS = [
       description: "Aún no hay tickets resueltos.",
     },
   },
+
+  {
+    value: "cancelados",
+    label: "Cancelados",
+    countKey: "ticketsCancelados" as const,
+    emptyMessage: {
+      title: "Cancelar",
+      description: "Aún no hay tickets cancelados.",
+    },
+  },
 ] as const;
 
 const AVATAR_PALETTE = [

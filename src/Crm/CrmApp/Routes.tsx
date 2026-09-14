@@ -117,6 +117,7 @@ import PppoeCuentaDetailPage from "../CrmPppoeCuentas/detalles/pppoe-cuenta-deta
 import PppoeCuentaCreatePage from "../CrmPppoeCuentas/crear/pppoe-cuenta-create-page";
 
 import PppoeCuentaAdopcionPage from "../CrmPppoeCuentas/adopcion/pppoe-cuenta-adopcion-page";
+import RouterFormPage from "../routers/_components/form/page";
 
 /*
  * Entrada principal del CRM.
@@ -562,6 +563,22 @@ function CrmRoutes() {
           element={permissionRoute(
             CRM_PERMISSION.OPTICO_VER,
             <RouterMainPage />,
+          )}
+        />
+
+        <Route
+          path="/crm/routers/nuevo"
+          element={permissionRoute(
+            CRM_PERMISSION.OPTICO_VER,
+            <RouterFormPage />,
+          )}
+        />
+
+        <Route
+          path="/crm/routers/:routerId/editar"
+          element={permissionRoute(
+            CRM_PERMISSION.OPTICO_VER,
+            <RouterFormPage />,
           )}
         />
 

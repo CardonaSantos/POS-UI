@@ -4,7 +4,6 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Eye,
   RefreshCcw,
   RotateCcw,

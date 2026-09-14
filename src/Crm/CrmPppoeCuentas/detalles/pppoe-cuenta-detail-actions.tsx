@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import {
+  KeyRound,
   Play,
   Power,
   PowerOff,
@@ -63,6 +64,7 @@ import {
   usePostReintentarPppoeOperacionCuenta,
 } from "@/Crm/CrmHooks/hooks/pppoe-operaciones/pppoe-operaciones-hook";
 import { buildPppoeRetryIdempotencyKey } from "@/Crm/CrmHooks/hooks/pppoe-administracion/pppoe-administracion-hook";
+import { PppoeCuentaCredencialesDialog } from "./pppoe-cuenta-credenciales-dialog";
 
 type Props = {
   cuenta: PppoeCuentaDetalle;
@@ -472,7 +474,7 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
   const suspenderDialog = useAppDisclosure();
 
   const reactivarDialog = useAppDisclosure();
-
+  const credencialesDialog = useAppDisclosure();
   //   OPERACIONES
   const reintentarDialog = useAppDisclosure();
 
@@ -496,6 +498,8 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
   const canReactivar = can(CRM_PERMISSION.PPPOE_REACTIVAR);
 
+  const canRevealCredentials = can(CRM_PERMISSION.PPPOE_CREDENCIALES_REVELAR);
+
   const canManageOperations = can(CRM_PERMISSION.PPPOE_OPERACIONES_REINTENTAR);
 
   const retryOperationId = cuenta.acciones.reintentarOperacion.operacionId;
@@ -514,11 +518,11 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
     !canProvisionar &&
     !canSuspender &&
     !canReactivar &&
+    !canRevealCredentials &&
     !canManageOperations
   ) {
     return null;
   }
-
   const handleCompleted = async () => {
     provisionarDialog.close();
 
@@ -530,6 +534,20 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
     recuperarDialog.close();
 
+    invalidateCuenta();
+
+    await onDataChanged?.();
+  };
+
+  const handleCredentialsRevealed = async () => {
+    /**
+     * Revelar credenciales genera una nueva entrada
+     * de auditoría, por lo que refrescamos el detalle.
+     *
+     * No cerramos el diálogo: las credenciales deben
+     * permanecer visibles hasta que el usuario pulse
+     * "Ocultar y cerrar".
+     */
     invalidateCuenta();
 
     await onDataChanged?.();
@@ -610,6 +628,19 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
               </AppButton>
             ) : null}
 
+            {canRevealCredentials ? (
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                leftIcon={<KeyRound size={14} aria-hidden="true" />}
+                title="Revelar credenciales PPPoE"
+                onClick={credencialesDialog.open}
+              >
+                Revelar credenciales
+              </AppButton>
+            ) : null}
+
             {canManageOperations &&
             cuenta.acciones.reintentarOperacion.habilitada &&
             retryOperationId ? (
@@ -674,6 +705,15 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
           open={reactivarDialog.isOpen}
           onOpenChange={reactivarDialog.setOpen}
           onCompleted={handleCompleted}
+        />
+      ) : null}
+
+      {canRevealCredentials ? (
+        <PppoeCuentaCredencialesDialog
+          cuenta={cuenta}
+          open={credencialesDialog.isOpen}
+          onOpenChange={credencialesDialog.setOpen}
+          onDataChanged={handleCredentialsRevealed}
         />
       ) : null}
 

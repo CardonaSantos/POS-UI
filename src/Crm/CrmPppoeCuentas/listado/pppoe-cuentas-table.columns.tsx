@@ -13,7 +13,6 @@ import type {
 } from "@/Crm/features/pppoe-cuentas/pppoe-cuentas.interfaces";
 
 import { formattShortFecha } from "@/utils/formattFechas";
-import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
 
 type AppBadgeTone =
   | "neutral"
@@ -289,13 +288,6 @@ export function createPppoeCuentasTableColumns(): ColumnDef<
           return <EmptyText>Sin servicio</EmptyText>;
         }
 
-        const description = [
-          servicio.velocidad,
-          servicio.precio != null ? formattMonedaGT(servicio.precio) : null,
-        ]
-          .filter(Boolean)
-          .join(" · ");
-
         return (
           <div className="min-w-0">
             <p className="truncate text-xs font-medium" title={servicio.nombre}>
@@ -321,8 +313,6 @@ export function createPppoeCuentasTableColumns(): ColumnDef<
 
       cell: ({ row }) => {
         const router = row.original.router;
-
-        const perfil = row.original.perfilHomologacion;
 
         return (
           <div className="min-w-0">
