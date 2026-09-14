@@ -40,6 +40,10 @@ import {
   safeFormatTicketDate,
 } from "../_components/ticket-detail.helpers";
 import { TicketConformidadDialog } from "./conformidad/TicketConformidadDialog";
+import {
+  ticketHistoryQkeys,
+  useGetTicketHistory,
+} from "@/Crm/CrmHooks/hooks/use-tickets/useTicketHistory";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -73,9 +77,24 @@ export default function TicketDetail({
   const ticketEdit = useAppStateHandlers<Ticket>(ticket);
 
   const createTicketResumen = useCreateTicketResumen();
+
   const deleteTicket = useDeleteTicket(ticket.id);
+
   const updateTicket = useUpdateTicket(ticketEdit.state.id);
+
   const postCommentary = usePostCommentary();
+
+  // =========================================================
+  // HISTORIAL DEL TICKET SELECCIONADO
+  // =========================================================
+
+  const { data: historyResponse, isLoading: isHistoryLoading } =
+    useGetTicketHistory(ticket.id);
+
+  const ticketHistory = React.useMemo(
+    () => historyResponse?.data ?? [],
+    [historyResponse?.data],
+  );
 
   const formCloseTicket = useForm<TicketResumenSchemaType>({
     defaultValues: {
@@ -102,6 +121,12 @@ export default function TicketDetail({
       queryKey: ticketsSoporteQkeys.search(query),
     });
   }, [query, queryClient]);
+
+  const invalidateTicketHistory = React.useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ticketHistoryQkeys.ticket(ticket.id),
+    });
+  }, [queryClient, ticket.id]);
 
   const handleCloseView = React.useCallback(() => {
     setSelectedTicketId(null);
@@ -138,7 +163,11 @@ export default function TicketDetail({
         return;
       }
 
-      const payload = buildUpdateTicketPayload(currentTicket);
+      const payload = {
+        ...buildUpdateTicketPayload(currentTicket),
+
+        userId,
+      };
 
       await toast.promise(updateTicket.mutateAsync(payload), {
         loading: "Actualizando ticket...",
@@ -146,7 +175,14 @@ export default function TicketDetail({
         error: (error) => getApiErrorMessageAxios(error),
       });
 
-      await invalidateTickets();
+      /**
+       * Refrescamos:
+       *
+       * 1. ticket actualizado;
+       * 2. auditoría recién creada.
+       */
+      await Promise.all([invalidateTickets(), invalidateTicketHistory()]);
+
       editDialog.close();
     },
     {
@@ -335,6 +371,8 @@ export default function TicketDetail({
         closedAt={safeFormatTicketDate(ticket.closedAt)}
         metricas={ticket.metrics}
         comments={ticket.comments}
+        history={ticketHistory}
+        isHistoryLoading={isHistoryLoading}
         creator={ticket.creator}
       />
 

@@ -227,6 +227,30 @@ export const crm_endpoints = {
     },
   },
 
+  ticket_historial: {
+    /**
+     * Historial completo de un ticket concreto.
+     *
+     * GET
+     * /ticket-soporte-historial/ticket/:ticketId
+     */
+    by_ticket: (ticketId: number) =>
+      `/ticket-soporte-historial/ticket/${ticketId}`,
+
+    /**
+     * Consulta administrativa general.
+     *
+     * La dejamos disponible desde ahora aunque todavía
+     * no la utilicemos en la pantalla de tickets.
+     */
+    list: `/ticket-soporte-historial`,
+
+    /**
+     * Obtiene un registro concreto del historial.
+     */
+    by_id: (historialId: number) => `/ticket-soporte-historial/${historialId}`,
+  },
+
   contrato: {
     contrato_instalacion: (contratoId: number, plantillaId: number) =>
       `contrato-cliente/get-one-contrato/${contratoId}/${plantillaId}`,

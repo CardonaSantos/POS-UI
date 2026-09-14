@@ -3,7 +3,8 @@ import type { CSSProperties } from "react";
 import type { Ticket } from "../ticketTypes";
 import type { TicketsData } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketsSoporte";
 
-export type TicketListTabValue = "inbox" | "enProceso" | "lista";
+// export type TicketListTabValue = "inbox" | "enProceso" | "lista";
+export type TicketListTabValue = "inbox" | "enProceso" | "lista" | "cancelados";
 
 export const TICKET_LIST_TABS = [
   {
@@ -33,13 +34,12 @@ export const TICKET_LIST_TABS = [
       description: "Aún no hay tickets resueltos.",
     },
   },
-
   {
     value: "cancelados",
     label: "Cancelados",
     countKey: "ticketsCancelados" as const,
     emptyMessage: {
-      title: "Cancelar",
+      title: "Sin cancelados",
       description: "Aún no hay tickets cancelados.",
     },
   },
