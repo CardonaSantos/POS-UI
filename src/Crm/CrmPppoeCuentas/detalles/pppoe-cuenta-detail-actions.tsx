@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { useAppDisclosure } from "@/components/app/handlers";
+
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppInline } from "@/components/app/primitives/app-inline";
@@ -19,52 +20,48 @@ import { useAuthorization } from "@/Crm/CrmAuthRoutes/auth/use-authorization";
 
 import { useInvalidatePppoeCuenta } from "@/Crm/CrmHooks/hooks/pppoe-cuentas/pppoe-cuentas-hook";
 
-import type {
-  PppoeCuentaDetalle,
-  PppoeCuentaDetalleAccion,
-} from "@/Crm/features/pppoe-cuentas/pppoe-cuenta-detalle.interfaces";
+import type { PppoeCuentaDetalle } from "@/Crm/features/pppoe-cuentas/pppoe-cuenta-detalle.interfaces";
 
 import { SuspenderPppoeDialog } from "@/Crm/Crm-instalaciones/pppoe-admin/suspender-pppoe-dialog";
+
 import { ReactivarPppoeDialog } from "@/Crm/Crm-instalaciones/pppoe-admin/reactivar-pppoe-dialog";
 
 import { PppoeCuentaCredencialesDialog } from "./pppoe-cuenta-credenciales-dialog";
+
 import {
   DarDeBajaPppoeDialog,
-  ProvisionarPppoeDialog,
   RecuperarOperacionDialog,
   ReintentarOperacionDialog,
 } from "./pppoe-cuenta-action-dialogs";
 
+import { PppoeCuentaActivarDialog } from "./pppoe-cuenta-activar-dialog";
+
 type Props = {
   cuenta: PppoeCuentaDetalle;
+
   onDataChanged?: () => void | Promise<void>;
 };
-
-function getActionTitle(
-  action: PppoeCuentaDetalleAccion,
-  enabledTitle: string,
-  disabledFallback: string,
-) {
-  return action.habilitada ? enabledTitle : (action.motivo ?? disabledFallback);
-}
 
 export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
   const { can } = useAuthorization();
 
-  const provisionarDialog = useAppDisclosure();
+  const activarDialog = useAppDisclosure();
+
   const suspenderDialog = useAppDisclosure();
+
   const reactivarDialog = useAppDisclosure();
+
   const darDeBajaDialog = useAppDisclosure();
+
   const credencialesDialog = useAppDisclosure();
+
   const reintentarDialog = useAppDisclosure();
+
   const recuperarDialog = useAppDisclosure();
 
   const invalidateCuenta = useInvalidatePppoeCuenta(cuenta.cuentaPppoeId);
 
-  const esAdoptada = cuenta.origen === "EXTERNA_ADOPTADA";
-
-  const canProvisionar =
-    can(CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL) && !esAdoptada;
+  const canActivar = can(CRM_PERMISSION.PPPOE_ACTIVAR_INICIAL);
 
   const canSuspender = can(CRM_PERMISSION.PPPOE_SUSPENDER);
 
@@ -74,37 +71,87 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
   const canManageOperations = can(CRM_PERMISSION.PPPOE_OPERACIONES_REINTENTAR);
 
+  /**
+   * Conservamos por ahora la política existente
+   * para baja definitiva.
+   *
+   * En una fase posterior podemos hacer que backend
+   * exponga también acciones.darDeBaja.
+   */
   const canDarDeBaja =
     can(CRM_PERMISSION.PPPOE_SUSPENDER) &&
     can(CRM_PERMISSION.PPPOE_OPERACIONES_REINTENTAR);
 
+  /**
+   * A partir de aquí backend es la fuente de verdad
+   * para Activar / Suspender / Reactivar.
+   */
+  const mostrarActivar = canActivar && cuenta.acciones.activar.habilitada;
+
+  const mostrarSuspender = canSuspender && cuenta.acciones.suspender.habilitada;
+
+  const mostrarReactivar = canReactivar && cuenta.acciones.reactivar.habilitada;
+
   const puedeDarDeBaja =
     cuenta.estadoCuenta === "ACTIVA" || cuenta.estadoCuenta === "SUSPENDIDA";
+
+  const mostrarDarDeBaja = canDarDeBaja && puedeDarDeBaja;
 
   const retryOperationId = cuenta.acciones.reintentarOperacion.operacionId;
 
   const recoverOperationId = cuenta.acciones.recuperarOperacion.operacionId;
 
+  const mostrarReintentar =
+    canManageOperations &&
+    cuenta.acciones.reintentarOperacion.habilitada &&
+    Boolean(retryOperationId);
+
+  const mostrarRecuperar =
+    canManageOperations &&
+    cuenta.acciones.recuperarOperacion.habilitada &&
+    Boolean(recoverOperationId);
+
+  /**
+   * Revelar credenciales es una consulta auditada,
+   * no una transición del ciclo de vida PPPoE.
+   */
+  const mostrarCredenciales = canRevealCredentials;
+
   const tieneAcciones =
-    canProvisionar ||
-    canSuspender ||
-    canReactivar ||
-    canDarDeBaja ||
-    canRevealCredentials ||
-    canManageOperations;
+    mostrarActivar ||
+    mostrarSuspender ||
+    mostrarReactivar ||
+    mostrarDarDeBaja ||
+    mostrarCredenciales ||
+    mostrarReintentar ||
+    mostrarRecuperar;
 
   if (!tieneAcciones) {
     return null;
   }
 
   const handleCompleted = async () => {
-    provisionarDialog.close();
+    activarDialog.close();
+
     suspenderDialog.close();
+
     reactivarDialog.close();
+
     darDeBajaDialog.close();
+
     reintentarDialog.close();
+
     recuperarDialog.close();
 
+    /**
+     * Tanto el flujo manual como el de instalación
+     * pueden modificar:
+     *
+     * - estadoCuenta;
+     * - estadoAcceso;
+     * - operaciones;
+     * - acciones disponibles.
+     */
     invalidateCuenta();
 
     await onDataChanged?.();
@@ -112,6 +159,7 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
 
   const handleCredentialsRevealed = async () => {
     invalidateCuenta();
+
     await onDataChanged?.();
   };
 
@@ -127,82 +175,63 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
         >
           <AppInline align="center" gap="xs" wrap>
             <Router size={16} aria-hidden="true" />
+
             <p className="text-sm font-semibold">Acciones PPPoE</p>
           </AppInline>
 
           <AppInline gap="xs" wrap>
-            {canProvisionar ? (
+            {mostrarActivar ? (
               <AppButton
                 type="button"
                 size="sm"
                 leftIcon={<Play size={14} aria-hidden="true" />}
-                disabled={!cuenta.acciones.provisionar.habilitada}
-                title={getActionTitle(
-                  cuenta.acciones.provisionar,
-                  "Provisionar cuenta PPPoE",
-                  "La provisión no está disponible.",
-                )}
-                onClick={provisionarDialog.open}
+                title="Activar cuenta PPPoE"
+                onClick={activarDialog.open}
               >
-                Provisionar
+                Activar PPPoE
               </AppButton>
             ) : null}
 
-            {canReactivar ? (
+            {mostrarReactivar ? (
               <AppButton
                 type="button"
                 variant="outline"
                 size="sm"
                 leftIcon={<Power size={14} aria-hidden="true" />}
-                disabled={!cuenta.acciones.reactivar.habilitada}
-                title={getActionTitle(
-                  cuenta.acciones.reactivar,
-                  "Reactivar servicio PPPoE",
-                  "La reactivación no está disponible.",
-                )}
+                title="Reactivar servicio PPPoE"
                 onClick={reactivarDialog.open}
               >
                 Reactivar
               </AppButton>
             ) : null}
 
-            {canSuspender ? (
+            {mostrarSuspender ? (
               <AppButton
                 type="button"
                 variant="danger"
                 size="sm"
                 leftIcon={<PowerOff size={14} aria-hidden="true" />}
-                disabled={!cuenta.acciones.suspender.habilitada}
-                title={getActionTitle(
-                  cuenta.acciones.suspender,
-                  "Suspender servicio PPPoE",
-                  "La suspensión no está disponible.",
-                )}
+                title="Suspender servicio PPPoE"
                 onClick={suspenderDialog.open}
               >
                 Suspender
               </AppButton>
             ) : null}
 
-            {canDarDeBaja ? (
+            {mostrarDarDeBaja ? (
               <AppButton
                 type="button"
                 variant="danger"
                 size="sm"
                 leftIcon={<Trash2 size={14} aria-hidden="true" />}
-                disabled={!puedeDarDeBaja}
-                title={
-                  puedeDarDeBaja
-                    ? "Dar de baja definitivamente"
-                    : "Disponible únicamente para cuentas activas o suspendidas."
-                }
+                title="Dar de baja definitivamente"
                 onClick={darDeBajaDialog.open}
               >
                 Dar de baja
               </AppButton>
             ) : null}
 
-            {canRevealCredentials ? (
+            {mostrarCredenciales ? (
               <AppButton
                 type="button"
                 variant="outline"
@@ -215,9 +244,7 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
               </AppButton>
             ) : null}
 
-            {canManageOperations &&
-            cuenta.acciones.reintentarOperacion.habilitada &&
-            retryOperationId ? (
+            {mostrarReintentar && retryOperationId ? (
               <AppButton
                 type="button"
                 variant="outline"
@@ -233,9 +260,7 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
               </AppButton>
             ) : null}
 
-            {canManageOperations &&
-            cuenta.acciones.recuperarOperacion.habilitada &&
-            recoverOperationId ? (
+            {mostrarRecuperar && recoverOperationId ? (
               <AppButton
                 type="button"
                 variant="outline"
@@ -254,12 +279,13 @@ export function PppoeCuentaDetailActions({ cuenta, onDataChanged }: Props) {
         </AppInline>
       </AppCard>
 
-      {canProvisionar ? (
-        <ProvisionarPppoeDialog
+      {canActivar ? (
+        <PppoeCuentaActivarDialog
           cuentaPppoeId={cuenta.cuentaPppoeId}
           usuario={cuenta.usuario}
-          open={provisionarDialog.isOpen}
-          onOpenChange={provisionarDialog.setOpen}
+          accion={cuenta.acciones.activar}
+          open={activarDialog.isOpen}
+          onOpenChange={activarDialog.setOpen}
           onCompleted={handleCompleted}
         />
       ) : null}

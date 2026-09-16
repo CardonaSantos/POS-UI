@@ -16,9 +16,14 @@ import type {
 import type { OrigenCuentaPppoe } from "./pppoe-cuentas.interfaces";
 
 /**
- * Usuario relacionado con la generación o ejecución
- * administrativa de una cuenta PPPoE.
+ * Orquestador que el backend determinó para
+ * realizar la primera activación PPPoE.
+ *
+ * La UI no debe inferir este dato a partir
+ * de origen, estado o instalaciones[].
  */
+export type FlujoActivacionCuentaPppoe = "INSTALACION" | "ALTA_MANUAL";
+
 export type PppoeCuentaDetalleUsuario = {
   id: number;
 
@@ -158,19 +163,35 @@ export type PppoeCuentaDetalleUltimaOperacion = {
 };
 
 /**
- * Capacidad administrativa simple.
- *
- * habilitada:
- *   define si el backend considera válida la acción
- *   en el estado actual.
- *
- * motivo:
- *   explica por qué está deshabilitada.
+ * Capacidad administrativa calculada por backend.
  */
 export type PppoeCuentaDetalleAccion = {
   habilitada: boolean;
 
   motivo: string | null;
+};
+
+/**
+ * Primera activación PPPoE.
+ *
+ * El backend decide:
+ *
+ * INSTALACION
+ *   -> POST /cliente-instalaciones/:id/pppoe/activar
+ *
+ * ALTA_MANUAL
+ *   -> POST /pppoe-cuentas/:id/provisionar
+ */
+export type PppoeCuentaDetalleActivacionAccion = PppoeCuentaDetalleAccion & {
+  flujo: FlujoActivacionCuentaPppoe | null;
+
+  /**
+   * Obligatorio cuando flujo === "INSTALACION".
+   *
+   * null para ALTA_MANUAL o cuando no existe
+   * un flujo de activación aplicable.
+   */
+  instalacionId: number | null;
 };
 
 /**
@@ -182,7 +203,14 @@ export type PppoeCuentaDetalleOperacionAccion = PppoeCuentaDetalleAccion & {
 };
 
 export type PppoeCuentaDetalleAcciones = {
-  provisionar: PppoeCuentaDetalleAccion;
+  /**
+   * Reemplaza el antiguo "provisionar".
+   *
+   * La UI muestra una única acción:
+   *
+   * Activar PPPoE
+   */
+  activar: PppoeCuentaDetalleActivacionAccion;
 
   suspender: PppoeCuentaDetalleAccion;
 

@@ -393,7 +393,7 @@ export function ReintentarOperacionDialog({
       return;
     }
 
-    if (requiereReautenticacion && !values.contrasenaActual.trim()) {
+    if (requiereReautenticacion && values.contrasenaActual.length === 0) {
       form.setError("contrasenaActual", {
         type: "manual",
         message: "La contraseña actual es obligatoria.",
@@ -407,6 +407,7 @@ export function ReintentarOperacionDialog({
         mutation.mutateAsync({
           claveIdempotencia: buildPppoeRetryIdempotencyKey(operacionId),
           motivo: values.motivo.trim() || undefined,
+
           contrasenaActual: requiereReautenticacion
             ? values.contrasenaActual
             : undefined,

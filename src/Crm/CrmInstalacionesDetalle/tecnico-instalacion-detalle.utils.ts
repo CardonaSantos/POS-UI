@@ -8,8 +8,23 @@ import {
   formattShortFecha,
 } from "@/utils/formattFechas";
 
-export type InstalacionDetalleActionKey =
-  keyof DetalleInstalacionTecnicaResponse["acciones"];
+/**
+ * Acciones que pertenecen a la pantalla operativa
+ * de la instalación.
+ *
+ * revelarCredenciales sigue existiendo en el contrato
+ * del detalle por compatibilidad, pero ya no es una
+ * acción ejecutable desde esta vista.
+ *
+ * La administración de una cuenta PPPoE existente
+ * se realiza desde:
+ *
+ * /crm/pppoe/cuentas/:cuentaPppoeId
+ */
+export type InstalacionDetalleActionKey = Exclude<
+  keyof DetalleInstalacionTecnicaResponse["acciones"],
+  "revelarCredenciales"
+>;
 
 export type InstalacionDetalleActionRequest = {
   action: InstalacionDetalleActionKey;
@@ -156,9 +171,6 @@ export function getActionLabel(action: InstalacionDetalleActionKey): string {
 
     case "subirEvidencia":
       return "Subir evidencias";
-
-    case "revelarCredenciales":
-      return "Ver credenciales";
 
     case "reintentarPrealta":
       return "Reintentar prealta";

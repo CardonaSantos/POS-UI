@@ -1,28 +1,35 @@
 import { memo, useCallback } from "react";
+
+import { Link } from "react-router-dom";
+
 import {
-  KeyRound,
+  ExternalLink,
   RefreshCcw,
   Router,
   ShieldCheck,
   UserRound,
   Wifi,
 } from "lucide-react";
+
 import type { DetalleInstalacionTecnicaResponse } from "@/Crm/features/instalaciones_tecnico/instalaciones-tecnicas-response.interface";
+
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppGrid } from "@/components/app/primitives/app-grid";
 import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
+
 import {
   formatEnumValue,
-  getActionDisabledReason,
   type InstalacionDetalleActionRequest,
 } from "../tecnico-instalacion-detalle.utils";
+
 import { DetailValueRow } from "./detail-value-row";
 import { DetalleSectionCard } from "./detalle-section-card";
 
 type AccesosPppoeCardProps = {
   detalle: DetalleInstalacionTecnicaResponse;
+
   onAction?: (request: InstalacionDetalleActionRequest) => void;
 };
 
@@ -61,7 +68,9 @@ export const AccesosPppoeCard = memo(function AccesosPppoeCard({
 
 type AccesoPppoeItemProps = {
   acceso: DetalleInstalacionTecnicaResponse["accesos"][number];
+
   detalle: DetalleInstalacionTecnicaResponse;
+
   onAction?: (request: InstalacionDetalleActionRequest) => void;
 };
 
@@ -70,29 +79,25 @@ const AccesoPppoeItem = memo(function AccesoPppoeItem({
   detalle,
   onAction,
 }: AccesoPppoeItemProps) {
-  const revealDisabledReason = getActionDisabledReason(
-    detalle,
-    "revelarCredenciales",
-    Boolean(onAction),
-  );
-  const retryDisabledReason = getActionDisabledReason(
-    detalle,
-    "reintentarPrealta",
-    Boolean(onAction),
-  );
+  const cuentaPppoeId = acceso.cuentaPppoe?.id ?? null;
 
-  const handleReveal = useCallback(() => {
-    onAction?.({
-      action: "revelarCredenciales",
-      instalacionId: detalle.id,
-      accesoInternetId: acceso.accesoInternetId,
-    });
-  }, [acceso.accesoInternetId, detalle.id, onAction]);
+  /**
+   * Reintentar prealta únicamente aparece
+   * cuando backend indica que la recuperación
+   * realmente está disponible.
+   *
+   * No mostramos permanentemente un botón
+   * deshabilitado.
+   */
+  const puedeReintentarPrealta =
+    detalle.acciones.reintentarPrealta.habilitada && Boolean(onAction);
 
   const handleRetry = useCallback(() => {
     onAction?.({
       action: "reintentarPrealta",
+
       instalacionId: detalle.id,
+
       accesoInternetId: acceso.accesoInternetId,
     });
   }, [acceso.accesoInternetId, detalle.id, onAction]);
@@ -105,33 +110,44 @@ const AccesoPppoeItem = memo(function AccesoPppoeItem({
             <div className="text-sm font-medium text-foreground">
               {formatEnumValue(acceso.tecnologia)}
             </div>
+
             <div className="mt-0.5 text-xs text-muted-foreground">
               {formatEnumValue(acceso.metodoAutenticacion)}
             </div>
           </div>
+
           <AppBadge tone="info" size="xs" dot>
             {formatEnumValue(acceso.estado)}
           </AppBadge>
         </AppInline>
 
         {acceso.cuentaPppoe ? (
-          <AppGrid cols={{ base: 1, sm: 2 }} gap="sm">
+          <AppGrid
+            cols={{
+              base: 1,
+              sm: 2,
+            }}
+            gap="sm"
+          >
             <DetailValueRow
               icon={UserRound}
               label="Usuario"
               value={acceso.cuentaPppoe.usuario}
               emphasize
             />
+
             <DetailValueRow
               icon={ShieldCheck}
               label="Perfil"
               value={acceso.cuentaPppoe.codigoPerfil}
             />
+
             <DetailValueRow
               icon={Router}
               label="Router"
               value={acceso.cuentaPppoe.routerNombre}
             />
+
             <DetailValueRow
               icon={Wifi}
               label="Cuenta"
@@ -144,29 +160,45 @@ const AccesoPppoeItem = memo(function AccesoPppoeItem({
           </div>
         )}
 
-
         {acceso.configuracionTecnica ? (
-          <AppGrid cols={{ base: 2, sm: 3 }} gap="xs">
+          <AppGrid
+            cols={{
+              base: 2,
+              sm: 3,
+            }}
+            gap="xs"
+          >
             <TechnicalMetric
               label="RX"
-              value={formatMetric(acceso.configuracionTecnica.potenciaOpticaRxDbm, "dBm")}
+              value={formatMetric(
+                acceso.configuracionTecnica.potenciaOpticaRxDbm,
+                "dBm",
+              )}
             />
+
             <TechnicalMetric
               label="Señal"
-              value={formatMetric(acceso.configuracionTecnica.senalInalambricaDbm, "dBm")}
+              value={formatMetric(
+                acceso.configuracionTecnica.senalInalambricaDbm,
+                "dBm",
+              )}
             />
+
             <TechnicalMetric
               label="IPv4"
               value={acceso.configuracionTecnica.ipv4 ?? "Pendiente"}
             />
+
             <TechnicalMetric
               label="SSID"
               value={acceso.configuracionTecnica.ssid ?? "Pendiente"}
             />
+
             <TechnicalMetric
               label="Canal"
               value={formatMetric(acceso.configuracionTecnica.canal)}
             />
+
             <TechnicalMetric
               label="Banda"
               value={formatEnumValue(acceso.configuracionTecnica.bandaWifi)}
@@ -184,45 +216,57 @@ const AccesoPppoeItem = memo(function AccesoPppoeItem({
         ) : null}
 
         <AppInline gap="xs" wrap fullWidth>
-          <AppButton
-            size="xs"
-            variant="outline"
-            disabled={Boolean(revealDisabledReason)}
-            title={revealDisabledReason}
-            onClick={handleReveal}
-          >
-            <KeyRound aria-hidden="true" />
-            Ver credenciales
-          </AppButton>
+          {cuentaPppoeId ? (
+            <AppButton
+              asChild
+              type="button"
+              size="xs"
+              variant="outline"
+              leftIcon={<ExternalLink size={14} aria-hidden="true" />}
+            >
+              <Link to={`/crm/pppoe/cuentas/${cuentaPppoeId}`}>
+                Administrar cuenta PPPoE
+              </Link>
+            </AppButton>
+          ) : null}
 
-          <AppButton
-            size="xs"
-            variant="outline"
-            disabled={Boolean(retryDisabledReason)}
-            title={retryDisabledReason}
-            onClick={handleRetry}
-          >
-            <RefreshCcw aria-hidden="true" />
-            Reintentar prealta
-          </AppButton>
+          {puedeReintentarPrealta ? (
+            <AppButton
+              type="button"
+              size="xs"
+              variant="outline"
+              leftIcon={<RefreshCcw size={14} aria-hidden="true" />}
+              title={
+                detalle.acciones.reintentarPrealta.motivo ??
+                "Reintentar prealta PPPoE"
+              }
+              onClick={handleRetry}
+            >
+              Reintentar prealta
+            </AppButton>
+          ) : null}
         </AppInline>
       </AppStack>
     </article>
   );
 });
 
-
 const TechnicalMetric = memo(function TechnicalMetric({
   label,
   value,
 }: {
   label: string;
+
   value: string;
 }) {
   return (
     <div className="min-w-0 rounded-md bg-muted/40 px-2.5 py-2">
       <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-0.5 truncate text-xs font-medium text-foreground" title={value}>
+
+      <div
+        className="mt-0.5 truncate text-xs font-medium text-foreground"
+        title={value}
+      >
         {value}
       </div>
     </div>
@@ -230,6 +274,9 @@ const TechnicalMetric = memo(function TechnicalMetric({
 });
 
 function formatMetric(value: number | null, suffix?: string) {
-  if (!Number.isFinite(value)) return "Pendiente";
+  if (!Number.isFinite(value)) {
+    return "Pendiente";
+  }
+
   return suffix ? `${value} ${suffix}` : String(value);
 }

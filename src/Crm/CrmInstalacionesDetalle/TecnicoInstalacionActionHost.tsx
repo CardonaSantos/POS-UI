@@ -3,10 +3,10 @@ import { memo } from "react";
 import type { DetalleInstalacionTecnicaResponse } from "@/Crm/features/instalaciones_tecnico/instalaciones-tecnicas-response.interface";
 
 import type { InstalacionDetalleActionRequest } from "./tecnico-instalacion-detalle.utils";
+
 import { ActionContractWarningDialog } from "./actions/action-contract-warning-dialog";
 import { CancelarInstalacionDialog } from "./actions/cancelar-instalacion-dialog";
 import { CompletarInstalacionDialog } from "./actions/completar-instalacion-dialog";
-import { CredencialesPppoeDialog } from "./actions/credenciales-pppoe-dialog";
 import { IniciarInstalacionDialog } from "./actions/iniciar-instalacion-dialog";
 import { ReintentarPrealtaDialog } from "./actions/reintentar-prealta-dialog";
 import { ReprogramarInstalacionDialog } from "./actions/reprogramar-instalacion-dialog";
@@ -14,9 +14,13 @@ import { SubirEvidenciaInstalacionDialog } from "./actions/subir-evidencia-dialo
 
 type TecnicoInstalacionActionHostProps = {
   detalle: DetalleInstalacionTecnicaResponse;
+
   request: InstalacionDetalleActionRequest | null;
+
   open: boolean;
+
   onOpenChange: (open: boolean) => void;
+
   onCompleted: () => void | Promise<void>;
 };
 
@@ -28,12 +32,17 @@ export const TecnicoInstalacionActionHost = memo(
     onOpenChange,
     onCompleted,
   }: TecnicoInstalacionActionHostProps) {
-    if (!request || !open) return null;
+    if (!request || !open) {
+      return null;
+    }
 
     const common = {
       instalacionId: request.instalacionId,
+
       open,
+
       onOpenChange,
+
       onCompleted,
     };
 
@@ -58,15 +67,14 @@ export const TecnicoInstalacionActionHost = memo(
           />
         );
 
-      case "revelarCredenciales":
-        return (
-          <CredencialesPppoeDialog
-            instalacionId={request.instalacionId}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        );
-
+      /**
+       * La prealta pertenece todavía al flujo
+       * operativo de la instalación.
+       *
+       * Puede fallar antes de que exista una
+       * ClientePppoeCuenta, por lo que no puede
+       * delegarse siempre al detalle de cuenta.
+       */
       case "reintentarPrealta": {
         if (!request.accesoInternetId) {
           return (
@@ -82,6 +90,7 @@ export const TecnicoInstalacionActionHost = memo(
         const acceso = detalle.accesos.find(
           (item) => item.accesoInternetId === request.accesoInternetId,
         );
+
         const mikrotikRouterId = acceso?.cuentaPppoe?.mikrotikRouterId ?? null;
 
         if (!mikrotikRouterId) {
