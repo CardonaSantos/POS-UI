@@ -40,10 +40,7 @@ import {
   safeFormatTicketDate,
 } from "../_components/ticket-detail.helpers";
 import { TicketConformidadDialog } from "./conformidad/TicketConformidadDialog";
-import {
-  ticketHistoryQkeys,
-  useGetTicketHistory,
-} from "@/Crm/CrmHooks/hooks/use-tickets/useTicketHistory";
+import { useGetTicketHistory } from "@/Crm/CrmHooks/hooks/use-tickets/useTicketHistory";
 
 interface TicketDetailProps {
   ticket: Ticket;
@@ -64,7 +61,7 @@ export default function TicketDetail({
   optionsTecs,
   optionsCustomers,
   soluciones,
-  query,
+  // query,
 }: TicketDetailProps) {
   const userId = useStoreCrm((state) => state.userIdCRM) ?? 0;
   const queryClient = useQueryClient();
@@ -118,15 +115,9 @@ export default function TicketDetail({
 
   const invalidateTickets = React.useCallback(async () => {
     await queryClient.invalidateQueries({
-      queryKey: ticketsSoporteQkeys.search(query),
+      queryKey: ticketsSoporteQkeys.all,
     });
-  }, [query, queryClient]);
-
-  const invalidateTicketHistory = React.useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: ticketHistoryQkeys.ticket(ticket.id),
-    });
-  }, [queryClient, ticket.id]);
+  }, [queryClient]);
 
   const handleCloseView = React.useCallback(() => {
     setSelectedTicketId(null);
@@ -160,6 +151,7 @@ export default function TicketDetail({
 
       if (!currentTicket.title?.trim()) {
         toast.info("El ticket debe tener un título");
+
         return;
       }
 
@@ -169,22 +161,43 @@ export default function TicketDetail({
         userId,
       };
 
-      await toast.promise(updateTicket.mutateAsync(payload), {
+      /**
+       * Usamos la Promise de mutateAsync como fuente
+       * real de sincronización.
+       *
+       * No utilizamos el retorno de toast.promise()
+       * para determinar cuándo terminó la operación.
+       */
+      const updatePromise = updateTicket.mutateAsync(payload);
+
+      toast.promise(updatePromise, {
         loading: "Actualizando ticket...",
+
         success: "Ticket actualizado",
+
         error: (error) => getApiErrorMessageAxios(error),
       });
 
       /**
-       * Refrescamos:
+       * useUpdateTicket tiene un onSuccess async.
        *
-       * 1. ticket actualizado;
-       * 2. auditoría recién creada.
+       * Por eso este await incluye:
+       *
+       * PATCH
+       *   ↓
+       * backend confirma transacción
+       *   ↓
+       * invalidate tickets
+       *   ↓
+       * invalidate historial
+       *   ↓
+       * refetch queries activas
        */
-      await Promise.all([invalidateTickets(), invalidateTicketHistory()]);
+      await updatePromise;
 
       editDialog.close();
     },
+
     {
       preventConcurrent: true,
     },

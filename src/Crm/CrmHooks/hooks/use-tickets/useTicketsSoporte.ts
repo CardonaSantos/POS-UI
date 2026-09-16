@@ -10,6 +10,7 @@ import { updateTicketDto } from "@/Crm/features/ticket/ticket-types";
 import { PayloadCreateTicket } from "@/Crm/CrmTickets/CreateTickets/CrmCreateTicket";
 import { useInvalidateQk } from "../useInvalidateQk/useInvalidateQk";
 import { useQueryClient } from "@tanstack/react-query";
+import { ticketHistoryQkeys } from "./useTicketHistory";
 
 interface PropsResponse {
   data: Array<Ticket>;
@@ -112,21 +113,46 @@ export function useCreateTicket() {
 }
 
 /**
+ * Payload real utilizado actualmente por la edición.
+ *
+ * userId identifica al actor para la auditoría.
+ */
+export type UpdateTicketMutationPayload = updateTicketDto & {
+  userId?: number;
+};
+
+/**
  * ACTUALIZAR TICKET
- * @param id
- * @returns
  */
 export function useUpdateTicket(id: number) {
-  const q = useQueryClient();
-  return crm.useMutationApi<void, updateTicketDto>(
+  const queryClient = useQueryClient();
+
+  return crm.useMutationApi<void, UpdateTicketMutationPayload>(
     "patch",
+
     crm_endpoints.ticket.update_ticket(id),
+
     undefined,
+
     {
-      onSuccess: () => {
-        q.invalidateQueries({
-          queryKey: ticketsSoporteQkeys.all,
-        });
+      onSuccess: async () => {
+        /**
+         * La mutación no se considera completamente
+         * terminada hasta que ambas familias de queries
+         * hayan sido invalidadas/refrescadas.
+         *
+         * 1. listado/detalle actual del ticket;
+         * 2. historial generado por el mismo update.
+         */
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ticketsSoporteQkeys.all,
+          }),
+
+          queryClient.invalidateQueries({
+            queryKey: ticketHistoryQkeys.ticket(id),
+          }),
+        ]);
       },
     },
   );
