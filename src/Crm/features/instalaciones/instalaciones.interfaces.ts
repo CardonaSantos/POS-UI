@@ -268,6 +268,9 @@ export type ClienteInstalacionDetalle = ClienteInstalacionBase & {
   tecnicos: ClienteInstalacionTecnicoDetalle[];
   evidencias: ClienteInstalacionEvidenciaDetalle[];
   conteos: ClienteInstalacionConteos;
+  cuentaPppoe: {
+    id: number;
+  };
 };
 
 export type CrearClienteInstalacionResponse = {

@@ -1,4 +1,4 @@
-import { ClipboardList, FilePenLine, History, Router } from "lucide-react";
+import { ClipboardList, FilePenLine, History } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useAppStateHandlers } from "@/components/app/handlers";
@@ -21,7 +21,7 @@ import {
 
 import { InstalacionGeneralTab } from "../tabs/instalacion-general-tab";
 import { InstalacionPppoeAuditoriaTab } from "../tabs/instalacion-pppoe-auditoria-tab";
-import { InstalacionPppoeAdministracionTab } from "../tabs/instalacion-pppoe-administracion-tab";
+// import { InstalacionPppoeAdministracionTab } from "../tabs/instalacion-pppoe-administracion-tab";
 import { CRM_PERMISSION } from "@/Crm/CrmAuthRoutes/auth/crm-permissions";
 import { useAuthorization } from "@/Crm/CrmAuthRoutes/auth/use-authorization";
 import {
@@ -42,9 +42,9 @@ export function InstalacionDetailView(props: InstalacionDetailViewProps) {
 
   const canViewAudit = can(CRM_PERMISSION.PPPOE_AUDITORIA_VER);
 
-  const canViewPppoeAdministration = can(
-    CRM_PERMISSION.PPPOE_ADMINISTRACION_VER,
-  );
+  // const canViewPppoeAdministration = can(
+  //   CRM_PERMISSION.PPPOE_ADMINISTRACION_VER,
+  // );
 
   const tabs = useAppStateHandlers<{
     activeTab: InstalacionDetailTab;
@@ -131,6 +131,12 @@ export function InstalacionDetailView(props: InstalacionDetailViewProps) {
           </AppDropdownMenu>
 
           <AppButton asChild variant="outline" size="sm">
+            <Link to={`/crm/pppoe/cuentas/${instalacion.cuentaPppoe.id}`}>
+              PPPOE
+            </Link>
+          </AppButton>
+
+          <AppButton asChild variant="outline" size="sm">
             <Link to={`/crm/cliente/${instalacion.cliente.id}/?tab=resumen`}>
               Ver cliente
             </Link>
@@ -170,21 +176,21 @@ export function InstalacionDetailView(props: InstalacionDetailViewProps) {
               ]
             : []),
 
-          ...(canViewPppoeAdministration
-            ? [
-                {
-                  value: "pppoe",
-                  label: "Administración PPPoE",
-                  icon: <Router aria-hidden="true" />,
-                  content: (
-                    <InstalacionPppoeAdministracionTab
-                      instalacion={instalacion}
-                      enabled={activeTab === "pppoe"}
-                    />
-                  ),
-                } as const,
-              ]
-            : []),
+          // ...(canViewPppoeAdministration
+          //   ? [
+          //       {
+          //         value: "pppoe",
+          //         label: "Administración PPPoE",
+          //         icon: <Router aria-hidden="true" />,
+          //         content: (
+          //           <InstalacionPppoeAdministracionTab
+          //             instalacion={instalacion}
+          //             enabled={activeTab === "pppoe"}
+          //           />
+          //         ),
+          //       } as const,
+          //     ]
+          //   : []),
         ]}
       />
     </AppStack>

@@ -9,7 +9,6 @@ import {
 } from "@/Crm/features/instalaciones/instalaciones.interfaces";
 import { FiltrarClienteInstalacionesParams } from "@/Crm/features/instalaciones/filter";
 import { CrearClienteInstalacionPayload } from "@/Crm/Crm-instalaciones/common/crear-instalacion.payload";
-import { RevelarCredencialesPppoeResponse } from "@/Crm/features/instalaciones_tecnico/credenciales";
 import {
   DetalleInstalacionTecnicaResponse,
   ListarInstalacionesTecnicasAsignadasResponse,
@@ -248,19 +247,5 @@ export function usePostReintentarPrealtaPppoe(
         invalidate(instalacionesQkeys.all);
       },
     },
-  );
-}
-
-/**
- * Revela temporalmente las credenciales PPPoE asociadas
- * con una instalación.
- *
- * Se implementa como mutación porque el servidor utiliza POST
- * y registra la consulta en auditoría.
- */
-export function usePostRevelarCredencialesPppoe(instalacionId: number) {
-  return crm.useMutationApi<RevelarCredencialesPppoeResponse, void>(
-    "post",
-    crm_endpoints.pppoe.post_revelar_credenciales(instalacionId),
   );
 }

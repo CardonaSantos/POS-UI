@@ -115,9 +115,6 @@ export const crm_endpoints = {
     ) =>
       `/cliente-instalaciones/${instalacionId}/accesos/${accesoInternetId}/prealta-pppoe/reintentar`,
 
-    post_revelar_credenciales: (instalacionId: number) =>
-      `/cliente-instalaciones/${instalacionId}/credenciales-pppoe/revelar`,
-
     // FLUJO PPPoE DE INSTALACIÓN
 
     post_iniciar_instalacion: (instalacionId: number) =>
