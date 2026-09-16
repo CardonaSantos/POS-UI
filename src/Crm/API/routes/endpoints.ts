@@ -139,6 +139,9 @@ export const crm_endpoints = {
     post_reactivar_cuenta: (cuentaPppoeId: number) =>
       `/pppoe-cuentas/${cuentaPppoeId}/reactivar`,
 
+    post_dar_de_baja_cuenta: (cuentaPppoeId: number) =>
+      `/pppoe-cuentas/${cuentaPppoeId}/dar-de-baja`,
+
     // OPERACIONES PPPoE
 
     get_operaciones_paginated: `/pppoe-operaciones`,

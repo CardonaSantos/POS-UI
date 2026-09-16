@@ -21,6 +21,25 @@ import {
   CrearPrealtaPppoeCuentaResponse,
 } from "@/Crm/features/pppoe-cuentas/pppoe-prealta.interfaces";
 
+export type DarDeBajaPppoeCuentaPayload = {
+  /**
+   * Contraseña actual del operador autenticado.
+   *
+   * IMPORTANTE:
+   * no debe aplicarse trim().
+   */
+  contrasenaActual: string;
+
+  /**
+   * Motivo administrativo obligatorio.
+   *
+   * Backend:
+   * mínimo 5 caracteres;
+   * máximo 500 caracteres.
+   */
+  motivo: string;
+};
+
 export type RevelarCredencialesPppoeCuentaResponse = {
   cuentaPppoeId: number;
 
@@ -210,5 +229,40 @@ export function usePostRevelarCredencialesPppoeCuenta(cuentaPppoeId: number) {
     "post",
 
     crm_endpoints.pppoe.post_revelar_credenciales_cuenta(cuentaPppoeId),
+  );
+}
+
+/**
+ * POST /pppoe-cuentas/:cuentaPppoeId/dar-de-baja
+ *
+ * Ejecuta una baja administrativa definitiva:
+ *
+ * - elimina el secret de MikroTik;
+ * - remueve las sesiones PPPoE activas;
+ * - confirma la ausencia del secret;
+ * - deja ClientePppoeCuenta en ELIMINADA;
+ * - deja ClienteAccesoInternet en BAJA.
+ *
+ * No crea ClienteDesinstalacion.
+ *
+ * La empresa, operador e idempotencia son
+ * responsabilidad del backend.
+ */
+export function usePostDarDeBajaPppoeCuenta(cuentaPppoeId: number) {
+  const invalidate = useInvalidatePppoeCuenta(cuentaPppoeId);
+
+  return crm.useMutationApi<
+    EjecutarOperacionPppoeResponse,
+    DarDeBajaPppoeCuentaPayload
+  >(
+    "post",
+
+    crm_endpoints.pppoe.post_dar_de_baja_cuenta(cuentaPppoeId),
+
+    undefined,
+
+    {
+      onSuccess: invalidate,
+    },
   );
 }

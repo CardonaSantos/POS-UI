@@ -12,21 +12,30 @@ import { useInvalidateQk } from "../useInvalidateQk/useInvalidateQk";
 import { useCallback } from "react";
 
 export type ReintentarPppoeOperacionCuentaPayload = {
-  empresaId: number;
-
+  /**
+   * Identifica de forma única este nuevo intento.
+   */
   claveIdempotencia: string;
 
+  /**
+   * Observación administrativa opcional.
+   */
   motivo?: string;
+
+  /**
+   * Solamente es necesaria cuando el reintento
+   * corresponde a una BAJA_MANUAL.
+   *
+   * Nunca aplicar trim() antes de enviarla.
+   */
+  contrasenaActual?: string;
 };
 
 export type RecuperarPppoeOperacionCuentaPayload = {
-  empresaId: number;
-
   confirmarAbandono: true;
 
   fecha?: string;
 };
-
 /**
  * No tocamos crm_endpoints.pppoe.get_operacion existente.
  *
