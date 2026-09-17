@@ -1,7 +1,17 @@
+import { DashboardTicketsActividadParams } from "@/Crm/features/chart-types/tickets-chart";
+
 export const DashboardQkeys = {
   all: ["dashboard-data"] as const,
   kps: ["dashboard-kpis"] as const,
   cobros: ["cobros-data"] as const,
+  ticketsActividad: (params: DashboardTicketsActividadParams) =>
+    [
+      "dashboard",
+      "tickets-actividad",
+      params.preset,
+      params.desde ?? null,
+      params.hasta ?? null,
+    ] as const,
 };
 
 export const TicketsProcesoQkeys = {

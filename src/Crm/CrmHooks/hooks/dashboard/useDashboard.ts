@@ -10,14 +10,20 @@ import {
   TicketsAsignadosQkeys,
   TicketsProcesoQkeys,
 } from "./Qk";
-import { ChartDataLineNivo } from "@/Crm/_charts/line-chart/LineChart.interfaces";
-import { NivoBarData } from "@/Crm/_charts/bar-chart/bar-chart.interface";
 import { TicketsDashboardSoporte } from "@/Crm/CrmNewDashboard/interfaces/dashboard-interfaces";
 import { TicketAsignadoTecnico } from "@/Crm/features/dashboard/dashboard-tickets";
 import { useQueryClient } from "@tanstack/react-query";
 import { crm } from "@/Crm/API/crmApi";
 import { crm_endpoints } from "@/Crm/API/routes/endpoints";
 import { TecnicoPanelResponse } from "@/Crm/features/dashboard/panel-tecnico.types";
+import {
+  DashboardActividadHistorica,
+  DashboardActividadMes,
+} from "@/Crm/features/chart-types/chart-interfaces";
+import {
+  DashboardTicketsActividad,
+  DashboardTicketsActividadParams,
+} from "@/Crm/features/chart-types/tickets-chart";
 
 /**
  * DATOS KPI
@@ -40,16 +46,14 @@ export function useGetDashboardData() {
 }
 
 /**
- * INSTALACIONES VS DESINSTALACIONES LINE CHART
- * @returns
+ * ACTIVIDAD DE INSTALACIONES Y DESINSTALACIONES DEL MES
  */
-export function useGetDashboardChartInstalaciones() {
-  return useCrmQuery<ChartDataLineNivo>(
+export function useGetDashboardActividadMes() {
+  return useCrmQuery<DashboardActividadMes>(
     DashboardQkeys.all,
     `dashboard/instalaciones-vs-desinstalaciones`,
     undefined,
     {
-      initialData: [],
       staleTime: 0,
       gcTime: 1000 * 60,
       refetchOnWindowFocus: "always",
@@ -61,16 +65,15 @@ export function useGetDashboardChartInstalaciones() {
 }
 
 /**
- * INSTALACIONES HISTORICAS BAR CHART
- * @returns
+ * ACTIVIDAD HISTÓRICA DE INSTALACIONES Y DESINSTALACIONES
+ * Últimos 12 meses
  */
-export function useGetInstalacionesVsDesinstalaciones() {
-  return useCrmQuery<NivoBarData>(
+export function useGetDashboardActividadHistorica() {
+  return useCrmQuery<DashboardActividadHistorica>(
     InstalacionesVsDesinstalacionesQkeys.all,
     `dashboard/instalaciones-historicas`,
     undefined,
     {
-      initialData: [],
       staleTime: 0,
       gcTime: 1000 * 60,
       refetchOnWindowFocus: "always",
@@ -224,5 +227,69 @@ export function useGetTecnicoPanel() {
   return crm.useQueryApi<TecnicoPanelResponse>(
     tecnicoPanelQkeys.all,
     crm_endpoints.dashboard.tecnico_panel,
+  );
+}
+
+/**
+ * ACTIVIDAD DE SOPORTE
+ *
+ * Presets soportados:
+ * - 7D
+ * - 30D
+ * - 12M
+ * - HISTORICO
+ * - CUSTOM
+ */
+export function useGetDashboardTicketsActividad(
+  params: DashboardTicketsActividadParams = {
+    preset: "7D",
+  },
+) {
+  const searchParams = new URLSearchParams();
+
+  searchParams.set("preset", params.preset);
+
+  /**
+   * Las fechas solamente tienen sentido
+   * para un rango personalizado.
+   */
+  if (params.preset === "CUSTOM") {
+    if (params.desde) {
+      searchParams.set("desde", params.desde);
+    }
+
+    if (params.hasta) {
+      searchParams.set("hasta", params.hasta);
+    }
+  }
+
+  const endpoint = `dashboard/tickets-actividad?${searchParams.toString()}`;
+
+  const customRangeReady =
+    params.preset !== "CUSTOM" || Boolean(params.desde && params.hasta);
+
+  return useCrmQuery<DashboardTicketsActividad>(
+    DashboardQkeys.ticketsActividad(params),
+    endpoint,
+    undefined,
+    {
+      /**
+       * No ejecutamos CUSTOM hasta tener
+       * ambas fechas.
+       */
+      enabled: customRangeReady,
+
+      staleTime: 0,
+
+      gcTime: 1000 * 60 * 5,
+
+      refetchOnWindowFocus: "always",
+
+      refetchOnMount: "always",
+
+      refetchOnReconnect: "always",
+
+      retry: 1,
+    },
   );
 }

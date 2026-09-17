@@ -67,13 +67,14 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
   return (
     <section
       aria-labelledby="dashboard-rutas-activas"
-      className="min-w-0 p-0.5"
+      className="flex h-full min-h-0 min-w-0 flex-col p-0.5"
     >
+      {/* HEADER FIJO */}
       <AppInline
         gap="xs"
         align="center"
         justify="between"
-        className="mb-0.5 min-w-0"
+        className="mb-0.5 min-w-0 shrink-0"
       >
         <AppInline gap="xs" align="center" className="min-w-0">
           <CircleDollarSign className="h-3 w-3 shrink-0 text-[hsl(var(--app-primary,var(--primary)))]" />
@@ -91,7 +92,7 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
           tone="neutral"
           appearance="soft"
           radius="sm"
-          className="h-3.5 min-h-3.5 px-1 text-[9px]"
+          className="h-3.5 min-h-3.5 shrink-0 px-1 text-[9px]"
         >
           {rutas.length}
         </AppBadge>
@@ -100,9 +101,11 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
       {rutas.length > 0 ? (
         <div
           className={[
-            "flex gap-1 overflow-x-auto pb-0.5",
-            "lg:block lg:max-h-[6.75rem] lg:space-y-0.5 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1",
-            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            "dashboard-scrollbar",
+            "min-h-0 min-w-0 flex-1",
+            "space-y-0.5",
+            "overflow-y-auto overflow-x-hidden",
+            "pr-1",
           ].join(" ")}
         >
           {rutas.map((ruta) => (
@@ -113,14 +116,16 @@ export function DashboardActiveRoutesList({ rutas }: { rutas: RutaActiva[] }) {
           ))}
         </div>
       ) : (
-        <AppEmptyState
-          preset="empty"
-          variant="dashed"
-          size="xs"
-          align="left"
-          title="Sin rutas activas"
-          description="No hay rutas de cobro activas."
-        />
+        <div className="min-h-0 flex-1">
+          <AppEmptyState
+            preset="empty"
+            variant="dashed"
+            size="xs"
+            align="left"
+            title="Sin rutas activas"
+            description="No hay rutas de cobro activas."
+          />
+        </div>
       )}
     </section>
   );
