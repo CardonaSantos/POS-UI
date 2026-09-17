@@ -11,7 +11,6 @@ import { AppTabs, type AppTabItem } from "@/components/app/primitives/app-tabs";
 import { useAppDisclosure } from "@/components/app/handlers";
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
-import { MikroTikIcon } from "@/Crm/Icons/MikroTikIcon";
 import { useTabChangeWithUrl } from "@/Crm/Utils/Components/handleTabChangeWithParamURL";
 import { LocationTab } from "./_components/location-tab";
 import { TicketsTab } from "./_components/tickets-tab";
@@ -21,7 +20,6 @@ import { CustomerDialogs } from "./_components/customer-dialogs";
 import { ClientOverview } from "./_components/overview";
 import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
 import EmptyImages from "./CrmCustomerGalery/EmptyImages";
-import CustomerNetworkControl from "./customer-network-control/customer-network-controll";
 import { useClienteDetails } from "../API/customer-profile.queries";
 import { clienteInitialState } from "../helpers/clienteInitialState";
 
@@ -195,12 +193,6 @@ export default function CustomerProfile() {
         label: "Media",
         content: contentMediaSection,
         icon: <Image size={16} />,
-      },
-      {
-        value: "mikrotik",
-        label: "MikroTik",
-        content: <CustomerNetworkControl cliente={clienteSecure} />,
-        icon: <MikroTikIcon scale={16} />,
       },
     ],
     [clienteSecure, commonTabProps, contentMediaSection],
