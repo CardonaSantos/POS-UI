@@ -1,0 +1,413 @@
+.contract-pdf,
+.contract-pdf * {
+  box-sizing: border-box;
+}
+
+.contract-pdf {
+  background: #fff;
+  color: #20252b;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9.3pt;
+  line-height: 1.35;
+}
+
+.contract-half-letter {
+  font-size: 7.5pt;
+  line-height: 1.24;
+}
+
+.contract-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8mm;
+
+  padding-bottom: 5mm;
+  margin-bottom: 5mm;
+
+  border-bottom: 1px solid #d1d5db;
+
+  break-inside: avoid;
+}
+
+.contract-company {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+}
+
+.contract-logo {
+  width: 22mm;
+  height: 22mm;
+  object-fit: contain;
+}
+
+.contract-company h1 {
+  margin: 0 0 1mm;
+  font-size: 15pt;
+  line-height: 1.15;
+}
+
+.contract-company p {
+  margin: 0.6mm 0;
+  color: #4b5563;
+  font-size: 8.5pt;
+}
+
+.contract-document-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1mm;
+
+  white-space: nowrap;
+  font-size: 8.5pt;
+}
+
+.contract-section {
+  margin-bottom: 5mm;
+}
+
+.contract-section > h2 {
+  margin: 0 0 2.5mm;
+  padding-bottom: 1.5mm;
+
+  border-bottom: 1px solid #d8dde3;
+
+  font-size: 11pt;
+  line-height: 1.2;
+}
+
+.contract-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2mm 4mm;
+
+  padding: 3mm;
+
+  background: #f7f8fa;
+  border-radius: 2mm;
+
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.contract-half-letter .contract-info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4mm 2.5mm;
+  padding: 2.2mm;
+}
+
+.contract-half-letter .contract-info-item {
+  gap: 0.3mm;
+}
+
+.contract-half-letter .contract-info-item > span {
+  font-size: 6.9pt;
+}
+
+.contract-half-letter .contract-info-item > strong {
+  font-size: 7.5pt;
+  line-height: 1.2;
+}
+
+.contract-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7mm;
+}
+
+.contract-info-item > span {
+  color: #6b7280;
+  font-size: 7.8pt;
+}
+
+.contract-info-item > strong {
+  font-size: 8.7pt;
+  font-weight: 600;
+}
+
+.contract-info-full {
+  grid-column: 1 / -1;
+}
+
+.contract-note {
+  margin-top: 2mm;
+  padding: 3mm;
+
+  background: #f7f8fa;
+  border-radius: 2mm;
+
+  break-inside: avoid;
+}
+
+.contract-note p {
+  margin: 1mm 0 0;
+}
+
+.contract-terms-body {
+  padding: 3mm;
+
+  background: #fafafa;
+  border-radius: 2mm;
+}
+
+.contract-term-section {
+  margin: 3.5mm 0 1.3mm;
+
+  font-size: 9pt;
+  font-weight: 700;
+
+  break-after: avoid;
+}
+
+.contract-term-section:first-child {
+  margin-top: 0;
+}
+
+.contract-term-subsection {
+  margin: 2.5mm 0 1mm;
+
+  font-size: 8.6pt;
+  font-weight: 700;
+
+  break-after: avoid;
+}
+
+.contract-term-paragraph {
+  margin: 0 0 2mm;
+
+  text-align: justify;
+
+  orphans: 3;
+  widows: 3;
+}
+
+.contract-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14mm;
+
+  margin: 14mm 8mm 8mm;
+
+  break-inside: avoid;
+}
+
+.contract-signature {
+  text-align: center;
+}
+
+.contract-signature-line {
+  margin-bottom: 2mm;
+  border-top: 1px solid #6b7280;
+}
+
+.contract-signature strong,
+.contract-signature span {
+  display: block;
+}
+
+.contract-signature span {
+  margin-top: 1mm;
+  color: #6b7280;
+  font-size: 8pt;
+}
+
+.contract-footer {
+  margin-top: 8mm;
+  padding-top: 3mm;
+
+  border-top: 1px solid #d1d5db;
+
+  color: #6b7280;
+  text-align: center;
+  font-size: 7.5pt;
+
+  break-inside: avoid;
+}
+
+.contract-footer p {
+  margin: 0.8mm 0;
+}
+
+@media print {
+  .contract-pdf {
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+/* @media (max-width: 600px) {
+  .contract-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-info-full {
+    grid-column: auto;
+  }
+} */
+
+.contract-term-section,
+.contract-term-subsection,
+.contract-term-paragraph {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.contract-term-section,
+.contract-term-subsection {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+/* otros compactos */
+.contract-half-letter .contract-header {
+  gap: 4mm;
+  padding-bottom: 3mm;
+  margin-bottom: 3mm;
+}
+
+.contract-half-letter .contract-logo {
+  width: 16mm;
+  height: 16mm;
+}
+
+.contract-half-letter .contract-company h1 {
+  font-size: 11pt;
+}
+
+.contract-half-letter .contract-company p {
+  margin: 0.3mm 0;
+  font-size: 6.8pt;
+}
+
+.contract-half-letter .contract-document-meta {
+  font-size: 6.8pt;
+  gap: 0.5mm;
+}
+
+.contract-half-letter .contract-section {
+  margin-bottom: 3mm;
+}
+
+.contract-half-letter .contract-section > h2 {
+  margin-bottom: 1.5mm;
+  padding-bottom: 1mm;
+  font-size: 8.8pt;
+}
+
+.contract-half-letter .contract-terms-body {
+  padding: 2mm;
+}
+
+.contract-half-letter .contract-term-section {
+  margin: 2.4mm 0 0.8mm;
+  font-size: 7.7pt;
+}
+
+.contract-half-letter .contract-term-subsection {
+  margin: 1.7mm 0 0.6mm;
+  font-size: 7.3pt;
+}
+
+.contract-half-letter .contract-term-paragraph {
+  margin: 0 0 1.3mm;
+  line-height: 1.23;
+}
+
+/* otros para costos} */
+.contract-cost-summary {
+  margin-top: 2mm;
+  padding: 2.5mm 3mm;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 2mm;
+
+  background: #fff;
+
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.contract-cost-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2mm 5mm;
+}
+
+.contract-cost-row,
+.contract-cost-total > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3mm;
+}
+
+.contract-cost-row span,
+.contract-cost-total span {
+  color: #6b7280;
+}
+
+.contract-cost-total {
+  display: grid;
+  gap: 1mm;
+
+  margin-top: 2.5mm;
+  padding-top: 2mm;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.contract-cost-grand-total {
+  margin-top: 0.5mm;
+  padding-top: 1.5mm;
+
+  border-top: 1px solid #d1d5db;
+
+  font-size: 9.2pt;
+}
+
+.contract-cost-grand-total strong {
+  font-size: 10pt;
+}
+
+.contract-cost-notes {
+  margin-top: 2mm;
+  padding-top: 2mm;
+
+  border-top: 1px dashed #d1d5db;
+
+  font-size: 7.8pt;
+}
+
+.contract-cost-notes p {
+  margin: 0.8mm 0 0;
+  color: #4b5563;
+}
+
+/* costos media carta */
+.contract-half-letter .contract-cost-summary {
+  margin-top: 1.5mm;
+  padding: 1.8mm 2mm;
+}
+
+.contract-half-letter .contract-cost-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8mm 3mm;
+}
+
+.contract-half-letter .contract-cost-row,
+.contract-half-letter .contract-cost-total > div {
+  font-size: 6.8pt;
+}
+
+.contract-half-letter .contract-cost-grand-total {
+  font-size: 7.5pt;
+}
+
+.contract-half-letter .contract-cost-grand-total strong {
+  font-size: 8pt;
+}
+
+.contract-half-letter .contract-cost-notes {
+  font-size: 6.6pt;
+}

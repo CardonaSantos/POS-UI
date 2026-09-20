@@ -99,7 +99,6 @@ export default function LayoutCrm({ children }: LayoutProps) {
 
   React.useEffect(() => {
     const storedTokenCRM = localStorage.getItem("tokenAuthCRM");
-
     if (!storedTokenCRM) return;
 
     try {

@@ -1,151 +1,231 @@
+import type { ReactNode } from "react";
+
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { MikrotikRoutersResponse } from "@/Crm/features/mikro-tiks/mikrotiks.interfaces";
-import { Button } from "@/components/ui/button";
-import { formattShortFecha } from "@/utils/formattFechas";
-import {
-  Activity,
   Cable,
-  Clock,
+  CalendarClock,
   Edit,
   Globe,
-  KeyRound,
+  Network,
   Server,
+  Terminal,
   Trash2,
   User,
 } from "lucide-react";
 
+import { AppBadge } from "@/components/app/primitives/app-badge";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+
+import { AppCard } from "@/components/app/primitives/app-card";
+
+import { AppGrid } from "@/components/app/primitives/app-grid";
+
+import { AppInline } from "@/components/app/primitives/app-inline";
+
+import { AppStack } from "@/components/app/primitives/app-stack";
+
+import type { MikrotikRoutersResponse } from "@/Crm/features/mikro-tiks/mikrotiks.interfaces";
+
+import { formattShortFecha } from "@/utils/formattFechas";
+
 interface MkProps {
   mk: MikrotikRoutersResponse;
+
   handleSelectToEdit: (mk: MikrotikRoutersResponse) => void;
-  isToUpdate: boolean;
+
   handleOpenDelete: (mk: MikrotikRoutersResponse) => void;
 }
 
+interface RouterInfoProps {
+  label: string;
+
+  value: ReactNode;
+
+  icon?: ReactNode;
+
+  mono?: boolean;
+}
+
+function RouterInfo({ label, value, icon, mono = false }: RouterInfoProps) {
+  return (
+    <div className="min-w-0">
+      <AppInline align="center" gap="xs" wrap={false}>
+        {icon ? (
+          <span
+            aria-hidden="true"
+            className="shrink-0 text-[hsl(var(--app-muted-foreground))]"
+          >
+            {icon}
+          </span>
+        ) : null}
+
+        <span className="text-[11px] text-[hsl(var(--app-muted-foreground))]">
+          {label}
+        </span>
+      </AppInline>
+
+      <div
+        className={
+          mono
+            ? "mt-1 truncate font-mono text-xs font-medium"
+            : "mt-1 truncate text-xs font-medium"
+        }
+        title={typeof value === "string" ? value : undefined}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
-  const maskedPassword = mk.passwordEnc ? "********" : "—";
+  const createdAt = mk.creadoEn
+    ? formattShortFecha(mk.creadoEn)
+    : "Sin registrar";
+
+  const updatedAt = mk.actualizadoEn
+    ? formattShortFecha(mk.actualizadoEn)
+    : "Sin registrar";
 
   return (
-    <Card className="h-full border border-border/60 shadow-sm">
-      <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Server className="h-4 w-4 text-primary" />
-            <h2 className="text-base font-semibold leading-tight">
-              {mk.nombre ?? "Sin nombre"}
-            </h2>
-          </div>
-          <CardDescription className="text-xs line-clamp-2">
-            {mk.descripcion ?? "Sin descripción"}
-          </CardDescription>
-        </div>
-
-        <div className="flex flex-col items-end gap-1">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-              mk.activo
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-red-50 text-red-700"
-            }`}
+    <AppCard
+      variant="outline"
+      size="xs"
+      radius="md"
+      shadow="xs"
+      title={mk.nombre || `Router MikroTik #${mk.id}`}
+      description={mk.descripcion?.trim() || "Sin descripción administrativa."}
+      icon={<Server aria-hidden="true" />}
+      action={
+        <AppBadge
+          tone={mk.activo ? "success" : "danger"}
+          appearance="soft"
+          size="xs"
+          radius="full"
+          dot
+          dotPulse={mk.activo}
+        >
+          {mk.activo ? "Activo" : "Inactivo"}
+        </AppBadge>
+      }
+      headerDivider
+      footerDivider
+      footerAlign="right"
+      footer={
+        <AppInline justify="end" align="center" gap="xs" wrap fullWidth>
+          <AppButton
+            type="button"
+            variant="outline"
+            size="xs"
+            leftIcon={<Trash2 size={13} aria-hidden="true" />}
+            onClick={() => handleOpenDelete(mk)}
           >
-            <Activity className="mr-1 h-3 w-3" />
-            {mk.activo ? "Activo" : "Inactivo"}
-          </span>
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-            SSH&nbsp;
-            <span className="font-semibold">{mk.sshPort}</span>
-          </span>
-        </div>
-      </CardHeader>
+            Eliminar
+          </AppButton>
 
-      <CardContent className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-        {/* Acceso */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-[11px] font-medium uppercase text-muted-foreground tracking-wide">
-            <User className="h-3.5 w-3.5" />
-            <span>Acceso</span>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">Usuario</p>
-            <p className="font-medium break-all">{mk.usuario}</p>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">Contraseña</p>
-            <p className="flex items-center gap-1 font-medium">
-              <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
-              {maskedPassword}
-            </p>
-          </div>
-        </div>
+          <AppButton
+            type="button"
+            size="xs"
+            leftIcon={<Edit size={13} aria-hidden="true" />}
+            onClick={() => handleSelectToEdit(mk)}
+          >
+            Editar
+          </AppButton>
+        </AppInline>
+      }
+    >
+      <AppStack gap="sm">
+        {/* ============================== */}
+        {/* CONEXIÓN */}
+        {/* ============================== */}
 
-        {/* Red */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-[11px] font-medium uppercase text-muted-foreground tracking-wide">
-            <Globe className="h-3.5 w-3.5" />
-            <span>Red</span>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">Host</p>
-            <p className="font-medium break-all">{mk.host}</p>
-          </div>
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">OLT asignada</p>
-            <p className="font-medium flex items-center gap-1">
-              <Cable className="h-3.5 w-3.5 text-muted-foreground" />
-              {mk.oltId ?? "N/A"}
-            </p>
-          </div>
-        </div>
+        <section>
+          <AppInline align="center" gap="xs" wrap={false}>
+            <Network size={14} aria-hidden="true" />
 
-        {/* Fechas */}
-        <div className="space-y-1.5 md:col-span-2">
-          <div className="flex items-center gap-2 text-[11px] font-medium uppercase text-muted-foreground tracking-wide">
-            <Clock className="h-3.5 w-3.5" />
-            <span>Auditoría</span>
-          </div>
+            <p className="text-xs font-semibold">Conexión</p>
+          </AppInline>
 
-          <div className="grid grid-cols-2 gap-2 text-xs sm:text-[13px]">
-            <div>
-              <p className="text-muted-foreground">Creado en</p>
-              <p className="font-medium">
-                {mk.creadoEn ? formattShortFecha(mk.creadoEn) : "N/A"}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Actualizado en</p>
-              <p className="font-medium">
-                {mk.actualizadoEn ? formattShortFecha(mk.actualizadoEn) : "N/A"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
+          <AppGrid
+            cols={{
+              base: 1,
+              sm: 2,
+            }}
+            gap="sm"
+            className="mt-3"
+          >
+            <RouterInfo
+              label="Host"
+              value={mk.host || "Sin configurar"}
+              icon={<Globe size={13} />}
+              mono
+            />
 
-      <CardFooter className="flex items-center justify-end gap-2 pt-2">
-        <Button
-          onClick={() => handleOpenDelete(mk)}
-          variant="outline"
-          size="sm"
-          className="h-8 px-3 text-xs"
+            <RouterInfo
+              label="Puerto SSH"
+              value={mk.sshPort}
+              icon={<Terminal size={13} />}
+              mono
+            />
+
+            <RouterInfo
+              label="Usuario SSH"
+              value={"*****"}
+              icon={<User size={13} />}
+              mono
+            />
+
+            <RouterInfo
+              label="OLT asignada"
+              value={mk.oltId ? `OLT #${mk.oltId}` : "Sin asignar"}
+              icon={<Cable size={13} />}
+            />
+          </AppGrid>
+        </section>
+
+        {/* ============================== */}
+        {/* METADATOS */}
+        {/* ============================== */}
+
+        <section className="border-t border-[hsl(var(--app-border))] pt-3">
+          <AppInline align="center" gap="xs" wrap={false}>
+            <CalendarClock size={14} aria-hidden="true" />
+
+            <p className="text-xs font-semibold">Registro</p>
+          </AppInline>
+
+          <AppGrid
+            cols={{
+              base: 1,
+              sm: 2,
+            }}
+            gap="sm"
+            className="mt-3"
+          >
+            <RouterInfo label="Creado" value={createdAt} />
+
+            <RouterInfo label="Última actualización" value={updatedAt} />
+          </AppGrid>
+        </section>
+
+        <AppInline
+          justify="between"
+          align="center"
+          gap="xs"
+          wrap
+          fullWidth
+          className="border-t border-[hsl(var(--app-border))] pt-3"
         >
-          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-          Eliminar
-        </Button>
-        <Button
-          onClick={() => handleSelectToEdit(mk)}
-          size="sm"
-          className="h-8 px-3 text-xs"
-        >
-          <Edit className="mr-1.5 h-3.5 w-3.5" />
-          Editar
-        </Button>
-      </CardFooter>
-    </Card>
+          <span className="text-[11px] text-[hsl(var(--app-muted-foreground))]">
+            Router #{mk.id}
+          </span>
+
+          <AppBadge tone="neutral" appearance="outline" size="xs" radius="full">
+            SSH
+          </AppBadge>
+        </AppInline>
+      </AppStack>
+    </AppCard>
   );
 }
 

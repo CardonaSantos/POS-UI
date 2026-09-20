@@ -1,1195 +1,903 @@
 "use client";
 
-import type React from "react";
+import * as React from "react";
 
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
-import axios from "axios";
+import { ArrowLeft, Trash2, Users } from "lucide-react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
+
+import { useNavigate, useParams } from "react-router-dom";
+
+import type { RowSelectionState, VisibilityState } from "@tanstack/react-table";
+
 import { toast } from "sonner";
 
-// UI Components
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { AppForm } from "@/components/app/form";
 
-// Icons
+import { useAppDisclosure } from "@/components/app/handlers";
+
+import { AppAlert } from "@/components/app/primitives/app-alert";
+import { AppBadge } from "@/components/app/primitives/app-badge";
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppDataState } from "@/components/app/primitives/app-data-state";
+import { AppGrid, AppGridItem } from "@/components/app/primitives/app-grid";
+
+import { AppDataTable } from "@/components/app/table/app-data-table";
+
+import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
+
 import {
-  Users,
-  MapPin,
-  Search,
-  ArrowUpDown,
-  Loader2,
-  Filter,
-  AlertCircle,
-  FileText,
-  Phone,
-  ChevronLeft,
-  Save,
-  Trash,
-  UserCheck,
-  Home,
-  Info,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Check,
-} from "lucide-react";
-import { SelectCobradores } from "./SelectCobradores";
+  EstadoCliente,
+  EstadoCobranzaCliente,
+} from "@/Crm/features/cliente-interfaces/cliente-types";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { EstadoCliente } from "../features/cliente-interfaces/cliente-types";
-import { FacturacionZona } from "../features/zonas-facturacion/FacturacionZonaTypes";
+import type { ClienteInternetFromCreateRuta } from "@/Crm/features/rutas/rutas.interfaces";
+
+import type { RutaEditDetail } from "@/Crm/features/rutas/ruta-edit.types";
+
+import type { AppOption } from "@/Crm/CrmCustomers/customer-table.constants";
+
+import { useDeleteRuta } from "@/Crm/CrmHooks/hooks/use-rutas/use-rutas";
+
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
+
+import { type SortDir, type SortField } from "./types/types";
+
 import {
-  ClienteInternetFromCreateRuta,
-  EstadoRuta,
-  Ruta,
-} from "../features/rutas/rutas.interfaces";
-import { PageTransitionCrm } from "@/components/Layout/page-transition";
-import { formattShortFecha } from "@/utils/formattFechas";
+  RutasClientesFilters,
+  type RutasClientesFiltersState,
+} from "./_components/rutas-clientes-filters";
 
-const VITE_CRM_API_URL = import.meta.env.VITE_CRM_API_URL;
-const ITEMS_PER_PAGE = 10;
+import { createRutasClientesColumns } from "./_components/rutas-clientes.columns";
 
-// Obtener el color del badge según el estado
-const getEstadoBadgeColor = (estado: EstadoRuta) => {
-  switch (estado) {
-    case EstadoRuta.ACTIVO:
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-    case EstadoRuta.PENDIENTE:
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-    case EstadoRuta.COMPLETADO:
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-    case EstadoRuta.INACTIVO:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-    default:
-      return "";
-  }
+import { RutasEditCurrentClients } from "./_components/edit/rutas-edit-current-clients";
+
+import { RutasEditFormCard } from "./_components/edit/rutas-edit-form-card";
+
+import {
+  INITIAL_RUTAS_COLUMN_VISIBILITY,
+  RUTAS_PAGE_SIZE_OPTIONS,
+} from "./_components/rutas_create_constants";
+
+import {
+  rutaEditDetailToFormValues,
+  rutaEditFormToPayload,
+} from "./common/rutas-edit-mapper";
+
+import {
+  rutaEditSchema,
+  type RutaEditFormValues,
+} from "./schemas/rutas-edit.schema";
+
+import { EstadoRuta } from "../features/rutas/rutas.interfaces";
+
+import { formattMonedaGT } from "../Utils/formattMonedaGT";
+import { useRutasEdit } from "../CrmHooks/hooks/use-rutas/useRutasEdit";
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const EMPTY_FORM_VALUES: RutaEditFormValues = {
+  nombreRuta: "",
+  cobradorId: null,
+  estadoRuta: EstadoRuta.ACTIVO,
+  observaciones: "",
+  clientes: [],
 };
 
-// Obtener el color del badge según el estado del cliente
-const getClienteEstadoBadgeColor = (estado: EstadoCliente) => {
-  switch (estado) {
-    case EstadoCliente.ACTIVO:
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-    case EstadoCliente.MOROSO:
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-    case EstadoCliente.SUSPENDIDO:
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-    case EstadoCliente.ATRASADO:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
-    default:
-      return "";
-  }
-};
+function getClienteAmount(cliente: ClienteInternetFromCreateRuta): number {
+  const facturasTotal = (cliente.facturas ?? []).reduce(
+    (sum, factura) => sum + Number(factura.montoFactura ?? 0),
+    0,
+  );
 
-// Obtener el icono según el estado
-const getEstadoIcon = (estado: EstadoRuta) => {
-  switch (estado) {
-    case EstadoRuta.ACTIVO:
-      return <CheckCircle className="h-3.5 w-3.5 mr-1" />;
-    case EstadoRuta.PENDIENTE:
-      return <Clock className="h-3.5 w-3.5 mr-1" />;
-    case EstadoRuta.COMPLETADO:
-      return <Check className="h-3.5 w-3.5 mr-1" />;
-    case EstadoRuta.INACTIVO:
-      return <XCircle className="h-3.5 w-3.5 mr-1" />;
-    default:
-      return null;
+  if (facturasTotal > 0) {
+    return facturasTotal;
   }
-};
+
+  return Number(cliente.saldoPendiente ?? 0);
+}
+
+function normalizeClientIds(values: Iterable<string | number>): number[] {
+  return Array.from(values)
+    .map(Number)
+    .filter((value) => Number.isInteger(value) && value > 0)
+    .sort((a, b) => a - b);
+}
+
+function createRouteAmounts(ruta: RutaEditDetail): Record<string, number> {
+  return ruta.clientes.reduce<Record<string, number>>(
+    (accumulator, cliente) => {
+      accumulator[String(cliente.id)] = Number(cliente.saldoPendiente ?? 0);
+
+      return accumulator;
+    },
+    {},
+  );
+}
+
+function toZonaOptions(
+  zonas: Array<{
+    id: number;
+    nombre: string;
+    nombreRuta?: string;
+    clientesCount?: number;
+    clientes?: number;
+  }>,
+): AppOption[] {
+  return zonas.map((zona) => {
+    const nombre = zona.nombreRuta?.trim() || zona.nombre;
+
+    const count = zona.clientesCount ?? zona.clientes;
+
+    return {
+      value: String(zona.id),
+
+      label: typeof count === "number" ? `${nombre} (${count})` : nombre,
+    };
+  });
+}
+
+function toSectorOptions(
+  sectores: Array<{
+    id: number;
+    nombre: string;
+    clientesCount?: number;
+  }>,
+): AppOption[] {
+  return sectores.map((sector) => ({
+    value: String(sector.id),
+
+    label:
+      typeof sector.clientesCount === "number"
+        ? `${sector.nombre} (${sector.clientesCount})`
+        : sector.nombre,
+  }));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export function RutasCobroEdit() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{
+    id: string;
+  }>();
+
   const navigate = useNavigate();
+
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
 
-  // Estados para la ruta
-  const [ruta, setRuta] = useState<Ruta | null>(null);
-  const [isLoadingRuta, setIsLoadingRuta] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("informacion");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const rutaId = Number(id);
 
-  // Estados para la edición de información básica
-  const [nombreRuta, setNombreRuta] = useState("");
-  const [cobradorId, setCobradorId] = useState<string | null>(null);
-  const [observaciones, setObservaciones] = useState("");
-  const [estadoRuta, setEstadoRuta] = useState<EstadoRuta>(EstadoRuta.ACTIVO);
+  const isValidRutaId = Number.isInteger(rutaId) && rutaId > 0;
 
-  // Estados para la gestión de clientes
-  const [clientesActuales, setClientesActuales] = useState<
-    ClienteInternetFromCreateRuta[]
-  >([]);
-  const [clientesDisponibles, setClientesDisponibles] = useState<
-    ClienteInternetFromCreateRuta[]
-  >([]);
-  const [selectedClientesIds, setSelectedClientesIds] = useState<string[]>([]);
-  const [clientesToRemove, setClientesToRemove] = useState<string[]>([]);
+  const vm = useRutasEdit(rutaId, empresaId);
 
-  // Estados para la paginación y filtrado de clientes disponibles
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalClientes, setTotalClientes] = useState(0);
-  const [searchCliente, setSearchCliente] = useState("");
-  const [clienteFilter, setClienteFilter] = useState<EstadoCliente | "TODOS">(
-    "TODOS",
+  const deleteMutation = useDeleteRuta(rutaId);
+
+  const deleteDialog = useAppDisclosure();
+
+  const discardDialog = useAppDisclosure();
+
+  const form = useForm<RutaEditFormValues>({
+    resolver: zodResolver(rutaEditSchema),
+
+    defaultValues: EMPTY_FORM_VALUES,
+
+    mode: "onChange",
+  });
+
+  /*
+   * Evita que un refetch automático del detalle
+   * sobrescriba cambios todavía no guardados.
+   */
+  const initializedRutaIdRef = React.useRef<number | null>(null);
+
+  const [selectedClientAmounts, setSelectedClientAmounts] = React.useState<
+    Record<string, number>
+  >({});
+
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(INITIAL_RUTAS_COLUMN_VISIBILITY);
+
+  const columns = React.useMemo(() => createRutasClientesColumns(), []);
+
+  const watchedClientes =
+    useWatch({
+      control: form.control,
+      name: "clientes",
+    }) ?? [];
+
+  const selectedClientIds = React.useMemo(
+    () => new Set(watchedClientes.map(String)),
+    [watchedClientes],
   );
-  const [zonaFacturacionId, setZonaFacturacionId] = useState<string | null>("");
-  const [facturacionZona, setFacturacionZona] = useState<FacturacionZona[]>([]);
-  const [sortBy, setSortBy] = useState<"nombre" | "saldo">("nombre");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [showFilters, setShowFilters] = useState(false);
-  const [isLoadingClientes, setIsLoadingClientes] = useState(false);
-  console.log(facturacionZona);
 
-  // Cargar datos de la ruta
-  useEffect(() => {
-    if (id) {
-      fetchRuta(Number.parseInt(id));
-      fetchZonaF();
+  const selectedCount = selectedClientIds.size;
+
+  const totalACobrar = React.useMemo(() => {
+    return Array.from(selectedClientIds).reduce(
+      (total, clienteId) =>
+        total + Number(selectedClientAmounts[clienteId] ?? 0),
+      0,
+    );
+  }, [selectedClientIds, selectedClientAmounts]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Inicialización de formulario                                             */
+  /* ------------------------------------------------------------------------ */
+
+  React.useEffect(() => {
+    if (!vm.ruta) {
+      return;
     }
-  }, [id]);
 
-  // Cargar clientes disponibles cuando se cambia a la pestaña de clientes
-  useEffect(() => {
-    if (activeTab === "clientes") {
-      fetchClientesDisponibles();
+    if (initializedRutaIdRef.current === vm.ruta.id) {
+      return;
     }
-  }, [
-    activeTab,
-    currentPage,
-    searchCliente,
-    clienteFilter,
-    zonaFacturacionId,
-    sortBy,
-    sortDirection,
-    clientesActuales, // 👈 faltaba
-  ]);
 
-  // Función para cargar datos de la ruta
-  const fetchRuta = async (rutaId: number) => {
-    setIsLoadingRuta(true);
-    try {
-      console.log("BUSCANDO LA RUTA");
+    const defaultValues = rutaEditDetailToFormValues(vm.ruta);
 
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/ruta-cobro/get-one-ruta-to-edit/${rutaId}`,
-      );
-      if (response.status === 200) {
-        const rutaData = response.data;
-        setRuta(rutaData);
+    form.reset(defaultValues);
 
-        // Inicializar estados con los datos de la ruta
-        setNombreRuta(rutaData.nombreRuta);
-        setCobradorId(
-          rutaData.cobradorId ? rutaData.cobradorId.toString() : null,
-        );
-        setObservaciones(rutaData.observaciones || "");
-        setEstadoRuta(rutaData.estadoRuta);
-        setClientesActuales(rutaData.clientes);
-        setSelectedClientesIds(
-          rutaData.clientes.map((c: ClienteInternetFromCreateRuta) =>
-            c.id.toString(),
-          ),
-        );
+    setSelectedClientAmounts(createRouteAmounts(vm.ruta));
+
+    initializedRutaIdRef.current = vm.ruta.id;
+
+    void form.trigger();
+  }, [vm.ruta, form]);
+
+  /*
+   * Si hay cambios sin guardar y se recarga/cierra
+   * el navegador, dejamos actuar la advertencia nativa.
+   */
+  React.useEffect(() => {
+    if (!form.formState.isDirty) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [form.formState.isDirty]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Options                                                                  */
+  /* ------------------------------------------------------------------------ */
+
+  const cobradorOptions = React.useMemo<AppOption[]>(() => {
+    const options = vm.cobradores.map((cobrador) => ({
+      value: String(cobrador.id),
+      label: cobrador.nombre,
+    }));
+
+    /*
+     * Si el cobrador actual dejó de aparecer
+     * en el catálogo, conservamos su opción
+     * para no mostrar el select vacío.
+     */
+    if (
+      vm.ruta?.cobrador &&
+      !options.some((option) => option.value === String(vm.ruta?.cobrador?.id))
+    ) {
+      options.unshift({
+        value: String(vm.ruta.cobrador.id),
+        label: vm.ruta.cobrador.nombre,
+      });
+    }
+
+    return options;
+  }, [vm.cobradores, vm.ruta?.cobrador]);
+
+  const zonaOptions = React.useMemo<AppOption[]>(
+    () => toZonaOptions(vm.zonas),
+    [vm.zonas],
+  );
+
+  const sectorOptions = React.useMemo<AppOption[]>(
+    () => toSectorOptions(vm.sectores),
+    [vm.sectores],
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* Selection                                                                */
+  /* ------------------------------------------------------------------------ */
+
+  const rowSelection = React.useMemo<RowSelectionState>(() => {
+    const next: RowSelectionState = {};
+
+    vm.clientes.forEach((cliente) => {
+      const id = String(cliente.id);
+
+      if (selectedClientIds.has(id)) {
+        next[id] = true;
       }
-    } catch (err) {
-      console.error("Error al cargar la ruta:", err);
-      toast.error("Error al cargar los datos de la ruta");
-      navigate("/crm/rutas-cobro");
-    } finally {
-      setIsLoadingRuta(false);
-    }
-  };
+    });
 
-  // Función para cargar zonas de facturación
-  const fetchZonaF = async () => {
-    try {
-      const response = await axios.get(
-        `${VITE_CRM_API_URL}/facturacion-zona/get-zonas-facturacion-to-ruta`,
-      );
-      if (response.status === 200) {
-        setFacturacionZona(response.data);
-      }
-    } catch (err) {
-      console.error("Error al cargar zonas de facturación:", err);
-    }
-  };
+    return next;
+  }, [vm.clientes, selectedClientIds]);
 
-  const fetchClientesDisponibles = async () => {
-    setIsLoadingClientes(true);
-    try {
-      const params = {
-        empresaId,
-        search: searchCliente || undefined,
-        estado: clienteFilter === "TODOS" ? undefined : clienteFilter,
-        zonaIds: zonaFacturacionId ? [Number(zonaFacturacionId)] : undefined,
-        sortBy: sortBy, // "nombre" | "saldo"
-        sortDir: sortDirection, // "asc" | "desc"
-        page: currentPage, // 1-based (tu backend lo espera así)
-        perPage: ITEMS_PER_PAGE,
+  const setSelectedClients = React.useCallback(
+    (ids: Set<string>, amounts: Record<string, number>) => {
+      const normalized = normalizeClientIds(ids);
+
+      setSelectedClientAmounts(amounts);
+
+      form.setValue("clientes", normalized, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+    },
+    [form],
+  );
+
+  const handleRowSelectionChange = React.useCallback(
+    (next: RowSelectionState) => {
+      const nextIds = new Set(selectedClientIds);
+
+      const nextAmounts = {
+        ...selectedClientAmounts,
       };
 
-      const { data } = await axios.get(
-        `${VITE_CRM_API_URL}/internet-customer/get-customers-ruta`,
-        { params },
-      );
+      /*
+       * Solo modificamos los clientes
+       * pertenecientes a la página actual.
+       * Los seleccionados en otras páginas
+       * permanecen intactos.
+       */
+      vm.clientes.forEach((cliente) => {
+        const clienteId = String(cliente.id);
 
-      // data es { items, total, page, perPage }
-      const idsActuales = new Set(clientesActuales.map((c) => c.id.toString()));
+        const isNowSelected = Boolean(next[clienteId]);
 
-      // Excluye de la página actual los que ya están en la ruta
-      const paginaSinActuales = (
-        data.items as ClienteInternetFromCreateRuta[]
-      ).filter((c) => !idsActuales.has(c.id.toString()));
+        if (isNowSelected) {
+          nextIds.add(clienteId);
 
-      setClientesDisponibles(paginaSinActuales);
+          nextAmounts[clienteId] = getClienteAmount(cliente);
 
-      // ⚠️ El total que muestras es el del server; si excluyes en cliente,
-      // el conteo puede no coincidir perfecto. Déjalo así o ver "opción ideal" abajo.
-      setTotalClientes(data.total);
-    } catch (err) {
-      console.error("Error al cargar clientes disponibles:", err);
-      toast.error("Error al cargar clientes disponibles");
-    } finally {
-      setIsLoadingClientes(false);
-    }
-  };
+          return;
+        }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!ruta) return;
+        nextIds.delete(clienteId);
 
-    setIsSubmitting(true);
-    try {
-      if (!nombreRuta.trim()) {
-        throw new Error("El nombre de la ruta es obligatorio");
-      }
+        delete nextAmounts[clienteId];
+      });
 
-      if (selectedClientesIds.length === 0) {
-        throw new Error("Debe seleccionar al menos un cliente para la ruta");
-      }
+      setSelectedClients(nextIds, nextAmounts);
+    },
+    [vm.clientes, selectedClientIds, selectedClientAmounts, setSelectedClients],
+  );
 
-      const dataToUpdate = {
-        nombreRuta,
-        cobradorId: cobradorId ? Number.parseInt(cobradorId) : null,
-        empresaId,
-        estadoRuta,
-        observaciones,
-        clientes: selectedClientesIds.map((id) => Number.parseInt(id)),
+  const handleRemoveCurrentClient = React.useCallback(
+    (clienteId: string) => {
+      const nextIds = new Set(selectedClientIds);
+
+      const nextAmounts = {
+        ...selectedClientAmounts,
       };
 
-      console.log("La data para actualizar la ruta es: ", dataToUpdate);
+      nextIds.delete(clienteId);
 
-      const response = await axios.patch(
-        `${VITE_CRM_API_URL}/ruta-cobro/update-one-ruta/${ruta.id}`,
-        dataToUpdate,
+      delete nextAmounts[clienteId];
+
+      setSelectedClients(nextIds, nextAmounts);
+    },
+    [selectedClientIds, selectedClientAmounts, setSelectedClients],
+  );
+
+  const handleRestoreCurrentClient = React.useCallback(
+    (clienteId: string) => {
+      const cliente = vm.ruta?.clientes.find(
+        (item) => String(item.id) === clienteId,
       );
 
-      if (response.status === 200) {
-        toast.success("Ruta actualizada exitosamente");
-        fetchRuta(ruta.id);
-        setActiveTab("informacion");
+      if (!cliente) {
+        return;
       }
-    } catch (err: any) {
-      console.error("Error al actualizar la ruta:", err);
-      toast.error(err.message || "Error al actualizar la ruta de cobro");
-    } finally {
-      setIsSubmitting(false);
+
+      const nextIds = new Set(selectedClientIds);
+
+      const nextAmounts = {
+        ...selectedClientAmounts,
+      };
+
+      nextIds.add(clienteId);
+
+      nextAmounts[clienteId] = Number(cliente.saldoPendiente ?? 0);
+
+      setSelectedClients(nextIds, nextAmounts);
+    },
+    [vm.ruta, selectedClientIds, selectedClientAmounts, setSelectedClients],
+  );
+
+  /* ------------------------------------------------------------------------ */
+  /* Filters                                                                  */
+  /* ------------------------------------------------------------------------ */
+
+  const filterState = React.useMemo<RutasClientesFiltersState>(
+    () => ({
+      search: vm.searchInput,
+
+      estado: vm.estado,
+
+      estadoCobranza: vm.estadoCobranza,
+
+      zonasFacturacionIDs: vm.zonasFacturacionIDs,
+
+      sectorIDs: vm.sectorIDs,
+
+      sort: `${vm.sortBy}-${vm.sortDir}`,
+    }),
+    [
+      vm.searchInput,
+      vm.estado,
+      vm.estadoCobranza,
+      vm.zonasFacturacionIDs,
+      vm.sectorIDs,
+      vm.sortBy,
+      vm.sortDir,
+    ],
+  );
+
+  const handleSearchChange = (value: string) => {
+    vm.setSearchInput(value);
+  };
+
+  const handleDebouncedSearchChange = (value: string) => {
+    vm.setSearch(value);
+    vm.setPage(1);
+  };
+
+  const handleEstadoChange = (value: string | null) => {
+    vm.setEstado((value ?? "TODOS") as EstadoCliente | "TODOS");
+
+    vm.setPage(1);
+  };
+
+  const handleEstadoCobranzaChange = (value: string | null) => {
+    vm.setEstadoCobranza((value ?? "TODOS") as EstadoCobranzaCliente | "TODOS");
+
+    vm.setPage(1);
+  };
+
+  const handleZonasChange = (values: string[]) => {
+    vm.setZonasFacturacionIDs(values);
+
+    vm.setPage(1);
+  };
+
+  const handleSectoresChange = (values: string[]) => {
+    vm.setSectorIDs(values);
+    vm.setPage(1);
+  };
+
+  const handleSortChange = (value: string | null) => {
+    if (!value) {
+      vm.setSortBy("nombre");
+      vm.setSortDir("asc");
+      vm.setPage(1);
+      return;
+    }
+
+    const [field, direction] = value.split("-");
+
+    const nextField: SortField = field === "saldo" ? "saldo" : "nombre";
+
+    const nextDirection: SortDir = direction === "desc" ? "desc" : "asc";
+
+    vm.setSortBy(nextField);
+    vm.setSortDir(nextDirection);
+
+    vm.setPage(1);
+  };
+
+  /* ------------------------------------------------------------------------ */
+  /* Navigation                                                               */
+  /* ------------------------------------------------------------------------ */
+
+  const navigateToList = React.useCallback(() => {
+    navigate("/crm/ruta");
+  }, [navigate]);
+
+  const handleRequestLeave = React.useCallback(() => {
+    if (form.formState.isDirty) {
+      discardDialog.open();
+      return;
+    }
+
+    navigateToList();
+  }, [form.formState.isDirty, discardDialog, navigateToList]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Submit                                                                   */
+  /* ------------------------------------------------------------------------ */
+
+  const handleSubmit: SubmitHandler<RutaEditFormValues> = async (values) => {
+    if (!vm.ruta) {
+      return;
+    }
+
+    try {
+      /*
+       * Usamos empresaId de la propia ruta,
+       * no el del store, para evitar cambiar
+       * accidentalmente su empresa.
+       */
+      const payload = rutaEditFormToPayload(values, vm.ruta.empresaId);
+
+      await vm.update(payload);
+
+      const normalizedValues: RutaEditFormValues = {
+        ...values,
+
+        nombreRuta: values.nombreRuta.trim(),
+
+        observaciones: values.observaciones.trim(),
+
+        clientes: normalizeClientIds(values.clientes),
+      };
+
+      /*
+       * El guardado pasa a ser el nuevo
+       * baseline del formulario.
+       */
+      form.reset(normalizedValues);
+
+      void form.trigger();
+
+      toast.success("Ruta actualizada correctamente");
+    } catch (error) {
+      console.error(error);
+
+      toast.error(getApiErrorMessageAxios(error));
     }
   };
+
+  /* ------------------------------------------------------------------------ */
+  /* Delete                                                                   */
+  /* ------------------------------------------------------------------------ */
 
   const handleDeleteRuta = async () => {
-    if (!ruta) return;
+    if (!isValidRutaId) {
+      return;
+    }
 
-    setIsSubmitting(true);
     try {
-      const response = await axios.delete(
-        `${VITE_CRM_API_URL}/ruta-cobro/delete-one-ruta/${ruta.id}`,
-      );
+      await deleteMutation.mutateAsync(undefined);
 
-      if (response.status === 200) {
-        toast.success("Ruta eliminada exitosamente");
-        navigate("/crm/ruta");
-      }
-    } catch (err) {
-      console.error("Error al eliminar la ruta:", err);
-      toast.error("Error al eliminar la ruta");
-    } finally {
-      setIsSubmitting(false);
-      setShowDeleteDialog(false);
+      deleteDialog.close();
+
+      toast.success("Ruta eliminada correctamente");
+
+      navigate("/crm/ruta", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error(error);
+
+      toast.error(getApiErrorMessageAxios(error));
     }
   };
 
-  const handleClienteSelect = (clienteId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedClientesIds((prev) => [...prev, clienteId]);
-    } else {
-      setSelectedClientesIds((prev) => prev.filter((id) => id !== clienteId));
+  /* ------------------------------------------------------------------------ */
+  /* Invalid ID                                                               */
+  /* ------------------------------------------------------------------------ */
 
-      // Si el cliente estaba en la lista original, añadirlo a la lista de clientes a eliminar
-      if (clientesActuales.some((c) => c.id.toString() === clienteId)) {
-        setClientesToRemove((prev) => [...prev, clienteId]);
-      }
-    }
-  };
-
-  // Función para quitar un cliente de la ruta
-  const handleRemoveCliente = (clienteId: string) => {
-    setSelectedClientesIds((prev) => prev.filter((id) => id !== clienteId));
-    setClientesToRemove((prev) => [...prev, clienteId]);
-  };
-
-  const handleRestoreCliente = (clienteId: string) => {
-    // 1) Lo quitamos de la lista de eliminados
-    setClientesToRemove((prev) => prev.filter((id) => id !== clienteId));
-    // 2) Lo volvemos a seleccionar (si no está ya)
-    setSelectedClientesIds((prev) =>
-      prev.includes(clienteId) ? prev : [...prev, clienteId],
-    );
-  };
-
-  // Función para cambiar ordenamiento
-  const toggleSort = (field: "nombre" | "saldo") => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
-    setCurrentPage(1); // Volver a la primera página al cambiar el ordenamiento
-  };
-
-  // Calcular el número total de páginas
-  const totalPages = Math.ceil(totalClientes / ITEMS_PER_PAGE);
-
-  // Generar array de páginas para la paginación
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow) {
-      // Si hay pocas páginas, mostrar todas
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Mostrar siempre la primera página
-      pages.push(1);
-
-      // Calcular el rango de páginas alrededor de la página actual
-      let startPage = Math.max(2, currentPage - 1);
-      let endPage = Math.min(totalPages - 1, currentPage + 1);
-
-      // Ajustar si estamos cerca del inicio
-      if (currentPage <= 3) {
-        endPage = Math.min(totalPages - 1, 4);
-      }
-
-      // Ajustar si estamos cerca del final
-      if (currentPage >= totalPages - 2) {
-        startPage = Math.max(2, totalPages - 3);
-      }
-
-      // Añadir elipsis después de la primera página si es necesario
-      if (startPage > 2) {
-        pages.push("ellipsis1");
-      }
-
-      // Añadir páginas del rango calculado
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-
-      // Añadir elipsis antes de la última página si es necesario
-      if (endPage < totalPages - 1) {
-        pages.push("ellipsis2");
-      }
-
-      // Mostrar siempre la última página
-      if (totalPages > 1) {
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
-
-  const clearFilters = () => {
-    setSearchCliente("");
-    setClienteFilter("TODOS");
-    setZonaFacturacionId("");
-    setCurrentPage(1);
-  };
-
-  const totalACobrar = clientesActuales
-    .filter((cliente) => selectedClientesIds.includes(cliente.id.toString()))
-    .reduce((sum, cliente) => sum + (cliente.saldoPendiente || 0), 0);
-
-  if (isLoadingRuta) {
+  if (!isValidRutaId) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <Skeleton className="h-[600px] w-full" />
-      </div>
+      <AppContainer size="full" paddingY="none" paddingX="none">
+        <AppDataState
+          isEmpty
+          emptyTitle="Ruta no válida"
+          emptyDescription="El identificador de la ruta no es válido."
+          emptyAction={
+            <AppButton
+              type="button"
+              size="xs"
+              variant="secondary"
+              leftIcon={<ArrowLeft size={13} />}
+              onClick={navigateToList}
+            >
+              Volver a rutas
+            </AppButton>
+          }
+        />
+      </AppContainer>
     );
   }
 
-  if (!ruta) {
-    return (
-      <div className="p-8 text-center">
-        <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Ruta no encontrada</h2>
-        <p className="text-muted-foreground mb-6">
-          No se pudo encontrar la ruta solicitada.
-        </p>
-        <Button onClick={() => navigate("/crm/rutas-cobro")}>
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Volver a Rutas de Cobro
-        </Button>
-      </div>
-    );
-  }
+  /* ------------------------------------------------------------------------ */
+  /* Render                                                                   */
+  /* ------------------------------------------------------------------------ */
 
   return (
-    <PageTransitionCrm
-      titleHeader="Rutas de cobro"
-      subtitle=""
-      variant="fade-pure"
-    >
-      <div className="">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:w-auto">
-            <TabsTrigger
-              value="informacion"
-              className="flex items-center gap-2"
-            >
-              <Info className="h-4 w-4" />
-              <span>Información</span>
-            </TabsTrigger>
-            <TabsTrigger value="clientes" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Gestionar Clientes</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="informacion" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5 " />
-                  Información de la Ruta
-                </CardTitle>
-                <CardDescription>
-                  Modifique los datos básicos de la ruta de cobro
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nombreRuta" className="text-base">
-                        Nombre de la Ruta{" "}
-                        <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="nombreRuta"
-                        value={nombreRuta}
-                        onChange={(e) => setNombreRuta(e.target.value)}
-                        className="text-base"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cobrador" className="text-base">
-                        Cobrador Asignado
-                      </Label>
-                      <SelectCobradores
-                        value={cobradorId}
-                        onChange={setCobradorId}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="estado" className="text-base">
-                        Estado de la Ruta
-                      </Label>
-                      <Select
-                        value={estadoRuta}
-                        onValueChange={(value) =>
-                          setEstadoRuta(value as EstadoRuta)
-                        }
-                      >
-                        <SelectTrigger id="estado">
-                          <SelectValue placeholder="Seleccionar estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="TODOS">Todos</SelectItem>
-                          <SelectItem value={EstadoCliente.ACTIVO}>
-                            Activos
-                          </SelectItem>
-                          <SelectItem value={EstadoCliente.MOROSO}>
-                            Morosos
-                          </SelectItem>
-                          <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                            Suspendidos
-                          </SelectItem>
-                          <SelectItem value={EstadoCliente.ATRASADO}>
-                            Inactivos
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="observaciones" className="text-base">
-                        Observaciones
-                      </Label>
-                      <Textarea
-                        id="observaciones"
-                        value={observaciones}
-                        onChange={(e) => setObservaciones(e.target.value)}
-                        rows={3}
-                        className="resize-none text-base"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="p-4 bg-muted rounded-lg space-y-3">
-                      <h3 className="font-medium">Información Adicional</h3>
-
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`${getEstadoBadgeColor(
-                            ruta.estadoRuta,
-                          )} flex items-center`}
-                        >
-                          {getEstadoIcon(ruta.estadoRuta)}
-                          {ruta.estadoRuta}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span>
-                          Creada: {formattShortFecha(ruta.fechaCreacion)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span>
-                          Actualizada:{" "}
-                          {formattShortFecha(ruta.fechaActualizacion)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4 text-primary" />
-                        <span>Clientes: {ruta.clientes.length}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <FileText className="h-4 w-4 " />
-                        <span>Total a cobrar: Q{totalACobrar.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {ruta.cobrador && (
-                      <div className="p-4 bg-muted rounded-lg space-y-3">
-                        <h3 className="font-medium">Cobrador Actual</h3>
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="h-4 w-4 " />
-                          <span className="font-medium">
-                            {ruta.cobrador.nombre}{" "}
-                            {ruta.cobrador.apellidos || ""}
-                          </span>
-                        </div>
-                        {ruta.cobrador.telefono && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{ruta.cobrador.telefono}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-2 py-2 px-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="text-destructive"
+    <>
+      <AppContainer size="full" paddingY="none" paddingX="none">
+        <AppDataState
+          isLoading={vm.isLoadingRuta}
+          error={vm.rutaError}
+          isEmpty={!vm.isLoadingRuta && !vm.ruta}
+          loadingVariant="skeleton-grid"
+          loadingRows={4}
+          emptyTitle="Ruta no encontrada"
+          emptyDescription="No se encontró la ruta de cobro solicitada."
+          errorTitle="No se pudo cargar la ruta"
+          onRetry={vm.refetchRuta}
+        >
+          {vm.ruta ? (
+            <AppForm<RutaEditFormValues> form={form} onSubmit={handleSubmit}>
+              <div className="space-y-3">
+                {/* Header */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <AppButton
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      leftIcon={<ArrowLeft size={13} />}
+                      disabled={vm.isSubmitting || deleteMutation.isPending}
+                      onClick={handleRequestLeave}
                     >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Eliminar
-                    </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Guardando...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Guardar Cambios
-                        </>
-                      )}
-                    </Button>
+                      Volver
+                    </AppButton>
+
+                    <AppBadge
+                      tone="info"
+                      appearance="soft"
+                      size="xs"
+                      radius="full"
+                    >
+                      Ruta #{vm.ruta.id}
+                    </AppBadge>
+
+                    <AppBadge
+                      tone="success"
+                      appearance="soft"
+                      size="xs"
+                      radius="full"
+                    >
+                      {selectedCount} seleccionados
+                    </AppBadge>
+
+                    <AppBadge
+                      tone="warning"
+                      appearance="soft"
+                      size="xs"
+                      radius="full"
+                    >
+                      {formattMonedaGT(totalACobrar)} a cobrar
+                    </AppBadge>
                   </div>
+
+                  <AppButton
+                    type="button"
+                    variant="danger"
+                    size="xs"
+                    leftIcon={<Trash2 size={13} />}
+                    disabled={vm.isSubmitting || deleteMutation.isPending}
+                    onClick={deleteDialog.open}
+                  >
+                    Eliminar ruta
+                  </AppButton>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="clientes" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Clientes actuales */}
-              <Card className="lg:col-span-1">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Clientes en la Ruta
-                  </CardTitle>
-                  <CardDescription>
-                    {clientesActuales.length} cliente
-                    {clientesActuales.length !== 1 ? "s" : ""} asignados
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[500px]">
-                    <div className="p-4 space-y-3">
-                      {clientesActuales.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-8">
-                          No hay clientes asignados a esta ruta
-                        </div>
-                      ) : (
-                        clientesActuales.map((cliente) => {
-                          const isSelected = selectedClientesIds.includes(
-                            cliente.id.toString(),
-                          );
-                          const isRemoved = clientesToRemove.includes(
-                            cliente.id.toString(),
-                          );
+                {/* Validación de clientes */}
+                {form.formState.errors.clientes?.message ? (
+                  <AppAlert tone="warning" title="Selección de clientes">
+                    {form.formState.errors.clientes.message}
+                  </AppAlert>
+                ) : null}
 
-                          return (
-                            <div
-                              key={cliente.id}
-                              className={`p-3 rounded-md border ${
-                                isSelected
-                                  ? "bg-background"
-                                  : "bg-muted/50 opacity-50"
-                              } ${
-                                isRemoved
-                                  ? "border-destructive/30"
-                                  : "border-transparent"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="font-medium">
-                                  {cliente.nombre} {cliente.apellidos || ""}
-                                </div>
-                                <Badge
-                                  className={getClienteEstadoBadgeColor(
-                                    cliente.estadoCliente,
-                                  )}
-                                >
-                                  {cliente.estadoCliente}
-                                </Badge>
-                              </div>
+                {/* Datos generales */}
+                <RutasEditFormCard
+                  ruta={vm.ruta}
+                  cobradorOptions={cobradorOptions}
+                  selectedCount={selectedCount}
+                  totalACobrar={totalACobrar}
+                  isSaving={vm.isSubmitting}
+                  onCancel={handleRequestLeave}
+                />
 
-                              {cliente.telefono && (
-                                <div className="flex items-center gap-2 mt-1 text-sm">
-                                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                  <span>{cliente.telefono}</span>
-                                </div>
-                              )}
+                {/* Filtros */}
+                <RutasClientesFilters
+                  filters={filterState}
+                  options={{
+                    zonas: zonaOptions,
 
-                              {cliente.direccion && (
-                                <div className="flex items-start gap-2 mt-1 text-sm">
-                                  <Home className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
-                                  <span className="line-clamp-2">
-                                    {cliente.direccion}
-                                  </span>
-                                </div>
-                              )}
+                    sectores: sectorOptions,
+                  }}
+                  isFetching={vm.isFetchingAny}
+                  onSearchChange={handleSearchChange}
+                  onSearchDebouncedChange={handleDebouncedSearchChange}
+                  onEstadoChange={handleEstadoChange}
+                  onEstadoCobranzaChange={handleEstadoCobranzaChange}
+                  onZonasChange={handleZonasChange}
+                  onSectoresChange={handleSectoresChange}
+                  onSortChange={handleSortChange}
+                  onClearFilters={vm.clearFilters}
+                  onRefetch={vm.refetchAll}
+                />
 
-                              <div className="flex items-center justify-between mt-2">
-                                <div className="text-sm">
-                                  <span className="font-medium">
-                                    Saldo: Q
-                                    {cliente.saldoPendiente?.toFixed(2) ||
-                                      "0.00"}
-                                  </span>
-                                </div>
+                {/* Gestión de clientes */}
+                <AppGrid
+                  cols={{
+                    base: 1,
+                    xl: 12,
+                  }}
+                  gap="sm"
+                  align="start"
+                >
+                  {/* Clientes originales */}
+                  <AppGridItem
+                    span={{
+                      base: "full",
+                      xl: 4,
+                    }}
+                  >
+                    <RutasEditCurrentClients
+                      clientes={vm.ruta.clientes}
+                      selectedClientIds={selectedClientIds}
+                      isDisabled={vm.isSubmitting}
+                      onRemove={handleRemoveCurrentClient}
+                      onRestore={handleRestoreCurrentClient}
+                    />
+                  </AppGridItem>
 
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-destructive hover:text-destructive"
-                                  onClick={() => {
-                                    isRemoved
-                                      ? handleRestoreCliente(
-                                          cliente.id.toString(),
-                                        )
-                                      : handleRemoveCliente(
-                                          cliente.id.toString(),
-                                        );
-                                  }}
-                                >
-                                  {isRemoved ? "Removido" : "Quitar"}
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4 pt-4">
-                  <div className="w-full p-4 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">
-                        Clientes seleccionados:
-                      </span>
-                      <Badge variant="outline">
-                        {selectedClientesIds.length}
-                      </Badge>
-                    </div>
-                    <div className="font-medium text-sm">
-                      Total a cobrar:{" "}
-                      <span className="">Q{totalACobrar.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </CardFooter>
-              </Card>
+                  {/* Tabla de clientes */}
+                  <AppGridItem
+                    span={{
+                      base: "full",
+                      xl: 8,
+                    }}
+                  >
+                    <AppCard
+                      variant="outline"
+                      size="xs"
+                      radius="md"
+                      title="Clientes asignables"
+                      description="Selecciona los clientes que deben pertenecer a la ruta."
+                      icon={<Users size={15} />}
+                      action={
+                        <AppBadge
+                          tone="neutral"
+                          appearance="soft"
+                          size="xs"
+                          radius="full"
+                        >
+                          {vm.total} encontrados
+                        </AppBadge>
+                      }
+                    >
+                      <AppDataTable<ClienteInternetFromCreateRuta>
+                        data={vm.clientes}
+                        columns={columns}
+                        getRowId={(row) => String(row.id)}
+                        isLoading={vm.isInitialClientes}
+                        isFetching={vm.isFetchingClientes}
+                        error={vm.clientesError}
+                        onRetry={vm.refetchClientes}
+                        paginationMode="server"
+                        pagination={{
+                          pageIndex: vm.page - 1,
 
-              {/* Clientes disponibles */}
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      Añadir Clientes
-                    </CardTitle>
+                          pageSize: vm.perPage,
 
-                    <div className="flex items-center gap-2">
-                      <div className="relative w-full sm:w-auto">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar clientes..."
-                          className="pl-8 w-full sm:w-[200px]"
-                          value={searchCliente}
-                          onChange={(e) => {
-                            setSearchCliente(e.target.value);
-                            setCurrentPage(1);
-                          }}
-                        />
-                      </div>
+                          totalRows: vm.total,
 
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="h-9 w-9"
-                      >
-                        <Filter className="h-4 w-4" />
-                        <span className="sr-only">Mostrar filtros</span>
-                      </Button>
-                    </div>
-                  </div>
+                          pageSizeOptions: RUTAS_PAGE_SIZE_OPTIONS,
 
-                  {/* Filtros expandibles */}
-                  {showFilters && (
-                    <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                      <div className="flex flex-col sm:flex-row gap-4 items-end">
-                        <div className="space-y-2 w-full sm:w-auto">
-                          <Label htmlFor="estado-filter">
-                            Estado del cliente
-                          </Label>
-                          <Select
-                            onValueChange={(value) => {
-                              setClienteFilter(
-                                value as EstadoCliente | "TODOS",
-                              );
-                              setCurrentPage(1);
-                            }}
-                            value={clienteFilter}
-                          >
-                            <SelectTrigger
-                              id="estado-filter"
-                              className="w-full sm:w-[160px]"
-                            >
-                              <SelectValue placeholder="Todos los estados" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="TODOS">Todos</SelectItem>
-                              <SelectItem value={EstadoCliente.ACTIVO}>
-                                Activos
-                              </SelectItem>
-                              <SelectItem value={EstadoCliente.MOROSO}>
-                                Morosos
-                              </SelectItem>
-                              <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                                Suspendidos
-                              </SelectItem>
-                              <SelectItem value={EstadoCliente.SUSPENDIDO}>
-                                Inactivos
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                          onPaginationChange: (pagination) => {
+                            if (pagination.pageSize !== vm.perPage) {
+                              vm.setPerPage(pagination.pageSize);
 
-                        <div className="space-y-2 w-full sm:w-auto sm:flex-1">
-                          <Label htmlFor="zona-filter">
-                            Zona de facturación
-                          </Label>
-                          {/* <SelectZonaFacturacion
-                          zonas={facturacionZona}
-                          value={zonaFacturacionId}
-                          onChange={handleSelecZona}
-                        /> */}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardHeader>
+                              vm.setPage(1);
 
-                <CardContent>
-                  {isLoadingClientes ? (
-                    <div className="rounded-md border">
-                      <div className="p-4">
-                        <div className="space-y-3">
-                          {[...Array(5)].map((_, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center space-x-4"
-                            >
-                              <div className="h-4 w-4 bg-muted rounded animate-pulse"></div>
-                              <div className="w-full space-y-2">
-                                <div className="h-4 bg-muted rounded w-1/4 animate-pulse"></div>
-                                <div className="h-3 bg-muted rounded w-1/6 animate-pulse"></div>
-                              </div>
-                              <div className="h-4 bg-muted rounded w-1/6 animate-pulse"></div>
-                              <div className="h-4 bg-muted rounded w-1/12 animate-pulse"></div>
-                              <div className="h-6 bg-muted rounded w-1/12 animate-pulse"></div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : clientesDisponibles.length === 0 ? (
-                    <div className="bg-muted/50 rounded-lg p-8 text-center">
-                      <div className="flex justify-center mb-4">
-                        <div className="bg-muted rounded-full p-3">
-                          <Search className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      </div>
-                      <h3 className="text-lg font-medium mb-1">
-                        No se encontraron clientes disponibles
-                      </h3>
-                      <p className="text-muted-foreground mb-4">
-                        Intente con otros criterios de búsqueda o limpie los
-                        filtros
-                      </p>
-                      <Button variant="outline" onClick={clearFilters}>
-                        Limpiar filtros
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="rounded-md border overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[50px]">
-                                <span className="sr-only">Seleccionar</span>
-                              </TableHead>
-                              <TableHead>
-                                <div
-                                  className="flex items-center gap-1 cursor-pointer"
-                                  onClick={() => toggleSort("nombre")}
-                                >
-                                  Cliente
-                                  <ArrowUpDown className="h-3.5 w-3.5" />
-                                </div>
-                              </TableHead>
-                              <TableHead className="hidden md:table-cell">
-                                Contacto
-                              </TableHead>
-                              <TableHead className="hidden md:table-cell">
-                                Estado
-                              </TableHead>
-                              <TableHead>
-                                <div
-                                  className="flex items-center gap-1 cursor-pointer"
-                                  onClick={() => toggleSort("saldo")}
-                                >
-                                  Saldo
-                                  <ArrowUpDown className="h-3.5 w-3.5" />
-                                </div>
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {clientesDisponibles.map((cliente) => (
-                              <TableRow
-                                key={cliente.id}
-                                className={
-                                  selectedClientesIds.includes(
-                                    cliente.id.toString(),
-                                  )
-                                    ? "bg-primary/5"
-                                    : ""
-                                }
-                              >
-                                <TableCell>
-                                  <Checkbox
-                                    checked={selectedClientesIds.includes(
-                                      cliente.id.toString(),
-                                    )}
-                                    onCheckedChange={(checked) =>
-                                      handleClienteSelect(
-                                        cliente.id.toString(),
-                                        checked === true,
-                                      )
-                                    }
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <div className="font-medium">
-                                    {cliente.nombre} {cliente.apellidos || ""}
-                                  </div>
-                                  <div className="flex items-start gap-1 text-sm text-muted-foreground md:hidden">
-                                    <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                                    <span className="truncate max-w-[200px]">
-                                      {cliente.direccion || "No disponible"}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell">
-                                  <div className="space-y-1">
-                                    {cliente.telefono && (
-                                      <div className="flex items-center gap-1 text-sm">
-                                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <span>{cliente.telefono}</span>
-                                      </div>
-                                    )}
-                                    <div className="flex items-start gap-1 text-sm">
-                                      <MapPin className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                      <span className="truncate max-w-[200px]">
-                                        {cliente.direccion || "No disponible"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell">
-                                  <Badge
-                                    className={getClienteEstadoBadgeColor(
-                                      cliente.estadoCliente,
-                                    )}
-                                  >
-                                    {cliente.estadoCliente}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="font-medium">
-                                    Q
-                                    {cliente.saldoPendiente?.toFixed(2) ||
-                                      "0.00"}
-                                  </div>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <FileText className="h-3 w-3" />
-                                    {cliente.facturasPendientes || 0} facturas
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                              return;
+                            }
 
-                      {/* Paginación */}
-                      {totalPages > 1 && (
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="text-sm text-muted-foreground">
-                            Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} -{" "}
-                            {Math.min(
-                              currentPage * ITEMS_PER_PAGE,
-                              totalClientes,
-                            )}{" "}
-                            de {totalClientes} clientes
-                          </div>
+                            vm.setPage(pagination.pageIndex + 1);
+                          },
+                        }}
+                        rowSelection={rowSelection}
+                        onRowSelectionChange={handleRowSelectionChange}
+                        columnVisibility={columnVisibility}
+                        onColumnVisibilityChange={setColumnVisibility}
+                        enableRowSelection
+                        enableColumnVisibility
+                        enableColumnPinning={false}
+                        enableSorting={false}
+                        enableVirtualization
+                        stickyHeader
+                        density="xs"
+                        maxHeight="62vh"
+                        emptyTitle="Sin clientes"
+                        emptyDescription="No hay clientes que coincidan con los filtros actuales."
+                      />
+                    </AppCard>
+                  </AppGridItem>
+                </AppGrid>
+              </div>
+            </AppForm>
+          ) : null}
+        </AppDataState>
+      </AppContainer>
 
-                          <Pagination>
-                            <PaginationContent>
-                              <PaginationItem>
-                                <PaginationPrevious
-                                  href="#"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (currentPage > 1)
-                                      setCurrentPage(currentPage - 1);
-                                  }}
-                                  className={
-                                    currentPage === 1
-                                      ? "pointer-events-none opacity-50"
-                                      : ""
-                                  }
-                                />
-                              </PaginationItem>
+      {/* Eliminar */}
+      <AppConfirmDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={deleteDialog.setOpen}
+        preset="delete"
+        tone="danger"
+        title="Eliminar ruta de cobro"
+        description="Esta acción eliminará la ruta. Confirma únicamente si ya no debe utilizarse."
+        confirmText="Sí, eliminar ruta"
+        cancelText="Cancelar"
+        loadingText="Eliminando..."
+        isLoading={deleteMutation.isPending}
+        disabled={deleteMutation.isPending}
+        preventClose={deleteMutation.isPending}
+        closeOnConfirm={false}
+        onConfirm={handleDeleteRuta}
+        size="sm"
+        footerAlign="between"
+      >
+        {vm.ruta ? (
+          <div className="space-y-2 text-xs text-[hsl(var(--app-muted-foreground))]">
+            <div className="flex items-center justify-between gap-3">
+              <span>Ruta</span>
 
-                              {getPageNumbers().map((page, index) =>
-                                page === "ellipsis1" || page === "ellipsis2" ? (
-                                  <PaginationItem key={`ellipsis-${index}`}>
-                                    <PaginationEllipsis />
-                                  </PaginationItem>
-                                ) : (
-                                  <PaginationItem key={page}>
-                                    <PaginationLink
-                                      href="#"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        setCurrentPage(Number(page));
-                                      }}
-                                      isActive={currentPage === page}
-                                    >
-                                      {page}
-                                    </PaginationLink>
-                                  </PaginationItem>
-                                ),
-                              )}
-
-                              <PaginationItem>
-                                <PaginationNext
-                                  href="#"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (currentPage < totalPages)
-                                      setCurrentPage(currentPage + 1);
-                                  }}
-                                  className={
-                                    currentPage === totalPages
-                                      ? "pointer-events-none opacity-50"
-                                      : ""
-                                  }
-                                />
-                              </PaginationItem>
-                            </PaginationContent>
-                          </Pagination>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+              <span className="font-medium text-[hsl(var(--app-foreground))]">
+                {vm.ruta.nombreRuta}
+              </span>
             </div>
-          </TabsContent>
-        </Tabs>
 
-        {/* Diálogo de confirmación de eliminación */}
+            <div className="flex items-center justify-between gap-3">
+              <span>Clientes</span>
 
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Confirmar Eliminación</DialogTitle>
-              <DialogDescription>
-                ¿Está seguro que desea eliminar esta plantilla? Esta acción no
-                se puede deshacer.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Advertencia</AlertTitle>
-                <AlertDescription>
-                  Si elimina esta plantilla, no podrá utilizarla para generar
-                  nuevos contratos.
-                </AlertDescription>
-              </Alert>
+              <span className="font-medium text-[hsl(var(--app-foreground))]">
+                {vm.ruta.clientes.length}
+              </span>
             </div>
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => setShowDeleteDialog(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteRuta}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Eliminando...
-                  </>
-                ) : (
-                  "Eliminar"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageTransitionCrm>
+
+            <div className="flex items-center justify-between gap-3">
+              <span>Estado</span>
+
+              <span className="font-medium text-[hsl(var(--app-foreground))]">
+                {vm.ruta.estadoRuta}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </AppConfirmDialog>
+
+      {/* Salir sin guardar */}
+      <AppConfirmDialog
+        open={discardDialog.isOpen}
+        onOpenChange={discardDialog.setOpen}
+        preset="warning"
+        tone="warning"
+        title="Descartar cambios"
+        description="Hay cambios en la ruta que todavía no han sido guardados."
+        confirmText="Descartar y salir"
+        cancelText="Seguir editando"
+        onConfirm={navigateToList}
+        size="sm"
+        footerAlign="between"
+      />
+    </>
   );
 }

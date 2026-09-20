@@ -32,6 +32,11 @@ import {
 type Props = {
   instalacionId: number;
   empresaId: number;
+
+  cropImages?: boolean;
+
+  disabled?: boolean;
+  disabledReason?: string | null;
 };
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -215,6 +220,9 @@ function EvidenciaInstalacionCard({
 export function InstalacionEvidenciasUploadPage({
   instalacionId,
   empresaId,
+  cropImages = true,
+  disabled = false,
+  disabledReason = null,
 }: Props) {
   const cropDialog = useAppDisclosure();
 
@@ -279,20 +287,36 @@ export function InstalacionEvidenciasUploadPage({
       return;
     }
 
+    if (!cropImages) {
+      appendFiles(validFiles);
+      return;
+    }
+
     setCropCandidates(validFiles);
+
     cropDialog.open();
   };
 
   const handleCropDone = (croppedFiles: File[]) => {
+    appendFiles(croppedFiles);
+
+    setCropCandidates([]);
+  };
+
+  const appendFiles = React.useCallback((files: File[]) => {
     setEvidencias((current) => {
-      const nuevasEvidencias = croppedFiles.map(
+      const nuevasEvidencias = files.map(
         (file, index): EvidenciaInstalacionDraft => ({
           id: crypto.randomUUID(),
+
           file,
+
           previewUrl: URL.createObjectURL(file),
 
           tipo: null,
+
           descripcion: "",
+
           orden: current.length + index,
 
           status: "pending",
@@ -301,9 +325,7 @@ export function InstalacionEvidenciasUploadPage({
 
       return [...current, ...nuevasEvidencias];
     });
-
-    setCropCandidates([]);
-  };
+  }, []);
 
   const handleUpdateEvidencia = React.useCallback(
     (id: string, patch: Partial<EvidenciaInstalacionDraft>) => {
@@ -450,6 +472,7 @@ export function InstalacionEvidenciasUploadPage({
   };
 
   const canSubmit =
+    !disabled &&
     evidencias.length > 0 &&
     evidencias.every((evidencia) => evidencia.tipo !== null) &&
     !isSubmittingBatch;
@@ -506,7 +529,7 @@ export function InstalacionEvidenciasUploadPage({
                   size="xs"
                   leftIcon={<ImagePlus size={13} />}
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isSubmittingBatch}
+                  disabled={disabled || isSubmittingBatch}
                 >
                   Seleccionar
                 </AppButton>
@@ -518,7 +541,7 @@ export function InstalacionEvidenciasUploadPage({
                     size="xs"
                     leftIcon={<Trash2 size={13} />}
                     onClick={handleClearEvidencias}
-                    disabled={isSubmittingBatch}
+                    disabled={disabled || isSubmittingBatch}
                   >
                     Limpiar
                   </AppButton>
@@ -541,7 +564,11 @@ export function InstalacionEvidenciasUploadPage({
                 align="center"
                 icon={<Images size={32} strokeWidth={1.5} />}
                 title="Sin imágenes seleccionadas"
-                description="Selecciona fotografías para recortarlas y configurar sus datos."
+                description={
+                  cropImages
+                    ? "Selecciona fotografías para recortarlas y configurar sus datos."
+                    : "Selecciona fotografías y configura sus datos antes de subirlas."
+                }
               />
             </AppCard>
           ) : (
@@ -551,7 +578,7 @@ export function InstalacionEvidenciasUploadPage({
                   key={evidencia.id}
                   evidencia={evidencia}
                   tipoOptions={tipoOptions}
-                  disabled={isSubmittingBatch}
+                  disabled={disabled || isSubmittingBatch}
                   onChange={(patch) =>
                     handleUpdateEvidencia(evidencia.id, patch)
                   }
@@ -560,6 +587,12 @@ export function InstalacionEvidenciasUploadPage({
               ))}
             </AppStack>
           )}
+
+          {disabled && disabledReason ? (
+            <p className="text-xs text-[hsl(var(--app-muted-foreground))]">
+              {disabledReason}
+            </p>
+          ) : null}
 
           <AppInline align="center" justify="end" gap="xs" wrap>
             {isSubmittingBatch ? (
@@ -584,18 +617,20 @@ export function InstalacionEvidenciasUploadPage({
         </AppStack>
       </AppContainer>
 
-      <ImagesCropper
-        open={cropDialog.isOpen}
-        onOpenChange={(open) => {
-          cropDialog.setOpen(open);
+      {cropImages ? (
+        <ImagesCropper
+          open={cropDialog.isOpen}
+          onOpenChange={(open) => {
+            cropDialog.setOpen(open);
 
-          if (!open) {
-            setCropCandidates([]);
-          }
-        }}
-        files={cropCandidates}
-        onDone={handleCropDone}
-      />
+            if (!open) {
+              setCropCandidates([]);
+            }
+          }}
+          files={cropCandidates}
+          onDone={handleCropDone}
+        />
+      ) : null}
     </>
   );
 }

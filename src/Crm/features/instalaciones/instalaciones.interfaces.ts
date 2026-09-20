@@ -1,6 +1,11 @@
 import {
   EstadoInstalacionCliente,
+  EstadoCuentaPppoe,
+  EstadoResultadoPrealtaPppoe,
+  MetodoAutenticacionInternet,
+  ModoAccesoInstalacion,
   RolTecnicoOperacionCliente,
+  TecnologiaAccesoInternet,
   TipoEvidenciaClienteOperacion,
   TipoInstalacionCliente,
 } from "./enums";
@@ -22,8 +27,16 @@ export type ClienteInstalacionCostos = {
   costoManoObra: number;
   costoOtros: number;
   montoCobradoCliente: number;
-  saldoPendiente: number;
   notas: string | null;
+};
+
+export type ClienteInstalacionTicketResumen = {
+  id: number;
+  titulo: string | null;
+  estado: string;
+  prioridad: string;
+  fechaApertura: string;
+  fechaCierre: string | null;
 };
 
 export type ClienteInstalacionCliente = {
@@ -67,48 +80,56 @@ export type ClienteInstalacionUsuarioResumen = {
   activo: boolean;
 };
 
-export type ClienteInstalacionListItem = {
-  id: number;
-  empresaId: number;
-  clienteId: number;
+// export type ClienteInstalacionListItem = {
+//   id: number;
+//   empresaId: number;
+//   clienteId: number;
 
-  servicioInternetId: number | null;
-  ticketId: number | null;
+//   servicioInternetId: number | null;
+//   ticketId: number | null;
 
-  asesorId: number | null;
-  creadoPorId: number;
-  completadoPorId: number | null;
+//   asesorId: number | null;
+//   creadoPorId: number;
+//   completadoPorId: number | null;
 
-  tipo: TipoInstalacionCliente;
-  estado: EstadoInstalacionCliente;
+//   tipo: TipoInstalacionCliente;
+//   estado: EstadoInstalacionCliente;
 
-  fechaProgramada: string | null;
-  fechaInicio: string | null;
-  fechaFinalizacion: string | null;
-  fechaCancelacion: string | null;
-  fechaActivacionServicio: string | null;
+//   fechaProgramada: string | null;
+//   fechaInicio: string | null;
+//   fechaFinalizacion: string | null;
+//   fechaCancelacion: string | null;
+//   fechaActivacionServicio: string | null;
 
-  motivo: string | null;
-  observaciones: string | null;
-  resultado: string | null;
+//   motivo: string | null;
+//   observaciones: string | null;
+//   resultado: string | null;
 
-  ubicacion: ClienteInstalacionUbicacion;
-  wifi: ClienteInstalacionWifi;
-  costos: ClienteInstalacionCostos;
+//   ubicacion: ClienteInstalacionUbicacion;
+//   wifi: ClienteInstalacionWifi;
+//   costos: ClienteInstalacionCostos;
 
-  esMigrada: boolean;
+//   esMigrada: boolean;
 
-  creadoEn: string;
-  actualizadoEn: string;
+//   creadoEn: string;
+//   actualizadoEn: string;
 
+//   cliente: ClienteInstalacionCliente;
+
+//   servicioInternet: ClienteInstalacionServicioInternet | null;
+
+//   asesor: ClienteInstalacionUsuarioResumen | null;
+
+//   tecnicoResponsable: ClienteInstalacionTecnicoResponsable | null;
+
+//   conteos: ClienteInstalacionConteos;
+// };
+
+export type ClienteInstalacionListItem = ClienteInstalacionBase & {
   cliente: ClienteInstalacionCliente;
-
   servicioInternet: ClienteInstalacionServicioInternet | null;
-
   asesor: ClienteInstalacionUsuarioResumen | null;
-
   tecnicoResponsable: ClienteInstalacionTecnicoResponsable | null;
-
   conteos: ClienteInstalacionConteos;
 };
 
@@ -143,13 +164,13 @@ export type ClienteInstalacionBase = {
   ticketId: number | null;
 
   asesorId: number | null;
-  creadoPorId: number;
+  creadoPorId: number | null;
   completadoPorId: number | null;
 
   tipo: TipoInstalacionCliente;
   estado: EstadoInstalacionCliente;
 
-  fechaProgramada: string | null;
+  fechaProgramada: string;
   fechaInicio: string | null;
   fechaFinalizacion: string | null;
   fechaCancelacion: string | null;
@@ -159,17 +180,10 @@ export type ClienteInstalacionBase = {
   observaciones: string | null;
   resultado: string | null;
 
+  descripcion: string | null;
+
   ubicacion: ClienteInstalacionUbicacion;
-  wifi: ClienteInstalacionWifi;
   costos: ClienteInstalacionCostos;
-
-  esMigrada: boolean;
-
-  /*
-   * El presenter lo incluye, pero JSON.stringify
-   * puede omitirlo cuando su valor es undefined.
-   */
-  metadata?: Record<string, unknown> | null;
 
   creadoEn: string;
   actualizadoEn: string;
@@ -248,14 +262,38 @@ export type ClienteInstalacionEvidenciaDetalle = {
 
 export type ClienteInstalacionDetalle = ClienteInstalacionBase & {
   cliente: ClienteInstalacionCliente;
-
   servicioInternet: ClienteInstalacionServicioInternet | null;
-
+  ticket: ClienteInstalacionTicketResumen | null;
   participantes: ClienteInstalacionParticipantes;
-
   tecnicos: ClienteInstalacionTecnicoDetalle[];
-
   evidencias: ClienteInstalacionEvidenciaDetalle[];
-
   conteos: ClienteInstalacionConteos;
+  cuentaPppoe: {
+    id: number;
+  };
+};
+
+export type CrearClienteInstalacionResponse = {
+  instalacion: {
+    id: number;
+  };
+  detalle: ClienteInstalacionDetalle;
+  acceso: {
+    accesoInternetId: number;
+    modo: ModoAccesoInstalacion;
+    tecnologia: TecnologiaAccesoInternet;
+    metodoAutenticacion: MetodoAutenticacionInternet;
+    mikrotikRouterId: number | null;
+  };
+  prealtaPppoe: {
+    aplica: boolean;
+    estado: EstadoResultadoPrealtaPppoe;
+    cuentaPppoeId: number | null;
+    perfilHomologacionId: number | null;
+    usuario: string | null;
+    estadoCuenta: EstadoCuentaPppoe | null;
+    generadoEn: string | null;
+    mensaje: string | null;
+    reintentable: boolean;
+  };
 };

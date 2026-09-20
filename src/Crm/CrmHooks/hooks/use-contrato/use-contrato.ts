@@ -2,6 +2,9 @@ import { useCrmMutation, useCrmQuery } from "@/Crm/hooks/crmApiHooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { contratoQkeys, PlantillaQkeys } from "./qk";
 import { TipoPlantillaLegal } from "@/Crm/features/plantillas-legales/plantillas-legales.interfaces";
+import { crm } from "@/Crm/API/crmApi";
+import { crm_endpoints } from "@/Crm/API/routes/endpoints";
+import { ContratoInstalacionVistaResponse } from "@/Crm/features/plantilla-contratos/plantilla-contratos";
 
 export interface CreatePlantillaLegalPayload {
   tipo: TipoPlantillaLegal;
@@ -85,5 +88,19 @@ export function useGetHtmls() {
       refetchOnReconnect: "always",
       retry: 1,
     },
+  );
+}
+
+/**
+ * Obtiene la información necesaria para generar
+ * el contrato correspondiente a una instalación.
+ */
+export function useGetContratoInstalacion(
+  instalacionId: number,
+  plantillaId: number,
+) {
+  return crm.useQueryApi<ContratoInstalacionVistaResponse>(
+    contratoQkeys.instalacion(instalacionId, plantillaId),
+    crm_endpoints.contrato.contrato_instalacion(instalacionId, plantillaId),
   );
 }

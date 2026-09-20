@@ -22,12 +22,14 @@ import DialogEdit from "./DialogEdit";
 import DialogDelete from "./DialogDelete";
 import { toast } from "sonner";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
-import { useAuthStoreCRM } from "../CrmAuthRoutes/AuthStateCRM";
+
+import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { RolUsuario } from "../features/users/users-rol";
 
 function CrmUsers() {
-  const userRol = useAuthStoreCRM((state) => state.userRol);
-  const isDisable = userRol !== "SUPER_ADMIN";
+  const userRol = useStoreCrm((state) => state.rol);
+
+  const isDisable = userRol !== RolUsuario.SUPER_ADMIN;
 
   const [openEdit, setOpenEdit] = useState<boolean>(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);

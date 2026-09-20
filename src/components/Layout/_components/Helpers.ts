@@ -1,13 +1,19 @@
-import { CRM_ROUTES, Route } from "./RoutesCrm";
-import { POS_ROUTES } from "./RoutesPOS";
+// import { RolUsuario } from "@/Crm/features/users/users-rol";
 
-export function selectRoutes(
-  isCrm: boolean,
-  crmRole: string,
-  posRole: string,
-): Route[] {
-  if (isCrm) {
-    return CRM_ROUTES[crmRole] ?? CRM_ROUTES.DEFAULT;
-  }
-  return POS_ROUTES[posRole] ?? POS_ROUTES.DEFAULT;
-}
+// export const CRM_ROUTES: Partial<Record<RolUsuario, Route[]>> = {
+//   [RolUsuario.SUPER_ADMIN]: routesCrm_SuperAdmin,
+//   [RolUsuario.ADMIN]: routesCrm_Admin,
+//   [RolUsuario.OFICINA]: routesCrm_Oficina,
+//   [RolUsuario.TECNICO]: routesCrm_Tecnico,
+//   [RolUsuario.COBRADOR]: routesCrm_Cobrador,
+// };
+
+// export function getCrmRoutesByRole(
+//   role: RolUsuario | null | undefined,
+// ): Route[] {
+//   if (!role) {
+//     return routesCrm_Otro;
+//   }
+
+//   return CRM_ROUTES[role] ?? routesCrm_Otro;
+// }

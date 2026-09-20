@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Download, Eye, Lock, Trash2 } from "lucide-react";
+import { Download, Eye, Lock, Pencil, Trash2 } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { createAppRowActionsColumn } from "@/components/app/table/app-table-row-actions";
@@ -19,6 +19,7 @@ type AppBadgeTone =
 
 export type RutasListColumnHandlers = {
   onView: (ruta: Ruta) => void;
+  onEdit: (ruta: Ruta) => void;
   onDelete: (ruta: Ruta) => void;
   onClose: (ruta: Ruta) => void;
   onDownloadExcel: (ruta: Ruta) => void;
@@ -225,21 +226,29 @@ export function createRutasListColumns(
         );
       },
     },
-
     createAppRowActionsColumn<Ruta>({
       header: "",
       size: 44,
+
       actions: (row) => [
         {
           label: "Ver detalle",
           icon: <Eye size={14} />,
           onClick: () => handlers.onView(row.original),
         },
+
+        {
+          label: "Editar ruta",
+          icon: <Pencil size={14} />,
+          onClick: () => handlers.onEdit(row.original),
+        },
+
         {
           label: "Descargar Excel",
           icon: <Download size={14} />,
           onClick: () => handlers.onDownloadExcel(row.original),
         },
+
         {
           label: "Cerrar ruta",
           icon: <Lock size={14} />,
@@ -248,6 +257,7 @@ export function createRutasListColumns(
           hidden: !canCloseRuta(row.original),
           onClick: () => handlers.onClose(row.original),
         },
+
         {
           label: "Eliminar",
           icon: <Trash2 size={14} />,

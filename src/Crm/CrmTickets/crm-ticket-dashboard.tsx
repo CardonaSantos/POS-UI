@@ -52,6 +52,7 @@ const DEFAULT_TICKETS_DATA: TicketsData = {
   ticketEnProceso: 0,
   ticketsDisponibles: 0,
   ticketsResueltos: 0,
+  ticketsCancelados: 0,
 };
 
 export default function TicketDashboard() {

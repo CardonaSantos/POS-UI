@@ -13,6 +13,9 @@ export type InstalacionesListFiltersState = {
   estado: EstadoInstalacionCliente | null;
   tipo: TipoInstalacionCliente | null;
 
+  servicioInternetId: number | null;
+  asesorId: number | null;
+
   fechaProgramada: InstalacionesDateRange;
   fechaFinalizacion: InstalacionesDateRange;
 };
@@ -21,6 +24,9 @@ export const INSTALACIONES_LIST_FILTERS_DEFAULT: InstalacionesListFiltersState =
   {
     estado: null,
     tipo: null,
+
+    servicioInternetId: null,
+    asesorId: null,
 
     fechaProgramada: {
       start: null,
@@ -60,7 +66,6 @@ export function toInstalacionesQueryParams({
   return {
     empresaId,
 
-    // TanStack usa base 0 y la API base 1.
     page: pageIndex + 1,
     limit: pageSize,
 
@@ -69,12 +74,13 @@ export function toInstalacionesQueryParams({
     estado: filters.estado ?? undefined,
     tipo: filters.tipo ?? undefined,
 
-    fechaProgramadaDesde: optionalString(filters.fechaProgramada.start),
+    servicioInternetId: filters.servicioInternetId ?? undefined,
+    asesorId: filters.asesorId ?? undefined,
 
+    fechaProgramadaDesde: optionalString(filters.fechaProgramada.start),
     fechaProgramadaHasta: optionalString(filters.fechaProgramada.end),
 
     fechaFinalizacionDesde: optionalString(filters.fechaFinalizacion.start),
-
     fechaFinalizacionHasta: optionalString(filters.fechaFinalizacion.end),
   };
 }

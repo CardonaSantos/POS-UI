@@ -1,23 +1,18 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch, type SubmitHandler } from "react-hook-form";
-import {
-  useAppConfirmHandler,
-  useAppFormHandlers,
-} from "@/components/app/handlers";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { useAppConfirmHandler } from "@/components/app/handlers";
 import { useGetUsersToSelect } from "../CrmHooks/hooks/useUsuarios/use-usuers";
 import { useGetCustomerToSelect } from "../CrmHooks/hooks/Client/useGetClient";
 import { useCreateInstalacion } from "../CrmHooks/hooks/instalaciones/instalaciones-hook";
-import {
-  CREAR_INSTALACION_DEFAULT_VALUES,
-  CrearInstalacionFormValues,
-  crearInstalacionSchema,
-} from "./crear-instalaciones/zod.schema";
+
 import {
   EstadoInstalacionCliente,
+  EstadoResultadoPrealtaPppoe,
+  MetodoAutenticacionInternet,
+  TecnologiaAccesoInternet,
   TipoInstalacionCliente,
 } from "../features/instalaciones/enums";
-import { toCrearInstalacionPayload } from "./crear-instalaciones/crear-instalaciones.mapper";
 import { AppContainer } from "@/components/app/primitives/app-container";
 import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppCard } from "@/components/app/primitives/app-card";
@@ -29,10 +24,19 @@ import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
+import { ReplaceUnderlines } from "@/utils/replaceUnderlines";
+import {
+  CREAR_INSTALACION_DEFAULT_VALUES,
+  CrearInstalacionFormValues,
+  crearInstalacionSchema,
+} from "../CrmHomologaciones/schema/schema";
+import { toCrearInstalacionPayload } from "./common/crear-instalaciones.mapper";
+import { useGetHomologacionesSelect } from "../CrmHooks/hooks/pppoe-homologaciones/pppoe-perfil-homologaciones";
+import { useNavigate } from "react-router-dom";
 
 function InstalacionesMainPage() {
+  const navigate = useNavigate();
   const empresaId = useStoreCrm((state) => state.empresaId) ?? 0;
-  const creadoPorId = useStoreCrm((state) => state.userIdCRM) ?? 0;
 
   const { data: tecnicos = [], isLoading: isLoadingTecnicos } =
     useGetUsersToSelect();
@@ -43,6 +47,8 @@ function InstalacionesMainPage() {
   const { data: servicios = [], isLoading: isLoadingServicios } =
     useGetServiciosWifi();
 
+  const { data: homologacionOptions = [], isLoading: isLoadingHomologaciones } =
+    useGetHomologacionesSelect();
   const {
     data: tickets = {
       data: [],
@@ -75,23 +81,6 @@ function InstalacionesMainPage() {
     defaultValues: CREAR_INSTALACION_DEFAULT_VALUES,
 
     mode: "onChange",
-  });
-
-  const { setField, reset } = useAppFormHandlers(form);
-
-  /*
-   * Técnicos seleccionados
-   */
-
-  const tecnicoIds =
-    useWatch({
-      control: form.control,
-      name: "tecnicoIds",
-    }) ?? [];
-
-  const tecnicoResponsableId = useWatch({
-    control: form.control,
-    name: "tecnicoResponsableId",
   });
 
   /*
@@ -134,17 +123,11 @@ function InstalacionesMainPage() {
     [tickets],
   );
 
-  const tecnicoResponsableOptions = useMemo(() => {
-    const selectedIds = new Set(tecnicoIds);
-
-    return tecnicoOptions.filter((option) => selectedIds.has(option.value));
-  }, [tecnicoIds, tecnicoOptions]);
-
   const tipoOptions = useMemo(
     () =>
       Object.values(TipoInstalacionCliente).map((value) => ({
         value,
-        label: value,
+        label: ReplaceUnderlines(value),
       })),
     [],
   );
@@ -153,51 +136,103 @@ function InstalacionesMainPage() {
     () =>
       Object.values(EstadoInstalacionCliente).map((value) => ({
         value,
-        label: value,
+        label: ReplaceUnderlines(value),
       })),
     [],
   );
 
-  useEffect(() => {
-    if (tecnicoResponsableId === null) {
-      return;
-    }
+  const tecnologiaOptions = useMemo(
+    () =>
+      Object.values(TecnologiaAccesoInternet).map((value) => ({
+        value,
+        label: ReplaceUnderlines(value),
+      })),
+    [],
+  );
 
-    if (!tecnicoIds.includes(tecnicoResponsableId)) {
-      setField("tecnicoResponsableId", null, {
-        shouldValidate: true,
-      });
-    }
-  }, [tecnicoIds, tecnicoResponsableId, setField]);
+  const metodoAutenticacionOptions = useMemo(
+    () =>
+      Object.values(MetodoAutenticacionInternet).map((value) => ({
+        value,
+        label: ReplaceUnderlines(value),
+      })),
+    [],
+  );
 
   /*
    * Submit
    */
 
+  const resolveHomologacionSeleccionada = (
+    values: CrearInstalacionFormValues,
+  ) => {
+    const perfilHomologacionId = values.acceso.perfilHomologacionId;
+
+    if (perfilHomologacionId === null) {
+      return null;
+    }
+
+    const option = homologacionOptions.find(
+      (item) => item.value === perfilHomologacionId,
+    );
+
+    if (!option?.meta) {
+      return null;
+    }
+
+    return {
+      id: option.value,
+      ...option.meta,
+    };
+  };
+
   const createConfirm = useAppConfirmHandler<CrearInstalacionFormValues>();
 
   const onSubmit: SubmitHandler<CrearInstalacionFormValues> = (values) => {
+    const requierePrealtaPppoe =
+      values.acceso.tecnologia === TecnologiaAccesoInternet.FIBRA_GPON &&
+      values.acceso.metodoAutenticacion === MetodoAutenticacionInternet.PPPOE;
+
+    const homologacionSeleccionada = resolveHomologacionSeleccionada(values);
+
+    if (requierePrealtaPppoe && !homologacionSeleccionada) {
+      form.setError("acceso.perfilHomologacionId", {
+        type: "manual",
+        message:
+          "La homologación seleccionada ya no está disponible. Selecciónela nuevamente.",
+      });
+
+      return;
+    }
+
+    form.clearErrors("acceso.perfilHomologacionId");
+
     createConfirm.open(values);
   };
 
   const handleConfirmCreate = () =>
     createConfirm.confirm(async (values) => {
+      const homologacionSeleccionada = resolveHomologacionSeleccionada(values);
+
       const payload = toCrearInstalacionPayload(values, {
         empresaId,
-        creadoPorId,
+        homologacionSeleccionada,
       });
 
-      const mutationPromise = createInstalacion.mutateAsync(payload);
-
-      await toast.promise(mutationPromise, {
+      await toast.promise(createInstalacion.mutateAsync(payload), {
         loading: "Registrando instalación...",
 
         error: (error) => getApiErrorMessageAxios(error),
 
-        success: () => {
-          reset(CREAR_INSTALACION_DEFAULT_VALUES);
+        success: (response) => {
+          form.reset(CREAR_INSTALACION_DEFAULT_VALUES);
 
-          return "Instalación registrada";
+          navigate(`/crm/instalacion/${response.instalacion.id}`);
+
+          return response.prealtaPppoe.estado ===
+            EstadoResultadoPrealtaPppoe.FALLIDA
+            ? "Instalación creada; la prealta PPPoE quedó pendiente de reintento"
+            : "Instalación registrada";
         },
       });
     });
@@ -208,19 +243,22 @@ function InstalacionesMainPage() {
         <AppStack gap="md">
           <AppCard size="sm">
             <InstalacionCreateForm
+              estadoOptions={estadoOptions}
               form={form}
               onSubmit={onSubmit}
               clienteOptions={clienteOptions}
               servicioOptions={servicioOptions}
               ticketOptions={ticketOptions}
               tecnicoOptions={tecnicoOptions}
-              tecnicoResponsableOptions={tecnicoResponsableOptions}
               tipoOptions={tipoOptions}
-              estadoOptions={estadoOptions}
+              tecnologiaOptions={tecnologiaOptions}
+              metodoAutenticacionOptions={metodoAutenticacionOptions}
+              homologacionOptions={homologacionOptions}
               isLoadingClientes={isLoadingClientes}
               isLoadingServicios={isLoadingServicios}
               isLoadingTickets={isLoadingTickets}
               isLoadingTecnicos={isLoadingTecnicos}
+              isLoadingHomologaciones={isLoadingHomologaciones}
             />
           </AppCard>
         </AppStack>
@@ -235,6 +273,7 @@ function InstalacionesMainPage() {
           cancelText="Cancelar"
           loadingText="Creando instalación..."
           isLoading={createInstalacion.isPending}
+          preventClose={createInstalacion.isPending}
           onConfirm={handleConfirmCreate}
         />
       </AppContainer>

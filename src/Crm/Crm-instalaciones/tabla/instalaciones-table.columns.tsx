@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
@@ -22,6 +22,7 @@ type AppBadgeTone =
 
 export type InstalacionTableColumnActions = {
   onViewInstalacion: (instalacionId: number) => void;
+  onEditInstalacion: (instalacionId: number) => void;
 };
 
 const tableMutedTextClass =
@@ -350,6 +351,12 @@ export function createInstalacionesTableColumns(
           label: "Ver instalación",
           icon: <Eye size={14} />,
           onClick: () => actions.onViewInstalacion(row.original.id),
+        },
+
+        {
+          label: "Editar",
+          icon: <Pencil size={14} />,
+          onClick: () => actions.onEditInstalacion(row.original.id),
         },
       ],
     }),

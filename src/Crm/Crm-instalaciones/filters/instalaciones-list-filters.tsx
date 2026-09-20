@@ -17,17 +17,26 @@ import {
   INSTALACION_ESTADO_OPTIONS,
   INSTALACION_TIPO_OPTIONS,
 } from "./options";
+type NumericSelectOption = {
+  value: number;
+  label: string;
+};
 
 type InstalacionesListFiltersProps = {
   search: string;
 
   filters: InstalacionesListFiltersState;
 
+  asesorOptions: NumericSelectOption[];
+  servicioOptions: NumericSelectOption[];
+
+  isLoadingAsesores?: boolean;
+  isLoadingServicios?: boolean;
   isSearching?: boolean;
+
   hasActiveFilters: boolean;
 
   onSearchChange: (value: string) => void;
-
   onDebouncedSearchChange: (value: string) => void;
 
   onFilterChange: <TKey extends keyof InstalacionesListFiltersState>(
@@ -49,6 +58,11 @@ export function InstalacionesListFilters({
   onDebouncedSearchChange,
   onFilterChange,
   onClear,
+
+  asesorOptions,
+  servicioOptions,
+  isLoadingAsesores,
+  isLoadingServicios,
 }: InstalacionesListFiltersProps) {
   return (
     <AppCard size="xs" variant="outline" className="p-2">
@@ -56,7 +70,7 @@ export function InstalacionesListFilters({
         cols={{
           base: 1,
           md: 2,
-          xl: 4,
+          xl: 6,
         }}
         gap="sm"
       >
@@ -105,7 +119,43 @@ export function InstalacionesListFilters({
           )}
         </AppField>
 
-        <div className="md:col-span-2">
+        <AppField label="Servicio">
+          {(fieldUi) => (
+            <AppSingleSelect<number>
+              inputId={fieldUi.id}
+              aria-describedby={fieldUi.describedBy}
+              aria-invalid={fieldUi.invalid}
+              value={filters.servicioInternetId}
+              options={servicioOptions}
+              onChange={(value) => onFilterChange("servicioInternetId", value)}
+              placeholder="Todos los servicios"
+              noOptionsText="No hay servicios"
+              isLoading={isLoadingServicios}
+              density="compact"
+              isClearable
+            />
+          )}
+        </AppField>
+
+        <AppField label="Asesor">
+          {(fieldUi) => (
+            <AppSingleSelect<number>
+              inputId={fieldUi.id}
+              aria-describedby={fieldUi.describedBy}
+              aria-invalid={fieldUi.invalid}
+              value={filters.asesorId}
+              options={asesorOptions}
+              onChange={(value) => onFilterChange("asesorId", value)}
+              placeholder="Todos los asesores"
+              noOptionsText="No hay usuarios"
+              isLoading={isLoadingAsesores}
+              density="compact"
+              isClearable
+            />
+          )}
+        </AppField>
+
+        <div className="md:col-span-2 xl:col-span-3">
           <AppField label="Fecha programada">
             <AppDatePicker
               mode="range"
@@ -116,7 +166,7 @@ export function InstalacionesListFilters({
           </AppField>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 xl:col-span-3">
           <AppField label="Fecha de finalización">
             <AppDatePicker
               mode="range"

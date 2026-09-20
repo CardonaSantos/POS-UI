@@ -36,6 +36,7 @@ import {
 import { useParams } from "react-router-dom";
 import { TicketMediaSection } from "./ticket-media-section";
 import { TicketBottomActionBar } from "./ticket-bottom-bar";
+import { useGenerarEnlaceConformidadRapido } from "@/Crm/CrmHooks/hooks/use-tickets-conformidad/use-generar-enlace-conformidad-rapido";
 
 export type TicketLifecycleAction = "start" | "review";
 
@@ -44,7 +45,7 @@ function TicketAsignadoDetails() {
   const ticketId = Number(id ?? 0);
 
   const ticketQuery = useGetTicketDetails(ticketId);
-
+  const conformidadLink = useGenerarEnlaceConformidadRapido(ticketId);
   const {
     data: ticket,
     isLoading,
@@ -146,11 +147,64 @@ function TicketAsignadoDetails() {
               ticket={ticket}
               lifecycleAction={lifecycleAction}
               isLoading={isMutating}
+              conformidadLoading={conformidadLink.isPending}
+              onRequestConformidad={conformidadLink.generar}
               onRequestAction={() => {
                 if (!lifecycleAction) return;
+
                 actionDialog.open(lifecycleAction);
               }}
             />
+
+            <AppConfirmDialog
+              open={actionDialog.isOpen}
+              onOpenChange={actionDialog.setOpen}
+              preset="info"
+              tone="info"
+              title={
+                actionDialog.target === "review"
+                  ? "Enviar ticket a revisión"
+                  : "Tomar ticket en proceso"
+              }
+              description={
+                actionDialog.target === "review"
+                  ? "El ticket pasará a PENDIENTE_REVISION. Verifica que la evidencia y observaciones estén completas."
+                  : "El ticket pasará a EN_PROCESO y quedará registrado como iniciado."
+              }
+              confirmText={
+                actionDialog.target === "review"
+                  ? "Enviar a revisión"
+                  : "Tomar en proceso"
+              }
+              cancelText="Cancelar"
+              loadingText="Procesando..."
+              isLoading={updateTicketAction.isLoading}
+              preventClose={updateTicketAction.isLoading}
+              closeOnConfirm={false}
+              onConfirm={() =>
+                actionDialog.confirm(async (action) => {
+                  await updateTicketAction.run(action);
+                })
+              }
+            >
+              <AppCard variant="outline" size="xs">
+                <AppStack gap="xs">
+                  <AppInline gap="xs" align="center" justify="between">
+                    <span className="text-xs text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+                      Ticket
+                    </span>
+
+                    <span className="text-xs font-semibold text-[hsl(var(--app-foreground,var(--foreground)))]">
+                      #{ticket.id}
+                    </span>
+                  </AppInline>
+
+                  <p className="line-clamp-2 text-xs leading-snug text-[hsl(var(--app-foreground,var(--foreground)))]">
+                    {ticket.titulo || "Ticket sin título"}
+                  </p>
+                </AppStack>
+              </AppCard>
+            </AppConfirmDialog>
 
             <AppConfirmDialog
               open={actionDialog.isOpen}

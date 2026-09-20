@@ -1,6 +1,8 @@
 export const contratoQkeys = {
   all: ["contrato"] as const,
-  specific: (id: number) => ["contrato", id] as const,
+
+  instalacion: (instalacionId: number, plantillaId: number) =>
+    [...contratoQkeys.all, "instalacion", instalacionId, plantillaId] as const,
 };
 
 export const PlantillaQkeys = {

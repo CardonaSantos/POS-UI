@@ -5,6 +5,7 @@ import {
   FileText,
   Pin,
   RotateCcw,
+  Signature,
   Sticker,
   TicketSlash,
   X,
@@ -30,10 +31,16 @@ import { getTicketPriorityTone } from "../_components/ticket-list.helpers";
 
 interface TicketHeaderProps {
   ticket: Ticket;
+
   onCloseView: () => void;
+
   onEdit: () => void;
+
   onDelete: () => void;
+
   onCloseTicket: () => void;
+
+  onConformidad: () => void;
 }
 
 const menuItemClassName =
@@ -53,6 +60,7 @@ export function TicketHeader({
   onEdit,
   onDelete,
   onCloseTicket,
+  onConformidad,
 }: TicketHeaderProps) {
   const customerName = ticket.customer?.name ?? null;
   const customerId = ticket.customer?.id ?? null;
@@ -146,6 +154,15 @@ export function TicketHeader({
               >
                 <span>Editar</span>
                 <RotateCcw size={12} />
+              </AppDropdownMenuItem>
+
+              <AppDropdownMenuItem
+                className={menuItemClassName}
+                onSelect={() => deferTicketDetailAction(onConformidad)}
+              >
+                <span>Conformidad</span>
+
+                <Signature size={12} />
               </AppDropdownMenuItem>
 
               <AppDropdownMenuItem

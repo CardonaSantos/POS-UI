@@ -1,18 +1,39 @@
 export interface DashboardData {
-  clientes: {
-    totalEnSistema: number; // antes: enSistema
-    activos: number; // antes: alDia
-    suspendidos: number;
-    desinstalados: number;
-    pendientesActivacion: number; // antes: pendienteActivo
-    morosos: number;
+  periodo: {
+    desde: string;
+    hasta: string;
+    zonaHoraria: string;
   };
+
+  clientes: {
+    resumen: {
+      totalEnSistema: number;
+      carteraActual: number;
+    };
+
+    servicio: {
+      activos: number;
+      suspendidos: number;
+      pendientesActivacion: number;
+      enInstalacion: number;
+      desinstalados: number;
+    };
+
+    cobranza: {
+      alDia: number;
+      pagoPendiente: number;
+      atrasados: number;
+      morosos: number;
+    };
+  };
+
   facturacion: {
-    facturasEmitidasMes: number; // antes: fEmitidasMes
-    facturasPagadasMes: number; // antes: fPagadasMes
-    montoFacturadoMes: number; // antes: fTotalGeneradas
-    montoCobradoMes: number; // antes: fTotalPagadas
-    montoPendienteMes: number; // antes: fGeneradasSinPagar
+    facturasEmitidasMes: number;
+    facturasPagadasMes: number;
+
+    montoFacturadoMes: number;
+    montoCobradoMes: number;
+    montoPendienteMes: number;
   };
 }
 

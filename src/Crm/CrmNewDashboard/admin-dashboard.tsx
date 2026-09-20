@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
+
 import { motion } from "framer-motion";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
 import { useQueryClient } from "@tanstack/react-query";
 
 import { fadeElegant } from "@/components/Layout/page-transition";
+
 import { AppAlert } from "@/components/app/primitives/app-alert";
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppContainer } from "@/components/app/primitives/app-container";
@@ -15,9 +18,10 @@ import { AppStack } from "@/components/app/primitives/app-stack";
 
 import {
   useGetCobrosDashboard,
-  useGetDashboardChartInstalaciones,
+  useGetDashboardActividadHistorica,
+  useGetDashboardActividadMes,
   useGetDashboardData,
-  useGetInstalacionesVsDesinstalaciones,
+  useGetDashboardTicketsActividad,
   useGetTicketProceso,
 } from "../CrmHooks/hooks/dashboard/useDashboard";
 
@@ -30,34 +34,62 @@ import {
 } from "../CrmHooks/hooks/dashboard/Qk";
 
 import { realTimeQkeys } from "../CrmHooks/hooks/use-real-time-location/Qk";
+
 import { useSocketEvent } from "../WEB/SocketProvider";
 import { showTicketBrowserNotification } from "../WEB/browserNotifications";
 
 import { DashboardRoutesSidebar } from "./_components/DashboardRoutesSidebar";
 import { DashboardSupportSidebar } from "./_components/DashboardSupportSidebar";
 import { DashboardChartsGrid } from "./_components/DashboardChartsGrid";
-
-import type { DashboardCobrosResponse } from "../features/dashboard/dashboard.interfaces";
-
-import type { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
-import type { TicketsDashboardSoporte } from "./interfaces/dashboard-interfaces";
-import { DashboardRuntimeBar } from "./_components/dashboard-runtime-bar";
 import { DashboardKpisSection } from "./_components/DashboardKpisSection";
 import { DashboardMapPanel } from "./_components/dashboard-charts-grids";
+
+import type {
+  DashboardCobrosResponse,
+  DashboardData,
+} from "../features/dashboard/dashboard.interfaces";
+import type { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
+import type { TicketsDashboardSoporte } from "./interfaces/dashboard-interfaces";
+import {
+  DashboardTicketsActividadParams,
+  DashboardTicketsActividadPreset,
+} from "../features/chart-types/tickets-chart";
+import { DashboardTicketsActivity } from "../_charts/dashboard-tickets-activity-chart/activitu-chart-ticket";
 
 const EMPTY_COBROS_DATA: DashboardCobrosResponse = {
   rutasActiva: [],
   morosoTop: [],
 };
-const DEFAULT_DASHBOARD_DATA = {
-  clientes: {
-    totalEnSistema: 0,
-    activos: 0,
-    suspendidos: 0,
-    desinstalados: 0,
-    pendientesActivacion: 0,
-    morosos: 0,
+
+const DEFAULT_DASHBOARD_DATA: DashboardData = {
+  periodo: {
+    desde: "",
+    hasta: "",
+    zonaHoraria: "America/Guatemala",
   },
+
+  clientes: {
+    resumen: {
+      totalEnSistema: 0,
+      carteraActual: 0,
+    },
+
+    servicio: {
+      activos: 0,
+      suspendidos: 0,
+      pendientesActivacion: 0,
+      enInstalacion: 0,
+      desinstalados: 0,
+    },
+
+    cobranza: {
+      alDia: 0,
+      pagoPendiente: 0,
+      atrasados: 0,
+      morosos: 0,
+    },
+  },
+
   facturacion: {
     facturasEmitidasMes: 0,
     facturasPagadasMes: 0,
@@ -66,6 +98,7 @@ const DEFAULT_DASHBOARD_DATA = {
     montoPendienteMes: 0,
   },
 };
+
 const EMPTY_TICKETS_SOPORTE: TicketsDashboardSoporte = {
   tickets: [],
   ticketsMetricas: {
@@ -84,18 +117,62 @@ function NewDashboard() {
   const invalidateQk = useInvalidateQk();
   const queryClient = useQueryClient();
 
-  const instalacionesMesQuery = useGetDashboardChartInstalaciones();
-  const instalacionesHistoricasQuery = useGetInstalacionesVsDesinstalaciones();
+  const [ticketsActividadParams, setTicketsActividadParams] =
+    React.useState<DashboardTicketsActividadParams>({
+      preset: "7D",
+    });
+
+  /**
+   * Dashboard principal
+   */
   const kpisQuery = useGetDashboardData();
   const ticketsQuery = useGetTicketProceso();
   const cobrosQuery = useGetCobrosDashboard();
+
+  /**
+   * Actividad de instalaciones
+   */
+  const actividadMesQuery = useGetDashboardActividadMes();
+
+  const actividadHistoricaQuery = useGetDashboardActividadHistorica();
+
+  const ticketsActividadQuery = useGetDashboardTicketsActividad(
+    ticketsActividadParams,
+  );
+
+  const ticketsActividad = ticketsActividadQuery.data;
+  /**
+   * Ubicación en tiempo real
+   */
   const locationsQuery = useGetUsersRealTime();
 
-  const instalacionesMes = instalacionesMesQuery.data ?? [];
-  const instalacionesHistoricas = instalacionesHistoricasQuery.data ?? [];
+  /**
+   * Datos core.
+   *
+   * Estos sí tienen fallbacks porque el dashboard operativo
+   * puede representarse correctamente con valores vacíos.
+   */
   const ticketsSoporte = ticketsQuery.data ?? EMPTY_TICKETS_SOPORTE;
+
   const cobros = cobrosQuery.data ?? EMPTY_COBROS_DATA;
+
   const kpisData = kpisQuery.data ?? DEFAULT_DASHBOARD_DATA;
+
+  /**
+   * Los charts NO reciben fallback [].
+   *
+   * Ahora el servidor retorna objetos:
+   *
+   * DashboardActividadMes
+   * DashboardActividadHistorica
+   *
+   * undefined nos permite distinguir correctamente el estado
+   * inicial/loading de una respuesta real.
+   */
+  const instalacionesMes = actividadMesQuery.data;
+
+  const instalacionesHistoricas = actividadHistoricaQuery.data;
+
   const locations = React.useMemo<RealTimeLocationRaw[]>(() => {
     return Array.isArray(locationsQuery.data) ? locationsQuery.data : [];
   }, [locationsQuery.data]);
@@ -106,66 +183,85 @@ function NewDashboard() {
 
   const topMorosos = Array.isArray(cobros.morosoTop) ? cobros.morosoTop : [];
 
-  const ticketsEnProceso = Array.isArray(ticketsSoporte.tickets)
-    ? ticketsSoporte.tickets.length
-    : 0;
-
-  const tecnicosEnLinea = ticketsSoporte.ticketsMetricas?.enLinea ?? 0;
-
+  /**
+   * Solamente estos recursos bloquean inicialmente
+   * el contenido principal del dashboard.
+   *
+   * Charts y mapa son recursos secundarios y pueden
+   * cargar independientemente.
+   */
   const isCoreLoading =
     kpisQuery.isLoading || ticketsQuery.isLoading || cobrosQuery.isLoading;
 
+  /**
+   * Estado global de actualización.
+   *
+   * Aquí sí incluimos todo porque el botón "Reintentar"
+   * vuelve a consultar todos los recursos.
+   */
   const isRefreshing =
     kpisQuery.isFetching ||
     ticketsQuery.isFetching ||
     cobrosQuery.isFetching ||
-    instalacionesMesQuery.isFetching ||
-    instalacionesHistoricasQuery.isFetching ||
+    actividadMesQuery.isFetching ||
+    actividadHistoricaQuery.isFetching ||
+    ticketsActividadQuery.isFetching ||
     locationsQuery.isFetching;
 
   const hasCoreData = Boolean(
     kpisQuery.data || ticketsQuery.data || cobrosQuery.data,
   );
 
-  const dashboardError =
-    kpisQuery.error ??
-    ticketsQuery.error ??
-    cobrosQuery.error ??
-    instalacionesMesQuery.error ??
-    instalacionesHistoricasQuery.error ??
-    locationsQuery.error ??
-    null;
+  /**
+   * Solo errores del núcleo pueden provocar el
+   * error global del dashboard.
+   */
+  const coreError =
+    kpisQuery.error ?? ticketsQuery.error ?? cobrosQuery.error ?? null;
 
+  /**
+   * Cualquier recurso puede provocar la advertencia suave.
+   *
+   * De esta manera un fallo en:
+   * - chart del mes
+   * - chart histórico
+   * - ubicaciones
+   *
+   * no destruye todo el dashboard.
+   */
   const hasSoftError = Boolean(
     kpisQuery.isError ||
     ticketsQuery.isError ||
     cobrosQuery.isError ||
-    instalacionesMesQuery.isError ||
-    instalacionesHistoricasQuery.isError ||
+    actividadMesQuery.isError ||
+    actividadHistoricaQuery.isError ||
+    ticketsActividadQuery.isError ||
     locationsQuery.isError,
   );
 
   const showGlobalLoading = isCoreLoading && !hasCoreData;
-  const showGlobalError = Boolean(dashboardError && !hasCoreData);
+
+  const showGlobalError = Boolean(coreError && !hasCoreData);
 
   const refetchAll = React.useCallback(async () => {
     await Promise.allSettled([
       kpisQuery.refetch(),
       ticketsQuery.refetch(),
       cobrosQuery.refetch(),
-      instalacionesMesQuery.refetch(),
-      instalacionesHistoricasQuery.refetch(),
+      actividadMesQuery.refetch(),
+      actividadHistoricaQuery.refetch(),
+      ticketsActividadQuery.refetch(),
       locationsQuery.refetch(),
     ]);
   }, [
     kpisQuery,
     ticketsQuery,
     cobrosQuery,
-    instalacionesMesQuery,
-    instalacionesHistoricasQuery,
+    actividadMesQuery,
+    actividadHistoricaQuery,
+    ticketsActividadQuery,
     locationsQuery,
   ]);
-
   const handleTicketStatusChange = React.useCallback(
     (payload: TicketStatusChangePayload) => {
       invalidateQk(TicketsProcesoQkeys.all);
@@ -205,13 +301,17 @@ function NewDashboard() {
         (oldData: RealTimeLocationRaw[] | undefined) => {
           const incoming = payload;
 
-          if (!oldData) return [incoming];
+          if (!oldData) {
+            return [incoming];
+          }
 
           const exists = oldData.some(
             (location) => location.usuarioId === incoming.usuarioId,
           );
 
-          if (!exists) return [...oldData, incoming];
+          if (!exists) {
+            return [...oldData, incoming];
+          }
 
           return oldData.map((location) =>
             location.usuarioId === incoming.usuarioId ? incoming : location,
@@ -222,6 +322,18 @@ function NewDashboard() {
     [queryClient],
   );
 
+  const handleTicketsActividadPresetChange = React.useCallback(
+    (preset: DashboardTicketsActividadPreset) => {
+      setTicketsActividadParams({
+        preset,
+      });
+    },
+    [],
+  );
+
+  /**
+   * Eventos realtime
+   */
   useSocketEvent("ticket-soporte:change-status", handleTicketStatusChange, [
     handleTicketStatusChange,
   ]);
@@ -242,16 +354,6 @@ function NewDashboard() {
     <motion.div {...fadeElegant} className="min-w-0">
       <AppContainer size="full" paddingX="xs" paddingY="xs" className="min-w-0">
         <AppStack gap="xs" className="min-w-0 pb-3">
-          <DashboardRuntimeBar
-            isRefreshing={isRefreshing}
-            rutasCount={rutasActivas.length}
-            morososCount={topMorosos.length}
-            tecnicosEnLinea={tecnicosEnLinea}
-            ticketsEnProceso={ticketsEnProceso}
-            usuariosEnCampo={locations.length}
-            onRefresh={() => void refetchAll()}
-          />
-
           {hasSoftError && !showGlobalError ? (
             <AppAlert
               tone="warning"
@@ -279,50 +381,106 @@ function NewDashboard() {
           <AppDataState
             isLoading={showGlobalLoading}
             isFetching={isRefreshing}
-            error={showGlobalError ? dashboardError : null}
+            error={showGlobalError ? coreError : null}
             isEmpty={false}
             onRetry={() => void refetchAll()}
             loadingVariant="skeleton-grid"
             loadingRows={6}
           >
-            <AppStack gap="xs" className="min-w-0">
+            <AppStack gap="sm" className="min-w-0">
+              {/*
+               * ============================================================
+               * BLOQUE OPERATIVO
+               * ============================================================
+               *
+               * Izquierda:
+               *   rutas y cobranza
+               *
+               * Centro:
+               *   KPIs generales
+               *
+               * Derecha:
+               *   soporte
+               *
+               * Los charts YA NO viven dentro de esta cuadrícula.
+               */}
               <section
                 aria-label="Dashboard operativo"
                 className={[
-                  "grid min-w-0 grid-cols-1 items-start gap-2",
+                  "grid min-w-0 grid-cols-1 gap-2",
                   "xl:grid-cols-[15.5rem_minmax(0,1fr)_16rem]",
                   "2xl:grid-cols-[17rem_minmax(0,1fr)_17rem]",
-                  "xl:[--dashboard-panel-h:31rem]",
-                  "2xl:[--dashboard-panel-h:31rem]",
+
+                  "xl:[--dashboard-panel-h:34rem]",
+                  "2xl:[--dashboard-panel-h:34rem]",
                 ].join(" ")}
               >
-                {/* Columna izquierda */}
-                <aside className="order-2 min-w-0 xl:order-1">
+                <aside className="order-2 min-w-0 xl:order-1 xl:h-[var(--dashboard-panel-h)]">
                   <DashboardRoutesSidebar
                     rutaActiva={rutasActivas}
                     topMorosos={topMorosos}
                   />
                 </aside>
 
-                {/* Centro */}
-                <main className="order-1 min-w-0 xl:order-2">
-                  <AppStack gap="xs" className="min-w-0">
-                    <DashboardKpisSection kpisData={kpisData} />
+                <main className="order-1 min-w-0 xl:order-2 xl:h-[var(--dashboard-panel-h)]">
+                  <div className="flex h-full min-h-0 flex-col gap-2">
+                    <div className="shrink-0">
+                      <DashboardKpisSection kpisData={kpisData} />
+                    </div>
 
-                    <DashboardChartsGrid
-                      instalacionesMes={instalacionesMes}
-                      instalacionesHistoricas={instalacionesHistoricas}
-                    />
-                  </AppStack>
+                    <div className="min-h-0 flex-1">
+                      <DashboardTicketsActivity
+                        data={ticketsActividad}
+                        params={ticketsActividadParams}
+                        isLoading={ticketsActividadQuery.isLoading}
+                        isFetching={ticketsActividadQuery.isFetching}
+                        onPresetChange={handleTicketsActividadPresetChange}
+                      />
+                    </div>
+                  </div>
                 </main>
 
-                {/* Columna derecha */}
                 <aside className="order-3 min-w-0 xl:order-3 xl:h-[var(--dashboard-panel-h)]">
                   <DashboardSupportSidebar ticketsSoporte={ticketsSoporte} />
                 </aside>
               </section>
 
-              {/* Mapa abajo en ancho completo */}
+              {/*
+               * ============================================================
+               * ACTIVIDAD DE INSTALACIONES
+               * ============================================================
+               *
+               * Esta sección ahora usa TODO el ancho disponible.
+               *
+               * DashboardChartsGrid posteriormente tendrá:
+               *
+               * 1. Actividad del mes
+               *    - barras agrupadas por día
+               *
+               * 2. Actividad últimos 12 meses
+               *    - barras agrupadas por mes
+               *
+               * Las cards se colocarán una debajo de otra.
+               */}
+              <section
+                aria-label="Actividad de instalaciones y desinstalaciones"
+                className="min-w-0"
+              >
+                <DashboardChartsGrid
+                  instalacionesMes={instalacionesMes}
+                  instalacionesHistoricas={instalacionesHistoricas}
+                  isMesLoading={actividadMesQuery.isLoading}
+                  isHistoricoLoading={actividadHistoricaQuery.isLoading}
+                />
+              </section>
+
+              {/*
+               * ============================================================
+               * MAPA
+               * ============================================================
+               *
+               * Mantiene ancho completo debajo de charts.
+               */}
               <section
                 aria-label="Ubicación de técnicos en campo"
                 className="min-w-0"

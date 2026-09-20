@@ -1,26 +1,11 @@
 "use client";
 
-import {
-  FilePenLine,
-  FilePlus,
-  Printer,
-  Ticket,
-  User,
-  UserCog,
-} from "lucide-react";
+import { Ticket, User, UserCog } from "lucide-react";
 import { Link } from "react-router-dom";
-
 import { cn } from "@/lib/utils";
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppButton } from "@/components/app/primitives/app-button";
 import { AppCard } from "@/components/app/primitives/app-card";
-import {
-  AppDropdownMenu,
-  AppDropdownMenuContent,
-  AppDropdownMenuItem,
-  AppDropdownMenuSeparator,
-  AppDropdownMenuTrigger,
-} from "@/components/app/primitives/app-dropdown-menu";
 import { AppInline } from "@/components/app/primitives/app-inline";
 import {
   ClienteDetailsDto,
@@ -36,33 +21,17 @@ import {
   ESTADO_CLIENTE_LABELS,
 } from "@/Crm/CrmCustomers/customer-table.constants";
 
-interface PlantillasInterface {
-  id: number;
-  nombre: string;
-  body: string;
-  empresaId: number;
-  creadoEn: string;
-  actualizadoEn: string;
-}
-
 interface CustomerHeaderProps {
   cliente: ClienteDetailsDto;
-  plantillas: PlantillasInterface[];
-  setOpenCreateContrato: (open: boolean) => void;
 }
 
-export function CustomerHeader({
-  cliente,
-  plantillas,
-  setOpenCreateContrato,
-}: CustomerHeaderProps) {
+export function CustomerHeader({ cliente }: CustomerHeaderProps) {
   const nombreCompleto = `${cliente.nombre ?? ""} ${
     cliente.apellidos ?? ""
   }`.trim();
 
   const estadoOperativo = cliente.estadoCliente as EstadoCliente;
   const estadoCobranza = cliente.estadoCobranza as EstadoCobranzaCliente;
-  const hasContrato = Boolean(cliente.contratoServicioInternet?.id);
 
   return (
     <AppCard
@@ -122,68 +91,6 @@ export function CustomerHeader({
             "px-1.5 py-1",
           )}
         >
-          {hasContrato ? (
-            <AppDropdownMenu>
-              <AppDropdownMenuTrigger asChild>
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  width="auto"
-                  leftIcon={<FilePenLine size={13} />}
-                  className="h-7"
-                >
-                  Contrato
-                </AppButton>
-              </AppDropdownMenuTrigger>
-
-              <AppDropdownMenuContent
-                align="end"
-                side="bottom"
-                sideOffset={8}
-                width="md"
-                size="xs"
-                className="z-[120]"
-              >
-                {plantillas.length ? (
-                  <>
-                    <AppDropdownMenuSeparator />
-
-                    {plantillas.map((plantilla) => (
-                      <AppDropdownMenuItem key={plantilla.id}>
-                        <Link
-                          to={`/crm/contrato/${
-                            cliente.contratoServicioInternet!.id
-                          }/vista?plantilla=${plantilla.id}`}
-                          className="flex w-full items-center gap-2"
-                        >
-                          <Printer size={13} className="shrink-0" />
-                          <span className="truncate">{plantilla.nombre}</span>
-                        </Link>
-                      </AppDropdownMenuItem>
-                    ))}
-                  </>
-                ) : (
-                  <div className="px-2 py-1.5 text-xs italic text-[hsl(var(--app-muted-foreground))]">
-                    Sin plantillas disponibles
-                  </div>
-                )}
-              </AppDropdownMenuContent>
-            </AppDropdownMenu>
-          ) : (
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="xs"
-              width="auto"
-              leftIcon={<FilePlus size={13} />}
-              className="h-7"
-              onClick={() => setOpenCreateContrato(true)}
-            >
-              Contrato
-            </AppButton>
-          )}
-
           <AppButton
             asChild
             type="button"

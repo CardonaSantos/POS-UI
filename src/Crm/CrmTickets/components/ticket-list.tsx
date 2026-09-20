@@ -50,7 +50,7 @@ export default function TicketList({
     >
       <div className="shrink-0 border-b border-[hsl(var(--app-border,var(--border)))] px-2 py-1.5">
         <div className="rounded-[var(--app-radius-md)] bg-[hsl(var(--app-muted,var(--muted))/0.45)] p-0.5">
-          <AppInline gap="none" align="center" className="grid grid-cols-3">
+          <AppInline gap="none" align="center" className="grid grid-cols-4">
             {TICKET_LIST_TABS.map((tab) => {
               const isActive = tab.value === resolvedActiveTab;
               const count = getTicketTabCount(ticketsData, tab.countKey);
@@ -63,7 +63,7 @@ export default function TicketList({
                   size="xs"
                   width="full"
                   className={[
-                    "h-6 justify-center rounded-[var(--app-radius-sm)] px-1",
+                    "h-7 min-w-0 justify-center rounded-[var(--app-radius-sm)] px-1",
                     "text-[10px] font-medium",
                     isActive
                       ? "bg-[hsl(var(--app-background,var(--background)))] text-[hsl(var(--app-foreground,var(--foreground)))]"
@@ -71,8 +71,11 @@ export default function TicketList({
                   ].join(" ")}
                   onClick={() => onTabChange(tab.value)}
                 >
-                  <span className="truncate">{tab.label}</span>
-                  <span className="ml-1 text-[9px] opacity-70">({count})</span>
+                  <span className="min-w-0 truncate">{tab.label}</span>
+
+                  <span className="ml-1 shrink-0 text-[9px] opacity-70">
+                    ({count})
+                  </span>
                 </AppButton>
               );
             })}

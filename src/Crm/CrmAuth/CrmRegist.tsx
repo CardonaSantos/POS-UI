@@ -1,195 +1,193 @@
-"use client";
-
-import type React from "react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AtSign, Lock, User, Eye, EyeOff } from "lucide-react"; // Añadimos Eye/EyeOff
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { AtSign, Eye, EyeOff, Lock, User, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useRegister } from "../CrmHooks/hooks/use-auth/useAuth";
+import { z } from "zod";
+
+import {
+  AppForm,
+  AppFormInput,
+  AppFormSingleSelect,
+  AppFormSubmit,
+} from "@/components/app/form";
+
+import { AppButton } from "@/components/app/primitives/app-button";
+import { AppCard } from "@/components/app/primitives/app-card";
+import { AppContainer } from "@/components/app/primitives/app-container";
+import { AppStack } from "@/components/app/primitives/app-stack";
+
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
-import { RolUsuario } from "../features/users/users-rol";
+
+import { useRegister } from "../CrmHooks/hooks/use-auth/useAuth";
+
+import { RolUsuario, ROL_USUARIO_OPTIONS } from "../features/users/users-rol";
+
+const registerSchema = z.object({
+  nombre: z.string().trim().min(1, "El nombre es obligatorio"),
+
+  correo: z
+    .string()
+    .trim()
+    .min(1, "El correo es obligatorio")
+    .email("Ingrese un correo electrónico válido"),
+
+  contrasena: z.string().min(1, "La contraseña es obligatoria"),
+
+  rol: z.nativeEnum(RolUsuario),
+
+  empresaId: z.number().int().positive(),
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
+const REGISTER_DEFAULTS: RegisterFormValues = {
+  nombre: "",
+  correo: "",
+  contrasena: "",
+  rol: RolUsuario.TECNICO,
+  empresaId: 1,
+};
 
 export default function CrmRegist() {
-  const [formData, setFormData] = useState({
-    nombre: "",
-    correo: "",
-    contrasena: "",
-    rol: RolUsuario.TECNICO,
-    empresaId: 1,
-  });
-
   const [showPassword, setShowPassword] = useState(false);
 
-  const { mutate, isPending } = useRegister(formData);
+  const registerMutation = useRegister();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: REGISTER_DEFAULTS,
+    mode: "onChange",
+  });
 
-  const handleRolChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, rol: value as RolUsuario }));
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const cleanData = {
-      ...formData,
-      nombre: formData.nombre.trim(),
-      correo: formData.correo.toLowerCase().trim(),
+  const onSubmit: SubmitHandler<RegisterFormValues> = async (values) => {
+    const payload = {
+      ...values,
+      nombre: values.nombre.trim(),
+      correo: values.correo.trim().toLowerCase(),
     };
 
-    mutate(cleanData, {
-      onSuccess: (response: any) => {
-        console.log("Registro exitoso:", response);
-        toast.success("Usuario Registrado Correctamente");
+    try {
+      await toast.promise(registerMutation.mutateAsync(payload), {
+        loading: "Registrando usuario...",
+        success: "Usuario registrado correctamente",
+        error: (error) => getApiErrorMessageAxios(error),
+      });
 
-        if (response?.access_token) {
-          localStorage.setItem("tokenAuthCRM", response.access_token);
-          window.location.href = "/crm";
-        } else {
-          window.location.href = "/auth/login";
-        }
-      },
-      onError: (error: any) => {
-        toast.error(getApiErrorMessageAxios(error));
-      },
-    });
+      form.reset(REGISTER_DEFAULTS);
+    } catch {
+      // El toast ya presenta el error.
+      // Conservamos el formulario para que el usuario pueda corregirlo.
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full bg-gray-50">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Registro CRM
-          </CardTitle>
-          <CardDescription className="text-center">
-            Cree una nueva cuenta para acceder al sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* NOMBRE */}
-            <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="nombre"
-                  name="nombre"
-                  placeholder="Nombre completo"
-                  className="pl-10"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+    <main className="min-h-screen bg-background">
+      <AppContainer
+        size="sm"
+        paddingX="sm"
+        paddingY="md"
+        fullHeight
+        className="flex items-center justify-center"
+      >
+        <AppCard variant="outline" size="md" radius="lg" className="w-full">
+          <AppStack gap="md" className="p-4 sm:p-5">
+            {/* HEADER */}
+
+            <div className="text-center">
+              <h1 className="text-xl font-semibold tracking-tight">
+                Registrar usuario
+              </h1>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cree una nueva cuenta y asigne su función dentro del CRM.
+              </p>
             </div>
 
-            {/* CORREO */}
-            <div className="space-y-2">
-              <Label htmlFor="correo">Correo electrónico</Label>
-              <div className="relative">
-                <AtSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="correo"
+            {/* FORMULARIO */}
+
+            <AppForm form={form} onSubmit={onSubmit}>
+              <AppStack gap="sm">
+                <AppFormInput<RegisterFormValues>
+                  name="nombre"
+                  label="Nombre"
+                  placeholder="Nombre completo"
+                  autoComplete="name"
+                  leftIcon={<User size={16} aria-hidden="true" />}
+                  required
+                  clearable
+                />
+
+                <AppFormInput<RegisterFormValues>
                   name="correo"
                   type="email"
+                  label="Correo electrónico"
                   placeholder="correo@ejemplo.com"
-                  className="pl-10"
-                  value={formData.correo}
-                  onChange={handleChange}
+                  autoComplete="email"
+                  spellCheck={false}
+                  leftIcon={<AtSign size={16} aria-hidden="true" />}
                   required
+                  clearable
                 />
-              </div>
-            </div>
 
-            {/* CONTRASEÑA CON TOGGLE */}
-            <div className="space-y-2">
-              <Label htmlFor="contrasena">Contraseña</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="contrasena"
-                  name="contrasena"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10"
-                  value={formData.contrasena}
-                  onChange={handleChange}
+                <div className="relative">
+                  <AppFormInput<RegisterFormValues>
+                    name="contrasena"
+                    type={showPassword ? "text" : "password"}
+                    label="Contraseña"
+                    placeholder="Ingrese una contraseña"
+                    autoComplete="new-password"
+                    leftIcon={<Lock size={16} aria-hidden="true" />}
+                    required
+                  />
+
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    aria-label={
+                      showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                    }
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute right-2 top-7"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={15} aria-hidden="true" />
+                    ) : (
+                      <Eye size={15} aria-hidden="true" />
+                    )}
+                  </AppButton>
+                </div>
+
+                <AppFormSingleSelect<RegisterFormValues, RolUsuario>
+                  name="rol"
+                  label="Rol"
+                  options={ROL_USUARIO_OPTIONS}
+                  placeholder="Seleccione un rol"
+                  density="compact"
+                  isSearchable={false}
+                  isClearable={false}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  tabIndex={-1}
+
+                <AppFormSubmit<RegisterFormValues>
+                  variant="primary"
+                  width="full"
+                  leftIcon={<UserPlus size={16} aria-hidden="true" />}
+                  loadingText="Registrando..."
+                  disableWhenInvalid
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+                  Registrar usuario
+                </AppFormSubmit>
+              </AppStack>
+            </AppForm>
 
-            {/* ROL */}
-            <div className="space-y-2">
-              <Label htmlFor="rol">Rol</Label>
-              <Select value={formData.rol} onValueChange={handleRolChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione un rol" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={RolUsuario.TECNICO}>Técnico</SelectItem>
-                  <SelectItem value={RolUsuario.COBRADOR}>Cobrador</SelectItem>
-                  <SelectItem value={RolUsuario.OFICINA}>Oficina</SelectItem>
-                  <SelectItem value={RolUsuario.ADMIN}>
-                    Administrador
-                  </SelectItem>
-                  <SelectItem value={RolUsuario.SUPER_ADMIN}>
-                    Super Administrador
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* BOTÓN SUBMIT */}
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Registrando..." : "Registrar Usuario"}
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-500">
-            Sistema de gestión CRM © {new Date().getFullYear()}
-          </p>
-        </CardFooter>
-      </Card>
-    </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Sistema de gestión CRM © {new Date().getFullYear()}
+            </p>
+          </AppStack>
+        </AppCard>
+      </AppContainer>
+    </main>
   );
 }

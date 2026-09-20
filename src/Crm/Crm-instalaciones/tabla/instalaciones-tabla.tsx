@@ -49,11 +49,11 @@ export function InstalacionesTable({
         error={error}
         onRetry={onRetry}
         paginationMode="server"
+        {...table.getDataTableStateProps()}
         pagination={table.getPaginationConfig({
           totalRows,
           pageSizeOptions: [10, 20, 50],
         })}
-        {...table.getDataTableStateProps()}
         enableColumnVisibility
         enableColumnPinning
         stickyHeader

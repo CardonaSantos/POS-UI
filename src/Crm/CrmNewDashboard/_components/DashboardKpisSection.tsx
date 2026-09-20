@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import {
   AlertTriangle,
   Clock,
@@ -7,9 +8,13 @@ import {
   FileText,
   PauseCircle,
   ReceiptText,
+  Router,
+  ShieldCheck,
+  TimerOff,
   Trash2,
   UserCheck,
   Users,
+  Wrench,
 } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
@@ -18,6 +23,7 @@ import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
 
 import { formattMonedaGT } from "@/Crm/Utils/formattMonedaGT";
+
 import type { DashboardData } from "@/Crm/features/dashboard/dashboard.interfaces";
 
 import { KpiCard } from "./KpiCard";
@@ -29,16 +35,21 @@ interface DashboardKpisSectionProps {
 export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
   const { facturacion, clientes } = kpisData;
 
+  const { resumen, servicio, cobranza } = clientes;
+
   return (
-    <AppStack gap="sm" className="min-w-0 ">
+    <AppStack gap="sm" className="min-w-0">
+      {/* ======================================================
+       * FACTURACIÓN
+       * ====================================================== */}
+
       <DashboardKpiGroup
         title="Facturación"
         description="Resumen mensual de emisión, cobro y saldos pendientes"
-        icon={<ReceiptText className="h-4 w-4" />}
+        icon={<ReceiptText className="h-3.5 w-3.5" />}
         badge={`${facturacion.facturasEmitidasMes} emitidas`}
       >
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 p-1">
-          {" "}
+        <div className="grid grid-cols-2 gap-1 p-1 sm:grid-cols-3 lg:grid-cols-5">
           <KpiCard
             type="FACTURACION"
             linkValue=""
@@ -47,6 +58,7 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             tone="info"
             Icon={FileText}
           />
+
           <KpiCard
             type="FACTURACION"
             linkValue="PAGADA"
@@ -55,14 +67,16 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             tone="success"
             Icon={DollarSign}
           />
+
           <KpiCard
             type="FACTURACION"
             linkValue=""
             title="Facturado"
             value={formattMonedaGT(facturacion.montoFacturadoMes)}
-            tone="purple"
+            tone="info"
             Icon={CreditCard}
           />
+
           <KpiCard
             type="FACTURACION"
             linkValue="PENDIENTE"
@@ -71,78 +85,131 @@ export function DashboardKpisSection({ kpisData }: DashboardKpisSectionProps) {
             tone="danger"
             Icon={AlertTriangle}
           />
+
           <KpiCard
             type="FACTURACION"
-            linkValue="PAGADAS"
+            linkValue="PAGADA"
             title="Cobrado"
             value={formattMonedaGT(facturacion.montoCobradoMes)}
-            tone="teal"
+            tone="primary"
             Icon={DollarSign}
           />
         </div>
       </DashboardKpiGroup>
 
+      {/* ======================================================
+       * CLIENTES
+       * ====================================================== */}
+
       <DashboardKpiGroup
         title="Clientes"
-        description="Estado operativo de clientes en el sistema"
-        icon={<Users className="h-4 w-4" />}
-        badge={`${clientes.totalEnSistema} en sistema`}
+        description="Estado operativo y situación de cobranza"
+        icon={<Users className="h-3.5 w-3.5" />}
+        badge={`${resumen.totalEnSistema} sistema · ${resumen.carteraActual} cartera`}
       >
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
-          {" "}
-          <KpiCard
-            type="CLIENTE"
-            linkValue=""
-            title="En sistema"
-            value={clientes.totalEnSistema}
-            tone="neutral"
-            Icon={Users}
-          />
-          <KpiCard
-            type="CLIENTE"
-            linkValue="ACTIVO"
-            title="Activos"
-            value={clientes.activos}
-            tone="success"
-            Icon={UserCheck}
-          />
-          <KpiCard
-            type="CLIENTE"
-            linkValue="SUSPENDIDO"
-            title="Suspendidos"
-            value={clientes.suspendidos}
-            tone="warning"
-            Icon={PauseCircle}
-          />
-          <KpiCard
-            type="CLIENTE"
-            linkValue="MOROSO"
-            title="Morosos"
-            value={clientes.morosos}
-            tone="danger"
-            Icon={AlertTriangle}
-          />
-          <KpiCard
-            type="CLIENTE"
-            linkValue="PENDIENTE_ACTIVO"
-            title="Pend. activo"
-            value={clientes.pendientesActivacion}
-            tone="purple"
-            Icon={Clock}
-          />
-          <KpiCard
-            type="CLIENTE"
-            linkValue="DESINSTALADO"
-            title="Desinstalados"
-            value={clientes.desinstalados}
-            tone="neutral"
-            Icon={Trash2}
-          />
+        <div className="min-w-0 space-y-1.5 p-1">
+          {/* ================================================
+           * SERVICIO
+           * ================================================ */}
+
+          <DashboardKpiSubgroup
+            title="Servicio"
+            icon={<Router className="h-3 w-3" />}
+          >
+            <div className="grid min-w-0 grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard
+                type="CLIENTE_SERVICIO"
+                linkValue="ACTIVO"
+                title="Activos"
+                value={servicio.activos}
+                tone="success"
+                Icon={UserCheck}
+              />
+
+              <KpiCard
+                type="CLIENTE_SERVICIO"
+                linkValue="SUSPENDIDO"
+                title="Suspendidos"
+                value={servicio.suspendidos}
+                tone="warning"
+                Icon={PauseCircle}
+              />
+
+              <KpiCard
+                type="CLIENTE_SERVICIO"
+                linkValue="EN_INSTALACION"
+                title="Instalación"
+                value={servicio.enInstalacion}
+                tone="primary"
+                Icon={Wrench}
+              />
+
+              <KpiCard
+                type="CLIENTE_SERVICIO"
+                linkValue="DESINSTALADO"
+                title="Desinstalados"
+                value={servicio.desinstalados}
+                tone="neutral"
+                Icon={Trash2}
+              />
+            </div>
+          </DashboardKpiSubgroup>
+
+          {/* ================================================
+           * COBRANZA
+           * ================================================ */}
+
+          <DashboardKpiSubgroup
+            title="Cobranza"
+            icon={<DollarSign className="h-3 w-3" />}
+          >
+            <div className="grid min-w-0 grid-cols-2 gap-1 sm:grid-cols-4">
+              <KpiCard
+                type="CLIENTE_COBRANZA"
+                linkValue="AL_DIA"
+                title="Al día"
+                value={cobranza.alDia}
+                tone="success"
+                Icon={ShieldCheck}
+              />
+
+              <KpiCard
+                type="CLIENTE_COBRANZA"
+                linkValue="PAGO_PENDIENTE"
+                title="Pago pend."
+                value={cobranza.pagoPendiente}
+                tone="info"
+                Icon={Clock}
+              />
+
+              <KpiCard
+                type="CLIENTE_COBRANZA"
+                linkValue="ATRASADO"
+                title="Atrasados"
+                value={cobranza.atrasados}
+                tone="warning"
+                Icon={TimerOff}
+              />
+
+              <KpiCard
+                type="CLIENTE_COBRANZA"
+                linkValue="MOROSO"
+                title="Morosos"
+                value={cobranza.morosos}
+                tone="danger"
+                Icon={AlertTriangle}
+              />
+            </div>
+          </DashboardKpiSubgroup>
         </div>
       </DashboardKpiGroup>
     </AppStack>
   );
 }
+
+/* ============================================================
+ * GROUP
+ * ============================================================ */
 
 function DashboardKpiGroup({
   title,
@@ -179,11 +246,11 @@ function DashboardKpiGroup({
             </div>
 
             <div className="min-w-0">
-              <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide  text-[hsl(var(--app-foreground,var(--foreground)))]">
+              <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
                 {title}
               </h2>
 
-              <p className="hidden">{description}</p>
+              <span className="sr-only">{description}</span>
             </div>
           </AppInline>
 
@@ -200,5 +267,31 @@ function DashboardKpiGroup({
         {children}
       </AppStack>
     </AppCard>
+  );
+}
+
+/* ============================================================
+ * SUBGROUP
+ * ============================================================ */
+
+function DashboardKpiSubgroup({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="mb-1 flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+        {icon}
+
+        <span>{title}</span>
+      </div>
+
+      {children}
+    </div>
   );
 }

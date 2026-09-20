@@ -34,6 +34,7 @@ import {
 import { AppOption } from "../CrmCustomers/customer-table.constants";
 import { createRutasListColumns } from "./_components/regists/rutas-list.columns";
 import { RutasDetailDialog } from "./_components/regists/rutas-detail-dialog";
+import { useNavigate } from "react-router-dom";
 
 type RutasResponse = {
   data: Ruta[];
@@ -79,6 +80,8 @@ function normalizeRutasResponse(raw: unknown): RutasResponse {
 }
 
 export function RutasCobroList() {
+  const navigate = useNavigate();
+
   const filters = useAppStateHandlers<RutasListFiltersState>({
     search: "",
     serverSearch: "",
@@ -159,6 +162,13 @@ export function RutasCobroList() {
     [detailDialog],
   );
 
+  const handleEditRuta = React.useCallback(
+    (ruta: Ruta) => {
+      navigate(`/crm/rutas-cobro/edit/${ruta.id}`);
+    },
+    [navigate],
+  );
+
   const handleDownloadExcelRutaCobro = React.useCallback(async (ruta: Ruta) => {
     try {
       const response = await downloadExcelRutaCobro(ruta.id);
@@ -203,12 +213,18 @@ export function RutasCobroList() {
     () =>
       createRutasListColumns({
         onView: handleViewRuta,
+
+        onEdit: handleEditRuta,
+
         onDelete: deleteDialog.open,
+
         onClose: closeDialog.open,
+
         onDownloadExcel: handleDownloadExcelRutaCobro,
       }),
     [
       handleViewRuta,
+      handleEditRuta,
       deleteDialog.open,
       closeDialog.open,
       handleDownloadExcelRutaCobro,

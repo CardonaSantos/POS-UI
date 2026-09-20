@@ -7,7 +7,11 @@ import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
 
 import type { ClienteInstalacionEvidenciaDetalle } from "@/Crm/features/instalaciones/instalaciones.interfaces";
-import { formatBytes, humanizeEnum } from "./instalacion-utils.utils";
+import {
+  formatBytes,
+  humanizeEnum,
+  isImageEvidence,
+} from "./instalacion-utils.utils";
 import { formattShortFecha } from "@/utils/formattFechas";
 
 type InstalacionEvidenceGalleryProps = {
@@ -19,9 +23,7 @@ export function InstalacionEvidenceGallery({
   evidencias,
   onOpenEvidence,
 }: InstalacionEvidenceGalleryProps) {
-  const imageEvidences = evidencias.filter((evidencia) =>
-    Boolean(evidencia.media.cdnUrl),
-  );
+  const imageEvidences = evidencias.filter(isImageEvidence);
 
   return (
     <AppCard variant="outline" size="sm" radius="md" className="p-2">

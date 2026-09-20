@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
+
 import { AlertTriangle, Route, Users } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppInline } from "@/components/app/primitives/app-inline";
-import { AppStack } from "@/components/app/primitives/app-stack";
 
 import type { MorosoTop, RutaActiva } from "../interfaces/dashboard-interfaces";
+
 import {
   DashboardActiveRoutesList,
   DashboardTopMorososList,
@@ -24,43 +25,40 @@ export function DashboardRoutesSidebar({
   topMorosos,
 }: DashboardRoutesSidebarProps) {
   const rutas = Array.isArray(rutaActiva) ? rutaActiva : [];
+
   const morosos = Array.isArray(topMorosos) ? topMorosos : [];
 
-  const totalClientesRuta = React.useMemo(() => {
-    return rutas.reduce(
-      (acc, ruta) => acc + Number(ruta.totalClientes || 0),
-      0,
-    );
-  }, [rutas]);
+  const totalClientesRuta = React.useMemo(
+    () => rutas.reduce((acc, ruta) => acc + Number(ruta.totalClientes || 0), 0),
+    [rutas],
+  );
 
   return (
     <AppCard
       variant="outline"
       size="xs"
       radius="md"
-      className="min-w-0 lg:h-full p-2"
+      className="h-full min-h-0 min-w-0 overflow-hidden p-2"
     >
-      <AppStack gap="xs" className="min-w-0">
-        {/* Header compacto */}
+      <div className="flex h-full min-h-0 flex-col gap-1.5">
+        {/* HEADER */}
         <AppInline
           gap="xs"
           align="center"
           justify="between"
-          className="min-w-0"
+          className="min-w-0 shrink-0"
         >
           <AppInline gap="xs" align="center" className="min-w-0">
             <Route className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--app-primary,var(--primary)))]" />
 
-            <div className="min-w-0">
-              <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
-                Rutas y cobros
-              </h2>
-            </div>
+            <h2 className="truncate text-[11px] font-semibold uppercase leading-none tracking-wide text-[hsl(var(--app-foreground,var(--foreground)))]">
+              Rutas y cobros
+            </h2>
           </AppInline>
         </AppInline>
 
-        {/* Métricas ultra compactas */}
-        <div className="grid grid-cols-2 gap-1 ">
+        {/* RESUMEN */}
+        <div className="grid shrink-0 grid-cols-2 gap-1">
           <CompactRouteStat
             label="Clientes"
             value={totalClientesRuta}
@@ -76,18 +74,26 @@ export function DashboardRoutesSidebar({
           />
         </div>
 
-        {/* Listas */}
-        {/* Listas */}
-        <div className="flex h-full min-h-0 flex-col">
-          <div className="min-w-0 shrink-0 border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
+        {/*
+         * ========================================================
+         * DOS MITADES REALES
+         * ========================================================
+         *
+         * Ambas disponen exactamente del mismo espacio.
+         * Cuando la lista supera su mitad, aparece scroll.
+         */}
+        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-1.5">
+          {/* RUTAS */}
+          <section className="min-h-0 min-w-0 overflow-hidden border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
             <DashboardActiveRoutesList rutas={rutas} />
-          </div>
+          </section>
 
-          <div className="min-w-0 min-h-0 flex-1 border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
+          {/* MOROSOS */}
+          <section className="min-h-0 min-w-0 overflow-hidden border-t border-[hsl(var(--app-border,var(--border)))] pt-1">
             <DashboardTopMorososList morosos={morosos} />
-          </div>
+          </section>
         </div>
-      </AppStack>
+      </div>
     </AppCard>
   );
 }
@@ -106,12 +112,11 @@ function CompactRouteStat({
   return (
     <div
       className={[
-        "flex min-w-0 items-center justify-between gap-1",
+        "flex h-6 min-w-0 items-center justify-between gap-1",
         "rounded-[var(--app-radius-sm)]",
         "border border-[hsl(var(--app-border,var(--border)))]",
         "bg-[hsl(var(--app-muted,var(--muted))/0.12)]",
-        "px-1.5 py-0.5",
-        "h-6",
+        "px-1.5",
       ].join(" ")}
     >
       <div className="flex min-w-0 items-center gap-1">
@@ -125,12 +130,12 @@ function CompactRouteStat({
           {icon}
         </AppBadge>
 
-        <span className="truncate text-[10px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
+        <span className="truncate text-[9px] leading-none text-[hsl(var(--app-muted-foreground,var(--muted-foreground)))]">
           {label}
         </span>
       </div>
 
-      <span className="shrink-0 text-[12px] font-semibold leading-none text-[hsl(var(--app-foreground,var(--foreground)))]">
+      <span className="shrink-0 text-[12px] font-semibold leading-none tabular-nums text-[hsl(var(--app-foreground,var(--foreground)))]">
         {value}
       </span>
     </div>

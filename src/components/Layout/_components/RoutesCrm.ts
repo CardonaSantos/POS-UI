@@ -1,5 +1,10 @@
+import { AddMinus } from "@/Crm/Icons/AddMinus";
+import { AlertShield } from "@/Crm/Icons/AlertShield";
+import { CustomIconProps, NetworkChartFilled } from "@/Crm/Icons/ChartNetWork";
+import { ListAltCheckOutline } from "@/Crm/Icons/cheklist";
 import { MessageIcon } from "@/Crm/Icons/MessageIcon";
 import { MetaIcon } from "@/Crm/Icons/MetaIcon";
+import { TwotoneAppRegistration } from "@/Crm/Icons/TwotoneAppRegistration";
 import { WhatsappIcon } from "@/Crm/Icons/WhatsappIcon";
 import {
   Home,
@@ -14,7 +19,6 @@ import {
   MapPinned,
   MapPin,
   User,
-  LucideIcon,
   Target,
   ClipboardCheck,
   Sheet,
@@ -29,19 +33,37 @@ import {
   GalleryHorizontal,
   BadgeCheck,
   BadgePlus,
-  CircleFadingPlus,
+  LucideIcon,
 } from "lucide-react";
 
-export interface Route {
-  icon: LucideIcon;
+import type { ComponentType, SVGProps } from "react";
+
+export type AppRouteIconProps = Omit<
+  SVGProps<SVGSVGElement>,
+  "ref" | "size"
+> & {
+  size?: number;
+};
+
+export type AppRouteIcon = LucideIcon | ComponentType<CustomIconProps>;
+
+export type Route = {
+  icon: AppRouteIcon;
+
   label: string;
+
   href?: string;
+
   submenu?: Route[];
-}
+};
 
 export const routesCrm_SuperAdmin = [
-  { icon: Home, label: "Dashboard", href: "/crm" },
-
+  {
+    icon: Home,
+    label: "Dashboard",
+    href: "/crm",
+  },
+  // CLIENTES
   {
     icon: Users,
     label: "Clientes",
@@ -56,27 +78,42 @@ export const routesCrm_SuperAdmin = [
         label: "Nuevo Cliente",
         href: "/crm/crear-cliente-crm",
       },
-      {
-        icon: CircleFadingPlus,
-        label: "Nueva Instalacion",
-        href: "/crm/crear-instalacion",
-      },
-
-      {
-        icon: CircleFadingPlus,
-        label: "Instalaciones",
-        href: "/crm/instalaciones",
-      },
     ],
   },
 
+  // INSTALACIONES
+  {
+    icon: TwotoneAppRegistration,
+    label: "Instalaciones",
+    submenu: [
+      {
+        icon: ListAltCheckOutline,
+        label: "Instalaciones registradas",
+        href: "/crm/instalaciones",
+      },
+
+      {
+        icon: NetworkChartFilled,
+        label: "Perfiles Homologados",
+        href: "/crm/pppoe/homologacion-perfiles",
+      },
+    ],
+  },
+  // SOPORTE
   {
     icon: MonitorSmartphone,
     label: "Soporte",
     submenu: [
-      { icon: Ticket, label: "Tickets de Soporte", href: "/crm/tickets" },
-      { icon: Target, label: "Metas de Soporte", href: "/crm/metas-soporte" },
-
+      {
+        icon: Ticket,
+        label: "Tickets de Soporte",
+        href: "/crm/tickets",
+      },
+      {
+        icon: Target,
+        label: "Metas de Soporte",
+        href: "/crm/metas-soporte",
+      },
       {
         icon: Tags,
         label: "Categorías de Soporte",
@@ -84,6 +121,26 @@ export const routesCrm_SuperAdmin = [
       },
     ],
   },
+
+  // INSTALACIONES
+  {
+    icon: AddMinus,
+    label: "Desinstalaciones",
+    submenu: [
+      {
+        icon: ListAltCheckOutline,
+        label: "Desinstalaciones registradas",
+        href: "/crm/desinstalaciones",
+      },
+
+      {
+        icon: AlertShield,
+        label: "Autorizaciones",
+        href: "/crm/desinstalacion-auth",
+      },
+    ],
+  },
+
   {
     icon: Waypoints,
     label: "Servicios",
@@ -468,6 +525,11 @@ export const routesCrm_Oficina = [
 
 export const routesCrm_Tecnico = [
   { icon: Home, label: "Dashboard", href: "/crm/tec-dashboard" },
+  {
+    icon: ListAltCheckOutline,
+    label: "Instalaciones Asignadas",
+    href: "/crm/instalaciones/tecnico",
+  },
   {
     icon: MonitorSmartphone,
     label: "Soporte",

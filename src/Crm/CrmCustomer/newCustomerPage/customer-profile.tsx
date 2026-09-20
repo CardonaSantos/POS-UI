@@ -4,18 +4,14 @@ import * as React from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { FileText, Image, MapPinned, Ticket, User } from "lucide-react";
-
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 import { AppContainer } from "@/components/app/primitives/app-container";
 import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppTabs, type AppTabItem } from "@/components/app/primitives/app-tabs";
 import { useAppDisclosure } from "@/components/app/handlers";
-
 import { useStoreCrm } from "@/Crm/ZustandCrm/ZustandCrmContext";
 import { CustomerImage } from "@/Crm/features/customer-galery/customer-galery.interfaces";
-import { MikroTikIcon } from "@/Crm/Icons/MikroTikIcon";
 import { useTabChangeWithUrl } from "@/Crm/Utils/Components/handleTabChangeWithParamURL";
-
 import { LocationTab } from "./_components/location-tab";
 import { TicketsTab } from "./_components/tickets-tab";
 import { BillingTab } from "./_components/billing-tab";
@@ -24,22 +20,8 @@ import { CustomerDialogs } from "./_components/customer-dialogs";
 import { ClientOverview } from "./_components/overview";
 import { CustomerImagesGallery } from "./CrmCustomerGalery/CustomerGaleryMain";
 import EmptyImages from "./CrmCustomerGalery/EmptyImages";
-import CustomerNetworkControl from "./customer-network-control/customer-network-controll";
-
-import {
-  useClienteDetails,
-  usePlantillasContrato,
-} from "../API/customer-profile.queries";
+import { useClienteDetails } from "../API/customer-profile.queries";
 import { clienteInitialState } from "../helpers/clienteInitialState";
-
-interface PlantillasInterface {
-  id: number;
-  nombre: string;
-  body: string;
-  empresaId: number;
-  creadoEn: string;
-  actualizadoEn: string;
-}
 
 interface FacturaToDeleter {
   id: number;
@@ -98,15 +80,7 @@ export default function CustomerProfile() {
     refetch: refetchCliente,
   } = useClienteDetails(clienteId);
 
-  const { data: plantillasData, error: plantillasError } =
-    usePlantillasContrato();
-
   const clienteSecure = cliente ?? clienteInitialState;
-
-  const plantillas = React.useMemo<PlantillasInterface[]>(
-    () => plantillasData ?? [],
-    [plantillasData],
-  );
 
   React.useEffect(() => {
     setDataContrato((prev) => ({
@@ -121,13 +95,6 @@ export default function CustomerProfile() {
     console.error(clienteError);
     toast.info("Error al conseguir información sobre el cliente");
   }, [clienteError]);
-
-  React.useEffect(() => {
-    if (!plantillasError) return;
-
-    console.error(plantillasError);
-    toast.info("Error al cargar plantillas de contrato");
-  }, [plantillasError]);
 
   React.useEffect(() => {
     const urlTab = searchParams.get("tab") || "resumen";
@@ -227,12 +194,6 @@ export default function CustomerProfile() {
         content: contentMediaSection,
         icon: <Image size={16} />,
       },
-      {
-        value: "mikrotik",
-        label: "MikroTik",
-        content: <CustomerNetworkControl cliente={clienteSecure} />,
-        icon: <MikroTikIcon scale={16} />,
-      },
     ],
     [clienteSecure, commonTabProps, contentMediaSection],
   );
@@ -247,11 +208,7 @@ export default function CustomerProfile() {
     >
       <AppContainer size="full" paddingX="none" paddingY="none">
         <AppStack gap="sm">
-          <CustomerHeader
-            cliente={clienteSecure}
-            plantillas={plantillas}
-            setOpenCreateContrato={createContratoDialog.setOpen}
-          />
+          <CustomerHeader cliente={clienteSecure} />
 
           <AppTabs
             value={activeTab}

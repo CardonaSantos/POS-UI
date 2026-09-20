@@ -1,6 +1,7 @@
-// instalacion-detail.utils.ts
-
-import type { ClienteInstalacionDetalle } from "@/Crm/features/instalaciones/instalaciones.interfaces";
+import type {
+  ClienteInstalacionDetalle,
+  ClienteInstalacionEvidenciaDetalle,
+} from "@/Crm/features/instalaciones/instalaciones.interfaces";
 import { EstadoInstalacionCliente } from "@/Crm/features/instalaciones/enums";
 
 export type AppBadgeTone =
@@ -10,12 +11,6 @@ export type AppBadgeTone =
   | "warning"
   | "danger"
   | "info";
-
-const currencyFormatter = new Intl.NumberFormat("es-GT", {
-  style: "currency",
-  currency: "GTQ",
-  minimumFractionDigits: 2,
-});
 
 const auditDateFormatter = new Intl.DateTimeFormat("es-GT", {
   dateStyle: "medium",
@@ -30,93 +25,62 @@ const businessDateFormatter = new Intl.DateTimeFormat("es-GT", {
   timeZone: "UTC",
 });
 
-export function formatCurrency(value: number): string {
-  return currencyFormatter.format(value);
-}
-
-/**
- * Para campos introducidos desde un date picker.
- * Evita que 2026-07-11T00:00:00.000Z aparezca como 10/07/2026
- * por la diferencia horaria de Guatemala.
- */
 export function formatBusinessDate(value: string | null): string {
-  if (!value) {
-    return "Sin registrar";
-  }
+  if (!value) return "Pendiente";
 
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha inválida";
-  }
-
-  return businessDateFormatter.format(date);
+  return Number.isNaN(date.getTime())
+    ? "Fecha inválida"
+    : businessDateFormatter.format(date);
 }
 
-/**
- * Para marcas reales de auditoría como creadoEn y actualizadoEn.
- */
 export function formatAuditDate(value: string | null): string {
-  if (!value) {
-    return "Sin registrar";
-  }
+  if (!value) return "Sin registrar";
 
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha inválida";
-  }
-
-  return auditDateFormatter.format(date);
+  return Number.isNaN(date.getTime())
+    ? "Fecha inválida"
+    : auditDateFormatter.format(date);
 }
 
 export function formatBytes(value: string | null): string {
-  if (!value) {
-    return "Tamaño no disponible";
-  }
+  if (!value) return "Tamaño no disponible";
 
   const bytes = Number(value);
-
-  if (!Number.isFinite(bytes) || bytes < 0) {
-    return "Tamaño no disponible";
-  }
-
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 ** 2) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
+  if (!Number.isFinite(bytes) || bytes < 0) return "Tamaño no disponible";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 }
 
 export function humanizeEnum(value: string): string {
   return value
     .toLowerCase()
-    .replace("_", " ")
-    .replace(/^\w/, (character) => character.toUpperCase());
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+export function isImageEvidence(
+  evidencia: ClienteInstalacionEvidenciaDetalle,
+): boolean {
+  if (!evidencia.media.cdnUrl) return false;
+
+  if (evidencia.media.mimeType) {
+    return evidencia.media.mimeType.startsWith("image/");
+  }
+
+  return ["jpg", "jpeg", "png", "webp", "gif", "avif"].includes(
+    (evidencia.media.extension ?? "").replace(/^\./, "").toLowerCase(),
+  );
 }
 
 export function getEstadoToneInstalacion(
   estado: EstadoInstalacionCliente,
 ): AppBadgeTone {
-  if (estado === EstadoInstalacionCliente.PROGRAMADA) {
-    return "info";
-  }
-
-  if (estado === EstadoInstalacionCliente.REPROGRAMADA) {
-    return "warning";
-  }
-
-  if (estado === EstadoInstalacionCliente.EN_PROCESO) {
-    return "primary";
-  }
-
-  if (estado === EstadoInstalacionCliente.COMPLETADA) {
-    return "success";
-  }
+  if (estado === EstadoInstalacionCliente.PROGRAMADA) return "info";
+  if (estado === EstadoInstalacionCliente.REPROGRAMADA) return "warning";
+  if (estado === EstadoInstalacionCliente.EN_PROCESO) return "primary";
+  if (estado === EstadoInstalacionCliente.COMPLETADA) return "success";
 
   if (
     estado === EstadoInstalacionCliente.CANCELADA ||
@@ -146,13 +110,11 @@ export function getTotalCostos(instalacion: ClienteInstalacionDetalle): number {
 }
 
 export function getInitials(name: string | null | undefined): string {
-  if (!name?.trim()) {
-    return "?";
-  }
+  if (!name?.trim()) return "?";
 
-  const parts = name.trim().split(/\s+/);
-
-  return parts
+  return name
+    .trim()
+    .split(/\s+/)
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");

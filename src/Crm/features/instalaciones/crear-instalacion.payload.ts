@@ -1,5 +1,3 @@
-import { EstadoInstalacionCliente, TipoInstalacionCliente } from "./enums";
-
 export type CrearClienteInstalacionCostosPayload = {
   costoInstalacion?: number;
   costoMateriales?: number;
@@ -20,34 +18,4 @@ export type AsignarTecnicoInstalacionPayload = {
   esResponsable?: boolean;
 
   observaciones?: string | null;
-};
-
-export type CrearClienteInstalacionPayload = {
-  empresaId: number;
-  clienteId: number;
-
-  servicioInternetId?: number;
-  ticketId?: number;
-
-  asesorId: number | null;
-  creadoPorId: number;
-
-  tipo?: TipoInstalacionCliente;
-  estado?: EstadoInstalacionCliente;
-
-  descripcion?: string;
-  motivo?: string;
-  observaciones?: string;
-
-  fechaProgramada?: string;
-  fechaInicio?: string;
-
-  direccionInstalacion?: string;
-  referenciaUbicacion?: string;
-
-  coordenadas?: string;
-
-  costos?: CrearClienteInstalacionCostosPayload;
-
-  tecnicos?: AsignarTecnicoInstalacionPayload[];
 };

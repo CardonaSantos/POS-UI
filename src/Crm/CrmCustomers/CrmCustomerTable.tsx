@@ -8,10 +8,8 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import { toast } from "sonner";
 
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
-import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppContainer } from "@/components/app/primitives/app-container";
-import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppStack } from "@/components/app/primitives/app-stack";
 import { AppDataTable } from "@/components/app/table/app-data-table";
 import {
@@ -235,13 +233,6 @@ export default function ClientesTable() {
   const clientes = responseTable?.data ?? [];
   const totalCount = responseTable?.totalCount ?? 0;
 
-  const summary = responseTable?.summary ?? {
-    activo: 0,
-    atrasado: 0,
-    moroso: 0,
-    pendiente_activo: 0,
-  };
-
   const selectedIds = useMemo(
     () => Object.keys(table.rowSelection),
     [table.rowSelection],
@@ -451,21 +442,6 @@ export default function ClientesTable() {
     <PageTransitionCrm titleHeader="Lista de clientes" variant="fade-pure">
       <AppContainer size="full" paddingY="none" paddingX="none">
         <AppStack gap="sm">
-          <AppInline gap="xs" wrap>
-            <AppBadge tone="success" appearance="soft">
-              {summary.activo} activos
-            </AppBadge>
-            <AppBadge tone="warning" appearance="soft">
-              {summary.atrasado} atrasados
-            </AppBadge>
-            <AppBadge tone="danger" appearance="soft">
-              {summary.moroso} morosos
-            </AppBadge>
-            <AppBadge tone="info" appearance="soft">
-              {summary.pendiente_activo} pendientes
-            </AppBadge>
-          </AppInline>
-
           <CustomerTableFilters
             filters={filters.state}
             options={{

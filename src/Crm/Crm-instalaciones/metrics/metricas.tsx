@@ -1,6 +1,5 @@
 import { AppCard } from "@/components/app/primitives/app-card";
 import { AppGrid } from "@/components/app/primitives/app-grid";
-// import { EstadoInstalacionCliente } from "@/Crm/features/instalaciones/enums";
 
 import type {
   ClienteInstalacionListItem,

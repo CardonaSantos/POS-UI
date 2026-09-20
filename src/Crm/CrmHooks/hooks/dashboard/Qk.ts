@@ -1,9 +1,17 @@
-// /src/Crm/CrmHooks/hooks/dashboard/Qk.ts
+import { DashboardTicketsActividadParams } from "@/Crm/features/chart-types/tickets-chart";
 
 export const DashboardQkeys = {
   all: ["dashboard-data"] as const,
   kps: ["dashboard-kpis"] as const,
   cobros: ["cobros-data"] as const,
+  ticketsActividad: (params: DashboardTicketsActividadParams) =>
+    [
+      "dashboard",
+      "tickets-actividad",
+      params.preset,
+      params.desde ?? null,
+      params.hasta ?? null,
+    ] as const,
 };
 
 export const TicketsProcesoQkeys = {
@@ -21,4 +29,8 @@ export const InstalacionesVsDesinstalacionesQkeys = {
 export const TicketsAsignadosQkeys = {
   all: ["tickets-tec-asignado"] as const,
   specific: (ticketId: number) => ["ticket-tec-asignado", ticketId] as const,
+};
+
+export const tecnicoPanelQkeys = {
+  all: ["tecnico-panel"] as const,
 };

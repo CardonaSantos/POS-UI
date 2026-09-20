@@ -1,3 +1,30 @@
+// export enum RolTecnicoOperacionCliente {
+//   RESPONSABLE = "RESPONSABLE",
+//   APOYO = "APOYO",
+//   SUPERVISOR = "SUPERVISOR",
+//   COBRADOR = "COBRADOR",
+//   OTRO = "OTRO",
+// }
+export enum BandaWifi {
+  GHZ_2_4 = "GHZ_2_4",
+  GHZ_5 = "GHZ_5",
+  DOBLE_BANDA = "DOBLE_BANDA",
+}
+
+export enum EstadoAccesoInternet {
+  PENDIENTE = "PENDIENTE",
+  CONFIGURANDO = "CONFIGURANDO",
+  ACTIVO = "ACTIVO",
+  SUSPENDIDO = "SUSPENDIDO",
+  BAJA = "BAJA",
+}
+
+export enum AccionInstalacionAcceso {
+  CREADO = "CREADO",
+  MODIFICADO = "MODIFICADO",
+  RETIRADO = "RETIRADO",
+}
+
 export enum EstadoInstalacionCliente {
   PROGRAMADA = "PROGRAMADA",
   EN_PROCESO = "EN_PROCESO",
@@ -15,6 +42,46 @@ export enum TipoInstalacionCliente {
   MIGRACION_PLAN = "MIGRACION_PLAN",
   MIGRACION_TECNOLOGIA = "MIGRACION_TECNOLOGIA",
   OTRO = "OTRO",
+}
+
+export enum ModoAccesoInstalacion {
+  NUEVO = "NUEVO",
+  EXISTENTE = "EXISTENTE",
+}
+
+export enum TecnologiaAccesoInternet {
+  FIBRA_GPON = "FIBRA_GPON",
+  INALAMBRICO = "INALAMBRICO",
+  ETHERNET = "ETHERNET",
+  OTRO = "OTRO",
+}
+
+export enum MetodoAutenticacionInternet {
+  PPPOE = "PPPOE",
+  DHCP = "DHCP",
+  IP_ESTATICA = "IP_ESTATICA",
+  NINGUNO = "NINGUNO",
+}
+
+export enum EstadoResultadoPrealtaPppoe {
+  NO_APLICA = "NO_APLICA",
+  CREADA = "CREADA",
+  YA_EXISTIA = "YA_EXISTIA",
+  FALLIDA = "FALLIDA",
+}
+
+export enum EstadoCuentaPppoe {
+  PENDIENTE_CREACION = "PENDIENTE_CREACION",
+  EN_INSTALACION = "EN_INSTALACION",
+  PENDIENTE_ACTIVACION = "PENDIENTE_ACTIVACION",
+  EN_ACTIVACION = "EN_ACTIVACION",
+  ACTIVA = "ACTIVA",
+  EN_SUSPENSION = "EN_SUSPENSION",
+  SUSPENDIDA = "SUSPENDIDA",
+  EN_DESINSTALACION = "EN_DESINSTALACION",
+  ELIMINADA = "ELIMINADA",
+  CANCELADA = "CANCELADA",
+  ERROR = "ERROR",
 }
 export enum RolTecnicoOperacionCliente {
   RESPONSABLE = "RESPONSABLE",
@@ -39,11 +106,3 @@ export enum TipoEvidenciaClienteOperacion {
   DOCUMENTO = "DOCUMENTO",
   OTRO = "OTRO",
 }
-
-// export enum RolTecnicoOperacionCliente {
-//   RESPONSABLE = "RESPONSABLE",
-//   APOYO = "APOYO",
-//   SUPERVISOR = "SUPERVISOR",
-//   COBRADOR = "COBRADOR",
-//   OTRO = "OTRO",
-// }

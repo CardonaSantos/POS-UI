@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AtSign, Lock, Eye, EyeOff } from "lucide-react"; // Importamos los iconos de ojo
 import { toast } from "sonner";
 import { useLogin } from "../CrmHooks/hooks/use-auth/useAuth";
+import { useStoreCrm } from "../ZustandCrm/ZustandCrmContext";
 
 export default function CrmLogin() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,9 @@ export default function CrmLogin() {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const { mutate, isPending } = useLogin(formData);
+  const { mutate, isPending } = useLogin();
+
+  const setSession = useStoreCrm((state) => state.setSession);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,13 +49,21 @@ export default function CrmLogin() {
 
     mutate(cleanData, {
       onSuccess: (data: any) => {
-        console.log("Login exitoso:", data);
+        if (!data?.access_token) {
+          toast.error("El servidor no devolvió una sesión válida");
+          return;
+        }
+
+        const sessionCreated = setSession(data.access_token);
+
+        if (!sessionCreated) {
+          toast.error("No se pudo iniciar la sesión");
+          return;
+        }
+
         toast.success("Inicio de sesión exitoso");
 
-        if (data?.access_token) {
-          localStorage.setItem("tokenAuthCRM", data.access_token);
-          window.location.href = "/crm";
-        }
+        window.location.href = "/crm";
       },
       onError: (error: any) => {
         console.error("Error en login:", error);
