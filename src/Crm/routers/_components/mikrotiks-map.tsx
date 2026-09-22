@@ -1,15 +1,10 @@
 import { useMemo } from "react";
-
 import { Router } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
-
 import { AppEmptyState } from "@/components/app/primitives/app-empty-state";
-
 import { AppGrid } from "@/components/app/primitives/app-grid";
-
 import { AppInline } from "@/components/app/primitives/app-inline";
-
 import { AppStack } from "@/components/app/primitives/app-stack";
 
 import type { MikrotikRoutersResponse } from "@/Crm/features/mikro-tiks/mikrotiks.interfaces";
@@ -21,7 +16,7 @@ interface PropsMikrotiks {
 
   handleSelectToEdit: (mk: MikrotikRoutersResponse) => void;
 
-  handleOpenDelete: (mk: MikrotikRoutersResponse) => void;
+  handleOpenStatusChange: (mk: MikrotikRoutersResponse) => void;
 }
 
 function getCreatedTimestamp(value: string | null | undefined): number {
@@ -37,14 +32,26 @@ function getCreatedTimestamp(value: string | null | undefined): number {
 function MikroTiks({
   mikrotiks,
   handleSelectToEdit,
-  handleOpenDelete,
+  handleOpenStatusChange,
 }: PropsMikrotiks) {
   const orderedMikrotiks = useMemo(
     () =>
-      [...mikrotiks].sort(
-        (a, b) =>
-          getCreatedTimestamp(b.creadoEn) - getCreatedTimestamp(a.creadoEn),
-      ),
+      [...mikrotiks].sort((a, b) => {
+        /*
+         * Primero activos.
+         */
+        if (a.activo !== b.activo) {
+          return a.activo ? -1 : 1;
+        }
+
+        /*
+         * Dentro de cada estado,
+         * los más recientes primero.
+         */
+        return (
+          getCreatedTimestamp(b.creadoEn) - getCreatedTimestamp(a.creadoEn)
+        );
+      }),
     [mikrotiks],
   );
 
@@ -59,6 +66,8 @@ function MikroTiks({
   }
 
   const routerCount = orderedMikrotiks.length;
+
+  const activeCount = orderedMikrotiks.filter((router) => router.activo).length;
 
   return (
     <AppStack gap="sm">
@@ -77,9 +86,15 @@ function MikroTiks({
           </p>
         </div>
 
-        <AppBadge tone="neutral" appearance="soft" size="xs" radius="full">
-          {routerCount} {routerCount === 1 ? "router" : "routers"}
-        </AppBadge>
+        <AppInline align="center" gap="xs">
+          <AppBadge tone="success" appearance="soft" size="xs" radius="full">
+            {activeCount} activos
+          </AppBadge>
+
+          <AppBadge tone="neutral" appearance="soft" size="xs" radius="full">
+            {routerCount} {routerCount === 1 ? "router" : "routers"}
+          </AppBadge>
+        </AppInline>
       </AppInline>
 
       <AppGrid
@@ -94,8 +109,8 @@ function MikroTiks({
           <MikroTikCard
             key={mk.id}
             mk={mk}
-            handleOpenDelete={handleOpenDelete}
             handleSelectToEdit={handleSelectToEdit}
+            handleOpenStatusChange={handleOpenStatusChange}
           />
         ))}
       </AppGrid>

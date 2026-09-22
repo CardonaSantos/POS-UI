@@ -185,47 +185,37 @@ function RouterFormPage() {
       //   const { passwordEnc, ...rest } = values;
 
       //   const normalizedPassword = passwordEnc?.trim();
-
-      const { passwordEnc, id: _formId, ...rest } = values;
+      const { passwordEnc, id: _formId, empresaId, ...routerData } = values;
 
       const normalizedPassword = passwordEnc?.trim();
 
-      /**
-       * El frontend recibe una contraseña plana.
-       *
-       * La API espera `password`.
-       * `passwordEnc` pertenece únicamente al
-       * modelo persistido del backend y nunca
-       * debe enviarse desde el cliente.
-       */
-      const payload = normalizedPassword
-        ? {
-            ...rest,
-            password: normalizedPassword,
-          }
-        : rest;
+      const updatePayload = {
+        ...routerData,
+        ...(normalizedPassword ? { password: normalizedPassword } : {}),
+      };
+
+      const createPayload = {
+        ...routerData,
+        empresaId,
+        ...(normalizedPassword ? { password: normalizedPassword } : {}),
+      };
 
       if (isEditMode && routerToEdit) {
         await toast.promise(
           updateMk.mutateAsync({
-            ...payload,
-
             id: routerToEdit.id,
+            payload: updatePayload,
           }),
           {
             loading: "Actualizando router...",
-
             success: "Router actualizado correctamente",
-
             error: (error) => getApiErrorMessageAxios(error),
           },
         );
       } else {
-        await toast.promise(createMk.mutateAsync(payload), {
+        await toast.promise(createMk.mutateAsync(createPayload), {
           loading: "Registrando router...",
-
           success: "Router registrado correctamente",
-
           error: (error) => getApiErrorMessageAxios(error),
         });
       }

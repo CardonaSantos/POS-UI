@@ -1,29 +1,25 @@
 import { useState } from "react";
-
 import { Plus, Router } from "lucide-react";
-
 import { useNavigate } from "react-router-dom";
-
 import { toast } from "sonner";
 
 import { PageTransitionCrm } from "@/components/Layout/page-transition";
 
 import { AppButton } from "@/components/app/primitives/app-button";
-
 import { AppConfirmDialog } from "@/components/app/primitives/app-confirm-dialog";
-
 import { AppInline } from "@/components/app/primitives/app-inline";
-
 import { AppStack } from "@/components/app/primitives/app-stack";
 
 import { getApiErrorMessageAxios } from "@/utils/getApiAxiosMessage";
 
 import {
-  useDeleteRouterMk,
+  useDeactivateRouterMk,
   useGetMikroTiks,
+  useReactivateRouterMk,
 } from "../CrmHooks/hooks/Mikrotik/useGetMikroTik";
 
 import type { MikrotikRoutersResponse } from "../features/mikro-tiks/mikrotiks.interfaces";
+
 import MikroTiks from "./_components/mikrotiks-map";
 
 const ROUTERS_BASE_PATH = "/crm/routers";
@@ -31,65 +27,97 @@ const ROUTERS_BASE_PATH = "/crm/routers";
 function RouterMainPage() {
   const navigate = useNavigate();
 
-  const [mkToDelete, setMkToDelete] = useState<MikrotikRoutersResponse | null>(
-    null,
-  );
+  const [statusTarget, setStatusTarget] =
+    useState<MikrotikRoutersResponse | null>(null);
 
-  const [openDelete, setOpenDelete] = useState(false);
+  const [openStatus, setOpenStatus] = useState(false);
 
   const { data: mks } = useGetMikroTiks();
 
   const mikrotiks = mks ?? [];
 
-  const deleteMk = useDeleteRouterMk();
+  const deactivateMk = useDeactivateRouterMk();
+
+  const reactivateMk = useReactivateRouterMk();
+
+  const isStatusPending = deactivateMk.isPending || reactivateMk.isPending;
 
   const handleCreate = () => {
     navigate(`${ROUTERS_BASE_PATH}/nuevo`);
   };
 
   const handleSelectToEdit = (mk: MikrotikRoutersResponse) => {
+    if (!mk.activo) {
+      toast.error("El router está retirado. Reactívalo antes de editarlo.");
+
+      return;
+    }
+
     navigate(`${ROUTERS_BASE_PATH}/${mk.id}/editar`);
   };
 
-  const handleOpenDelete = (mk: MikrotikRoutersResponse) => {
-    setMkToDelete(mk);
-
-    setOpenDelete(true);
+  const handleOpenStatusChange = (mk: MikrotikRoutersResponse) => {
+    setStatusTarget(mk);
+    setOpenStatus(true);
   };
 
-  const handleDeleteDialogChange = (open: boolean) => {
-    if (!open && deleteMk.isPending) {
+  const handleStatusDialogChange = (open: boolean) => {
+    if (!open && isStatusPending) {
       return;
     }
 
-    setOpenDelete(open);
+    setOpenStatus(open);
 
     if (!open) {
-      setMkToDelete(null);
+      setStatusTarget(null);
     }
   };
 
-  const handleDelete = async () => {
-    const routerId = mkToDelete?.id;
+  const handleStatusChange = async () => {
+    const routerId = statusTarget?.id;
 
     if (!Number.isInteger(routerId) || !routerId || routerId <= 0) {
-      toast.error("No se pudo identificar el router a eliminar.");
+      toast.error("No se pudo identificar el router.");
 
       return;
     }
 
-    await toast.promise(deleteMk.mutateAsync(routerId), {
-      loading: "Eliminando router...",
+    if (!statusTarget) {
+      return;
+    }
 
-      success: "Router eliminado correctamente",
+    try {
+      if (statusTarget.activo) {
+        await toast.promise(deactivateMk.mutateAsync(routerId), {
+          loading: "Retirando router...",
 
-      error: (error) => getApiErrorMessageAxios(error),
-    });
+          success: "Router retirado correctamente",
 
-    setOpenDelete(false);
+          error: (error) => getApiErrorMessageAxios(error),
+        });
+      } else {
+        await toast.promise(reactivateMk.mutateAsync(routerId), {
+          loading: "Reactivando router...",
 
-    setMkToDelete(null);
+          success: "Router reactivado correctamente",
+
+          error: (error) => getApiErrorMessageAxios(error),
+        });
+      }
+
+      setOpenStatus(false);
+      setStatusTarget(null);
+    } catch {
+      /*
+       * El toast ya presenta el error.
+       *
+       * Conservamos el diálogo abierto
+       * para permitir reintentar.
+       */
+    }
   };
+
+  const isRetiring = statusTarget?.activo === true;
 
   return (
     <PageTransitionCrm
@@ -138,30 +166,34 @@ function RouterMainPage() {
         <MikroTiks
           mikrotiks={mikrotiks}
           handleSelectToEdit={handleSelectToEdit}
-          handleOpenDelete={handleOpenDelete}
+          handleOpenStatusChange={handleOpenStatusChange}
         />
       </AppStack>
 
       {/* ================================= */}
-      {/* ELIMINACIÓN */}
+      {/* RETIRAR / REACTIVAR */}
       {/* ================================= */}
 
       <AppConfirmDialog
-        open={openDelete}
-        onOpenChange={handleDeleteDialogChange}
-        preset="delete"
-        title="Eliminar router MikroTik"
+        open={openStatus}
+        onOpenChange={handleStatusDialogChange}
+        preset={isRetiring ? "delete" : "warning"}
+        title={
+          isRetiring ? "Retirar router MikroTik" : "Reactivar router MikroTik"
+        }
         description={
-          mkToDelete
-            ? `Se eliminará el router "${mkToDelete.nombre}". Esta acción puede afectar configuraciones o servicios que dependan de él.`
+          statusTarget
+            ? isRetiring
+              ? `El router "${statusTarget.nombre}" será retirado y dejará de estar disponible para nuevas operaciones. Su historial y relaciones se conservarán.`
+              : `El router "${statusTarget.nombre}" volverá a estar disponible para conexiones SSH, operaciones y configuraciones que dependan de él.`
             : undefined
         }
-        confirmText="Eliminar router"
-        loadingText="Eliminando..."
-        onConfirm={handleDelete}
-        isLoading={deleteMk.isPending}
-        disabled={!mkToDelete}
-        preventClose={deleteMk.isPending}
+        confirmText={isRetiring ? "Retirar router" : "Reactivar router"}
+        loadingText={isRetiring ? "Retirando..." : "Reactivando..."}
+        onConfirm={handleStatusChange}
+        isLoading={isStatusPending}
+        disabled={!statusTarget}
+        preventClose={isStatusPending}
         closeOnConfirm={false}
       />
     </PageTransitionCrm>

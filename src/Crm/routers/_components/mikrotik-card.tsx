@@ -6,9 +6,10 @@ import {
   Edit,
   Globe,
   Network,
+  PowerOff,
+  RotateCcw,
   Server,
   Terminal,
-  Trash2,
   User,
 } from "lucide-react";
 
@@ -33,16 +34,13 @@ interface MkProps {
 
   handleSelectToEdit: (mk: MikrotikRoutersResponse) => void;
 
-  handleOpenDelete: (mk: MikrotikRoutersResponse) => void;
+  handleOpenStatusChange: (mk: MikrotikRoutersResponse) => void;
 }
 
 interface RouterInfoProps {
   label: string;
-
   value: ReactNode;
-
   icon?: ReactNode;
-
   mono?: boolean;
 }
 
@@ -78,7 +76,11 @@ function RouterInfo({ label, value, icon, mono = false }: RouterInfoProps) {
   );
 }
 
-function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
+function MikroTikCard({
+  mk,
+  handleSelectToEdit,
+  handleOpenStatusChange,
+}: MkProps) {
   const createdAt = mk.creadoEn
     ? formattShortFecha(mk.creadoEn)
     : "Sin registrar";
@@ -105,7 +107,7 @@ function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
           dot
           dotPulse={mk.activo}
         >
-          {mk.activo ? "Activo" : "Inactivo"}
+          {mk.activo ? "Activo" : "Retirado"}
         </AppBadge>
       }
       headerDivider
@@ -117,17 +119,30 @@ function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
             type="button"
             variant="outline"
             size="xs"
-            leftIcon={<Trash2 size={13} aria-hidden="true" />}
-            onClick={() => handleOpenDelete(mk)}
+            leftIcon={
+              mk.activo ? (
+                <PowerOff size={13} aria-hidden="true" />
+              ) : (
+                <RotateCcw size={13} aria-hidden="true" />
+              )
+            }
+            onClick={() => handleOpenStatusChange(mk)}
           >
-            Eliminar
+            {mk.activo ? "Retirar" : "Reactivar"}
           </AppButton>
 
           <AppButton
             type="button"
             size="xs"
+            variant={mk.activo ? "primary" : "outline"}
             leftIcon={<Edit size={13} aria-hidden="true" />}
+            disabled={!mk.activo}
             onClick={() => handleSelectToEdit(mk)}
+            title={
+              mk.activo
+                ? "Editar router"
+                : "Reactiva el router antes de editarlo"
+            }
           >
             Editar
           </AppButton>
@@ -170,7 +185,7 @@ function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
 
             <RouterInfo
               label="Usuario SSH"
-              value={"*****"}
+              value="*****"
               icon={<User size={13} />}
               mono
             />
@@ -220,8 +235,13 @@ function MikroTikCard({ mk, handleSelectToEdit, handleOpenDelete }: MkProps) {
             Router #{mk.id}
           </span>
 
-          <AppBadge tone="neutral" appearance="outline" size="xs" radius="full">
-            SSH
+          <AppBadge
+            tone={mk.activo ? "neutral" : "danger"}
+            appearance="outline"
+            size="xs"
+            radius="full"
+          >
+            {mk.activo ? "SSH" : "FUERA DE SERVICIO"}
           </AppBadge>
         </AppInline>
       </AppStack>
