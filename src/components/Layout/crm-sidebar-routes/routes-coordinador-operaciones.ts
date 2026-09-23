@@ -2,13 +2,15 @@ import type { Route } from "./crm-route-types";
 
 import {
   botMensajeriaRoute,
+  campaniasWhatsappRoute,
   clientesRoute,
   creditosRoute,
   dashboardRoute,
+  desinstalacionesAuthRoute,
   desinstalacionesRoute,
   facturacionZonaRoute,
   instalacionesRoute,
-  opticoRoute,
+  // opticoRoute,
   perfilRoute,
   plantillasContratosRoute,
   pppoeRoute,
@@ -33,6 +35,8 @@ export const routesCrm_CoordinadorOperaciones: Route[] = [
 
   desinstalacionesRoute,
 
+  desinstalacionesAuthRoute,
+
   serviciosRoute,
 
   facturacionZonaRoute,
@@ -40,12 +44,12 @@ export const routesCrm_CoordinadorOperaciones: Route[] = [
   sectoresRoute,
 
   botMensajeriaRoute,
-
+  campaniasWhatsappRoute,
   plantillasContratosRoute,
 
   rutasCobroRoute,
 
-  opticoRoute,
+  // opticoRoute,
 
   creditosRoute,
 
