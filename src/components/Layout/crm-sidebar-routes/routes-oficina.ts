@@ -9,7 +9,7 @@ import {
   instalacionesRoute,
   perfilRoute,
   plantillasContratosRoute,
-  pppoeOficinaRoute,
+  // pppoeOficinaRoute,
   registrosEliminadosRoute,
   reportsRoute,
   rutasCobroRoute,
@@ -24,7 +24,7 @@ export const routesCrm_Oficina: Route[] = [
 
   instalacionesRoute,
 
-  pppoeOficinaRoute,
+  // pppoeOficinaRoute,
 
   soporteRoute,
 

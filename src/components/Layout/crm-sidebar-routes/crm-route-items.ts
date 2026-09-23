@@ -111,12 +111,13 @@ export const pppoeRoute: Route = {
       label: "Cuentas PPPoE",
       href: "/crm/pppoe/cuentas",
     },
-    {
-      icon: NetworkChartFilled,
-      label: "Perfiles Homologados",
-      href: "/crm/pppoe/homologacion-perfiles",
-    },
   ],
+};
+
+export const pppoeHomologacionesRoute: Route = {
+  icon: NetworkChartFilled,
+  label: "Perfiles Homologados",
+  href: "/crm/pppoe/homologacion-perfiles",
 };
 
 /**
@@ -193,12 +194,13 @@ export const desinstalacionesRoute: Route = {
       label: "Desinstalaciones registradas",
       href: "/crm/desinstalaciones",
     },
-    {
-      icon: AlertShield,
-      label: "Autorizaciones",
-      href: "/crm/desinstalacion-auth",
-    },
   ],
+};
+
+export const desinstalacionesAuthRoute: Route = {
+  icon: AlertShield,
+  label: "Autorizaciones",
+  href: "/crm/desinstalacion-auth",
 };
 
 export const serviciosRoute: Route = {
@@ -249,6 +251,13 @@ export const botMensajeriaRoute: Route = {
       label: "Galería",
       href: "crm/bot/whatsapp/galery",
     },
+  ],
+};
+
+export const campaniasWhatsappRoute: Route = {
+  icon: WhatsappIcon,
+  label: "Campañas Whatsapp",
+  submenu: [
     {
       icon: MetaIcon,
       label: "Plantillas Meta",
@@ -328,12 +337,13 @@ export const creditosRoute: Route = {
       label: "Créditos",
       href: "/crm/credito-registros",
     },
-    {
-      icon: FileType,
-      label: "Contrato",
-      href: "/crm/contrato",
-    },
   ],
+};
+
+export const contratoRoute: Route = {
+  icon: FileType,
+  label: "Contrato",
+  href: "/crm/contrato",
 };
 
 export const registrosEliminadosRoute: Route = {
