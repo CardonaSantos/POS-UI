@@ -1,9 +1,4 @@
-import {
-  Battery,
-  Clock3,
-  Crosshair,
-  MapPin,
-} from "lucide-react";
+import { Battery, Clock3, Crosshair, MapPin } from "lucide-react";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppCard } from "@/components/app/primitives/app-card";
@@ -16,7 +11,6 @@ import type {
 } from "@/Crm/features/real-time-location/tracking.interfaces";
 
 import {
-  formatDateTime,
   formatMinutes,
   formatTime,
   stateLabel,
@@ -63,12 +57,7 @@ export function TrackingAttendanceSessions({
                 />
 
                 <div className="rounded-[var(--app-radius-md)] border border-border p-3">
-                  <AppInline
-                    align="center"
-                    justify="between"
-                    gap="sm"
-                    wrap
-                  >
+                  <AppInline align="center" justify="between" gap="sm" wrap>
                     <AppInline gap="xs" align="center" wrap>
                       <span className="text-xs font-semibold">
                         Sesión #{session.id}
@@ -156,7 +145,9 @@ export function TrackingAttendanceSessions({
                   key={location.id}
                   className="grid grid-cols-[7rem_6rem_6rem_7rem_minmax(12rem,1fr)] gap-2 border-b border-border px-3 py-2 text-[11px] last:border-b-0"
                 >
-                  <span>{formatTime(location.capturadoEn ?? location.recibidoEn)}</span>
+                  <span>
+                    {formatTime(location.capturadoEn ?? location.recibidoEn)}
+                  </span>
                   <span>
                     {location.sesionTrackingId
                       ? `#${location.sesionTrackingId}`
@@ -198,9 +189,7 @@ function Value({
     <AppInline gap="xs" align="center" wrap={false} className="min-w-0">
       <span className="shrink-0 text-primary">{icon}</span>
       <div className="min-w-0">
-        <div className="truncate text-[9px] text-muted-foreground">
-          {label}
-        </div>
+        <div className="truncate text-[9px] text-muted-foreground">{label}</div>
         <div className="truncate text-[11px] font-medium">{value}</div>
       </div>
     </AppInline>

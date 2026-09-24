@@ -2,11 +2,7 @@
 
 import * as React from "react";
 
-import {
-  AdvancedMarker,
-  Map,
-  useMap,
-} from "@vis.gl/react-google-maps";
+import { AdvancedMarker, Map, useMap } from "@vis.gl/react-google-maps";
 
 import {
   Battery,
@@ -21,11 +17,7 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { AppBadge } from "@/components/app/primitives/app-badge";
 import { AppButton } from "@/components/app/primitives/app-button";
@@ -34,10 +26,7 @@ import { AppInline } from "@/components/app/primitives/app-inline";
 import { AppSearchInput } from "@/components/app/primitives/app-search-input";
 import { AppStack } from "@/components/app/primitives/app-stack";
 
-import {
-  handleCall,
-  handleOpenWhatsapp,
-} from "@/Crm/_Utils/helpersText";
+import { handleCall, handleOpenWhatsapp } from "@/Crm/_Utils/helpersText";
 
 import type { TecnicoTrackingRealtimeView } from "@/Crm/features/real-time-location/tracking.interfaces";
 
@@ -91,10 +80,7 @@ function formatFreshness(value: string, nowMs: number): string {
     return "Sin dato";
   }
 
-  const seconds = Math.max(
-    0,
-    Math.floor((nowMs - date.getTime()) / 1000),
-  );
+  const seconds = Math.max(0, Math.floor((nowMs - date.getTime()) / 1000));
 
   if (seconds < 45) {
     return "Ahora";
@@ -130,15 +116,9 @@ function distanceMeters(
   const sinLat = Math.sin(dLat / 2);
   const sinLng = Math.sin(dLng / 2);
 
-  const h =
-    sinLat * sinLat +
-    Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
 
-  return (
-    2 *
-    earthRadius *
-    Math.asin(Math.min(1, Math.sqrt(h)))
-  );
+  return 2 * earthRadius * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
 function TrackingMarker({
@@ -154,8 +134,7 @@ function TrackingMarker({
     return null;
   }
 
-  const initial =
-    row.tecnico.nombre.trim().charAt(0).toUpperCase() || "?";
+  const initial = row.tecnico.nombre.trim().charAt(0).toUpperCase() || "?";
 
   return (
     <AdvancedMarker
@@ -176,9 +155,7 @@ function TrackingMarker({
         className={[
           "relative flex cursor-pointer flex-col items-center",
           "transition-transform duration-150",
-          selected
-            ? "scale-110"
-            : "hover:scale-105",
+          selected ? "scale-110" : "hover:scale-105",
         ].join(" ")}
       >
         {selected ? (
@@ -274,9 +251,7 @@ function TrackingInitialBounds({
 
     previousIdsRef.current = idsKey;
 
-    const visibleRows = rows.filter(
-      (row) => row.ubicacion !== null,
-    );
+    const visibleRows = rows.filter((row) => row.ubicacion !== null);
 
     if (visibleRows.length === 0) {
       return;
@@ -322,42 +297,25 @@ function TechnicianPicker({
     const needle = search.trim().toLowerCase();
 
     const source = needle
-      ? rows.filter((row) =>
-          row.tecnico.nombre
-            .toLowerCase()
-            .includes(needle),
-        )
+      ? rows.filter((row) => row.tecnico.nombre.toLowerCase().includes(needle))
       : rows;
 
     return [...source].sort((a, b) =>
-      a.tecnico.nombre.localeCompare(
-        b.tecnico.nombre,
-        "es",
-      ),
+      a.tecnico.nombre.localeCompare(b.tecnico.nombre, "es"),
     );
   }, [rows, search]);
 
   return (
     <aside className="hidden min-h-0 border-l border-border bg-background/95 lg:flex lg:flex-col">
       <div className="shrink-0 border-b border-border p-2">
-        <AppInline
-          align="center"
-          justify="between"
-          gap="xs"
-        >
+        <AppInline align="center" justify="between" gap="xs">
           <AppInline align="center" gap="xs">
             <UsersRound className="h-3.5 w-3.5 text-primary" />
 
-            <span className="text-xs font-semibold">
-              En seguimiento
-            </span>
+            <span className="text-xs font-semibold">En seguimiento</span>
           </AppInline>
 
-          <AppBadge
-            size="xs"
-            tone="success"
-            appearance="soft"
-          >
+          <AppBadge size="xs" tone="success" appearance="soft">
             {rows.length}
           </AppBadge>
         </AppInline>
@@ -377,16 +335,13 @@ function TechnicianPicker({
       <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
         <AppStack gap="xs">
           {filtered.map((row) => {
-            const selected =
-              selectedId === row.tecnico.id;
+            const selected = selectedId === row.tecnico.id;
 
             return (
               <button
                 key={row.tecnico.id}
                 type="button"
-                onClick={() =>
-                  onSelect(row.tecnico.id)
-                }
+                onClick={() => onSelect(row.tecnico.id)}
                 className={[
                   "w-full rounded-[var(--app-radius-md)] border p-2 text-left",
                   "transition-colors",
@@ -395,23 +350,12 @@ function TechnicianPicker({
                     : "border-border bg-background hover:bg-muted/60",
                 ].join(" ")}
               >
-                <AppInline
-                  gap="sm"
-                  align="center"
-                  wrap={false}
-                >
+                <AppInline gap="sm" align="center" wrap={false}>
                   <Avatar className="size-8 shrink-0">
-                    <AvatarImage
-                      src={
-                        row.tecnico.avatarUrl ??
-                        undefined
-                      }
-                    />
+                    <AvatarImage src={row.tecnico.avatarUrl ?? undefined} />
 
                     <AvatarFallback>
-                      {row.tecnico.nombre
-                        .charAt(0)
-                        .toUpperCase()}
+                      {row.tecnico.nombre.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
 
@@ -425,10 +369,7 @@ function TechnicianPicker({
                         <>
                           <MapPin className="h-3 w-3 text-success" />
 
-                          {formatFreshness(
-                            row.ubicacion.recibidoEn,
-                            nowMs,
-                          )}
+                          {formatFreshness(row.ubicacion.recibidoEn, nowMs)}
                         </>
                       ) : (
                         <>
@@ -445,9 +386,7 @@ function TechnicianPicker({
                     </div>
 
                     <div className="text-[9px] text-muted-foreground">
-                      {formatMinutes(
-                        row.jornada.minutosTracking,
-                      )}
+                      {formatMinutes(row.jornada.minutosTracking)}
                     </div>
                   </div>
                 </AppInline>
@@ -477,14 +416,8 @@ function MobilePicker({
             key={row.tecnico.id}
             type="button"
             size="xs"
-            variant={
-              selectedId === row.tecnico.id
-                ? "primary"
-                : "secondary"
-            }
-            onClick={() =>
-              onSelect(row.tecnico.id)
-            }
+            variant={selectedId === row.tecnico.id ? "primary" : "secondary"}
+            onClick={() => onSelect(row.tecnico.id)}
           >
             {row.tecnico.nombre}
           </AppButton>
@@ -532,23 +465,12 @@ function SelectedTechnicianCard({
           className="w-[min(22rem,calc(100vw-2rem))] bg-background/95 shadow-2xl backdrop-blur"
         >
           <AppStack gap="sm">
-            <AppInline
-              align="start"
-              gap="sm"
-              wrap={false}
-            >
+            <AppInline align="start" gap="sm" wrap={false}>
               <Avatar className="size-9 shrink-0">
-                <AvatarImage
-                  src={
-                    selected.tecnico.avatarUrl ??
-                    undefined
-                  }
-                />
+                <AvatarImage src={selected.tecnico.avatarUrl ?? undefined} />
 
                 <AvatarFallback>
-                  {selected.tecnico.nombre
-                    .charAt(0)
-                    .toUpperCase()}
+                  {selected.tecnico.nombre.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
 
@@ -557,16 +479,8 @@ function SelectedTechnicianCard({
                   {selected.tecnico.nombre}
                 </div>
 
-                <AppInline
-                  gap="xs"
-                  align="center"
-                  wrap
-                >
-                  <AppBadge
-                    size="xs"
-                    tone="success"
-                    appearance="soft"
-                  >
+                <AppInline gap="xs" align="center" wrap>
+                  <AppBadge size="xs" tone="success" appearance="soft">
                     En seguimiento
                   </AppBadge>
 
@@ -592,48 +506,35 @@ function SelectedTechnicianCard({
               <Metric
                 icon={<Clock3 className="h-3.5 w-3.5" />}
                 label="Entrada"
-                value={formatClock(
-                  selected.jornada.horaEntrada,
-                )}
+                value={formatClock(selected.jornada.horaEntrada)}
               />
 
               <Metric
                 icon={<Route className="h-3.5 w-3.5" />}
                 label="Tracking"
-                value={formatMinutes(
-                  selected.jornada.minutosTracking,
-                )}
+                value={formatMinutes(selected.jornada.minutosTracking)}
               />
 
               <Metric
                 icon={<Battery className="h-3.5 w-3.5" />}
                 label="Batería"
-                value={
-                  location.bateria === null
-                    ? "—"
-                    : `${location.bateria}%`
-                }
+                value={location.bateria === null ? "—" : `${location.bateria}%`}
               />
 
               <Metric
                 icon={<RadioTower className="h-3.5 w-3.5" />}
                 label="Reporte"
-                value={formatFreshness(
-                  location.recibidoEn,
-                  nowMs,
-                )}
+                value={formatFreshness(location.recibidoEn, nowMs)}
               />
             </div>
 
             {selected.jornada.sesionesTotal > 1 ||
-            selected.jornada
-              .minutosSinTrackingConfirmados > 0 ? (
+            selected.jornada.minutosSinTrackingConfirmados > 0 ? (
               <div className="rounded-[var(--app-radius-sm)] border border-border bg-muted/40 px-2 py-1.5 text-[10px] text-muted-foreground">
                 {selected.jornada.sesionesTotal} sesiones hoy
                 {" · "}
                 {formatMinutes(
-                  selected.jornada
-                    .minutosSinTrackingConfirmados,
+                  selected.jornada.minutosSinTrackingConfirmados,
                 )}{" "}
                 sin tracking confirmado
               </div>
@@ -652,14 +553,11 @@ function SelectedTechnicianCard({
                       type="button"
                       size="xs"
                       variant={
-                        row.tecnico.id ===
-                        selected.tecnico.id
+                        row.tecnico.id === selected.tecnico.id
                           ? "primary"
                           : "outline"
                       }
-                      onClick={() =>
-                        onSelect(row.tecnico.id)
-                      }
+                      onClick={() => onSelect(row.tecnico.id)}
                     >
                       {row.tecnico.nombre}
                     </AppButton>
@@ -668,42 +566,23 @@ function SelectedTechnicianCard({
               </div>
             ) : null}
 
-            {selected.actividad.ticketsEnProceso
-              .length > 0 ? (
-              <AppInline
-                gap="xs"
-                align="center"
-              >
-                <AppBadge
-                  size="xs"
-                  tone="info"
-                  appearance="soft"
-                >
-                  {
-                    selected.actividad
-                      .ticketsEnProceso.length
-                  }{" "}
-                  ticket(s)
+            {selected.actividad.ticketsEnProceso.length > 0 ? (
+              <AppInline gap="xs" align="center">
+                <AppBadge size="xs" tone="info" appearance="soft">
+                  {selected.actividad.ticketsEnProceso.length} ticket(s)
                 </AppBadge>
 
                 <span className="truncate text-[10px] text-muted-foreground">
-                  {selected.actividad
-                    .ticketsEnProceso[0]?.titulo ??
+                  {selected.actividad.ticketsEnProceso[0]?.titulo ??
                     `Ticket #${selected.actividad.ticketsEnProceso[0]?.id}`}
                 </span>
               </AppInline>
             ) : null}
 
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              <AppButton
-                asChild
-                variant="outline"
-                size="xs"
-              >
+              <AppButton asChild variant="outline" size="xs">
                 <a
-                  href={handleOpenWhatsapp(
-                    selected.tecnico.telefono ?? "",
-                  )}
+                  href={handleOpenWhatsapp(selected.tecnico.telefono ?? "")}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -712,16 +591,8 @@ function SelectedTechnicianCard({
                 </a>
               </AppButton>
 
-              <AppButton
-                asChild
-                variant="outline"
-                size="xs"
-              >
-                <a
-                  href={handleCall(
-                    selected.tecnico.telefono ?? "",
-                  )}
-                >
+              <AppButton asChild variant="outline" size="xs">
+                <a href={handleCall(selected.tecnico.telefono ?? "")}>
                   <Phone className="h-3.5 w-3.5" />
                   Llamar
                 </a>
@@ -761,94 +632,68 @@ function Metric({
 }) {
   return (
     <div className="rounded-[var(--app-radius-sm)] border border-border bg-muted/30 p-1.5">
-      <AppInline
-        gap="xs"
-        align="center"
-        wrap={false}
-      >
-        <span className="shrink-0 text-primary">
-          {icon}
-        </span>
+      <AppInline gap="xs" align="center" wrap={false}>
+        <span className="shrink-0 text-primary">{icon}</span>
 
         <div className="min-w-0">
           <div className="truncate text-[9px] text-muted-foreground">
             {label}
           </div>
 
-          <div className="truncate text-[10px] font-semibold">
-            {value}
-          </div>
+          <div className="truncate text-[10px] font-semibold">{value}</div>
         </div>
       </AppInline>
     </div>
   );
 }
 
-export function TrackingRealtimeMap({
-  rows,
-}: TrackingRealtimeMapProps) {
-  const fullscreenTargetRef =
-    React.useRef<HTMLDivElement>(null);
+export function TrackingRealtimeMap({ rows }: TrackingRealtimeMapProps) {
+  const fullscreenTargetRef = React.useRef<HTMLDivElement>(null);
 
-  const [
-    selectedId,
-    setSelectedId,
-  ] = React.useState<number | null>(null);
+  const [selectedId, setSelectedId] = React.useState<number | null>(null);
 
-  const [nowMs, setNowMs] = React.useState(
-    () => Date.now(),
-  );
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
 
   React.useEffect(() => {
     const intervalId = window.setInterval(() => {
       setNowMs(Date.now());
     }, 30_000);
 
-    return () =>
-      window.clearInterval(intervalId);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   React.useEffect(() => {
     if (
       selectedId !== null &&
-      !rows.some(
-        (row) =>
-          row.tecnico.id === selectedId,
-      )
+      !rows.some((row) => row.tecnico.id === selectedId)
     ) {
       setSelectedId(null);
     }
   }, [rows, selectedId]);
 
-  const selected =
-    rows.find(
-      (row) =>
-        row.tecnico.id === selectedId,
-    ) ?? null;
+  const selected = rows.find((row) => row.tecnico.id === selectedId) ?? null;
 
   const nearby = React.useMemo(() => {
-    if (!selected?.ubicacion) {
+    const selectedLocation = selected?.ubicacion;
+
+    if (!selectedLocation) {
       return [];
     }
 
     return rows.filter((row) => {
-      if (!row.ubicacion) {
+      const rowLocation = row.ubicacion;
+
+      if (!rowLocation) {
         return false;
       }
 
-      return (
-        distanceMeters(
-          selected.ubicacion,
-          row.ubicacion,
-        ) <= 35
-      );
+      return distanceMeters(selectedLocation, rowLocation) <= 35;
     });
   }, [rows, selected]);
 
-  const selectTechnician =
-    React.useCallback((id: number) => {
-      setSelectedId(id);
-    }, []);
+  const selectTechnician = React.useCallback((id: number) => {
+    setSelectedId(id);
+  }, []);
 
   return (
     <div
@@ -870,42 +715,25 @@ export function TrackingRealtimeMap({
           disableDefaultUI
           mapTypeId="hybrid"
           reuseMaps
-          onClick={() =>
-            setSelectedId(null)
-          }
+          onClick={() => setSelectedId(null)}
         >
-          <TrackingInitialBounds
-            rows={rows}
-            selectedId={selectedId}
-          />
+          <TrackingInitialBounds rows={rows} selectedId={selectedId} />
 
-          <TrackingCamera
-            selected={selected}
-          />
+          <TrackingCamera selected={selected} />
 
           <TrackingMapControls
             rows={rows}
             selectedId={selectedId}
-            fullscreenTargetRef={
-              fullscreenTargetRef
-            }
-            onClearSelection={() =>
-              setSelectedId(null)
-            }
+            fullscreenTargetRef={fullscreenTargetRef}
+            onClearSelection={() => setSelectedId(null)}
           />
 
           {rows.map((row) => (
             <TrackingMarker
               key={row.tecnico.id}
               row={row}
-              selected={
-                row.tecnico.id === selectedId
-              }
-              onSelect={() =>
-                selectTechnician(
-                  row.tecnico.id,
-                )
-              }
+              selected={row.tecnico.id === selectedId}
+              onSelect={() => selectTechnician(row.tecnico.id)}
             />
           ))}
 
@@ -915,9 +743,7 @@ export function TrackingRealtimeMap({
               nearby={nearby}
               nowMs={nowMs}
               onSelect={selectTechnician}
-              onClose={() =>
-                setSelectedId(null)
-              }
+              onClose={() => setSelectedId(null)}
             />
           ) : null}
         </Map>
