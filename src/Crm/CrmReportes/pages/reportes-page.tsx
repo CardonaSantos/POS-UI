@@ -65,11 +65,6 @@ export function ReportesPage() {
                   Excel
                 </AppBadge>
               </AppInline>
-
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Selecciona un reporte, aplica los filtros necesarios y genera el
-                archivo.
-              </p>
             </div>
           </AppInline>
 

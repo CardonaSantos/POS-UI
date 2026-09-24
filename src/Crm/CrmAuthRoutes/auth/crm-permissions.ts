@@ -100,6 +100,10 @@ export const CRM_PERMISSION = {
   PPPOE_SUSPENDER: "pppoe.suspender",
 
   PPPOE_REACTIVAR: "pppoe.reactivar",
+
+  // REAL TIME LOCATION
+  // Tracking / ubicación
+  REAL_TIME_LOCATION_VER: "real-time-location.ver",
 } as const;
 
 export type CrmPermission =

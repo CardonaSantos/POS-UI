@@ -118,6 +118,8 @@ import PppoeCuentaCreatePage from "../CrmPppoeCuentas/crear/pppoe-cuenta-create-
 
 import PppoeCuentaAdopcionPage from "../CrmPppoeCuentas/adopcion/pppoe-cuenta-adopcion-page";
 import RouterFormPage from "../routers/_components/form/page";
+import TrackingPage from "../CrmTracking/tracking-page";
+import TrackingAttendanceDetailPage from "../CrmTracking/attendance-detail/tracking-attendance-detail-page";
 
 /*
  * Entrada principal del CRM.
@@ -739,6 +741,22 @@ function CrmRoutes() {
           element={permissionRoute(
             CRM_PERMISSION.DESINSTALACIONES_AUTORIZAR,
             <AutorizacionesDesinstalacionPage />,
+          )}
+        />
+
+        <Route
+          path="/crm/real-time-location"
+          element={permissionRoute(
+            CRM_PERMISSION.REAL_TIME_LOCATION_VER,
+            <TrackingPage />,
+          )}
+        />
+
+        <Route
+          path="/crm/real-time-location/jornadas/:asistenciaId"
+          element={permissionRoute(
+            CRM_PERMISSION.REAL_TIME_LOCATION_VER,
+            <TrackingAttendanceDetailPage />,
           )}
         />
       </Route>

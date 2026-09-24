@@ -57,15 +57,7 @@ import {
   REPORTE_CLIENTE_ESTADO_OPTIONS,
 } from "@/Crm/features/reports/reportes.options";
 
-// =====================================================
-// CONSTANTS
-// =====================================================
-
 const EMPTY_CLIENT_REPORT_FILTERS: ReporteClientesFiltersDto = {};
-
-// =====================================================
-// COMPONENT
-// =====================================================
 
 export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
   const form = useForm<ReporteClientesFormValues>({
@@ -75,10 +67,6 @@ export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
 
     mode: "onChange",
   });
-
-  // =================================================
-  // CAMPOS DEPENDIENTES
-  // =================================================
 
   const departamentoId = useWatch({
     control: form.control,
@@ -94,10 +82,6 @@ export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
 
   const previousMunicipio = useRef<number | null>(municipioId);
 
-  // =================================================
-  // CATÁLOGOS
-  // =================================================
-
   const serviciosQuery = useGetReporteServicios();
 
   const departamentosQuery = useGetReporteDepartamentos();
@@ -106,9 +90,7 @@ export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
 
   const sectoresQuery = useGetReporteSectores();
 
-  // =================================================
   // OPCIONES
-  // =================================================
 
   const servicioOptions = useMemo(
     () => toReporteServicioOptions(serviciosQuery.data),
@@ -135,9 +117,7 @@ export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
     );
   }, [municipioId, sectoresQuery.data]);
 
-  // =================================================
   // DEPENDENCIAS GEOGRÁFICAS
-  // =================================================
 
   useEffect(() => {
     if (previousDepartamento.current === departamentoId) {
@@ -170,9 +150,7 @@ export const ReporteClientesPanel = memo(function ReporteClientesPanel() {
     });
   }, [municipioId, form]);
 
-  // =================================================
   // EXPORTACIÓN
-  // =================================================
 
   /**
    * El hook XLSX necesita filtros durante render

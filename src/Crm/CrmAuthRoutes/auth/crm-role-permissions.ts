@@ -79,6 +79,8 @@ const ADMIN_PERMISSIONS: readonly CrmPermission[] = [
 
   CRM_PERMISSION.EMPRESA_VER,
   CRM_PERMISSION.PERFIL_VER,
+
+  CRM_PERMISSION.REAL_TIME_LOCATION_VER,
 ];
 
 const OFICINA_PERMISSIONS: readonly CrmPermission[] = [
