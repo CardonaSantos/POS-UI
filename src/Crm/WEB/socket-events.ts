@@ -1,4 +1,9 @@
-import { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
+import type { RealTimeLocationRaw } from "../features/real-time-location/real-time-location";
+
+import type {
+  TecnicoTrackingRealtimeView,
+  TecnicoTrackingStateChangedPayload,
+} from "../features/real-time-location/tracking.interfaces";
 
 export type WsEventMap = {
   "ticket-soporte:change-status": {
@@ -8,7 +13,9 @@ export type WsEventMap = {
     titulo: string;
   };
 
-  "ruta-cobro:change-status": { rutaId: number };
+  "ruta-cobro:change-status": {
+    rutaId: number;
+  };
 
   "facturacion:change-event": {};
 
@@ -18,7 +25,19 @@ export type WsEventMap = {
   };
 
   "notifications:system": {};
+
+  /**
+   * Sistema anterior de ubicación.
+   * Todavía lo utiliza el dashboard actual.
+   */
   "emit:location:real-time": RealTimeLocationRaw;
+
+  /**
+   * Nuevo módulo real-time-location / tracking.
+   */
+  "tracking:location-updated": TecnicoTrackingRealtimeView;
+
+  "tracking:state-changed": TecnicoTrackingStateChangedPayload;
 };
 
 export type WsEventName = keyof WsEventMap;

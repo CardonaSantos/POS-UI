@@ -18,6 +18,7 @@ import {
   GalleryHorizontal,
   Home,
   Landmark,
+  Locate,
   MapIcon,
   MapPin,
   MapPinned,
@@ -171,6 +172,12 @@ export const soporteRoute: Route = {
       href: "/crm/tags",
     },
   ],
+};
+
+export const realtimeTrackingRoute: Route = {
+  icon: Locate,
+  label: "Jornadas y Ubicación",
+  href: "/crm/real-time-location",
 };
 
 export const soporteTicketsRoute: Route = {

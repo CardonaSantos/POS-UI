@@ -83,6 +83,18 @@ export const crm_endpoints = {
     delete_zona: (id: number) => `/facturacion-zona/${id}`,
   },
 
+  real_time_location: {
+    get_tracking_realtime: "/real-time-location/tracking/realtime",
+
+    get_tracking_history: "/real-time-location/tracking/history",
+
+    get_tracking_attendance: (asistenciaId: number) =>
+      `/real-time-location/tracking/attendance/${asistenciaId}`,
+
+    get_tracking_locations: (asistenciaId: number) =>
+      `/real-time-location/tracking/attendance/${asistenciaId}/locations`,
+  },
+
   //IMPRIMIBLES
   tickets_boleta: {
     byId: (id: number) => `/tickets-soporte/get-ticket-boleta/${id}`,
